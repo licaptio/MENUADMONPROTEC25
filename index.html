@@ -1,4 +1,4 @@
-<div class="botones"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -12,50 +12,68 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
+      padding: 40px 20px;
+      margin: 0;
     }
+
     h1 {
       font-size: 2em;
       margin-bottom: 30px;
+      text-align: center;
     }
+
     .botones {
       display: flex;
-      gap: 20px;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 400px;
     }
+
     .boton {
-      padding: 15px 30px;
-      text-decoration: none;
+      display: block;
+      width: 100%;
+      padding: 15px;
+      text-align: center;
       border-radius: 10px;
-      font-size: 1.2em;
+      font-size: 1.1em;
       color: white;
+      text-decoration: none;
       transition: background-color 0.3s;
+      box-sizing: border-box;
     }
+
     .pagos {
       background-color: #c62828;
     }
+
     .pagos:hover {
       background-color: #a91e1e;
     }
+
     .notas {
       background-color: #2d882d;
     }
+
     .notas:hover {
       background-color: #1c601c;
     }
+
     .pedidos {
       background-color: #1e88e5;
     }
+
     .pedidos:hover {
       background-color: #1565c0;
     }
-  .deuda {
-  background-color: #8e24aa;
-}
-.deuda:hover {
-  background-color: #6a1b9a;
-}
 
-  
+    .deuda {
+      background-color: #8e24aa;
+    }
+
+    .deuda:hover {
+      background-color: #6a1b9a;
+    }
   </style>
 </head>
 <body>
@@ -66,9 +84,7 @@
     <a href="https://licaptio.github.io/PAGOSRED/" target="_blank" class="boton pagos">VITACORA PAGOS</a>
     <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="boton notas">LIBRETA NOTAS</a>
     <a href="https://licaptio.github.io/PEDIDOAZUL/" target="_blank" class="boton pedidos">DIARIO PEDIDOS</a>
-<a href="https://licaptio.github.io/BDDEUDAPDD25/" target="_blank" class="boton deuda">CONSULTA FACTURA VERO</a>
-
-
+    <a href="https://licaptio.github.io/VEROEDITFACT/" target="_blank" class="boton deuda">CONSULTA FACTURA VERO</a>
   </div>
 
 </body>
