@@ -77,6 +77,12 @@
   </style>
 </head>
 <body>
+<div id="lockscreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#f2fef2; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999;">
+  <h2>🔒 Ingrese PIN de acceso</h2>
+  <input type="password" id="pinInput" placeholder="PIN" style="font-size:1.5em; padding:10px; text-align:center;" maxlength="6">
+  <button onclick="checkPIN()" style="margin-top:15px; padding:10px 20px; font-size:1.2em;">Acceder</button>
+  <p id="pinError" style="color:red; margin-top:10px; display:none;">PIN incorrecto</p>
+</div>
 
   <h1>MENU ADMINISTRADOR PROTEC 25</h1>
 
@@ -89,4 +95,23 @@
   </div>
 
 </body>
+<script>
+  function checkPIN() {
+    const correctPIN = "1982"; // ← Aquí puedes cambiar el PIN
+    const input = document.getElementById("pinInput").value;
+    const errorMsg = document.getElementById("pinError");
+
+    if (input === correctPIN) {
+      document.getElementById("lockscreen").style.display = "none";
+    } else {
+      errorMsg.style.display = "block";
+    }
+  }
+
+  // También permite presionar ENTER
+  document.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") checkPIN();
+  });
+</script>
+
 </html>
