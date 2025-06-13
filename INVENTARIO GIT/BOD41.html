@@ -135,14 +135,14 @@
       const tabla = document.getElementById('contenido');
 
       function cargarDatos() {
-const datos = JSON.parse(localStorage.getItem('inventario_bod41')) || datosIniciales;
+const datos = JSON.parse(localStorage.getItem('inventario_BOD41')) || datosIniciales;
         tabla.innerHTML = '';
         datos.forEach((fila, i) => {
           const tr = document.createElement('tr');
 ['BOD41', 'inventario', 'sto', 'pedido'].forEach(campo => {
             const td = document.createElement('td');
-            td.className = (campo === 'bod41') ? 'largo' : 'corto';
-if (campo === 'bod41') {
+            td.className = (campo === 'BOD41') ? 'largo' : 'corto';
+if (campo === 'BOD41') {
   td.textContent = fila[campo];
 } else if (campo === 'sto') {
   td.textContent = fila[campo]; // solo muestra el número, sin input
@@ -166,9 +166,9 @@ if (campo === 'bod41') {
         const input = e.target;
         const fila = parseInt(input.dataset.fila);
         const campo = input.dataset.campo;
-        const datos = JSON.parse(localStorage.getItem('inventario_bod41')) || datosIniciales;
+        const datos = JSON.parse(localStorage.getItem('inventario_BOD41')) || datosIniciales;
         datos[fila][campo] = input.value;
-        localStorage.setItem('inventario_bod41', JSON.stringify(datos));
+        localStorage.setItem('inventario_BOD41', JSON.stringify(datos));
       });
 
       cargarDatos();
