@@ -8,49 +8,54 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f0f4f8;
-      padding: 20px;
+      padding: 40px 20px;
       text-align: center;
     }
+
     h1 {
       color: #003366;
+      margin-bottom: 30px;
     }
-    ul {
-      list-style: none;
-      padding: 0;
-      max-width: 400px;
-      margin: auto;
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      max-width: 900px;
+      margin: 0 auto;
     }
-    li {
-      margin: 10px 0;
-    }
-    a {
+
+    .grid-container a {
       text-decoration: none;
-      font-size: 18px;
-      color: #0066cc;
-      background: #e0e0e0;
-      padding: 10px 20px;
-      border-radius: 8px;
-      display: inline-block;
-      transition: background 0.2s;
+      font-size: 16px;
+      color: #ffffff;
+      background: #0077cc;
+      padding: 12px 15px;
+      border-radius: 10px;
+      display: block;
+      transition: background 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    a:hover {
-      background: #d0d0d0;
+
+    .grid-container a:hover {
+      background: #005fa3;
     }
   </style>
 </head>
 <body>
   <h1>Menú de Inventarios</h1>
-  <ul>
-    <li><a href="BOD41.html">AZUCAR</a></li>
-    <li><a href="ARCADIO.html">HIGIENICOS GENERICOS</a></li>
-    <li><a href="PURATOS.html">PURATOS</a></li>
-    <li><a href="CERILLOS.html">CERILLOS</a></li>
-    <li><a href="CACHUATE.html">CACAHUATE</a></li>
-    <li><a href="ciervo.html">CIERVO</a></li>
-    <li><a href="CONVERMEX.html">CONVERMEX</a></li>
-    <li><a href="BASURA.html"> BOLSA BASURA</a></li>
-    <li><a href="ALUMINIO.html"> BOLSA BASURA</a></li>
-    <li><a href="CREMA.html"> BOLSA BASURA</a></li>    
-  </ul>
+  <div class="grid-container">
+    <a href="BOD41.html">AZUCAR</a>
+    <a href="ARCADIO.html">HIGIENICOS GENERICOS</a>
+    <a href="PURATOS.html">PURATOS</a>
+    <a href="CERILLOS.html">CERILLOS</a>
+    <a href="CACHUATE.html">CACAHUATE</a>
+    <a href="ciervo.html">CIERVO</a>
+    <a href="CONVERMEX.html">CONVERMEX</a>
+    <a href="BASURA.html">BOLSA BASURA</a>
+    <a href="ALUMINIO.html">PAPEL ALUMINIO</a>
+    <a href="CREMA.html">CREMA Y ADEREZO</a>
+  </div>
 </body>
 </html>
+
