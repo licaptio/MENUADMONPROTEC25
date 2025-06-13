@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventario con Cálculo de M3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+      text-align: center;
+      width: 14.2%;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+    }
+    input[type="number"] {
+      width: 100%;
+      border: none;
+      text-align: right;
+    }
+    .green {
+      background-color: #00cc66;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>INVENTARIO DE CONVERMEX</h2>
+<button onclick="imprimirPedido()">🖨️ Imprimir Pedido</button>
+<button onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
+<table id="inventario">
+    <thead>
+      <tr>
+        <th>CONCEPTO</th>
+        <th>STOCK</th>
+        <th class="green">Cantidad</th>
+        <th>M3</th>
+        <th class="green">PEDIDO</th>
+        <th>TOTAL M3</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-cuerpo"></tbody>
+  </table>
+  <br>
+<div id="resumen-pedido" style="display:none;"></div>
+
+
+  <script>
+    const data = [
+      ["VASO 104", 10, 0.06],
+      ["VASO 106", 100, 0.09],
+      ["VASO 108", 60, 0.11],
+      ["VASO 110", 150, 0.12],
+      ["VASO 112", 150, 0.17],
+      ["VASO 114", 100, 0.10],
+      ["VASO 116", 100, 0.11],
+      ["VASO 132", 100, 0.14],
+      ["VASO 120", 0, 0.20],
+      ["ENVASE 704", 20, 0.09],
+      ["ENVASE 706", 60, 0.12],
+      ["ENVASE 708", 60, 0.15],
+      ["ENVASE 712", 10, 0.14],
+      ["ENVASE 716", 100, 0.13],
+      ["ENVASE 732", 200, 0.14],
+      ["TAPA 404 LISO", 0, 0.02],
+      ["TAPA 406 LISO", 0, 0.02],
+      ["TAPA 406 PIQUETE", 30, 0.02],
+      ["TAPA PS 408 POPOTE", 10, 0.02],
+      ["TAPA PS 410 POPOTE", 10, 0.02],
+      ["TAPA PS 412 POPOTE(112,706)", 40, 0.02],
+      ["TAPA PS 414 POPOTE(114,116)", 30, 0.02],
+      ["TAPA PS 416 POPOTE(132,716,732)", 50, 0.05],
+      ["TAPA EPS 516 PIQUETE", 20, 0.06]
+    ];
+
+    const tbody = document.getElementById("tabla-cuerpo");
+
+    data.forEach((fila, i) => {
+      const [concepto, stock, m3] = fila;
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${concepto}</td>
+        <td>${stock}</td>
+        <td><input type="number" min="0" max="99999999" data-cantidad-index="${i}" /></td>
+        <td>${m3.toFixed(2)}</td>
+        <td><input type="number" min="0" max="99999999" data-pedido-index="${i}" oninput="calcular(${i}, ${m3})" /></td>
+        <td id="total-m3-${i}">0.00</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    // Manejo de tecla Enter en "Cantidad" y "Pedido"
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        const target = e.target;
+        if (target.tagName === 'INPUT') {
+          e.preventDefault();
+          if (target.hasAttribute('data-cantidad-index')) {
+            const index = parseInt(target.getAttribute('data-cantidad-index'));
+            const nextInput = document.querySelector(`input[data-cantidad-index="${index + 1}"]`);
+            if (nextInput) nextInput.focus();
+          } else if (target.hasAttribute('data-pedido-index')) {
+            const index = parseInt(target.getAttribute('data-pedido-index'));
+            const nextInput = document.querySelector(`input[data-pedido-index="${index + 1}"]`);
+            if (nextInput) nextInput.focus();
+          }
+        }
+      }
+    });
+
+    function calcular(index, m3) {
+      const pedido = document.querySelector(`input[data-pedido-index="${index}"]`).value;
+      const total = (parseFloat(pedido || 0) * m3).toFixed(2);
+      document.getElementById(`total-m3-${index}`).textContent = total;
+    }
+    function imprimirPedido() {
+  const resumen = [];
+  const conceptos = document.querySelectorAll('#tabla-cuerpo tr');
+
+  conceptos.forEach((tr, index) => {
+    const concepto = tr.cells[0].textContent;
+    const pedidoInput = tr.querySelector(`input[data-pedido-index="${index}"]`);
+    const pedido = parseInt(pedidoInput.value || '0');
+    if (pedido > 0) {
+      resumen.push({ concepto, pedido });
+    }
+  });
+
+  if (resumen.length === 0) {
+    alert("No hay pedidos para imprimir.");
+    return;
+  }
+
+  // Crear una ventana nueva para impresión
+  const ventana = window.open('', '', 'width=600,height=800');
+  ventana.document.write(`
+    <html>
+    <head>
+      <title>Resumen de Pedido</title>
+      <style>
+        body { font-family: Arial; padding: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+        th { background-color: #006633; color: white; }
+      </style>
+    </head>
+    <body>
+      <h2>Resumen de Pedido</h2>
+      <table>
+        <thead>
+          <tr><th>CONCEPTO</th><th>PEDIDO</th></tr>
+        </thead>
+        <tbody>
+          ${resumen.map(r => `<tr><td>${r.concepto}</td><td>${r.pedido}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `);
+  ventana.document.close();
+  ventana.print();
+}
+
+
+  </script>
+
+
+<script>
+  function limpiarPedidos() {
+    const inputs = document.querySelectorAll('input[data-pedido-index]');
+    inputs.forEach(input => input.value = '');
+    document.querySelectorAll('[id^="total-m3-"]').forEach(el => el.textContent = '0.00');
+  }
+</script>
+<script>
+  document.addEventListener('keydown', function (e) {
+    const isNumberInput = e.target.tagName === 'INPUT' && e.target.type === 'number';
+
+    if (!isNumberInput) return;
+
+    const inputs = Array.from(document.querySelectorAll('input[type="number"]'));
+    const index = inputs.indexOf(e.target);
+    const columns = 2; // solo usamos Cantidad y Pedido
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (index + 1 < inputs.length) inputs[index + 1].focus();
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (index - 1 >= 0) inputs[index - 1].focus();
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (index + columns < inputs.length) inputs[index + columns].focus();
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (index - columns >= 0) inputs[index - columns].focus();
+    }
+  });
+</script>
+
+</body>
+</html>
