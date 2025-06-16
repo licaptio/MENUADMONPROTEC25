@@ -317,6 +317,47 @@ document.getElementById('limpiar-datos').addEventListener('click', () => {
 });
 </script>
 
+<script>
+document.addEventListener('keydown', function (e) {
+  const teclasPermitidas = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"];
+  if (!teclasPermitidas.includes(e.key)) return;
+
+  const input = document.activeElement;
+  if (!input || input.tagName !== 'INPUT') return;
+
+  const filaActual = parseInt(input.dataset.fila);
+  const campoActual = input.dataset.campo;
+
+  const camposOrden = ['inventario', 'sto', 'pedido', 'precio'];
+  const colIndex = camposOrden.indexOf(campoActual);
+
+  let nuevaFila = filaActual;
+  let nuevoCampo = campoActual;
+
+  if (e.key === "ArrowUp") {
+    nuevaFila = filaActual - 1;
+  } else if (e.key === "ArrowDown") {
+    nuevaFila = filaActual + 1;
+  } else if (e.key === "ArrowLeft") {
+    if (colIndex > 0) nuevoCampo = camposOrden[colIndex - 1];
+  } else if (e.key === "ArrowRight") {
+    if (colIndex < camposOrden.length - 1) nuevoCampo = camposOrden[colIndex + 1];
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    nuevaFila = e.shiftKey ? filaActual - 1 : filaActual + 1;
+  }
+
+  // Prevenir navegación fuera de límites
+  if (nuevaFila < 0 || nuevaFila >= tabla.rows.length) return;
+
+  const nuevoInput = document.querySelector(`input[data-fila="${nuevaFila}"][data-campo="${nuevoCampo}"]`);
+  if (nuevoInput) {
+    nuevoInput.focus();
+    nuevoInput.select();
+    e.preventDefault();
+  }
+});
+</script>
 
 </body>
 </html>
