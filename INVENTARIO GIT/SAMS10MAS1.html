@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventario Estilo Excel</title>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 1rem;
+    }
+
+h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+
+    table {
+      width: 100%;
+      max-width: 1100px;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #e6e6e6;
+      font-weight: bold;
+    }
+
+    td.corto, th.corto {
+      width: 5ch;
+      text-align: center;
+    }
+
+    td.largo input {
+      text-align: left;
+      padding-left: 4px;
+    }
+td.largo, th.largo {
+  width: 24ch;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+input {
+  width: 100%;
+  max-width: 100%;
+  font-size: 1rem;
+  text-align: center;
+  padding: 0.3rem;
+  border: none;
+  background-color: transparent;
+  height: 2rem;
+  box-sizing: border-box;
+}
+
+
+
+    input:focus {
+      outline: none;
+      background-color: #ffffcc;
+    }
+
+.controls {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.no-print {
+  display: block;
+  margin: 0 auto 1rem;
+}
+
+/* Opcional: si no quieres que el botón salga al imprimir */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0.5rem;
+      }
+      table, th, td {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Inventario Estilo Excel</h1>
+
+<div class="controls">
+  <button id="export-img" class="no-print">Exportar pedido como imagen</button>
+  <button id="limpiar-datos" class="no-print">Limpiar datos</button>
+</div>
+
+
+<table id="tabla">
+<thead>
+  <tr>
+    <th class="largo">SAMS</th>
+    <th class="corto">INV</th>
+    <th class="corto">STO</th>
+    <th class="corto">PED</th>
+    <th class="corto">PRE</th>
+  </tr>
+  </thead>
+  <tbody id="contenido"></tbody>
+</table>
+
+
+    <script>
+    const datosIniciales = [
+  { SAMS: "ACEITE 1-2-3 DE 1 LTO.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "ACEITE KARTAMUS 12/900 ML.", inventario: 0, sto: 100, pedido: 0, precio: 0 },
+  { SAMS: "ATUN TUNY EN ACEITE C/48 140 GRS.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "ATUN TUNY EN ACEITE 8/140 GRS.", inventario: 0, sto: 0, pedido: 0, precio: 0 },
+  { SAMS: "ATUN TUNY EN AGUA 8/140 GRS.", inventario: 0, sto: 0, pedido: 0, precio: 0 },
+  { SAMS: "ATUN TUNY EN AGUA 48/140 GRS.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "ATUN TUNY ENS. C/VER C/MAY 8/135 G", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "ENSALADA DE ATUN TUNY 48/135 GR.", inventario: 0, sto: 0, pedido: 0, precio: 0 },
+  { SAMS: "AZUCAR REFINADA C/1000 SOBRES", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "AZUCAR SPLENDA C/600 MAS 100 SOBRES", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "BOLSA ZIPLOC 3/100 PZAS. SANDWICH", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "CALDO DE POLLO KNOR 3/24 CUBOS 264 GRS.", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "CEREZAS MEMBER'S MARK 2.100 KGS.", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "CHOCOLATE HERSEHEY’S 680 GRS. C3", inventario: 0, sto: 60, pedido: 0, precio: 0 },
+  { SAMS: "CINTA CANELA C/6", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "CINTA TRANSPARENTE C/6", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "CINTA TUCK MASKING TAPE C/8", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "CLORO 10 LITROS", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE ARCOIRIS 9 KGS", inventario: 0, sto: 70, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE FOCA 10/1 KG.", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE FOCA 20/500 GRS.", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE FOCA 40/250 GRS.", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "ELOTE DEL MONTE 6/2.900 KGS.", inventario: 0, sto: 80, pedido: 0, precio: 0 },
+  { SAMS: "FABULOSO LAVANDA 10 LITROS", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "GRAPAS STANDART PILOT C/5", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "IMITACION TONE’S TOCINO 426 GRS.", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "JUGO MAGGI 6/100 ML.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "JUGO MAGGI 800 ML.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "KETCHUP HEIN’Z C/200 SOBRES", inventario: 0, sto: 250, pedido: 0, precio: 0 },
+  { SAMS: "KURUMBA 1 LTO.INDIVIDUAL EN SAMS ES 6", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "MEDIA CREMA NESTLE 225 C8", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "LECHE CARNATION CLAVEL 368 GRS, INDIVIDUAL", inventario: 0, sto: 5, pedido: 0, precio: 0 },
+  { SAMS: "LECHE CONDENSADA LA LECHERA 397 ML.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "MAYONESA HEIN’Z C/200 SOBRES", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "MAYONESA REAL BAKER’S & CHETS 3.7", inventario: 0, sto: 80, pedido: 0, precio: 0 },
+  { SAMS: "MOLDE P/PAY C/GALLETA  C/4 680 GRS.", inventario: 0, sto: 70, pedido: 0, precio: 0 },
+  { SAMS: "MOSTAZA HEIN’Z  200 SOBRES", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "PAPEL ALUMINIO REYNOL'S 710 RF 200 HOJAS", inventario: 0, sto: 80, pedido: 0, precio: 0 },
+  { SAMS: "PEPINILLOS ANN OBCIEN 3.7 KGS.", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "PIMIENTO MORRON LA PASIEGA 780 GRS", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "PINOL 9 LTOS", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "PURE DE PAPA BAKER’S CHEFS 2.26 KGS.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "QUESO CHEDDAR 3.03 KG. Por piezas", inventario: 0, sto: 400, pedido: 0, precio: 0 },
+  { SAMS: "QUICK CHEF ALCOHOL SOLIDO C/24", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "REYNOLDS PLAS. VITAFILM 300 MTS. X 30 CM.", inventario: 0, sto: 70, pedido: 0, precio: 0 },
+  { SAMS: "SALSA HUNT’S BARBECUE 612 GRS.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "SALSA INGLESA BLACK WELL 6/145 GRS.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "SALSA INGLESA BLACK WELL 980 GRS.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "SALSA TABASCO 4/60 ML.", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "SANGRITA VIUDA DE SANCHEZ DE 12/1 LTO.", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "SARDINA TOMATE GUAYMEX 425 GRS.", inventario: 0, sto: 80, pedido: 0, precio: 0 },
+  { SAMS: "SUAVITEL FRESCA PRIMAVERA 8.5 LITROS", inventario: 0, sto: 0, pedido: 0, precio: 0 },
+  { SAMS: "SUSTITUTO DE CREMA MEMBER’S 1 KG.", inventario: 0, sto: 170, pedido: 0, precio: 0 },
+  { SAMS: "TAJIN EN BOTE C/4 142 GRS.", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "TAJIN EN BOTE C/3 255", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "VEL ROSITA 8.5", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "FILTRO BREW WITE CHICO", inventario: 0, sto: 10, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE ARIEL C/9 850 KG", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE ARIEL 18/500 GRS.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "DETERGENTE ARIEL 48/250 GRS", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "HARINA SELECTA 4/1KG.", inventario: 0, sto: 200, pedido: 0, precio: 0 },
+  { SAMS: "HARINA SELECTA 10/1KG.", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "MASECA 1 KG. C/10", inventario: 0, sto: 30, pedido: 0, precio: 0 },
+  { SAMS: "CREMA P/CAFÉ COFFEE MATE SOBRES C/200", inventario: 0, sto: 40, pedido: 0, precio: 0 },
+  { SAMS: "PEPSI LATA  c36", inventario: 0, sto: 200, pedido: 0, precio: 0 },
+  { SAMS: "JARABE NATURAL", inventario: 0, sto: 60, pedido: 0, precio: 0 },
+  { SAMS: "AGUA PURIFICADA MEMEBERK 980016038", inventario: 0, sto: 100, pedido: 0, precio: 0 },
+  { SAMS: "CINTA ADHESIVA 25766 CODIGO SAMS", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "HOJA DE MAQUINA", inventario: 0, sto: 20, pedido: 0, precio: 0 },
+  { SAMS: "SABRITAS MINI PACKS C/50", inventario: 0, sto: 50, pedido: 0, precio: 0 },
+  { SAMS: "COCA COLA LATA C24 355", inventario: 0, sto: 100, pedido: 0, precio: 0 },
+  { SAMS: "COCA COLA 600 ML", inventario: 0, sto: 50, pedido: 0, precio: 0 },
+  { SAMS: "COCA COLA 500 ML", inventario: 0, sto: 0, pedido: 0, precio: 0 },
+  { SAMS: "COCA COLA 3LT", inventario: 0, sto: 0, pedido: 0, precio: 0 }
+  ];
+  
+    const tabla = document.getElementById('contenido');
+
+    function cargarDatos() {
+      const datos = JSON.parse(localStorage.getItem('inventario_SAMS')) || datosIniciales;
+      tabla.innerHTML = '';
+      datos.forEach((fila, i) => {
+        const tr = document.createElement('tr');
+['SAMS', 'inventario', 'sto', 'pedido', 'precio'].forEach(campo => {
+  const td = document.createElement('td');
+  td.className = (campo === 'SAMS') ? 'largo' : 'corto';
+  if (campo === 'SAMS') {
+    td.textContent = fila[campo];
+  } else {
+    td.innerHTML = `<input type="text" value="${fila[campo] ? fila[campo] : ''}" maxlength="4" inputmode="numeric" pattern="[0-9]*" data-fila="${i}" data-campo="${campo}">`;
+  }
+  tr.appendChild(td);
+});
+
+        tabla.appendChild(tr);
+      });
+    }
+
+    tabla.addEventListener('input', (e) => {
+      const input = e.target;
+      const fila = parseInt(input.dataset.fila);
+      const campo = input.dataset.campo;
+      const datos = JSON.parse(localStorage.getItem('inventario_SAMS')) || datosIniciales;
+      datos[fila][campo] = input.value;
+      localStorage.setItem('inventario_SAMS', JSON.stringify(datos));
+    });
+
+    cargarDatos();
+  </script>
+<script>
+document.getElementById('export-img').addEventListener('click', () => {
+  const filas = document.querySelectorAll('#tabla tbody tr');
+
+  const temp = document.createElement('table');
+  temp.style.borderCollapse = 'collapse';
+  temp.style.background = 'white';
+  temp.style.margin = '1rem auto';
+  temp.style.fontFamily = 'Arial, sans-serif';
+
+  // Encabezado
+  const thead = temp.createTHead();
+  const hRow = thead.insertRow();
+  ['SAMS', 'PED', 'PRE'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.border = '1px solid #ccc';
+    th.style.padding = '.5rem';
+    th.style.backgroundColor = '#e6e6e6';
+    hRow.appendChild(th);
+  });
+
+  // Solo filas con PEDIDO > 0
+  const tBody = temp.createTBody();
+  filas.forEach(r => {
+    const pedido = parseFloat(r.cells[3].querySelector('input').value.trim()) || 0;
+    const precio = r.cells[4].querySelector('input').value.trim();
+
+    if (pedido > 0) {
+      const nuevaFila = tBody.insertRow();
+      [0, 3, 4].forEach(idx => {
+        const cell = document.createElement('td');
+        cell.textContent = idx === 0
+          ? r.cells[0].textContent
+          : r.cells[idx].querySelector('input').value.trim();
+        cell.style.border = '1px solid #ccc';
+        cell.style.padding = '.5rem';
+        nuevaFila.appendChild(cell);
+      });
+    }
+  });
+
+  if (tBody.rows.length === 0) {
+    alert('No hay filas con pedido para exportar.');
+    return;
+  }
+
+  // Agrega la tabla al DOM temporalmente
+  document.body.appendChild(temp);
+  html2canvas(temp).then(canvas => {
+    const ctx = canvas.getContext('2d');
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const link = document.createElement('a');
+    link.download = 'pedido.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+
+    temp.remove();
+  });
+});
+</script>
+<script>
+document.getElementById('limpiar-datos').addEventListener('click', () => {
+  if (confirm("¿Estás seguro de que quieres borrar todos los datos ingresados?")) {
+    // Restaurar datosIniciales sin valores en inventario, pedido y precio
+    const datosLimpios = datosIniciales.map(item => ({
+      ...item,
+      inventario: '',
+      pedido: '',
+      precio: ''
+    }));
+    localStorage.setItem('inventario_SAMS', JSON.stringify(datosLimpios));
+    cargarDatos();
+  }
+});
+</script>
+
+
+</body>
+</html>
