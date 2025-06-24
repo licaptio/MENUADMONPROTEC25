@@ -75,13 +75,13 @@ td:nth-child(2), th:nth-child(2) {
   overflow-wrap: break-word;
 }
 
-/* Adaptación para móvil */
 @media screen and (max-width: 768px) {
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+  td:nth-child(2), th:nth-child(2) {
+    max-width: 300px; /* más espacio en móvil */
+    white-space: normal !important;
   }
+}
+
 
   th, td {
     font-size: 11px;
