@@ -113,11 +113,12 @@ function mostrarTodos() {
       uuid_corto: f.uuid ? f.uuid.substring(0, 39) : "",
       factura_corta: (f.factura || "").substring(0, 15)
     }))
-    .sort((a, b) => {
-      const nombreA = (a.razon_social_emisor || "").toUpperCase();
-      const nombreB = (b.razon_social_emisor || "").toUpperCase();
-      return nombreA.localeCompare(nombreB);
-    });
+.sort((a, b) => {
+  const nombreA = (a.razon_social_emisor || "").toUpperCase();
+  const nombreB = (b.razon_social_emisor || "").toUpperCase();
+  return nombreA.localeCompare(nombreB);
+});
+
 
   const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   let totalTotal = 0;
