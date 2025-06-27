@@ -20,6 +20,8 @@
 
   <h3>Archivos</h3>
   <ul id="archivoList"></ul>
+<h3>Bitácora</h3>
+<pre id="bitacora" style="background:#eee; padding:10px; max-height:200px; overflow:auto; font-size:13px;"></pre>
 
   <script>
     const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
@@ -120,79 +122,95 @@ archivosDatos.push({
       }
     });
 
-    async function procesarArchivos() {
-      const items = document.querySelectorAll('#archivoList li');
+async function procesarArchivos() {
+  const items = document.querySelectorAll('#archivoList li');
 
-      for (let i = 0; i < archivosDatos.length; i++) {
-        const item = items[i];
-        const data = archivosDatos[i];
+  for (let i = 0; i < archivosDatos.length; i++) {
+    const item = items[i];
+    const data = archivosDatos[i];
 
-        if (data.tipo !== 'I') {
-          item.querySelector('span').textContent = `❌ Tipo ${data.tipo} no válido`;
-          item.querySelector('span').className = 'err';
-          continue;
-        }
+    logBitacora(`📄 Revisando UUID: ${data.uuid}`);
 
-        if (data.receptorRFC !== 'PDD031204KL5') {
-          item.querySelector('span').textContent = `❌ RFC no permitido`;
-          item.querySelector('span').className = 'err';
-          continue;
-        }
-
-        const existe = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd?uuid=eq.${data.uuid}`, {
-          headers: {
-            apikey: API_KEY,
-            Authorization: `Bearer ${API_KEY}`
-          }
-        });
-        const yaExiste = await existe.json();
-        if (yaExiste.length > 0) {
-          item.querySelector('span').textContent = `⚠️ Ya existe`;
-          item.querySelector('span').className = 'warn';
-          continue;
-        }
-
-        if (!data.uuid || data.uuid.trim() === '') {
-          item.querySelector('span').textContent = `❌ Sin UUID`;
-          item.querySelector('span').className = 'err';
-          continue;
-        }
-
-        const datosInsert = {
-          uuid: data.uuid,
-          fecha: data.fecha,
-          rfc_emisor: data.emisorRFC,
-          razon_social_emisor: data.razonSocial,
-          factura: data.folio,
-          total: parseFloat(data.total),
-conceptos_detalle: data.conceptosDetalle,
-          factura_pagada: 'NO',
-          factura_fisicamente: 'NO',
-          comentario_factura_fisica: '',
-          fotos: [],
-          fecha_certificacion: data.fecha_certificacion
-        };
-
-        const insert = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
-          method: 'POST',
-          headers: {
-            apikey: API_KEY,
-            Authorization: `Bearer ${API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(datosInsert)
-        });
-
-        if (insert.ok) {
-          item.querySelector('span').textContent = `✅ Subido`;
-          item.querySelector('span').className = 'ok';
-        } else {
-          const err = await insert.text();
-          item.querySelector('span').textContent = `❌ Error: ${err}`;
-          item.querySelector('span').className = 'err';
-        }
-      }
+    if (data.tipo !== 'I') {
+      item.querySelector('span').textContent = `❌ Tipo ${data.tipo} no válido`;
+      item.querySelector('span').className = 'err';
+      logBitacora(`❌ Rechazado por tipo: ${data.tipo}`);
+      continue;
     }
+
+    if (data.receptorRFC !== 'PDD031204KL5') {
+      item.querySelector('span').textContent = `❌ RFC no permitido`;
+      item.querySelector('span').className = 'err';
+      logBitacora(`❌ Rechazado por RFC receptor: ${data.receptorRFC}`);
+      continue;
+    }
+
+    const existe = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd?uuid=eq.${data.uuid}`, {
+      headers: {
+        apikey: API_KEY,
+        Authorization: `Bearer ${API_KEY}`
+      }
+    });
+    const yaExiste = await existe.json();
+    if (yaExiste.length > 0) {
+      item.querySelector('span').textContent = `⚠️ Ya existe`;
+      item.querySelector('span').className = 'warn';
+      logBitacora(`⚠️ Ya existía: ${data.uuid}`);
+      continue;
+    }
+
+    if (!data.uuid || data.uuid.trim() === '') {
+      item.querySelector('span').textContent = `❌ Sin UUID`;
+      item.querySelector('span').className = 'err';
+      logBitacora(`❌ Error: UUID vacío`);
+      continue;
+    }
+
+    const datosInsert = {
+      uuid: data.uuid,
+      fecha: data.fecha,
+      rfc_emisor: data.emisorRFC,
+      razon_social_emisor: data.razonSocial,
+      factura: data.folio,
+      total: parseFloat(data.total),
+      conceptos_detalle: data.conceptosDetalle,
+      factura_pagada: 'NO',
+      factura_fisicamente: 'NO',
+      comentario_factura_fisica: '',
+      fotos: [],
+      fecha_certificacion: data.fecha_certificacion
+    };
+
+    logBitacora(`✅ Subiendo: ${data.uuid}`);
+    logBitacora(`→ Payload: ${JSON.stringify(datosInsert, null, 2)}`);
+
+    const insert = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
+      method: 'POST',
+      headers: {
+        apikey: API_KEY,
+        Authorization: `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(datosInsert)
+    });
+
+    if (insert.ok) {
+      item.querySelector('span').textContent = `✅ Subido`;
+      item.querySelector('span').className = 'ok';
+      logBitacora(`✔️ Subida exitosa`);
+    } else {
+      const err = await insert.text();
+      item.querySelector('span').textContent = `❌ Error: ${err}`;
+      item.querySelector('span').className = 'err';
+      logBitacora(`❌ Error al subir: ${err}`);
+    }
+  }
+}
+  function logBitacora(mensaje) {
+  const log = document.getElementById("bitacora");
+  log.textContent += mensaje + "\n";
+}
+
   </script>
 </body>
 </html>
