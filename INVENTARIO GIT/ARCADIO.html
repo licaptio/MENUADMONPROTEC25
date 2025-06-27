@@ -218,12 +218,23 @@ cell.style.textOverflow = 'ellipsis';
     }
   });
 
-  document.body.appendChild(temp);
-  const wrapper = document.createElement('div');
-wrapper.style.width = '300px'; // Fuerza ancho compacto
+// Crear título con fecha automática
+const fecha = new Date().toLocaleDateString('es-MX');
+const titulo = document.createElement('div');
+titulo.textContent = `ARCADIO – ${fecha}`;
+titulo.style.textAlign = 'center';
+titulo.style.fontWeight = 'bold';
+titulo.style.fontSize = '16px';
+titulo.style.marginBottom = '8px';
+
+// Crear contenedor
+const wrapper = document.createElement('div');
+wrapper.style.width = '300px';
 wrapper.style.margin = '0 auto';
-wrapper.appendChild(titulo); // si tienes título
+wrapper.appendChild(titulo);
 wrapper.appendChild(temp);
+document.body.appendChild(wrapper);
+
 document.body.appendChild(wrapper);
 
 html2canvas(wrapper).then(canvas => {
