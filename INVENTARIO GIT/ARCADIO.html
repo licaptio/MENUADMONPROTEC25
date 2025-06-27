@@ -190,6 +190,8 @@ if (campo === 'arcadio') {
     th.textContent = text;
     th.style.border = '1px solid #ccc';
     th.style.padding = '2px 4px';
+    th.style.maxWidth = '140px';
+th.style.whiteSpace = 'nowrap';
     th.style.fontSize = '12px';
     th.style.backgroundColor = '#e6e6e6';
     hRow.appendChild(th);
@@ -205,6 +207,11 @@ if (campo === 'arcadio') {
         cell.textContent = (idx === 0) ? r.cells[0].textContent : pedido;
         cell.style.border = '1px solid #ccc';
         cell.style.padding = '2px 4px';
+cell.style.maxWidth = '140px';
+cell.style.whiteSpace = 'nowrap';
+cell.style.overflow = 'hidden';
+cell.style.textOverflow = 'ellipsis';
+
         cell.style.fontSize = '12px';
         nuevaFila.appendChild(cell);
       });
