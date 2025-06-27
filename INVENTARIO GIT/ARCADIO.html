@@ -174,61 +174,59 @@ if (campo === 'arcadio') {
     </script>
   <script>
   document.getElementById('export-img').addEventListener('click', () => {
-    const tablaOriginal = document.querySelector('#tabla tbody tr');
-    const filas = document.querySelectorAll('#tabla tbody tr');
+  const filas = document.querySelectorAll('#tabla tbody tr');
 
-    const temp = document.createElement('table');
-    temp.style.borderCollapse = 'collapse';
-    temp.style.background = 'white';
-    temp.style.margin = '1rem auto';
-    temp.style.fontFamily = 'Arial, sans-serif';
+  const temp = document.createElement('table');
+  temp.style.borderCollapse = 'collapse';
+  temp.style.background = 'white';
+  temp.style.margin = '1rem auto';
+  temp.style.fontFamily = 'Arial, sans-serif';
+  temp.style.fontSize = '12px'; // compacto
 
-    // Encabezado
-    const thead = temp.createTHead();
-    const hRow = thead.insertRow();
-    ['ARCADIO', 'PED'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      th.style.border = '1px solid #ccc';
-      th.style.padding = '.5rem';
-      th.style.backgroundColor = '#e6e6e6';
-      hRow.appendChild(th);
-    });
-
-    // Cuerpo con solo filas que tengan PEDIDO
-    const tBody = temp.createTBody();
-    filas.forEach(r => {
-      const pedido = r.cells[3].querySelector('input').value.trim();
-      if (pedido !== '') {
-        const nuevaFila = tBody.insertRow();
-        [0, 3].forEach(idx => {
-          const cell = document.createElement('td');
-          cell.textContent = (idx === 0)
-            ? r.cells[0].textContent
-            : pedido;
-          cell.style.border = '1px solid #ccc';
-          cell.style.padding = '.5rem';
-          nuevaFila.appendChild(cell);
-        });
-      }
-    });
-
-    // Agrega la tabla temporal al DOM, genera la imagen y luego la elimina
-    document.body.appendChild(temp);
-    html2canvas(temp).then(canvas => {
-      const ctx = canvas.getContext('2d');
-      ctx.globalCompositeOperation = 'destination-over';
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const link = document.createElement('a');
-      link.download = 'pedido.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.9);
-      link.click();
-
-      temp.remove();
-    });
+  const thead = temp.createTHead();
+  const hRow = thead.insertRow();
+  ['ARCADIO', 'PED'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.border = '1px solid #ccc';
+    th.style.padding = '2px 4px';
+    th.style.fontSize = '12px';
+    th.style.backgroundColor = '#e6e6e6';
+    hRow.appendChild(th);
   });
+
+  const tBody = temp.createTBody();
+  filas.forEach(r => {
+    const pedido = r.cells[3].querySelector('input').value.trim();
+    if (pedido !== '') {
+      const nuevaFila = tBody.insertRow();
+      [0, 3].forEach(idx => {
+        const cell = document.createElement('td');
+        cell.textContent = (idx === 0) ? r.cells[0].textContent : pedido;
+        cell.style.border = '1px solid #ccc';
+        cell.style.padding = '2px 4px';
+        cell.style.fontSize = '12px';
+        nuevaFila.appendChild(cell);
+      });
+    }
+  });
+
+  document.body.appendChild(temp);
+  html2canvas(temp).then(canvas => {
+    const ctx = canvas.getContext('2d');
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const link = document.createElement('a');
+    link.download = 'pedido.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+
+    temp.remove();
+  });
+});
+
   </script>
 
   </body>
