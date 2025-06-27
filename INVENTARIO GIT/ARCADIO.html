@@ -200,7 +200,7 @@ th.style.whiteSpace = 'nowrap';
   const tBody = temp.createTBody();
   filas.forEach(r => {
     const pedido = r.cells[3].querySelector('input').value.trim();
-    if (pedido !== '') {
+    if (pedido !== '' && parseInt(pedido) > 0) {
       const nuevaFila = tBody.insertRow();
       [0, 3].forEach(idx => {
         const cell = document.createElement('td');
