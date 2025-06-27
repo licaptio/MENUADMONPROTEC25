@@ -106,21 +106,25 @@ function mostrarTodos() {
   const hoy = new Date();
   const datosFiltrados = datos
     .filter(d => d.factura_pagada !== "SI")
-    .map(f => ({
-      ...f,
-      fecha_formateada: formatearFecha(f.fecha),
-      dias: isNaN(new Date(f.fecha).getTime()) ? null : Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24)),
-      uuid_corto: f.uuid ? f.uuid.substring(0, 39) : "",
-      factura_corta: (f.factura || "").substring(0, 15)
-    }))
-.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
+    .map(f => {
+      const fechaObj = new Date(f.fecha);
+      const dias = isNaN(fechaObj.getTime()) ? null : Math.floor((hoy - fechaObj) / (1000 * 60 * 60 * 24));
+      return {
+        ...f,
+        fecha_formateada: formatearFecha(f.fecha),
+        dias,
+        uuid_corto: f.uuid ? f.uuid.substring(0, 39) : "",
+        factura_corta: (f.factura || "").substring(0, 15),
+        total: Number(f.total) || 0
+      };
+    })
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   let totalTotal = 0;
 
   const filas = datosFiltrados.map(f => {
-    totalTotal += f.total || 0;
+    totalTotal += f.total;
     let clase = '';
     if (f.dias > 40) clase = 'factura-vencida-critica';
     else if (f.dias > 30) clase = 'factura-vencida';
@@ -144,7 +148,7 @@ function mostrarTodos() {
   document.getElementById("contenedorTabla").innerHTML = `
     <table>
       <thead>
-        <tr><th colspan="8">Totales</th><th>${formatoPesos.format(totalTotal)}</th></tr>
+        <tr><th colspan="8">Saldo total (sin pagadas)</th><th>${formatoPesos.format(totalTotal)}</th></tr>
         <tr>
           <th>Fecha</th>
           <th>#Días</th>
