@@ -235,8 +235,6 @@ wrapper.appendChild(titulo);
 wrapper.appendChild(temp);
 document.body.appendChild(wrapper);
 
-document.body.appendChild(wrapper);
-
 html2canvas(wrapper).then(canvas => {
   const ctx = canvas.getContext('2d');
   ctx.globalCompositeOperation = 'destination-over';
