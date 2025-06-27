@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalle de Factura</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f6fa;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h2 {
+      color: #003366;
+    }
+    .info {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    .campo {
+      margin-bottom: 10px;
+    }
+    .campo span {
+      font-weight: bold;
+      color: #003366;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    a {
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+  <h2>Detalle de Factura</h2>
+  <div class="info" id="contenedor"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const uuid = params.get("uuid");
+    const folio = params.get("folio");
+
+    const contenedor = document.getElementById('contenedor');
+    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+
+    if (!uuid && !folio) {
+      contenedor.innerHTML = '<p class="error">Folio o UUID no proporcionado en la URL.</p>';
+    } else {
+      const url = uuid
+        ? `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?uuid=eq.${uuid}`
+        : `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?factura=eq.${folio}`;
+
+      fetch(url, {
+        headers: { apikey: apiKey }
+      })
+      .then(r => r.json())
+.then(json => {
+  if (json.length === 0) {
+    contenedor.innerHTML = `<p class="error">No se encontró información para el ${uuid ? 'UUID' : 'folio'}.</p>`;
+    return;
+  }
+
+  const f = json[0];
+  const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+
+  let conceptosHTML = '';
+let subtotal = 0;
+let impuestos = 0;
+let tipoImp = 'IVA (16%)';
+
+if (Array.isArray(f.conceptos_detalle)) {
+  const conceptos = f.conceptos_detalle;
+for (let c of conceptos) {
+  let tipoImp = c.tipoImpuesto || 'SIN IMP';
+const totalSinImp = c.cantidad * c.costoUnitario;
+const imp = totalSinImp * c.tasaImpuesto;
+const totalConcepto = totalSinImp + imp;
+
+  subtotal += totalSinImp;
+  impuestos += imp;
+
+  if (c.tasaImpuesto === 0) tipoImp = 'Tasa 0%';
+  if ((c.tipoImpuesto || "").toUpperCase().includes("IEPS")) tipoImp = 'IEPS';
+
+  conceptosHTML += `
+    <tr>
+      <td>${c.cantidad}</td>
+      <td>${c.codigoSAT}</td>
+      <td>${c.descripcion}</td>
+      <td>$${c.costoUnitario.toFixed(2)}</td>
+      <td>${(c.tasaImpuesto * 100).toFixed(2)}%</td>
+      <td>$${totalSinImp.toFixed(2)}</td>
+    </tr>`;
+}
+
+
+    
+  }
+
+  contenedor.innerHTML = `
+    <div class="campo"><span>UUID:</span> ${f.uuid}</div>
+    <div class="campo"><span>Factura:</span> ${f.factura}</div>
+    <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
+    <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
+    <div class="campo"><span>Fecha:</span> ${new Date(f.fecha).toLocaleDateString('es-MX')}</div>
+    <div class="campo"><span>Total:</span> ${formatoPesos.format(f.total)}</div>
+    <div class="campo"><span>Recibida físicamente:</span> ${f.factura_fisicamente}</div>
+    <div class="campo"><span>Comentario:</span> ${f.comentario_factura_fisica || "Sin comentario"}</div>
+    ${f.concepto ? `<div class="campo"><span>Resumen de Concepto:</span></div>
+    <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 10px; border-radius: 6px;">
+      <ul style="margin: 0; padding-left: 20px; list-style-type: none;">
+        ${f.concepto.split('•').map(item => {
+          const match = item.match(/(\d+)\s×\s(.+?)\s\(SAT\s(\d+)\).*?Unitario:\s*\$?([\d.]+)\s*\+\s*([\d.]+)%/i);
+          if (match) {
+            const [, cantidad, descripcion, codigoSAT, unitario, impuesto] = match;
+            let tipo = "IVA";
+            if (item.toUpperCase().includes("IEPS")) tipo = "IEPS";
+            if (parseFloat(impuesto) === 0) tipo = "Tasa 0%";
+            return `<li style="margin-bottom: 10px;">
+              <strong>${cantidad} ×</strong> ${descripcion}<br>
+              <small>Código SAT: ${codigoSAT} | Unitario: $${parseFloat(unitario).toFixed(2)} | ${tipo}: ${parseFloat(impuesto).toFixed(2)}%</small>
+            </li>`;
+          } else {
+            return `<li style="margin-bottom: 10px;">${item.trim()}</li>`;
+          }
+        }).join('')}
+      </ul>
+    </div>` : ''}
+    ${Array.isArray(f.fotos) && f.fotos[0] ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
+    <div class="campo"><span>Conceptos:</span></div>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      <thead>
+        <tr style="background: #dbe5f1; color: #003366;">
+          <th>Cantidad</th>
+          <th>Código SAT</th>
+          <th>Descripción</th>
+          <th>Costo Unitario</th>
+          <th>Impuesto</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${conceptosHTML || `<tr><td colspan="7" style="text-align: center;">No hay conceptos registrados.</td></tr>`}
+      </tbody>
+      <tfoot>
+        <tr style="background: #eee;">
+          <td colspan="6" style="text-align: right; font-weight: bold;">SUBTOTAL</td>
+          <td style="text-align: right;">${formatoPesos.format(subtotal)}</td>
+        </tr>
+        <tr style="background: #eee;">
+          <td colspan="6" style="text-align: right; font-weight: bold;">${tipoImp}</td>
+          <td style="text-align: right;">${formatoPesos.format(impuestos)}</td>
+        </tr>
+        <tr style="background: #003366; color: white;">
+          <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL</td>
+          <td style="text-align: right;">${formatoPesos.format(subtotal + impuestos)}</td>
+        </tr>
+      </tfoot>
+    </table>`;
+})
+
+
+      .catch(err => {
+        contenedor.innerHTML = '<p class="error">Error al cargar los datos: ' + err.message + '</p>';
+      });
+    }
+
+
+  </script>
+</body>
+</html>

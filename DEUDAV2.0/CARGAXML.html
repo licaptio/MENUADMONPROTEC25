@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Carga de XML - Deuda Limpia PDD</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    ul { padding: 0; list-style: none; }
+    li { margin-bottom: 6px; font-size: 14px; }
+    .ok { color: green; }
+    .warn { color: orange; }
+    .err { color: red; }
+    .pending { color: blue; }
+  </style>
+</head>
+<body>
+  <h2>Subir CFDI válidos (solo tipo I y receptor PDD031204KL5)</h2>
+  <input type="file" id="xmlInput" accept=".xml" multiple>
+  <button onclick="procesarArchivos()">Procesar y Subir</button>
+
+  <h3>Archivos</h3>
+  <ul id="archivoList"></ul>
+
+  <script>
+    const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
+    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+
+    let archivosDatos = [];
+
+    document.getElementById('xmlInput').addEventListener('change', async function () {
+      const lista = document.getElementById('archivoList');
+      lista.innerHTML = '';
+      archivosDatos = [];
+
+      for (const file of this.files) {
+        try {
+          const text = await file.text();
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(text, 'application/xml');
+
+          const cfdiNS = "http://www.sat.gob.mx/cfd/4";
+          const tfdNS = "http://www.sat.gob.mx/TimbreFiscalDigital";
+
+          const comprobante = xml.getElementsByTagNameNS(cfdiNS, "Comprobante")[0];
+          const timbre = xml.getElementsByTagNameNS(tfdNS, "TimbreFiscalDigital")[0];
+          const emisor = xml.getElementsByTagNameNS(cfdiNS, "Emisor")[0];
+          const receptor = xml.getElementsByTagNameNS(cfdiNS, "Receptor")[0];
+
+          const tipo = comprobante?.getAttribute("TipoDeComprobante");
+          const uuid = timbre?.getAttribute("UUID");
+          const receptorRFC = receptor?.getAttribute("Rfc");
+          const emisorRFC = emisor?.getAttribute("Rfc");
+          const razonSocial = emisor?.getAttribute("Nombre");
+          const folio = comprobante?.getAttribute("Folio") || '';
+          const serie = comprobante?.getAttribute("Serie") || '';
+          const total = parseFloat(comprobante?.getAttribute("Total")) || 0;
+          const fecha = comprobante?.getAttribute("Fecha");
+          const fechaTimbrado = timbre?.getAttribute("FechaTimbrado") || null;
+
+let conceptosTxt = '';
+let conceptosDetalle = [];
+const conceptos = xml.getElementsByTagNameNS(cfdiNS, "Concepto");
+
+for (let c of conceptos) {
+  const cantidad = parseFloat(c.getAttribute("Cantidad")) || 0;
+  const descripcion = c.getAttribute("Descripcion") || "";
+  const codigoSAT = c.getAttribute("ClaveProdServ") || "";
+  const valorUnitario = parseFloat(c.getAttribute("ValorUnitario")) || 0;
+
+  let impuestoTasa = 0;
+  let tipoImpuesto = "";
+  const impuestos = c.getElementsByTagNameNS(cfdiNS, "Impuestos")[0];
+  if (impuestos) {
+    const traslados = impuestos.getElementsByTagNameNS(cfdiNS, "Traslado");
+    for (let t of traslados) {
+      const tasa = parseFloat(t.getAttribute("TasaOCuota")) || 0;
+      const impuesto = t.getAttribute("Impuesto") || "";
+      impuestoTasa += tasa;
+      tipoImpuesto = impuesto === '003' ? 'IEPS' : 'IVA';
+    }
+  }
+
+  conceptosTxt += `• ${cantidad} × ${descripcion} (SAT ${codigoSAT}) → Unitario: $${valorUnitario.toFixed(2)} | ${tipoImpuesto || 'SIN IMP'}: ${(impuestoTasa * 100).toFixed(2)}%\n`;
+
+  conceptosDetalle.push({
+    cantidad,
+    codigoSAT,
+    descripcion,
+    costoUnitario: valorUnitario,
+    tipoImpuesto: tipoImpuesto || "NINGUNO",
+    tasaImpuesto: impuestoTasa
+  });
+}
+
+
+archivosDatos.push({
+  uuid,
+  tipo,
+  receptorRFC,
+  emisorRFC,
+  razonSocial,
+  folio,
+  serie,
+  total,
+  fecha,
+  fecha_certificacion: fechaTimbrado,
+  conceptosTxt,
+  conceptosDetalle  // ✅ ESTA LÍNEA FALTABA
+});
+
+
+          const li = document.createElement('li');
+          li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado</span>`;
+          lista.appendChild(li);
+        } catch (e) {
+          const li = document.createElement('li');
+          li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Error al leer</span>`;
+          lista.appendChild(li);
+        }
+      }
+    });
+
+    async function procesarArchivos() {
+      const items = document.querySelectorAll('#archivoList li');
+
+      for (let i = 0; i < archivosDatos.length; i++) {
+        const item = items[i];
+        const data = archivosDatos[i];
+
+        if (data.tipo !== 'I') {
+          item.querySelector('span').textContent = `❌ Tipo ${data.tipo} no válido`;
+          item.querySelector('span').className = 'err';
+          continue;
+        }
+
+        if (data.receptorRFC !== 'PDD031204KL5') {
+          item.querySelector('span').textContent = `❌ RFC no permitido`;
+          item.querySelector('span').className = 'err';
+          continue;
+        }
+
+        const existe = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd?uuid=eq.${data.uuid}`, {
+          headers: {
+            apikey: API_KEY,
+            Authorization: `Bearer ${API_KEY}`
+          }
+        });
+        const yaExiste = await existe.json();
+        if (yaExiste.length > 0) {
+          item.querySelector('span').textContent = `⚠️ Ya existe`;
+          item.querySelector('span').className = 'warn';
+          continue;
+        }
+
+        if (!data.uuid || data.uuid.trim() === '') {
+          item.querySelector('span').textContent = `❌ Sin UUID`;
+          item.querySelector('span').className = 'err';
+          continue;
+        }
+
+        const datosInsert = {
+          uuid: data.uuid,
+          fecha: data.fecha,
+          rfc_emisor: data.emisorRFC,
+          razon_social_emisor: data.razonSocial,
+          factura: data.folio,
+          total: parseFloat(data.total),
+conceptos_detalle: data.conceptosDetalle,
+          factura_pagada: 'NO',
+          factura_fisicamente: 'NO',
+          comentario_factura_fisica: '',
+          fotos: [],
+          fecha_certificacion: data.fecha_certificacion
+        };
+
+        const insert = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
+          method: 'POST',
+          headers: {
+            apikey: API_KEY,
+            Authorization: `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datosInsert)
+        });
+
+        if (insert.ok) {
+          item.querySelector('span').textContent = `✅ Subido`;
+          item.querySelector('span').className = 'ok';
+        } else {
+          const err = await insert.text();
+          item.querySelector('span').textContent = `❌ Error: ${err}`;
+          item.querySelector('span').className = 'err';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

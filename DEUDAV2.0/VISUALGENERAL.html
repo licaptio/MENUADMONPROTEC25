@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Reporte Deuda Limpia</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 10px;
+      background: #f5f8fa;
+    }
+    h2 {
+      text-align: center;
+      color: #003366;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 15px;
+      font-weight: bold;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 12px;
+    }
+    th {
+      background: #dbe5f1;
+      color: #003366;
+      text-align: center;
+    }
+    td {
+      text-align: right;
+    }
+    .uuid, .proveedor {
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .comentario {
+      white-space: normal;
+      word-break: break-word;
+      text-align: left;
+    }
+    .factura-vencida {
+      animation: parpadeo 1s infinite;
+    }
+    @keyframes parpadeo {
+      0% { background-color: yellow; }
+      50% { background-color: transparent; }
+      100% { background-color: yellow; }
+    }
+    .factura-vencida-critica {
+      animation: parpadeo-rojo 1s infinite;
+      color: white;
+    }
+    @keyframes parpadeo-rojo {
+      0% { background-color: red; }
+      50% { background-color: transparent; }
+      100% { background-color: red; }
+    }
+    .link-factura {
+      color: #0066cc;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<h2>Reporte Deuda Limpia</h2>
+<div id="contenedorTabla"></div>
+
+<script>
+let datos = [];
+
+fetch('https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?select=*', {
+  headers: {
+    apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+  }
+})
+.then(r => r.json())
+.then(json => {
+  datos = json;
+  mostrarTodos();
+});
+
+function formatearFecha(fechaStr) {
+  const f = new Date(fechaStr);
+  return isNaN(f.getTime()) ? "Fecha inválida" : f.toLocaleDateString('es-MX');
+}
+
+function mostrarTodos() {
+  const hoy = new Date();
+  const datosFiltrados = datos
+    .filter(d => d.factura_pagada !== "SI")
+    .map(f => ({
+      ...f,
+      fecha_formateada: formatearFecha(f.fecha),
+      dias: isNaN(new Date(f.fecha).getTime()) ? null : Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24)),
+      uuid_corto: f.uuid ? f.uuid.substring(0, 39) : "",
+      factura_corta: (f.factura || "").substring(0, 15)
+    }))
+    .sort((a, b) => {
+      const nombreA = (a.razon_social_emisor || "").toUpperCase();
+      const nombreB = (b.razon_social_emisor || "").toUpperCase();
+      return nombreA.localeCompare(nombreB);
+    });
+
+  const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+  let totalTotal = 0;
+
+  const filas = datosFiltrados.map(f => {
+    totalTotal += f.total || 0;
+    let clase = '';
+    if (f.dias > 40) clase = 'factura-vencida-critica';
+    else if (f.dias > 30) clase = 'factura-vencida';
+    return `<tr class="${clase}">
+      <td>${f.fecha_formateada}</td>
+      <td>${f.dias ?? ""}</td>
+      <td class="uuid">
+        <a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid)}" class="link-factura" target="_blank">
+          ${f.uuid_corto}
+        </a>
+      </td>
+      <td class="proveedor">${f.razon_social_emisor}</td>
+      <td>${f.factura_corta}</td>
+      <td>${(f.factura_fisicamente || "").toUpperCase() === "SI" ? "Recibida" : ""}</td>
+      <td class="comentario">${f.comentario_factura_fisica || ""}</td>
+      <td>${Array.isArray(f.fotos) && f.fotos[0] ? `<a href="${f.fotos[0]}" target="_blank">🔗</a>` : ""}</td>
+      <td>${formatoPesos.format(f.total)}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("contenedorTabla").innerHTML = `
+    <table>
+      <thead>
+        <tr><th colspan="8">Totales</th><th>${formatoPesos.format(totalTotal)}</th></tr>
+        <tr>
+          <th>Fecha</th>
+          <th>#Días</th>
+          <th>UUID</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Recibida</th>
+          <th>Comentario</th>
+          <th>Fotos</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Reporte General Deuda Limpia", doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+  doc.autoTable({
+    html: document.querySelector("table"),
+    startY: 50,
+    styles: { fontSize: 7.5, cellPadding: 2 },
+    headStyles: { fillColor: [0, 102, 204], textColor: 255 },
+    theme: 'striped',
+    margin: { top: 50, left: 50, right: 10 },
+    didDrawPage: function (data) {
+      const pageSize = doc.internal.pageSize;
+      doc.setFontSize(9);
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageSize.width - 60, pageSize.height - 10);
+    }
+  });
+  doc.save("reporte_deuda_limpia.pdf");
+}
+</script>
+</body>
+</html>
