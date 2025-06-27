@@ -219,19 +219,27 @@ cell.style.textOverflow = 'ellipsis';
   });
 
   document.body.appendChild(temp);
-  html2canvas(temp).then(canvas => {
-    const ctx = canvas.getContext('2d');
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const wrapper = document.createElement('div');
+wrapper.style.width = '300px'; // Fuerza ancho compacto
+wrapper.style.margin = '0 auto';
+wrapper.appendChild(titulo); // si tienes título
+wrapper.appendChild(temp);
+document.body.appendChild(wrapper);
 
-    const link = document.createElement('a');
-    link.download = 'pedido.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.9);
-    link.click();
+html2canvas(wrapper).then(canvas => {
+  const ctx = canvas.getContext('2d');
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    temp.remove();
-  });
+  const link = document.createElement('a');
+  link.download = 'pedido.jpg';
+  link.href = canvas.toDataURL('image/jpeg', 0.9);
+  link.click();
+
+  wrapper.remove(); // elimina todo junto
+});
+
 });
 
   </script>
