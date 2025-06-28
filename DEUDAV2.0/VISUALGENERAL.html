@@ -114,7 +114,7 @@ function mostrarTodos() {
         fecha_formateada: formatearFecha(f.fecha),
         dias,
         uuid_corto: f.uuid ? f.uuid.substring(0, 39) : "",
-        factura_corta: (f.factura || "").substring(0, 15),
+        factura_corta: ((f.serie || "") + (f.factura || "")).substring(0, 15),
         total: Number(f.total) || 0
       };
     })
