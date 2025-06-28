@@ -144,11 +144,11 @@ function mostrarTodos() {
         </a>
       </td>
       <td class="proveedor">${f.razon_social_emisor}</td>
-      <td>${f.factura_corta}</td>
-      <td>${(f.factura_fisicamente || "").toUpperCase() === "SI" ? "Recibida" : ""}</td>
-      <td class="comentario">${f.comentario_factura_fisica || ""}</td>
-      <td>${Array.isArray(f.fotos) && f.fotos[0] ? `<a href="${f.fotos[0]}" target="_blank">🔗</a>` : ""}</td>
-      <td>${formatoPesos.format(f.total)}</td>
+<td>${f.factura_corta}</td>
+<td>${formatoPesos.format(f.total)}</td>
+<td>${(f.factura_fisicamente || "").toUpperCase() === "SI" ? "Recibida" : ""}</td>
+<td class="comentario">${f.comentario_factura_fisica || ""}</td>
+<td>${Array.isArray(f.fotos) && f.fotos[0] ? `<a href="${f.fotos[0]}" target="_blank">🔗</a>` : ""}</td>
     </tr>`;
   }).join("");
 
@@ -161,11 +161,11 @@ function mostrarTodos() {
           <th>#Días</th>
           <th>UUID</th>
           <th>Proveedor</th>
-          <th>Factura</th>
-          <th>Recibida</th>
-          <th>Comentario</th>
-          <th>Fotos</th>
-          <th>Total</th>
+<th>Factura</th>
+<th>Total</th>
+<th>Recibida</th>
+<th>Comentario</th>
+<th>Fotos</th>
         </tr>
       </thead>
       <tbody>${filas}</tbody>
