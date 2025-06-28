@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Actualizar Pago Factura</title>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003366;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 13px;
+    }
+    th {
+      background: #cce0ff;
+    }
+    select {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+<h2>Actualizar Estatus de Pago</h2>
+<div id="tablaFacturas"></div>
+
+<script>
+const API_URL = 'https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
+
+let datos = [];
+
+fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
+  headers: { apikey: API_KEY }
+})
+.then(res => res.json())
+.then(json => {
+  datos = json.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordena por fecha ascendente
+  renderTabla();
+});
+
+function formatearFecha(fechaStr) {
+  const f = new Date(fechaStr);
+  return isNaN(f.getTime()) ? "Fecha inválida" : f.toLocaleDateString('es-MX');
+}
+
+function renderTabla() {
+  const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+  const filas = datos.map(d => `
+    <tr>
+      <td>${formatearFecha(d.fecha)}</td>
+      <td>${d.uuid.slice(0, 30)}</td>
+      <td>${d.razon_social_emisor}</td>
+      <td>${d.factura}</td>
+      <td>${formato.format(d.total || 0)}</td>
+      <td>
+        <select onchange="actualizarPago('${d.id}', this.value)">
+          <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
+          <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('tablaFacturas').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>UUID</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Total</th>
+          <th>¿Pagado?</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>
+  `;
+}
+
+function actualizarPago(id, nuevoEstado) {
+  fetch(`${API_URL}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': API_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ factura_pagada: nuevoEstado })
+  })
+  .then(res => {
+    if (res.ok) {
+      swal("Actualizado", `Factura marcada como "${nuevoEstado}"`, "success");
+    } else {
+      throw new Error("Error al actualizar");
+    }
+  })
+  .catch(err => {
+    swal("Error", "No se pudo actualizar la factura", "error");
+    console.error(err);
+  });
+}
+</script>
+</body>
+</html>
