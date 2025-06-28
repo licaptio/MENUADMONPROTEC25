@@ -54,12 +54,17 @@ const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 let datos = [];
 
-fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
+fetch(`${API_URL}?id=eq.${id}`, {
+  method: 'PATCH',
   headers: {
     apikey: API_KEY,
-    Authorization: `Bearer ${API_KEY}`
-  }
+    Authorization: `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  },
+  body: JSON.stringify({ factura_pagada: nuevoEstado })
 })
+
 .then(res => res.json())
 .then(json => {
   if (!Array.isArray(json)) {
