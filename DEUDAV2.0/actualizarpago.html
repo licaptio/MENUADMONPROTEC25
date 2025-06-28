@@ -14,11 +14,19 @@
       text-align: center;
       color: #003366;
     }
+    #filtros {
+      text-align: center;
+      margin: 15px 0;
+    }
+    select {
+      padding: 6px;
+      font-size: 14px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      margin-top: 20px;
+      margin-top: 10px;
     }
     th, td {
       border: 1px solid #ccc;
@@ -28,18 +36,21 @@
     th {
       background: #cce0ff;
     }
-    select {
-      padding: 5px;
-    }
   </style>
 </head>
 <body>
 <h2>Actualizar Estatus de Pago</h2>
+<div id="filtros">
+  <label for="filtroProveedor">Filtrar por proveedor:</label>
+  <select id="filtroProveedor" onchange="renderTabla()">
+    <option value="TODOS">Todos</option>
+  </select>
+</div>
 <div id="tablaFacturas"></div>
 
 <script>
 const API_URL = 'https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd';
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ← Reemplaza con tu API KEY completa
 
 let datos = [];
 
@@ -48,7 +59,13 @@ fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,tota
 })
 .then(res => res.json())
 .then(json => {
-  datos = json.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordena por fecha ascendente
+  datos = json.sort((a, b) => {
+    const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
+    const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
+    if (proveedorA !== proveedorB) return proveedorA.localeCompare(proveedorB);
+    return new Date(a.fecha) - new Date(b.fecha);
+  });
+  llenarSelectProveedores();
   renderTabla();
 });
 
@@ -57,9 +74,25 @@ function formatearFecha(fechaStr) {
   return isNaN(f.getTime()) ? "Fecha inválida" : f.toLocaleDateString('es-MX');
 }
 
+function llenarSelectProveedores() {
+  const select = document.getElementById('filtroProveedor');
+  const proveedoresUnicos = [...new Set(datos.map(d => d.razon_social_emisor))].sort();
+  proveedoresUnicos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+}
+
 function renderTabla() {
+  const filtro = document.getElementById('filtroProveedor').value;
+  const datosFiltrados = filtro === "TODOS"
+    ? datos
+    : datos.filter(d => d.razon_social_emisor === filtro);
+
   const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
-  const filas = datos.map(d => `
+  const filas = datosFiltrados.map(d => `
     <tr>
       <td>${formatearFecha(d.fecha)}</td>
       <td>${d.uuid.slice(0, 30)}</td>
