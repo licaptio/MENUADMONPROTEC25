@@ -54,30 +54,18 @@ const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 let datos = [];
 
-fetch(`${API_URL}?id=eq.${id}`, {
-  method: 'PATCH',
+fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
   headers: {
     apikey: API_KEY,
-    Authorization: `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=minimal'
-  },
-  body: JSON.stringify({ factura_pagada: nuevoEstado })
+    Authorization: `Bearer ${API_KEY}`
+  }
 })
-
 .then(res => res.json())
 .then(json => {
-  if (!Array.isArray(json)) {
-    console.error("Respuesta inválida:", json);
-    swal("Error", "No se pudo cargar la información", "error");
-    return;
-  }
-
   datos = json.sort((a, b) => {
     const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
     const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
-    if (proveedorA !== proveedorB) return proveedorA.localeCompare(proveedorB);
-    return new Date(a.fecha) - new Date(b.fecha);
+    return proveedorA.localeCompare(proveedorB) || new Date(a.fecha) - new Date(b.fecha);
   });
 
   llenarSelectProveedores();
@@ -119,7 +107,7 @@ function renderTabla() {
   const filas = datosFiltrados.map(d => `
     <tr>
       <td>${formatearFecha(d.fecha)}</td>
-      <td>${d.uuid.slice(0, 30)}</td>
+      <td>${d.uuid?.slice(0, 30)}</td>
       <td>${d.razon_social_emisor}</td>
       <td>${d.factura}</td>
       <td>${formato.format(d.total || 0)}</td>
