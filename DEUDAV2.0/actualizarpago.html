@@ -23,10 +23,21 @@
     margin: 15px 0;
   }
 
-  select {
-    padding: 6px;
-    font-size: 14px;
+#filtros select {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  #filtros {
+    padding: 0 10px;
   }
+
+  #filtros select {
+    font-size: 16px;
+  }
+}
 
   table {
     width: 100%;
