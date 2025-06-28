@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventario Filtrado - Zapata</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 10px;
+      background: #f0f2f5;
+    }
+    h2 {
+      text-align: center;
+      color: #0d47a1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #0d47a1;
+      color: white;
+    }
+    button {
+      margin: 10px 0;
+      padding: 10px 15px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="loader" style="text-align:center; padding: 20px;">
+    <div class="spinner" style="margin:auto; width:40px; height:40px; border:4px solid #ccc; border-top:4px solid #0d47a1; border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <p style="color:#333;">Cargando inventario...</p>
+  </div>
+  <style>
+    @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+  </style>
+  <h2>📦 Inventario Filtrado - Almacén Zapata</h2>
+  <button onclick="exportarPDF()">📄 Exportar a PDF</button>
+  <table id="tablaInventario" style="display:none;">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Costo</th>
+        <th>Entradas</th>
+        <th>Salidas</th>
+        <th>Inventario</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+  const codigosPermitidos = [
+    "365", "7221", "7689", "7686", "2096", "1886", "2097", "1655", "1901", "2188",
+    "2408", "2190", "3261", "7572", "20270", "450065", "750182", "2397", "2395", "4898",
+    "4410", "5078", "1502", "1623", "4395", "450086"
+  ];
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+    authDomain: "inventariopv-643f1.firebaseapp.com",
+    projectId: "inventariopv-643f1",
+    storageBucket: "inventariopv-643f1.firebasestorage.app",
+    messagingSenderId: "96242533231",
+    appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  async function calcularInventario() {
+    const productosSnap = await db.collection("productos").get();
+    const productos = {};
+
+    productosSnap.forEach(doc => {
+      if (codigosPermitidos.includes(doc.id)) {
+        productos[doc.id] = {
+          descripcion: doc.data().Concepto || "Sin descripción",
+          costo: doc.data()["Costo sin Impuesto"] || 0,
+          entradas: 0,
+          salidas: 0
+        };
+      }
+    });
+
+    const entradasSnap = await db.collection("almacenes").doc("Almacen_Zapata").collection("entradas").get();
+    entradasSnap.forEach(doc => {
+      const d = doc.data();
+      if (productos[d.codigo]) {
+        productos[d.codigo].entradas += d.cantidad;
+      }
+    });
+
+    const salidasSnap = await db.collection("almacenes").doc("Almacen_Zapata").collection("salidas").get();
+    salidasSnap.forEach(doc => {
+      const d = doc.data();
+      if (productos[d.codigo]) {
+        productos[d.codigo].salidas += d.cantidad;
+      }
+    });
+
+    const cuerpo = document.querySelector("#tablaInventario tbody");
+    cuerpo.innerHTML = "";
+    Object.entries(productos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([codigo, p]) => {
+      const inventario = p.entradas - p.salidas;
+      const fila = `
+        <tr>
+          <td>${codigo}</td>
+          <td>${p.descripcion}</td>
+          <td>$${p.costo.toFixed(2)}</td>
+          <td>${p.entradas}</td>
+          <td>${p.salidas}</td>
+          <td><strong>${inventario}</strong></td>
+        </tr>
+      `;
+      cuerpo.innerHTML += fila;
+    });
+  }
+
+  function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Inventario Filtrado - Almacén Zapata", 14, 14);
+    doc.autoTable({ html: '#tablaInventario', startY: 20 });
+    doc.save("inventario_filtrado.pdf");
+  }
+
+  window.onload = async () => {
+    await calcularInventario();
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("tablaInventario").style.display = "table";
+  };
+</script>
+</body>
+</html>
