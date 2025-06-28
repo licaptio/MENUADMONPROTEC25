@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -138,28 +138,34 @@ function renderTabla() {
 }
 
 function actualizarPago(id, nuevoEstado) {
-  fetch(`${API_URL}?id=eq.${id}`, {
+  fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: {
       apikey: API_KEY,
       Authorization: `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
+      'Prefer': 'return=representation' // para obtener respuesta confirmada
     },
     body: JSON.stringify({ factura_pagada: nuevoEstado })
   })
-  .then(res => {
-    if (res.ok) {
+  .then(res => res.json())
+  .then(json => {
+    if (Array.isArray(json) && json.length > 0) {
+      // Actualiza también localmente para que persista en pantalla
+      const index = datos.findIndex(d => d.id === id);
+      if (index !== -1) datos[index].factura_pagada = nuevoEstado;
+      renderTabla(); // redibuja tabla
       swal("Actualizado", `Factura marcada como "${nuevoEstado}"`, "success");
     } else {
-      throw new Error("Error al actualizar");
+      throw new Error("No se modificó ningún registro");
     }
   })
   .catch(err => {
+    console.error("Error en PATCH:", err);
     swal("Error", "No se pudo actualizar la factura", "error");
-    console.error(err);
   });
 }
+
 </script>
 </body>
 </html>
