@@ -118,7 +118,14 @@ function mostrarTodos() {
         total: Number(f.total) || 0
       };
     })
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+.sort((a, b) => {
+  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+  if (proveedorA < proveedorB) return -1;
+  if (proveedorA > proveedorB) return 1;
+  return new Date(a.fecha) - new Date(b.fecha);
+});
+
 
   const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   let totalTotal = 0;
