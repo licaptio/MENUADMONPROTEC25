@@ -108,7 +108,7 @@ function formatearFecha(fechaStr) {
 function mostrarTodos() {
   const hoy = new Date();
   const datosFiltrados = datos
-    .filter(d => d.factura_pagada !== "SI")
+    .filter(d => (d.factura_pagada || "").trim().toUpperCase() !== "SI")
     .map(f => {
       const fechaObj = new Date(f.fecha);
       const dias = isNaN(fechaObj.getTime()) ? null : Math.floor((hoy - fechaObj) / (1000 * 60 * 60 * 24));
@@ -157,8 +157,10 @@ function mostrarTodos() {
   document.getElementById("contenedorTabla").innerHTML = `
     <table>
       <thead>
-        <tr><th colspan="8">Saldo total (sin pagadas)</th><th>${formatoPesos.format(totalTotal)}</th></tr>
         <tr>
+  <th colspan="8" style="text-align:right">Saldo total (sin pagadas)</th>
+  <th>${formatoPesos.format(totalTotal)}</th>
+</tr>
           <th>Fecha</th>
           <th>#Días</th>
           <th>UUID</th>
