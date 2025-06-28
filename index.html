@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MENU ADMINISTRADOR PROTEC 25</title>
   <style>
@@ -24,67 +24,44 @@
 
     .botones {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 15px;
+      max-width: 1000px;
       width: 100%;
-      max-width: 400px;
     }
 
     .boton {
-      display: block;
-      width: 100%;
+      flex: 1 1 calc(25% - 20px);
+      min-width: 180px;
       padding: 15px;
       text-align: center;
       border-radius: 10px;
-      font-size: 1.1em;
+      font-size: 1em;
       color: white;
       text-decoration: none;
       transition: background-color 0.3s;
       box-sizing: border-box;
     }
 
-    .pagos {
-      background-color: #c62828;
-    }
+    .notas { background-color: #2d882d; }
+    .notas:hover { background-color: #1c601c; }
 
-    .pagos:hover {
-      background-color: #a91e1e;
-    }
+    .pedidos { background-color: #1e88e5; }
+    .pedidos:hover { background-color: #1565c0; }
 
-    .notas {
-      background-color: #2d882d;
-    }
+    .deuda { background-color: #8e24aa; }
+    .deuda:hover { background-color: #6a1b9a; }
 
-    .notas:hover {
-      background-color: #1c601c;
-    }
+    .inventarios { background-color: #fbc02d; color: #000; }
+    .inventarios:hover { background-color: #f9a825; }
 
-    .pedidos {
-      background-color: #1e88e5;
-    }
-
-    .pedidos:hover {
-      background-color: #1565c0;
-    }
-
-    .deuda {
-      background-color: #8e24aa;
-    }
-
-    .deuda:hover {
-      background-color: #6a1b9a;
-    }
-  .inventarios {
-  background-color: #fbc02d; /* amarillo */
-}
-
-.inventarios:hover {
-  background-color: #f9a825; /* amarillo más oscuro al pasar el mouse */
-}
-
+    .pagos { background-color: #c62828; }
+    .pagos:hover { background-color: #a91e1e; }
   </style>
 </head>
 <body>
+
 <div id="lockscreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#f2fef2; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999;">
   <h2>🔒 Ingrese PIN de acceso</h2>
   <input type="password" id="pinInput" placeholder="PIN" style="font-size:1.5em; padding:10px; text-align:center;" maxlength="6">
@@ -92,24 +69,22 @@
   <p id="pinError" style="color:red; margin-top:10px; display:none;">PIN incorrecto</p>
 </div>
 
-  <h1>MENU ADMINISTRADOR PROTEC 25</h1>
+<h1>MENU ADMINISTRADOR PROTEC 25</h1>
 
-  <div class="botones">
-    
-    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="boton notas">LIBRETA NOTAS</a>
-    <a href="https://licaptio.github.io/PEDIDOAZUL/" target="_blank" class="boton pedidos">DIARIO PEDIDOS</a>
-    <a href="https://licaptio.github.io/VEROEDITFACT/" target="_blank" class="boton deuda">CONSULTA FACTURA VERO</a>
-    <a href="https://licaptio.github.io/DEUDAMENU/" target="_blank" class="boton deuda">📊 DEUDA PDD </a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="boton inventarios"> INVENTARIOS PDD</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/AUDITORIA%20DE%20PRECIOS/TAURO/tauro.html" target="_blank" class="boton pedidos"> AUDITORIA PRECIO TAURO</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="boton pagos">💼 DEUDA VERSION 2x</a>
-    <a href="https://licaptio.github.io/MONITOREO INV/ZAPATA/index.html" target="_blank" class="boton pedidos">MONITOR ALMACEN</a>
-  </div>
+<div class="botones">
+  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="boton notas">LIBRETA NOTAS</a>
+  <a href="https://licaptio.github.io/PEDIDOAZUL/" target="_blank" class="boton pedidos">DIARIO PEDIDOS</a>
+  <a href="https://licaptio.github.io/VEROEDITFACT/" target="_blank" class="boton deuda">CONSULTA FACTURA VERO</a>
+  <a href="https://licaptio.github.io/DEUDAMENU/" target="_blank" class="boton deuda">📊 DEUDA PDD</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="boton inventarios">INVENTARIOS PDD</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/AUDITORIA%20DE%20PRECIOS/TAURO/tauro.html" target="_blank" class="boton pedidos">AUDITORIA PRECIO TAURO</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="boton pagos">💼 DEUDA VERSION 2x</a>
+  <a href="https://licaptio.github.io/MONITOREO INV/ZAPATA/index.html" target="_blank" class="boton pedidos">MONITOR ALMACEN</a>
+</div>
 
-</body>
 <script>
   function checkPIN() {
-    const correctPIN = "1982"; // ← Aquí puedes cambiar el PIN
+    const correctPIN = "1982";
     const input = document.getElementById("pinInput").value;
     const errorMsg = document.getElementById("pinError");
 
@@ -120,10 +95,10 @@
     }
   }
 
-  // También permite presionar ENTER
   document.addEventListener("keydown", function(event) {
     if (event.key === "Enter") checkPIN();
   });
 </script>
 
+</body>
 </html>
