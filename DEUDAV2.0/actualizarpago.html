@@ -1,171 +1,219 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Actualizar Pago Factura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       padding: 20px;
+      margin: 0;
     }
+
     h2 {
       text-align: center;
       color: #003366;
     }
+
     #filtros {
       text-align: center;
       margin: 15px 0;
     }
+
     select {
       padding: 6px;
       font-size: 14px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
       margin-top: 10px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       font-size: 13px;
+      text-align: left;
     }
+
     th {
       background: #cce0ff;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px;
+      }
+
+      td {
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #eee;
+      }
+
+      td::before {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: bold;
+        color: #003366;
+      }
+
+      td:nth-of-type(1)::before { content: "Fecha"; }
+      td:nth-of-type(2)::before { content: "UUID"; }
+      td:nth-of-type(3)::before { content: "Proveedor"; }
+      td:nth-of-type(4)::before { content: "Factura"; }
+      td:nth-of-type(5)::before { content: "Total"; }
+      td:nth-of-type(6)::before { content: "¿Pagado?"; }
     }
   </style>
 </head>
 <body>
-<h2>Actualizar Estatus de Pago</h2>
-<div id="filtros">
-  <label for="filtroProveedor">Filtrar por proveedor:</label>
-  <select id="filtroProveedor" onchange="renderTabla()">
-    <option value="TODOS">Todos</option>
-  </select>
-</div>
-<div id="tablaFacturas"></div>
+  <h2>Actualizar Estatus de Pago</h2>
+  <div id="filtros">
+    <label for="filtroProveedor">Filtrar por proveedor:</label>
+    <select id="filtroProveedor" onchange="renderTabla()">
+      <option value="TODOS">Todos</option>
+    </select>
+  </div>
+  <div id="tablaFacturas"></div>
 
-<script>
-const API_URL = 'https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd';
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
+  <script>
+    const API_URL = 'https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd';
+    const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
+    let datos = [];
 
-let datos = [];
+    fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
+      headers: {
+        apikey: API_KEY,
+        Authorization: `Bearer ${API_KEY}`
+      }
+    })
+    .then(res => res.json())
+    .then(json => {
+      datos = json.sort((a, b) => {
+        const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
+        const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
+        return proveedorA.localeCompare(proveedorB) || new Date(a.fecha) - new Date(b.fecha);
+      });
 
-fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
-  headers: {
-    apikey: API_KEY,
-    Authorization: `Bearer ${API_KEY}`
-  }
-})
-.then(res => res.json())
-.then(json => {
-  datos = json.sort((a, b) => {
-    const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
-    const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
-    return proveedorA.localeCompare(proveedorB) || new Date(a.fecha) - new Date(b.fecha);
-  });
+      llenarSelectProveedores();
+      renderTabla();
+    })
+    .catch(err => {
+      console.error("Error en fetch:", err);
+      swal("Error", "No se pudo conectar al servidor", "error");
+    });
 
-  llenarSelectProveedores();
-  renderTabla();
-})
-.catch(err => {
-  console.error("Error en fetch:", err);
-  swal("Error", "No se pudo conectar al servidor", "error");
-});
-
-function formatearFecha(fechaStr) {
-  const f = new Date(fechaStr);
-  return isNaN(f.getTime()) ? "Fecha inválida" : f.toLocaleDateString('es-MX');
-}
-
-function llenarSelectProveedores() {
-  const select = document.getElementById('filtroProveedor');
-  const proveedoresUnicos = [...new Set(datos.map(d => d.razon_social_emisor))].sort();
-  proveedoresUnicos.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p;
-    opt.textContent = p;
-    select.appendChild(opt);
-  });
-}
-
-function renderTabla() {
-  const filtro = document.getElementById('filtroProveedor').value;
-  const datosFiltrados = filtro === "TODOS"
-    ? datos
-    : datos.filter(d => d.razon_social_emisor === filtro);
-
-  if (datosFiltrados.length === 0) {
-    document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
-    return;
-  }
-
-  const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
-  const filas = datosFiltrados.map(d => `
-    <tr>
-      <td>${formatearFecha(d.fecha)}</td>
-      <td>${d.uuid?.slice(0, 30)}</td>
-      <td>${d.razon_social_emisor}</td>
-      <td>${d.factura}</td>
-      <td>${formato.format(d.total || 0)}</td>
-      <td>
-        <select onchange="actualizarPago('${d.id}', this.value)">
-          <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
-          <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
-        </select>
-      </td>
-    </tr>
-  `).join('');
-
-  document.getElementById('tablaFacturas').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>UUID</th>
-          <th>Proveedor</th>
-          <th>Factura</th>
-          <th>Total</th>
-          <th>¿Pagado?</th>
-        </tr>
-      </thead>
-      <tbody>${filas}</tbody>
-    </table>
-  `;
-}
-
-function actualizarPago(id, nuevoEstado) {
-  fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: API_KEY,
-      Authorization: `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation' // para obtener respuesta confirmada
-    },
-    body: JSON.stringify({ factura_pagada: nuevoEstado })
-  })
-  .then(res => res.json())
-  .then(json => {
-    if (Array.isArray(json) && json.length > 0) {
-      // Actualiza también localmente para que persista en pantalla
-      const index = datos.findIndex(d => d.id === id);
-      if (index !== -1) datos[index].factura_pagada = nuevoEstado;
-      renderTabla(); // redibuja tabla
-      swal("Actualizado", `Factura marcada como "${nuevoEstado}"`, "success");
-    } else {
-      throw new Error("No se modificó ningún registro");
+    function formatearFecha(fechaStr) {
+      const f = new Date(fechaStr);
+      return isNaN(f.getTime()) ? "Fecha inválida" : f.toLocaleDateString('es-MX');
     }
-  })
-  .catch(err => {
-    console.error("Error en PATCH:", err);
-    swal("Error", "No se pudo actualizar la factura", "error");
-  });
-}
 
-</script>
+    function llenarSelectProveedores() {
+      const select = document.getElementById('filtroProveedor');
+      const proveedoresUnicos = [...new Set(datos.map(d => d.razon_social_emisor))].sort();
+      proveedoresUnicos.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderTabla() {
+      const filtro = document.getElementById('filtroProveedor').value;
+      const datosFiltrados = filtro === "TODOS"
+        ? datos
+        : datos.filter(d => d.razon_social_emisor === filtro);
+
+      if (datosFiltrados.length === 0) {
+        document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
+        return;
+      }
+
+      const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+      const filas = datosFiltrados.map(d => `
+        <tr>
+          <td>${formatearFecha(d.fecha)}</td>
+          <td>${d.uuid?.slice(0, 30)}</td>
+          <td>${d.razon_social_emisor}</td>
+          <td>${d.factura}</td>
+          <td>${formato.format(d.total || 0)}</td>
+          <td>
+            <select onchange="actualizarPago('${d.id}', this.value)">
+              <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
+              <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('tablaFacturas').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>UUID</th>
+              <th>Proveedor</th>
+              <th>Factura</th>
+              <th>Total</th>
+              <th>¿Pagado?</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      `;
+    }
+
+    function actualizarPago(id, nuevoEstado) {
+      fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: API_KEY,
+          Authorization: `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({ factura_pagada: nuevoEstado })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (Array.isArray(json) && json.length > 0) {
+          const index = datos.findIndex(d => d.id === id);
+          if (index !== -1) datos[index].factura_pagada = nuevoEstado;
+          renderTabla();
+          swal("Actualizado", `Factura marcada como "${nuevoEstado}"`, "success");
+        } else {
+          throw new Error("No se modificó ningún registro");
+        }
+      })
+      .catch(err => {
+        console.error("Error en PATCH:", err);
+        swal("Error", "No se pudo actualizar la factura", "error");
+      });
+    }
+  </script>
 </body>
 </html>
