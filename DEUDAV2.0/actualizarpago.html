@@ -50,27 +50,37 @@
 
 <script>
 const API_URL = 'https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd';
-const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ← Reemplaza con tu API KEY completa
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
 
 let datos = [];
 
 fetch(`${API_URL}?select=id,uuid,razon_social_emisor,factura,factura_pagada,total,fecha`, {
   headers: {
-  apikey: API_KEY,
-  Authorization: `Bearer ${API_KEY}`
-}
-
+    apikey: API_KEY,
+    Authorization: `Bearer ${API_KEY}`
+  }
 })
 .then(res => res.json())
 .then(json => {
+  if (!Array.isArray(json)) {
+    console.error("Respuesta inválida:", json);
+    swal("Error", "No se pudo cargar la información", "error");
+    return;
+  }
+
   datos = json.sort((a, b) => {
     const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
     const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
     if (proveedorA !== proveedorB) return proveedorA.localeCompare(proveedorB);
     return new Date(a.fecha) - new Date(b.fecha);
   });
+
   llenarSelectProveedores();
   renderTabla();
+})
+.catch(err => {
+  console.error("Error en fetch:", err);
+  swal("Error", "No se pudo conectar al servidor", "error");
 });
 
 function formatearFecha(fechaStr) {
@@ -94,6 +104,11 @@ function renderTabla() {
   const datosFiltrados = filtro === "TODOS"
     ? datos
     : datos.filter(d => d.razon_social_emisor === filtro);
+
+  if (datosFiltrados.length === 0) {
+    document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
+    return;
+  }
 
   const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   const filas = datosFiltrados.map(d => `
@@ -133,7 +148,8 @@ function actualizarPago(id, nuevoEstado) {
   fetch(`${API_URL}?id=eq.${id}`, {
     method: 'PATCH',
     headers: {
-      'apikey': API_KEY,
+      apikey: API_KEY,
+      Authorization: `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
       'Prefer': 'return=minimal'
     },
