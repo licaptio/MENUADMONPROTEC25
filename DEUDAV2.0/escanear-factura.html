@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escanear Factura CFDI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; background: #eef2f7; margin: 0; padding: 0; }
+    header { background: #003366; color: white; padding: 16px; text-align: center; }
+    .contenedor { max-width: 800px; margin: 30px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    .resumen { background: #f3f6fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .resumen p { margin: 6px 0; color: #003366; font-weight: bold; }
+    label { display: block; margin-top: 20px; font-weight: bold; color: #003366; }
+    select, textarea, input[type="file"], input[type="text"] { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+    textarea { height: 120px; resize: vertical; }
+    #preview img { max-width: 100px; margin: 5px; border: 1px solid #ccc; border-radius: 6px; }
+    button.guardar { margin-top: 25px; width: 100%; padding: 16px; font-size: 18px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Escanear Factura CFDI (UUID desde QR)</h2>
+  </header>
+
+  <div class="contenedor">
+    <label>Escanea el código QR o pega el link completo del SAT</label>
+    <input type="text" id="inputQR" placeholder="Escanea aquí..." autofocus oninput="procesarQR()" />
+
+    <div class="resumen" id="resumenFactura" style="display:none;">
+      <p>Folio: <span id="folio"></span></p>
+      <p>Fecha: <span id="fecha"></span></p>
+      <p>RFC Emisor: <span id="rfc"></span></p>
+      <p>Razón Social: <span id="razon"></span></p>
+      <p>Total: $<span id="total"></span></p>
+    </div>
+
+    <div id="formulario" style="display:none;">
+      <label>¿Factura física disponible?</label>
+      <select id="factura_fisicamente">
+        <option value="NO">NO</option>
+        <option value="SI">SI</option>
+      </select>
+
+      <label>Comentario adicional</label>
+      <textarea id="comentario_factura_fisica" placeholder="Ej: Factura en resguardo, enviada a pagos, etc."></textarea>
+
+      <label>Agregar fotos o PDFs</label>
+      <input type="file" id="fotos" accept=".jpg,.jpeg,.png,.pdf" multiple />
+      <div id="preview" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+
+      <button class="guardar" onclick="guardarCambios()">Guardar Cambios</button>
+      <div id="mensaje"></div>
+    </div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    let uuidExtraido = null;
+    let urlsFotos = [];
+    let fotosSeleccionadas = [];
+
+    function procesarQR() {
+      const input = document.getElementById("inputQR").value;
+      const match = input.match(/id=([0-9A-Fa-f-]{36})/);
+      if (match) {
+        uuidExtraido = match[1];
+        cargarFactura(uuidExtraido);
+      }
+    }
+
+    async function cargarFactura(uuid) {
+      const { data, error } = await supabase
+        .from('deuda_limpia_pdd')
+        .select('*')
+        .eq('uuid', uuid)
+        .single();
+
+      if (error || !data) {
+        alert("Factura no encontrada en Supabase.");
+        return;
+      }
+
+      document.getElementById("resumenFactura").style.display = "block";
+      document.getElementById("folio").textContent = data.factura || "(Sin folio)";
+      document.getElementById("fecha").textContent = data.fecha?.split("T")[0] || "(Sin fecha)";
+      document.getElementById("rfc").textContent = data.rfc_emisor || "(Sin RFC)";
+      document.getElementById("razon").textContent = data.razon_social_emisor || "(Sin razón social)";
+      document.getElementById("total").textContent = data.total?.toFixed(2) || "0.00";
+
+      document.getElementById("factura_fisicamente").value = "SI";
+      document.getElementById("comentario_factura_fisica").value = data.comentario_factura_fisica || "";
+
+      urlsFotos = data.fotos || [];
+      mostrarFotos();
+      document.getElementById("formulario").style.display = "block";
+    }
+
+    function mostrarFotos() {
+      const contenedor = document.getElementById("preview");
+      contenedor.innerHTML = "";
+
+      urlsFotos.forEach((url, index) => {
+        const cont = document.createElement("div");
+        cont.style.position = "relative";
+
+        const img = document.createElement("img");
+        img.src = url;
+        cont.appendChild(img);
+
+        const btn = document.createElement("span");
+        btn.textContent = "❌";
+        Object.assign(btn.style, {
+          position: "absolute", top: "-8px", right: "-8px",
+          background: "red", color: "white", borderRadius: "50%",
+          cursor: "pointer", padding: "2px 6px"
+        });
+        btn.onclick = async () => {
+          const ruta = url.split("/").slice(7).join("/");
+          const { error } = await supabase.storage.from("fotos-facturas").remove([ruta]);
+          if (!error) {
+            urlsFotos.splice(index, 1);
+            mostrarFotos();
+          } else alert("Error al eliminar del bucket.");
+        };
+
+        cont.appendChild(btn);
+        contenedor.appendChild(cont);
+      });
+
+      fotosSeleccionadas.forEach((foto, index) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const div = document.createElement("div");
+          div.style.position = "relative";
+
+          if (foto.name.toLowerCase().endsWith(".pdf")) {
+            const span = document.createElement("span");
+            span.textContent = "📄 PDF";
+            span.style.background = "#eee";
+            span.style.padding = "10px";
+            div.appendChild(span);
+          } else {
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            div.appendChild(img);
+          }
+
+          const btn = document.createElement("span");
+          btn.textContent = "❌";
+          Object.assign(btn.style, {
+            position: "absolute", top: "-8px", right: "-8px",
+            background: "red", color: "white", borderRadius: "50%",
+            cursor: "pointer", padding: "2px 6px"
+          });
+          btn.onclick = () => {
+            fotosSeleccionadas.splice(index, 1);
+            mostrarFotos();
+          };
+
+          div.appendChild(btn);
+          contenedor.appendChild(div);
+        };
+        reader.readAsDataURL(foto);
+      });
+    }
+
+    document.getElementById("fotos").addEventListener("change", e => {
+      fotosSeleccionadas.push(...e.target.files);
+      mostrarFotos();
+      e.target.value = "";
+    });
+
+    async function guardarCambios() {
+      const comentario = document.getElementById('comentario_factura_fisica').value.trim() || '';
+      const fisica = document.getElementById('factura_fisicamente').value;
+      const nuevasUrls = [];
+
+      for (let i = 0; i < fotosSeleccionadas.length; i++) {
+        const archivo = fotosSeleccionadas[i];
+        const nombreSeguro = `${uuidExtraido}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
+        const { error } = await supabase.storage
+          .from("fotos-facturas")
+          .upload(nombreSeguro, archivo, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: archivo.type
+          });
+        if (error) {
+          alert("Error al subir archivo.");
+          return;
+        }
+        const { data: publicUrl } = supabase.storage.from("fotos-facturas").getPublicUrl(nombreSeguro);
+        nuevasUrls.push(publicUrl.publicUrl);
+      }
+
+      const { error: updateError } = await supabase
+        .from('deuda_limpia_pdd')
+        .update({
+          factura_fisicamente: fisica,
+          comentario_factura_fisica: comentario,
+          fotos: [...urlsFotos, ...nuevasUrls]
+        })
+        .eq('uuid', uuidExtraido);
+
+      const msg = document.getElementById('mensaje');
+      if (updateError) {
+        msg.innerHTML = '<p style="color:red;">❌ Error al guardar.</p>';
+      } else {
+        msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
+        setTimeout(() => location.reload(), 1500);
+      }
+    }
+  </script>
+</body>
+</html>
