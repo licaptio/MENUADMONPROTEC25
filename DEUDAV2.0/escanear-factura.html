@@ -328,7 +328,13 @@ function actualizarUUIDManual() {
   uuid = input.replace(/\s+/g, '');
 
   // Validar si es un UUID con formato correcto
-  const esUUIDValido = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+  const matchUUID = uuid.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+if (matchUUID) {
+  uuid = matchUUID[0];
+  document.getElementById("uuidExtraido").value = uuid;
+  buscarFactura();
+}
+
 
   if (esUUIDValido) {
     buscarFactura(); // ✅ buscar automáticamente si es válido
