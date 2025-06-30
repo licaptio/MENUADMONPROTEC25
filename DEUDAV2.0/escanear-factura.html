@@ -27,6 +27,18 @@
 .buscar {
   display: none; /* Oculta el botón */
 }
+ #buscando {
+  text-align: center;
+  font-size: 16px;
+  animation: parpadeo 1s infinite;
+}
+
+@keyframes parpadeo {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
   </style>
 </head>
 <body>
@@ -37,6 +49,9 @@
   <div class="contenedor">
     <label>Escanea el código QR o pega el link completo del SAT</label>
     <input type="text" id="inputQR" placeholder="Escanea aquí..." oninput="extraerUUIDConRetardo()" />
+<div id="buscando" style="display:none; margin-top:10px; color:#003366; font-weight:bold;">
+  ⏳ Buscando factura...
+</div>
 
     <label>UUID extraído automáticamente</label>
     <input type="text" id="uuidExtraido" readonly />
@@ -85,7 +100,15 @@ let temporizadorUUID;
 
 function extraerUUIDConRetardo() {
   clearTimeout(temporizadorUUID);
-  temporizadorUUID = setTimeout(extraerUUID, 400); // Espera 400 ms después de la última tecla
+
+  // Mostrar ícono de búsqueda mientras el usuario (o escáner) está escribiendo
+  document.getElementById("buscando").style.display = "block";
+
+  temporizadorUUID = setTimeout(() => {
+    extraerUUID();
+    // Ocultar ícono de búsqueda después de intentar extraer y buscar
+    document.getElementById("buscando").style.display = "none";
+  }, 400); // Puedes ajustar este tiempo si el escáner tarda más
 }
 
 function extraerUUID() {
