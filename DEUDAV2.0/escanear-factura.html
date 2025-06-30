@@ -319,8 +319,14 @@ function mostrarCampoUUID() {
   document.getElementById("mostrarUUIDManual").style.display = "none";
   document.querySelector(".buscar").style.display = "block";
 }
- function actualizarUUIDManual() {
+function actualizarUUIDManual() {
   uuid = document.getElementById("uuidExtraido").value.trim();
+
+  // Si el UUID tiene formato válido, buscar automáticamente
+  const esValido = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+  if (esValido) {
+    buscarFactura();
+  }
 }
 
   </script>
