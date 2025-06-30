@@ -53,8 +53,11 @@
   ⏳ Buscando factura...
 </div>
 
-    <label>UUID extraído automáticamente</label>
-    <input type="text" id="uuidExtraido" readonly />
+    <div id="uuidManualContainer" style="display:none;">
+      <label>UUID extraído automáticamente</label>
+      <input type="text" id="uuidExtraido" oninput="actualizarUUIDManual()" />
+    </div>
+    <button id="mostrarUUIDManual" onclick="mostrarCampoUUID()" style="margin-top: 10px;">✏️ Ingresar UUID manualmente</button>
 
     <div class="botones">
       <button class="buscar" onclick="buscarFactura()">🔍 Buscar factura</button>
@@ -102,7 +105,9 @@ function extraerUUIDConRetardo() {
   clearTimeout(temporizadorUUID);
 
   // Mostrar ícono de búsqueda mientras el usuario (o escáner) está escribiendo
-  document.getElementById("buscando").style.display = "block";
+  document.getElementById("inputQR").style.display = "none";
+document.getElementById("buscando").style.display = "block";
+
 
   temporizadorUUID = setTimeout(() => {
     extraerUUID();
@@ -303,7 +308,21 @@ function limpiarFormulario() {
   document.getElementById("formulario").style.display = "none";
   document.getElementById("mensaje").innerHTML = "";
   document.getElementById("preview").innerHTML = "";
+  document.getElementById("inputQR").style.display = "block";
+  document.getElementById("uuidManualContainer").style.display = "none";
+document.getElementById("mostrarUUIDManual").style.display = "block";
+document.querySelector(".buscar").style.display = "none";
+
 }
+function mostrarCampoUUID() {
+  document.getElementById("uuidManualContainer").style.display = "block";
+  document.getElementById("mostrarUUIDManual").style.display = "none";
+  document.querySelector(".buscar").style.display = "block";
+}
+ function actualizarUUIDManual() {
+  uuid = document.getElementById("uuidExtraido").value.trim();
+}
+
   </script>
 </body>
 </html>
