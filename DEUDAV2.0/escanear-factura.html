@@ -320,12 +320,14 @@ function mostrarCampoUUID() {
   document.querySelector(".buscar").style.display = "block";
 }
 function actualizarUUIDManual() {
-  uuid = document.getElementById("uuidExtraido").value.trim();
+  const input = document.getElementById("uuidExtraido").value.trim();
+  uuid = input.replace(/\s+/g, '');
 
-  // Si el UUID tiene formato válido, buscar automáticamente
-  const esValido = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
-  if (esValido) {
-    buscarFactura();
+  // Validar si es un UUID con formato correcto
+  const esUUIDValido = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+
+  if (esUUIDValido) {
+    buscarFactura(); // ✅ buscar automáticamente si es válido
   }
 }
 
