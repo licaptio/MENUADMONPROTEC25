@@ -76,17 +76,27 @@
     let urlsFotos = [];
     let fotosSeleccionadas = [];
 
-    function extraerUUID() {
-      const input = document.getElementById("inputQR").value;
-      const match = input.match(/id=([0-9A-Fa-f-]{36})/);
-      if (match) {
-        uuid = match[1];
-        document.getElementById("uuidExtraido").value = uuid;
-      } else {
-        document.getElementById("uuidExtraido").value = "";
-        uuid = null;
-      }
+function extraerUUID() {
+  const input = document.getElementById("inputQR").value;
+  let match;
+
+  // 1. Buscar formato estándar con id=UUID
+  match = input.match(/id=([0-9A-Fa-f-]{36})/);
+  if (match) {
+    uuid = match[1];
+  } else {
+    // 2. Buscar formato alternativo con _id)UUID pero con /
+    match = input.match(/_id\)([0-9A-Fa-f/]{36})/);
+    if (match) {
+      const crudo = match[1];
+      uuid = crudo.replaceAll('/', '-');
+    } else {
+      uuid = null;
     }
+  }
+
+  document.getElementById("uuidExtraido").value = uuid || "";
+}
 
     async function buscarFactura() {
       if (!uuid) {
