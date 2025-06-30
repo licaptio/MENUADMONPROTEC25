@@ -24,7 +24,9 @@
   color: #999;
   font-style: italic;
 }
-
+.buscar {
+  display: none; /* Oculta el botón */
+}
   </style>
 </head>
 <body>
@@ -90,12 +92,12 @@ function extraerUUID() {
   const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
   let match;
 
-  // Formatos id= con guiones
+  // Formato con id= y guiones
   match = input.match(/[\?&]?id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
   if (match) {
     uuid = match[1];
   } else {
-    // Formatos ^id) o _id) con barras
+    // Formato ^id) o _id) con barras
     match = input.match(/[\^_]{1}id\)?([0-9a-fA-F]{8}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{12})/);
     if (match) {
       uuid = match[1].replaceAll('/', '-');
@@ -105,6 +107,9 @@ function extraerUUID() {
   }
 
   document.getElementById("uuidExtraido").value = uuid || "";
+
+  // ✅ Buscar factura automáticamente si se extrajo un UUID válido
+  if (uuid) buscarFactura();
 }
 
     async function buscarFactura() {
