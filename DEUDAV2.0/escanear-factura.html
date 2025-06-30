@@ -77,16 +77,16 @@
     let fotosSeleccionadas = [];
 
 function extraerUUID() {
-  const input = document.getElementById("inputQR").value;
+  const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, ''); // Elimina espacios y saltos
   let match;
 
-  // 1. Buscar UUID en formato estándar con id=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-  match = input.match(/id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+  // 1. Buscar UUID en formato estándar con ?id=, &id= o solo id=
+  match = input.match(/[\?&]?id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
   if (match) {
     uuid = match[1];
   } else {
-    // 2. Buscar UUID con barras en lugar de guiones: _id)xxxxxxxx/xxxx/xxxx/xxxx/xxxxxxxxxxxx
-    match = input.match(/_id\)([0-9a-fA-F]{8}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{12})/);
+    // 2. Buscar UUID con barras: ^id) o _id) u otras variantes
+    match = input.match(/[\^_]{1}id\)?([0-9a-fA-F]{8}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{12})/);
     if (match) {
       uuid = match[1].replaceAll('/', '-');
     } else {
