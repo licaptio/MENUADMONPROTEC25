@@ -55,8 +55,7 @@
       </select>
 
       <label>Comentario adicional</label>
-      <textarea id="comentario_factura_fisica" placeholder="Ej: Factura en resguardo, enviada a pagos, etc."></textarea>
-
+      <textarea id="comentario_factura_fisica" placeholder="Factura sin anotaciones"></textarea>
       <label>Agregar fotos o PDFs</label>
       <input type="file" id="fotos" accept=".jpg,.jpeg,.png,.pdf" multiple />
       <div id="preview" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
@@ -210,7 +209,10 @@ function extraerUUID() {
     });
 
     async function guardarCambios() {
-      const comentario = document.getElementById('comentario_factura_fisica').value.trim() || '';
+      const comentarioInput = document.getElementById('comentario_factura_fisica');
+const comentarioTexto = comentarioInput.value.trim();
+const comentario = comentarioTexto === '' ? 'Factura sin anotaciones' : comentarioTexto;
+
       const fisica = document.getElementById('factura_fisicamente').value;
       const nuevasUrls = [];
 
@@ -249,6 +251,9 @@ function extraerUUID() {
         setTimeout(() => location.reload(), 1500);
       }
     }
+setTimeout(() => location.reload(), 1500);
+limpiarFormulario();
+document.getElementById("inputQR").focus();
 
     function limpiarFormulario() {
       uuid = null;
