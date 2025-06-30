@@ -119,10 +119,12 @@ function extraerUUID() {
         .eq('uuid', uuid)
         .single();
 
-      if (error || !data) {
-        alert("Factura no encontrada.");
-        return;
-      }
+if (error || !data) {
+  alert("Factura no encontrada.");
+  limpiarFormulario(); // ← Agrega esta línea
+  return;
+}
+
 
       document.getElementById("resumenFactura").style.display = "block";
       document.getElementById("folio").textContent = data.factura || "(Sin folio)";
