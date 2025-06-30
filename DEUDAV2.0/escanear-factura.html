@@ -29,7 +29,7 @@
 
   <div class="contenedor">
     <label>Escanea el código QR o pega el link completo del SAT</label>
-    <input type="text" id="inputQR" placeholder="Escanea aquí..." oninput="extraerUUID()" />
+    <input type="text" id="inputQR" placeholder="Escanea aquí..." oninput="extraerUUIDConRetardo()" />
 
     <label>UUID extraído automáticamente</label>
     <input type="text" id="uuidExtraido" readonly />
@@ -75,17 +75,23 @@
     let uuid = null;
     let urlsFotos = [];
     let fotosSeleccionadas = [];
+let temporizadorUUID;
+
+function extraerUUIDConRetardo() {
+  clearTimeout(temporizadorUUID);
+  temporizadorUUID = setTimeout(extraerUUID, 400); // Espera 400 ms después de la última tecla
+}
 
 function extraerUUID() {
-  const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, ''); // Elimina espacios y saltos
+  const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
   let match;
 
-  // 1. Buscar UUID en formato estándar con ?id=, &id= o solo id=
+  // Formatos id= con guiones
   match = input.match(/[\?&]?id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
   if (match) {
     uuid = match[1];
   } else {
-    // 2. Buscar UUID con barras: ^id) o _id) u otras variantes
+    // Formatos ^id) o _id) con barras
     match = input.match(/[\^_]{1}id\)?([0-9a-fA-F]{8}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{12})/);
     if (match) {
       uuid = match[1].replaceAll('/', '-');
@@ -96,6 +102,7 @@ function extraerUUID() {
 
   document.getElementById("uuidExtraido").value = uuid || "";
 }
+
     async function buscarFactura() {
       if (!uuid) {
         alert("UUID no válido.");
