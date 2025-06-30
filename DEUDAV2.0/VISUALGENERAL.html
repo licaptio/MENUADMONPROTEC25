@@ -148,7 +148,12 @@ function mostrarTodos() {
       <td class="proveedor">${f.razon_social_emisor}</td>
       <td>${f.factura_corta}</td>
       <td>${formatoPesos.format(f.total)}</td>
-      <td>${(f.factura_fisicamente || "").toUpperCase() === "SI" ? "Recibida" : ""}</td>
+      <td style="text-align:center;">
+  ${(f.factura_fisicamente || "").toUpperCase() === "SI"
+    ? '<span style="display:inline-block;background:#4CAF50;color:black;font-weight:bold;font-size:10px;padding:2px 4px;border-radius:4px;">✔</span>'
+    : ''}
+</td>
+
       <td class="comentario">${f.comentario_factura_fisica || ""}</td>
       <td>${Array.isArray(f.fotos) && f.fotos[0] ? `<a href="${f.fotos[0]}" target="_blank">🔗</a>` : ""}</td>
     </tr>`;
