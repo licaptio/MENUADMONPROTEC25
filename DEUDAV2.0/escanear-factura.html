@@ -15,7 +15,11 @@
     select, textarea, input[type="file"], input[type="text"] { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
     textarea { height: 120px; resize: vertical; }
     #preview img { max-width: 100px; margin: 5px; border: 1px solid #ccc; border-radius: 6px; }
-    button.guardar { margin-top: 25px; width: 100%; padding: 16px; font-size: 18px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .botones { margin-top: 15px; display: flex; gap: 10px; }
+    .botones button { flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
+    .buscar { background-color: #0066cc; color: white; }
+    .limpiar { background-color: #ccc; }
+    .guardar { margin-top: 25px; width: 100%; padding: 16px; font-size: 18px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -25,7 +29,15 @@
 
   <div class="contenedor">
     <label>Escanea el código QR o pega el link completo del SAT</label>
-    <input type="text" id="inputQR" placeholder="Escanea aquí..." autofocus oninput="procesarQR()" />
+    <input type="text" id="inputQR" placeholder="Escanea aquí..." oninput="extraerUUID()" />
+
+    <label>UUID extraído automáticamente</label>
+    <input type="text" id="uuidExtraido" readonly />
+
+    <div class="botones">
+      <button class="buscar" onclick="buscarFactura()">🔍 Buscar factura</button>
+      <button class="limpiar" onclick="limpiarFormulario()">🧹 Limpiar</button>
+    </div>
 
     <div class="resumen" id="resumenFactura" style="display:none;">
       <p>Folio: <span id="folio"></span></p>
@@ -60,20 +72,28 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     );
 
-    let uuidExtraido = null;
+    let uuid = null;
     let urlsFotos = [];
     let fotosSeleccionadas = [];
 
-    function procesarQR() {
+    function extraerUUID() {
       const input = document.getElementById("inputQR").value;
       const match = input.match(/id=([0-9A-Fa-f-]{36})/);
       if (match) {
-        uuidExtraido = match[1];
-        cargarFactura(uuidExtraido);
+        uuid = match[1];
+        document.getElementById("uuidExtraido").value = uuid;
+      } else {
+        document.getElementById("uuidExtraido").value = "";
+        uuid = null;
       }
     }
 
-    async function cargarFactura(uuid) {
+    async function buscarFactura() {
+      if (!uuid) {
+        alert("UUID no válido.");
+        return;
+      }
+
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
         .select('*')
@@ -81,7 +101,7 @@
         .single();
 
       if (error || !data) {
-        alert("Factura no encontrada en Supabase.");
+        alert("Factura no encontrada.");
         return;
       }
 
@@ -107,7 +127,6 @@
       urlsFotos.forEach((url, index) => {
         const cont = document.createElement("div");
         cont.style.position = "relative";
-
         const img = document.createElement("img");
         img.src = url;
         cont.appendChild(img);
@@ -182,7 +201,7 @@
 
       for (let i = 0; i < fotosSeleccionadas.length; i++) {
         const archivo = fotosSeleccionadas[i];
-        const nombreSeguro = `${uuidExtraido}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
+        const nombreSeguro = `${uuid}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
         const { error } = await supabase.storage
           .from("fotos-facturas")
           .upload(nombreSeguro, archivo, {
@@ -205,7 +224,7 @@
           comentario_factura_fisica: comentario,
           fotos: [...urlsFotos, ...nuevasUrls]
         })
-        .eq('uuid', uuidExtraido);
+        .eq('uuid', uuid);
 
       const msg = document.getElementById('mensaje');
       if (updateError) {
@@ -214,6 +233,18 @@
         msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
         setTimeout(() => location.reload(), 1500);
       }
+    }
+
+    function limpiarFormulario() {
+      uuid = null;
+      urlsFotos = [];
+      fotosSeleccionadas = [];
+      document.getElementById("inputQR").value = "";
+      document.getElementById("uuidExtraido").value = "";
+      document.getElementById("resumenFactura").style.display = "none";
+      document.getElementById("formulario").style.display = "none";
+      document.getElementById("mensaje").innerHTML = "";
+      document.getElementById("preview").innerHTML = "";
     }
   </script>
 </body>
