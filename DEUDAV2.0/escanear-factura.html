@@ -20,6 +20,11 @@
     .buscar { background-color: #0066cc; color: white; }
     .limpiar { background-color: #ccc; }
     .guardar { margin-top: 25px; width: 100%; padding: 16px; font-size: 18px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  textarea::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
   </style>
 </head>
 <body>
@@ -208,64 +213,67 @@ function extraerUUID() {
       e.target.value = "";
     });
 
-    async function guardarCambios() {
-      const comentarioInput = document.getElementById('comentario_factura_fisica');
-const comentarioTexto = comentarioInput.value.trim();
-const comentario = comentarioTexto === '' ? 'Factura sin anotaciones' : comentarioTexto;
+async function guardarCambios() {
+  const comentarioInput = document.getElementById('comentario_factura_fisica');
+  const comentarioTexto = comentarioInput.value.trim();
+  const comentario = comentarioTexto === '' ? 'Factura sin anotaciones' : comentarioTexto;
 
-      const fisica = document.getElementById('factura_fisicamente').value;
-      const nuevasUrls = [];
+  const fisica = document.getElementById('factura_fisicamente').value;
+  const nuevasUrls = [];
 
-      for (let i = 0; i < fotosSeleccionadas.length; i++) {
-        const archivo = fotosSeleccionadas[i];
-        const nombreSeguro = `${uuid}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
-        const { error } = await supabase.storage
-          .from("fotos-facturas")
-          .upload(nombreSeguro, archivo, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: archivo.type
-          });
-        if (error) {
-          alert("Error al subir archivo.");
-          return;
-        }
-        const { data: publicUrl } = supabase.storage.from("fotos-facturas").getPublicUrl(nombreSeguro);
-        nuevasUrls.push(publicUrl.publicUrl);
-      }
-
-      const { error: updateError } = await supabase
-        .from('deuda_limpia_pdd')
-        .update({
-          factura_fisicamente: fisica,
-          comentario_factura_fisica: comentario,
-          fotos: [...urlsFotos, ...nuevasUrls]
-        })
-        .eq('uuid', uuid);
-
-      const msg = document.getElementById('mensaje');
-      if (updateError) {
-        msg.innerHTML = '<p style="color:red;">❌ Error al guardar.</p>';
-      } else {
-        msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
-        setTimeout(() => location.reload(), 1500);
-      }
+  for (let i = 0; i < fotosSeleccionadas.length; i++) {
+    const archivo = fotosSeleccionadas[i];
+    const nombreSeguro = `${uuid}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
+    const { error } = await supabase.storage
+      .from("fotos-facturas")
+      .upload(nombreSeguro, archivo, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: archivo.type
+      });
+    if (error) {
+      alert("Error al subir archivo.");
+      return;
     }
-setTimeout(() => location.reload(), 1500);
-limpiarFormulario();
-document.getElementById("inputQR").focus();
+    const { data: publicUrl } = supabase.storage.from("fotos-facturas").getPublicUrl(nombreSeguro);
+    nuevasUrls.push(publicUrl.publicUrl);
+  }
 
-    function limpiarFormulario() {
-      uuid = null;
-      urlsFotos = [];
-      fotosSeleccionadas = [];
-      document.getElementById("inputQR").value = "";
-      document.getElementById("uuidExtraido").value = "";
-      document.getElementById("resumenFactura").style.display = "none";
-      document.getElementById("formulario").style.display = "none";
-      document.getElementById("mensaje").innerHTML = "";
-      document.getElementById("preview").innerHTML = "";
-    }
+  const { error: updateError } = await supabase
+    .from('deuda_limpia_pdd')
+    .update({
+      factura_fisicamente: fisica,
+      comentario_factura_fisica: comentario,
+      fotos: [...urlsFotos, ...nuevasUrls]
+    })
+    .eq('uuid', uuid);
+
+  const msg = document.getElementById('mensaje');
+  if (updateError) {
+    msg.innerHTML = '<p style="color:red;">❌ Error al guardar.</p>';
+  } else {
+    msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
+    setTimeout(() => {
+      limpiarFormulario();
+      const input = document.getElementById("inputQR");
+      input.focus();
+      input.select();
+    }, 500);
+  }
+}
+
+// ✅ Mueve esta función fuera de cualquier otra
+function limpiarFormulario() {
+  uuid = null;
+  urlsFotos = [];
+  fotosSeleccionadas = [];
+  document.getElementById("inputQR").value = "";
+  document.getElementById("uuidExtraido").value = "";
+  document.getElementById("resumenFactura").style.display = "none";
+  document.getElementById("formulario").style.display = "none";
+  document.getElementById("mensaje").innerHTML = "";
+  document.getElementById("preview").innerHTML = "";
+}
   </script>
 </body>
 </html>
