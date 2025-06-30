@@ -55,7 +55,11 @@
 
     <div id="uuidManualContainer" style="display:none;">
       <label>UUID extraído automáticamente</label>
-      <input type="text" id="uuidExtraido" oninput="actualizarUUIDManual()" />
+      <input type="text" id="uuidExtraido"
+       oninput="actualizarUUIDManual()"
+       onpaste="setTimeout(actualizarUUIDManual, 100)"
+       onchange="actualizarUUIDManual()" />
+
     </div>
     <button id="mostrarUUIDManual" onclick="mostrarCampoUUID()" style="margin-top: 10px;">✏️ Ingresar UUID manualmente</button>
 
