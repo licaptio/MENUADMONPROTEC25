@@ -129,9 +129,9 @@ console.log("Match UUID:", match);
     async function buscarFactura() {
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
-        .select('*')
-        .ilike('uuid_text', uuid) // o el nombre exacto de la segunda columna
-        .single();
+.select('*')
+.eq('uuid', uuid.toUpperCase()) // fuerza comparación exacta y en mayúsculas
+.single();
 console.log("UUID buscado:", uuid);
 
       if (error || !data) {
