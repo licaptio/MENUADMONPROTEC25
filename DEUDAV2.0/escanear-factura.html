@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escanear Factura CFDI</title>
+  <title>Escaneo Automático CFDI</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #eef2f7; margin: 0; padding: 0; }
@@ -11,62 +11,33 @@
     .contenedor { max-width: 800px; margin: 30px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
     .resumen { background: #f3f6fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
     .resumen p { margin: 6px 0; color: #003366; font-weight: bold; }
-    label { display: block; margin-top: 20px; font-weight: bold; color: #003366; }
-    select, textarea, input[type="file"], input[type="text"] { width: 100%; padding: 12px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+    label { font-weight: bold; color: #003366; display: block; margin-bottom: 8px; }
+    select, textarea, input[type="file"] { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; margin-top: 10px; }
     textarea { height: 120px; resize: vertical; }
     #preview img { max-width: 100px; margin: 5px; border: 1px solid #ccc; border-radius: 6px; }
-    .botones { margin-top: 15px; display: flex; gap: 10px; }
-    .botones button { flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
-    .buscar { background-color: #0066cc; color: white; }
-    .limpiar { background-color: #ccc; }
     .guardar { margin-top: 25px; width: 100%; padding: 16px; font-size: 18px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; }
-  textarea::placeholder {
-  color: #999;
-  font-style: italic;
-}
-.buscar {
-  display: none; /* Oculta el botón */
-}
- #buscando {
-  text-align: center;
-  font-size: 16px;
-  animation: parpadeo 1s infinite;
-}
-
-@keyframes parpadeo {
-  0% { opacity: 1; }
-  50% { opacity: 0.3; }
-  100% { opacity: 1; }
-}
-
+    #buscando {
+      text-align: center;
+      font-size: 18px;
+      color: #003366;
+      margin-top: 20px;
+      animation: parpadeo 1s infinite;
+    }
+    @keyframes parpadeo {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h2>Escanear Factura CFDI (UUID desde QR)</h2>
+    <h2>Escaneo CFDI vía QR</h2>
   </header>
 
   <div class="contenedor">
-    <label>Escanea el código QR o pega el link completo del SAT</label>
-    <input type="text" id="inputQR" placeholder="Escanea aquí..." oninput="extraerUUIDConRetardo()" />
-<div id="buscando" style="display:none; margin-top:10px; color:#003366; font-weight:bold;">
-  ⏳ Buscando factura...
-</div>
-
-    <div id="uuidManualContainer" style="display:none;">
-      <label>UUID extraído automáticamente</label>
-      <input type="text" id="uuidExtraido"
-       oninput="actualizarUUIDManual()"
-       onpaste="setTimeout(actualizarUUIDManual, 100)"
-       onchange="actualizarUUIDManual()" />
-
-    </div>
-    <button id="mostrarUUIDManual" onclick="mostrarCampoUUID()" style="margin-top: 10px;">✏️ Ingresar UUID manualmente</button>
-
-    <div class="botones">
-      <button class="buscar" onclick="buscarFactura()">🔍 Buscar factura</button>
-      <button class="limpiar" onclick="limpiarFormulario()">🧹 Limpiar</button>
-    </div>
+    <input type="text" id="inputQR" placeholder="Escanea aquí..." autofocus oninput="extraerUUIDConRetardo()" />
+    <div id="buscando" style="display:none;">⏳ Buscando factura...</div>
 
     <div class="resumen" id="resumenFactura" style="display:none;">
       <p>Folio: <span id="folio"></span></p>
@@ -85,6 +56,7 @@
 
       <label>Comentario adicional</label>
       <textarea id="comentario_factura_fisica" placeholder="Factura sin anotaciones"></textarea>
+
       <label>Agregar fotos o PDFs</label>
       <input type="file" id="fotos" accept=".jpg,.jpeg,.png,.pdf" multiple />
       <div id="preview" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
@@ -103,65 +75,47 @@
     let uuid = null;
     let urlsFotos = [];
     let fotosSeleccionadas = [];
-let temporizadorUUID;
+    let temporizadorUUID;
 
-function extraerUUIDConRetardo() {
-  clearTimeout(temporizadorUUID);
+    function extraerUUIDConRetardo() {
+      clearTimeout(temporizadorUUID);
+      const input = document.getElementById("inputQR").value;
 
-  // Mostrar ícono de búsqueda mientras el usuario (o escáner) está escribiendo
-  document.getElementById("inputQR").style.display = "none";
-document.getElementById("buscando").style.display = "block";
-
-
-  temporizadorUUID = setTimeout(() => {
-    extraerUUID();
-    // Ocultar ícono de búsqueda después de intentar extraer y buscar
-    document.getElementById("buscando").style.display = "none";
-  }, 400); // Puedes ajustar este tiempo si el escáner tarda más
-}
-
-function extraerUUID() {
-  const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
-  let match;
-
-  // Formato con id= y guiones
-  match = input.match(/[\?&]?id=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
-  if (match) {
-    uuid = match[1];
-  } else {
-    // Formato ^id) o _id) con barras
-    match = input.match(/[\^_]{1}id\)?([0-9a-fA-F]{8}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{4}\/[0-9a-fA-F]{12})/);
-    if (match) {
-      uuid = match[1].replaceAll('/', '-');
-    } else {
-      uuid = null;
-    }
-  }
-
-  document.getElementById("uuidExtraido").value = uuid || "";
-
-  // ✅ Buscar factura automáticamente si se extrajo un UUID válido
-  if (uuid) buscarFactura();
-}
-
-    async function buscarFactura() {
-      if (!uuid) {
-        alert("UUID no válido.");
-        return;
+      if (input.length >= 4) {
+        document.getElementById("inputQR").style.display = "none";
+        document.getElementById("buscando").style.display = "block";
       }
 
+      temporizadorUUID = setTimeout(() => {
+        extraerUUID();
+        document.getElementById("buscando").style.display = "none";
+      }, 400);
+    }
+
+    function extraerUUID() {
+      const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
+      const match = input.match(/[\?&]?id=([0-9a-fA-F\-]{36})|[\^_]{1}id\)?([0-9a-fA-F\/]{36})/);
+      if (match) {
+        uuid = (match[1] || match[2].replaceAll("/", "-"));
+        buscarFactura();
+      } else {
+        alert("No se pudo extraer UUID.");
+        limpiarFormulario();
+      }
+    }
+
+    async function buscarFactura() {
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
         .select('*')
         .eq('uuid', uuid)
         .single();
 
-if (error || !data) {
-  alert("Factura no encontrada.");
-  limpiarFormulario(); // ← Agrega esta línea
-  return;
-}
-
+      if (error || !data) {
+        alert("Factura no encontrada.");
+        limpiarFormulario();
+        return;
+      }
 
       document.getElementById("resumenFactura").style.display = "block";
       document.getElementById("folio").textContent = data.factura || "(Sin folio)";
@@ -193,8 +147,7 @@ if (error || !data) {
         btn.textContent = "❌";
         Object.assign(btn.style, {
           position: "absolute", top: "-8px", right: "-8px",
-          background: "red", color: "white", borderRadius: "50%",
-          cursor: "pointer", padding: "2px 6px"
+          background: "red", color: "white", borderRadius: "50%", cursor: "pointer", padding: "2px 6px"
         });
         btn.onclick = async () => {
           const ruta = url.split("/").slice(7).join("/");
@@ -231,8 +184,7 @@ if (error || !data) {
           btn.textContent = "❌";
           Object.assign(btn.style, {
             position: "absolute", top: "-8px", right: "-8px",
-            background: "red", color: "white", borderRadius: "50%",
-            cursor: "pointer", padding: "2px 6px"
+            background: "red", color: "white", borderRadius: "50%", cursor: "pointer", padding: "2px 6px"
           });
           btn.onclick = () => {
             fotosSeleccionadas.splice(index, 1);
@@ -252,95 +204,60 @@ if (error || !data) {
       e.target.value = "";
     });
 
-async function guardarCambios() {
-  const comentarioInput = document.getElementById('comentario_factura_fisica');
-  const comentarioTexto = comentarioInput.value.trim();
-  const comentario = comentarioTexto === '' ? 'Factura sin anotaciones' : comentarioTexto;
+    async function guardarCambios() {
+      const comentario = document.getElementById('comentario_factura_fisica').value.trim() || 'Factura sin anotaciones';
+      const fisica = document.getElementById('factura_fisicamente').value;
+      const nuevasUrls = [];
 
-  const fisica = document.getElementById('factura_fisicamente').value;
-  const nuevasUrls = [];
+      for (let i = 0; i < fotosSeleccionadas.length; i++) {
+        const archivo = fotosSeleccionadas[i];
+        const nombreSeguro = `${uuid}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
+        const { error } = await supabase.storage
+          .from("fotos-facturas")
+          .upload(nombreSeguro, archivo, {
+            cacheControl: '3600', upsert: true, contentType: archivo.type
+          });
+        if (error) {
+          alert("Error al subir archivo.");
+          return;
+        }
+        const { data: publicUrl } = supabase.storage.from("fotos-facturas").getPublicUrl(nombreSeguro);
+        nuevasUrls.push(publicUrl.publicUrl);
+      }
 
-  for (let i = 0; i < fotosSeleccionadas.length; i++) {
-    const archivo = fotosSeleccionadas[i];
-    const nombreSeguro = `${uuid}-${i}-${Date.now()}.${archivo.name.split('.').pop()}`;
-    const { error } = await supabase.storage
-      .from("fotos-facturas")
-      .upload(nombreSeguro, archivo, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: archivo.type
-      });
-    if (error) {
-      alert("Error al subir archivo.");
-      return;
+      const { error: updateError } = await supabase
+        .from('deuda_limpia_pdd')
+        .update({
+          factura_fisicamente: fisica,
+          comentario_factura_fisica: comentario,
+          fotos: [...urlsFotos, ...nuevasUrls]
+        })
+        .eq('uuid', uuid);
+
+      const msg = document.getElementById('mensaje');
+      if (updateError) {
+        msg.innerHTML = '<p style="color:red;">❌ Error al guardar.</p>';
+      } else {
+        msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
+        setTimeout(() => {
+          limpiarFormulario();
+          const input = document.getElementById("inputQR");
+          input.style.display = "block";
+          input.focus();
+        }, 500);
+      }
     }
-    const { data: publicUrl } = supabase.storage.from("fotos-facturas").getPublicUrl(nombreSeguro);
-    nuevasUrls.push(publicUrl.publicUrl);
-  }
 
-  const { error: updateError } = await supabase
-    .from('deuda_limpia_pdd')
-    .update({
-      factura_fisicamente: fisica,
-      comentario_factura_fisica: comentario,
-      fotos: [...urlsFotos, ...nuevasUrls]
-    })
-    .eq('uuid', uuid);
-
-  const msg = document.getElementById('mensaje');
-  if (updateError) {
-    msg.innerHTML = '<p style="color:red;">❌ Error al guardar.</p>';
-  } else {
-    msg.innerHTML = '<p style="color:green;">✅ Cambios guardados correctamente.</p>';
-    setTimeout(() => {
-      limpiarFormulario();
-      const input = document.getElementById("inputQR");
-      input.focus();
-      input.select();
-    }, 500);
-  }
-}
-
-// ✅ Mueve esta función fuera de cualquier otra
-function limpiarFormulario() {
-  uuid = null;
-  urlsFotos = [];
-  fotosSeleccionadas = [];
-  document.getElementById("inputQR").value = "";
-  document.getElementById("uuidExtraido").value = "";
-  document.getElementById("resumenFactura").style.display = "none";
-  document.getElementById("formulario").style.display = "none";
-  document.getElementById("mensaje").innerHTML = "";
-  document.getElementById("preview").innerHTML = "";
-  document.getElementById("inputQR").style.display = "block";
-  document.getElementById("uuidManualContainer").style.display = "none";
-document.getElementById("mostrarUUIDManual").style.display = "block";
-document.querySelector(".buscar").style.display = "none";
-
-}
-function mostrarCampoUUID() {
-  document.getElementById("uuidManualContainer").style.display = "block";
-  document.getElementById("mostrarUUIDManual").style.display = "none";
-  document.querySelector(".buscar").style.display = "block";
-}
-function actualizarUUIDManual() {
-  const input = document.getElementById("uuidExtraido").value.trim();
-  uuid = input.replace(/\s+/g, '');
-
-  // Validar si es un UUID con formato correcto
-  const matchUUID = uuid.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-if (matchUUID) {
-  uuid = matchUUID[0];
-  document.getElementById("uuidExtraido").value = uuid;
-  buscarFactura();
-}
-
-
-  if (esUUIDValido) {
-    buscarFactura(); // ✅ buscar automáticamente si es válido
-  }
-}
-
+    function limpiarFormulario() {
+      uuid = null;
+      urlsFotos = [];
+      fotosSeleccionadas = [];
+      document.getElementById("inputQR").value = "";
+      document.getElementById("resumenFactura").style.display = "none";
+      document.getElementById("formulario").style.display = "none";
+      document.getElementById("mensaje").innerHTML = "";
+      document.getElementById("preview").innerHTML = "";
+    }
   </script>
 </body>
 </html>
