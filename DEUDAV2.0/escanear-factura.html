@@ -92,26 +92,18 @@
       }, 400);
     }
 
-    function extraerUUID() {
-      const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
-      // ✅ Versión más robusta
-const match = input.match(/(?:id=|[\^_]{1}id\))([0-9a-fA-F]{8})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{12})/);
-if (match) {
-  uuid = `${match[1]}-${match[2]}-${match[3]}-${match[4]}-${match[5]}`.toLowerCase(); // normalizado
-  buscarFactura();
-} else {
-  alert("No se pudo extraer UUID.");
-  limpiarFormulario();
+function extraerUUID() {
+  const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
+  const match = input.match(/(?:id=|[\^_]{1}id\))([0-9a-fA-F]{8})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{12})/);
+  
+  if (match) {
+    uuid = `${match[1]}-${match[2]}-${match[3]}-${match[4]}-${match[5]}`.toLowerCase(); // siempre minúsculas
+    buscarFactura();
+  } else {
+    alert("No se pudo extraer UUID.");
+    limpiarFormulario();
+  }
 }
-
-      if (match) {
-        uuid = (match[1] || match[2].replaceAll("/", "-"));
-        buscarFactura();
-      } else {
-        alert("No se pudo extraer UUID.");
-        limpiarFormulario();
-      }
-    }
 
     async function buscarFactura() {
       const { data, error } = await supabase
