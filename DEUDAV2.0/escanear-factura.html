@@ -118,7 +118,7 @@ function extraerUUID() {
 console.log("Match UUID:", match);
 
   if (match) {
-    uuid = `${match[1]}-${match[2]}-${match[3]}-${match[4]}-${match[5]}`.toLowerCase(); // siempre minúsculas
+    uuid = `${match[1]}-${match[2]}-${match[3]}-${match[4]}-${match[5]}`.toUpperCase(); // siempre MAYÚSCULAS
     buscarFactura();
   } else {
     alert("No se pudo extraer UUID.");
