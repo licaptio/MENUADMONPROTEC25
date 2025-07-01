@@ -28,6 +28,25 @@
       50% { opacity: 0.3; }
       100% { opacity: 1; }
     }
+#inputQR {
+  font-size: 20px;
+  padding: 18px;
+  width: 100%;
+  border: 2px solid #003366;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin-top: 10px;
+}
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.contenedor {
+  padding-bottom: 100px; /* para que no se tape con el teclado */
+}
+
   </style>
 </head>
 <body>
@@ -259,6 +278,13 @@ function extraerUUID() {
       document.getElementById("mensaje").innerHTML = "";
       document.getElementById("preview").innerHTML = "";
     }
+// Forzar scroll cuando se enfoca el inputQR
+document.getElementById("inputQR").addEventListener("focus", function() {
+  setTimeout(() => {
+    this.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 300);
+});
+
   </script>
 </body>
 </html>
