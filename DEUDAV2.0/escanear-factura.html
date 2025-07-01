@@ -130,7 +130,7 @@ console.log("Match UUID:", match);
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
         .select('*')
-        .eq('uuid', uuid)
+        .ilike('uuid', uuid)
         .single();
 console.log("UUID buscado:", uuid);
 
