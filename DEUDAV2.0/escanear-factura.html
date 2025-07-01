@@ -54,7 +54,7 @@ html, body {
     <h2>Escaneo CFDI vía QR</h2>
   </header>
 <div style="text-align:center; color:#555; font-size:14px; margin-top:10px;">
-  ⚙️ Escaneo actualizado — versión 2.2 10:10PM (TODAVIA NO QUEDA)
+  ⚙️ Escaneo actualizado — versión 2.3 10:15PM (TODAVIA NO QUEDA NI QUEDA)
 </div>
 
   <div class="contenedor">
@@ -135,12 +135,12 @@ function extraerUUID() {
 
 
     async function buscarFactura() {
-      const { data, error } = await supabase
-        .from('deuda_limpia_pdd')
-.select('*')
-.eq('uuid', uuid.toLowerCase())
-.single();
-console.log("UUID buscado:", uuid);
+const { data, error } = await supabase
+  .from('deuda_limpia_pdd')
+  .select('*')
+  .eq('uuid', uuid.toLowerCase())
+  .single();
+      console.log("UUID buscado:", uuid);
 
       if (error || !data) {
   console.warn("Error Supabase o factura no encontrada:", error);
@@ -258,14 +258,14 @@ console.log("UUID buscado:", uuid);
         nuevasUrls.push(publicUrl.publicUrl);
       }
 
-      const { error: updateError } = await supabase
-        .from('deuda_limpia_pdd')
-        .update({
-          factura_fisicamente: fisica,
-          comentario_factura_fisica: comentario,
-          fotos: [...urlsFotos, ...nuevasUrls]
-        })
-        .eq('uuid', uuid);
+const { error: updateError } = await supabase
+  .from('deuda_limpia_pdd')
+  .update({
+    factura_fisicamente: fisica,
+    comentario_factura_fisica: comentario,
+    fotos: [...urlsFotos, ...nuevasUrls]
+  })
+  .eq('uuid', uuid.toLowerCase());
 
       const msg = document.getElementById('mensaje');
       if (updateError) {
