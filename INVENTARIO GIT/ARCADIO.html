@@ -1,110 +1,110 @@
-﻿  <!DOCTYPE html>
-  <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Inventario Estilo Excel</title>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventario Estilo Excel</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f9f9f9;
-        margin: 0;
-        padding: 1rem;
-      }
-
-  h1 {
-    text-align: center;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-  }
-
-
-      table {
-        width: 100%;
-        max-width: 1100px;
-        margin: auto;
-        border-collapse: collapse;
-        background-color: white;
-        box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      }
-
-      th, td {
-        border: 1px solid #ccc;
-        padding: 0.5rem;
-        vertical-align: middle;
-      }
-
-      th {
-        background-color: #e6e6e6;
-        font-weight: bold;
-      }
-
-      td.corto, th.corto {
-        width: 5ch;
-        text-align: center;
-      }
-
-      td.largo input {
-        text-align: left;
-        padding-left: 4px;
-      }
-  td.largo, th.largo {
-    width: 24ch;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  input {
-    width: 100%;
-    border: none;
-    font-size: 1rem;
-    background-color: transparent;
-    padding: 0.2rem;
-    height: 1.8rem;
-    box-sizing: border-box;
-  }
-
-
-      input:focus {
-        outline: none;
-        background-color: #ffffcc;
-      }
-
-  .controls {
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-  .no-print {
-    display: block;
-    margin: 0 auto 1rem;
-  }
-
-  /* Opcional: si no quieres que el botón salga al imprimir */
-  @media print {
-    .no-print {
-      display: none !important;
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 1rem;
     }
-  }
 
-      @media (max-width: 600px) {
-        body {
-          padding: 0.5rem;
-        }
-        table, th, td {
-          font-size: 0.9rem;
-        }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      max-width: 1100px;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #e6e6e6;
+      font-weight: bold;
+    }
+
+    td.corto, th.corto {
+      width: 5ch;
+      text-align: center;
+    }
+
+    td.largo, th.largo {
+      width: 24ch;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    td.largo input {
+      text-align: left;
+      padding-left: 4px;
+    }
+
+    input {
+      width: 100%;
+      border: none;
+      font-size: 1rem;
+      background-color: transparent;
+      padding: 0.2rem;
+      height: 1.8rem;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      outline: none;
+      background-color: #ffffcc;
+    }
+
+    .controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .no-print {
+      display: block;
+      margin: 0 auto 1rem;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
       }
-    </style>
-  </head>
-  <body>
+    }
 
-    <h1>ARCADIO</h1>
+    @media (max-width: 600px) {
+      body {
+        padding: 0.5rem;
+      }
+      table, th, td {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ARCADIO</h1>
 
   <div class="controls">
     <button id="export-img" class="no-print">Exportar pedido como imagen</button>
+    <button id="borrar-datos" class="no-print">Borrar inventario y pedido</button>
   </div>
 
   <table id="tabla">
@@ -119,139 +119,191 @@
     <tbody id="contenido"></tbody>
   </table>
 
-
-    <script>
-      const datosIniciales = [
-{ arcadio: 'HIG JUMBO DALIA360', inventario: '', sto: 40, pedido: '' },
-  { arcadio: 'HIG JUNIOR DALIA180', inventario: '', sto: 40, pedido: '' },
-  { arcadio: 'MARLY 12 C/500', inventario: '', sto: 40, pedido: '' },
-  { arcadio: 'BARRA MESA C/24', inventario: '', sto: 15, pedido: '' },
-  { arcadio: 'SANITA', inventario: '', sto: 40, pedido: '' },
-  { arcadio: 'TR160 C/6 MOC BLA', inventario: '', sto: 40, pedido: '' },
-  { arcadio: 'MOCAMBO LITHE C/16', inventario: '', sto: 40, pedido: '' }
-      ];
-
-      const tabla = document.getElementById('contenido');
-
-      function cargarDatos() {
-const datos = JSON.parse(localStorage.getItem('inventario_arcadio')) || datosIniciales;
-        tabla.innerHTML = '';
-        datos.forEach((fila, i) => {
-          const tr = document.createElement('tr');
-['arcadio', 'inventario', 'sto', 'pedido'].forEach(campo => {
-            const td = document.createElement('td');
-            td.className = (campo === 'arcadio') ? 'largo' : 'corto';
-if (campo === 'arcadio') {
-  td.textContent = fila[campo];
-} else if (campo === 'sto') {
-  td.textContent = fila[campo]; // solo muestra el número, sin input
-} else {
-  const input = document.createElement('input');
-  input.value = fila[campo] ?? '';
-  input.dataset.fila = i;
-  input.dataset.campo = campo;
-  input.setAttribute('inputmode', 'numeric');
-  input.setAttribute('pattern', '[0-9]*');
-  td.appendChild(input);
-}
- 
-            tr.appendChild(td);
-          });
-          tabla.appendChild(tr);
-        });
-      }
-
-      tabla.addEventListener('input', (e) => {
-        const input = e.target;
-        const fila = parseInt(input.dataset.fila);
-        const campo = input.dataset.campo;
-        const datos = JSON.parse(localStorage.getItem('inventario_arcadio')) || datosIniciales;
-        datos[fila][campo] = input.value;
-        localStorage.setItem('inventario_arcadio', JSON.stringify(datos));
-      });
-
-      cargarDatos();
-    </script>
   <script>
-  document.getElementById('export-img').addEventListener('click', () => {
-  const filas = document.querySelectorAll('#tabla tbody tr');
+    const datosIniciales = [
+      { arcadio: 'HIG JUMBO DALIA360', inventario: '', sto: 40, pedido: '' },
+      { arcadio: 'HIG JUNIOR DALIA180', inventario: '', sto: 40, pedido: '' },
+      { arcadio: 'MARLY 12 C/500', inventario: '', sto: 40, pedido: '' },
+      { arcadio: 'BARRA MESA C/24', inventario: '', sto: 15, pedido: '' },
+      { arcadio: 'SANITA', inventario: '', sto: 40, pedido: '' },
+      { arcadio: 'TR160 C/6 MOC BLA', inventario: '', sto: 40, pedido: '' },
+      { arcadio: 'MOCAMBO LITHE C/16', inventario: '', sto: 40, pedido: '' }
+    ];
 
-  const temp = document.createElement('table');
-  temp.style.borderCollapse = 'collapse';
-  temp.style.background = 'white';
-  temp.style.margin = '1rem auto';
-  temp.style.fontFamily = 'Arial, sans-serif';
-  temp.style.fontSize = '12px'; // compacto
+    const tabla = document.getElementById('contenido');
 
-  const thead = temp.createTHead();
-  const hRow = thead.insertRow();
-  ['ARCADIO', 'PED'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    th.style.border = '1px solid #ccc';
-    th.style.padding = '2px 4px';
-    th.style.maxWidth = '140px';
-th.style.whiteSpace = 'nowrap';
-    th.style.fontSize = '12px';
-    th.style.backgroundColor = '#e6e6e6';
-    hRow.appendChild(th);
-  });
+    function cargarDatos() {
+      const datos = JSON.parse(localStorage.getItem('inventario_arcadio')) || datosIniciales;
+      tabla.innerHTML = '';
+      datos.forEach((fila, i) => {
+        const tr = document.createElement('tr');
+        ['arcadio', 'inventario', 'sto', 'pedido'].forEach(campo => {
+          const td = document.createElement('td');
+          td.className = (campo === 'arcadio') ? 'largo' : 'corto';
 
-  const tBody = temp.createTBody();
-  filas.forEach(r => {
-    const pedido = r.cells[3].querySelector('input').value.trim();
-    if (pedido !== '' && parseInt(pedido) > 0) {
-      const nuevaFila = tBody.insertRow();
-      [0, 3].forEach(idx => {
-        const cell = document.createElement('td');
-        cell.textContent = (idx === 0) ? r.cells[0].textContent : pedido;
-        cell.style.border = '1px solid #ccc';
-        cell.style.padding = '2px 4px';
-cell.style.maxWidth = '140px';
-cell.style.whiteSpace = 'nowrap';
-cell.style.overflow = 'hidden';
-cell.style.textOverflow = 'ellipsis';
+          if (campo === 'arcadio') {
+            td.textContent = fila[campo];
+          } else if (campo === 'sto') {
+            td.textContent = fila[campo];
+          } else {
+            const input = document.createElement('input');
+            input.value = fila[campo] ?? '';
+            input.dataset.fila = i;
+            input.dataset.campo = campo;
+            input.setAttribute('inputmode', 'numeric');
+            input.setAttribute('pattern', '[0-9]*');
+            td.appendChild(input);
+          }
 
-        cell.style.fontSize = '12px';
-        nuevaFila.appendChild(cell);
+          tr.appendChild(td);
+        });
+        tabla.appendChild(tr);
       });
     }
-  });
 
-// Crear título con fecha automática
-const fecha = new Date().toLocaleDateString('es-MX');
-const titulo = document.createElement('div');
-titulo.textContent = `ARCADIO – ${fecha}`;
-titulo.style.textAlign = 'center';
-titulo.style.fontWeight = 'bold';
-titulo.style.fontSize = '16px';
-titulo.style.marginBottom = '8px';
+    tabla.addEventListener('input', (e) => {
+      const input = e.target;
+      const fila = parseInt(input.dataset.fila);
+      const campo = input.dataset.campo;
+      const datos = JSON.parse(localStorage.getItem('inventario_arcadio')) || datosIniciales;
+      datos[fila][campo] = input.value.replace(/\D/g, ''); // solo números
+      input.value = datos[fila][campo];
+      localStorage.setItem('inventario_arcadio', JSON.stringify(datos));
+    });
 
-// Crear contenedor
-const wrapper = document.createElement('div');
-wrapper.style.width = '300px';
-wrapper.style.margin = '0 auto';
-wrapper.appendChild(titulo);
-wrapper.appendChild(temp);
-document.body.appendChild(wrapper);
+    document.getElementById('borrar-datos').addEventListener('click', () => {
+      if (confirm('¿Seguro que deseas borrar los datos de inventario y pedido?')) {
+        const datos = JSON.parse(localStorage.getItem('inventario_arcadio')) || datosIniciales;
+        datos.forEach(item => {
+          item.inventario = '';
+          item.pedido = '';
+        });
+        localStorage.setItem('inventario_arcadio', JSON.stringify(datos));
+        cargarDatos();
+      }
+    });
 
-html2canvas(wrapper).then(canvas => {
-  const ctx = canvas.getContext('2d');
-  ctx.globalCompositeOperation = 'destination-over';
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+    document.addEventListener('keydown', function (e) {
+      const active = document.activeElement;
+      if (active.tagName === 'INPUT') {
+        const inputs = [...document.querySelectorAll('input')];
+        const index = inputs.indexOf(active);
+        const currentCell = active.closest('td');
+        const currentRow = active.closest('tr');
+        const table = document.getElementById('tabla');
 
-  const link = document.createElement('a');
-  link.download = 'pedido.jpg';
-  link.href = canvas.toDataURL('image/jpeg', 0.9);
-  link.click();
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const next = inputs[index + 1];
+          if (next) next.focus();
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const col = currentCell.cellIndex;
+          const row = currentRow.rowIndex;
+          const nextRow = table.rows[row + 1];
+          if (nextRow && nextRow.cells[col]) {
+            const nextInput = nextRow.cells[col].querySelector('input');
+            if (nextInput) nextInput.focus();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const col = currentCell.cellIndex;
+          const row = currentRow.rowIndex;
+          const prevRow = table.rows[row - 1];
+          if (prevRow && prevRow.cells[col]) {
+            const prevInput = prevRow.cells[col].querySelector('input');
+            if (prevInput) prevInput.focus();
+          }
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          const next = inputs[index + 1];
+          if (next) next.focus();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const prev = inputs[index - 1];
+          if (prev) prev.focus();
+        }
+      }
+    });
 
-  wrapper.remove(); // elimina todo junto
-});
-
-});
-
+    cargarDatos();
   </script>
 
-  </body>
-  </html>
+  <script>
+    document.getElementById('export-img').addEventListener('click', () => {
+      const filas = document.querySelectorAll('#tabla tbody tr');
+
+      const temp = document.createElement('table');
+      temp.style.borderCollapse = 'collapse';
+      temp.style.background = 'white';
+      temp.style.margin = '1rem auto';
+      temp.style.fontFamily = 'Arial, sans-serif';
+      temp.style.fontSize = '12px';
+
+      const thead = temp.createTHead();
+      const hRow = thead.insertRow();
+      ['ARCADIO', 'PED'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        th.style.border = '1px solid #ccc';
+        th.style.padding = '2px 4px';
+        th.style.maxWidth = '140px';
+        th.style.whiteSpace = 'nowrap';
+        th.style.fontSize = '12px';
+        th.style.backgroundColor = '#e6e6e6';
+        hRow.appendChild(th);
+      });
+
+      const tBody = temp.createTBody();
+      filas.forEach(r => {
+        const pedido = r.cells[3].querySelector('input').value.trim();
+        if (pedido !== '' && parseInt(pedido) > 0) {
+          const nuevaFila = tBody.insertRow();
+          [0, 3].forEach(idx => {
+            const cell = document.createElement('td');
+            cell.textContent = (idx === 0) ? r.cells[0].textContent : pedido;
+            cell.style.border = '1px solid #ccc';
+            cell.style.padding = '2px 4px';
+            cell.style.maxWidth = '140px';
+            cell.style.whiteSpace = 'nowrap';
+            cell.style.overflow = 'hidden';
+            cell.style.textOverflow = 'ellipsis';
+            cell.style.fontSize = '12px';
+            nuevaFila.appendChild(cell);
+          });
+        }
+      });
+
+      const fecha = new Date().toLocaleDateString('es-MX');
+      const titulo = document.createElement('div');
+      titulo.textContent = `ARCADIO – ${fecha}`;
+      titulo.style.textAlign = 'center';
+      titulo.style.fontWeight = 'bold';
+      titulo.style.fontSize = '16px';
+      titulo.style.marginBottom = '8px';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.width = '300px';
+      wrapper.style.margin = '0 auto';
+      wrapper.appendChild(titulo);
+      wrapper.appendChild(temp);
+      document.body.appendChild(wrapper);
+
+      html2canvas(wrapper).then(canvas => {
+        const ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const link = document.createElement('a');
+        link.download = 'pedido.jpg';
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+
+        wrapper.remove();
+      });
+    });
+  </script>
+
+</body>
+</html>
