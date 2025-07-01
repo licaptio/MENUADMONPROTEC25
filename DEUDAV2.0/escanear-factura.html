@@ -114,7 +114,9 @@ html, body {
 function extraerUUID() {
   const input = document.getElementById("inputQR").value.trim().replace(/\s+/g, '');
   const match = input.match(/(?:id=|[\^_]{1}id\))([0-9a-fA-F]{8})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{4})[\/\-]?([0-9a-fA-F]{12})/);
-  
+  console.log("Entrada escaneada:", input);
+console.log("Match UUID:", match);
+
   if (match) {
     uuid = `${match[1]}-${match[2]}-${match[3]}-${match[4]}-${match[5]}`.toLowerCase(); // siempre minúsculas
     buscarFactura();
@@ -130,12 +132,15 @@ function extraerUUID() {
         .select('*')
         .eq('uuid', uuid)
         .single();
+console.log("UUID buscado:", uuid);
 
       if (error || !data) {
-        alert("Factura no encontrada.");
-        limpiarFormulario();
-        return;
-      }
+  console.warn("Error Supabase o factura no encontrada:", error);
+  alert("Factura no encontrada.");
+  limpiarFormulario();
+  return;
+}
+
 
       document.getElementById("resumenFactura").style.display = "block";
       document.getElementById("folio").textContent = data.factura || "(Sin folio)";
