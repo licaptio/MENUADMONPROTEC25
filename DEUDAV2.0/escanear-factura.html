@@ -54,7 +54,7 @@ html, body {
     <h2>Escaneo CFDI vía QR</h2>
   </header>
 <div style="text-align:center; color:#555; font-size:14px; margin-top:10px;">
-  ⚙️ Escaneo actualizado — versión 2.1 10:07PM (TODAVIA NO QUEDA)
+  ⚙️ Escaneo actualizado — versión 2.2 10:10PM (TODAVIA NO QUEDA)
 </div>
 
   <div class="contenedor">
@@ -138,7 +138,7 @@ function extraerUUID() {
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
 .select('*')
-.eq('uuid', uuid.toUpperCase()) // fuerza comparación exacta y en mayúsculas
+.eq('uuid', uuid.toLowerCase())
 .single();
 console.log("UUID buscado:", uuid);
 
