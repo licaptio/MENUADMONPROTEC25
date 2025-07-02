@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resumen de Salidas</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+    h1 { text-align: center; }
+    .contenedor { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .tarjeta {
+      background: white; border-radius: 10px; padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 280px;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .tarjeta:hover { transform: scale(1.03); }
+    .campo { margin: 6px 0; }
+    .campo span { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Salidas - Resumen</h1>
+  <div class="contenedor" id="reporte"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const contenedor = document.getElementById('reporte');
+
+    const cargarSalidas = async () => {
+      const colRef = collection(db, "almacenes", "Almacen_Zapata", "salidas");
+const q = query(colRef, orderBy("folio", "desc")); // 👈 clave aquí
+const snapshot = await getDocs(q);
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjeta";
+        tarjeta.innerHTML = `
+          <div class="campo"><span>Folio:</span> ${data.folio || doc.id}</div>
+          <div class="campo"><span>Fecha:</span> ${data.fecha || 'N/A'}</div>
+          <div class="campo"><span>Producto:</span> ${data.producto || 'N/A'}</div>
+        `;
+        tarjeta.addEventListener("click", () => {
+          window.location.href = `detalle-salida.html?id=${doc.id}`;
+        });
+        contenedor.appendChild(tarjeta);
+      });
+    };
+
+    cargarSalidas();
+  </script>
+</body>
+</html>
