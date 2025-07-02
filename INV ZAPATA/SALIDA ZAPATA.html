@@ -639,7 +639,14 @@ function limpiarLienzo(canvasId) {
 function cancelarFirmas() {
   document.getElementById("firmasOverlay").style.display = "none";
 }
-async function guardarConFirmas() {
+<script>
+function mostrarSeccion2() {
+  document.getElementById("seccion1").style.display = "none";
+  document.getElementById("seccion2").style.display = "block";
+}
+</script>
+
+    async function guardarConFirmas() {
   const canvasEntrega = document.getElementById("firmaEntrega");
   const canvasRecibe = document.getElementById("firmaRecibe");
 
