@@ -206,12 +206,23 @@ body {
     padding: 12px;
   }
 }
+#firmasOverlay button {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  font-size: 16px;
+}
 
   </style>
 </head>
 <body>
   <div style="max-width: 480px; margin: auto;">
-
+<body>
+  <div style="max-width: 480px; margin: auto;">
+    <p style="text-align:center; font-size:12px; color:gray; margin-top:5px;">
+      🛠️ Modificado el 02/07/2025 a las 11:57am — Versión actual optimizada para firma vertical en celular
+    </p>
 <div id="loaderFolio" style="text-align: center; padding: 20px;">
   <div class="spinner"></div>
   <div style="margin-top: 8px;">Cargando folio...</div>
@@ -759,20 +770,14 @@ function generarImagenResumen() {
 
   <div id="firmaPaso1">
     <h3>✍️ Firma de quien entrega</h3>
-    <p style="color: #d84315; font-size: 14px; margin-bottom: 10px;">
-  📱 Sugerencia: voltea el celular para firmar más cómodamente.
-</p>
-    <canvas id="firmaEntrega" width="1000" height="400" style="border:1px solid #ccc; width:100%;"></canvas>
+    <canvas id="firmaEntrega" width="300" height="500" style="border:1px solid #ccc; width:100%; max-width:400px; display:block; margin:auto;"></canvas>
     <button onclick="limpiarLienzo('firmaEntrega')">🧽 Limpiar firma</button>
     <button onclick="mostrarPaso2()">➡️ Continuar</button>
   </div>
 
   <div id="firmaPaso2" style="display:none;">
     <h3>✍️ Firma de quien recibe</h3>
-    <p style="color: #d84315; font-size: 14px; margin-bottom: 10px;">
-  📱 Sugerencia: voltea el celular para firmar más cómodamente.
-</p>
-    <canvas id="firmaRecibe" width="1000" height="400" style="border:1px solid #ccc; width:100%;"></canvas>
+    <canvas id="firmaRecibe" width="300" height="500" style="border:1px solid #ccc; width:100%; max-width:400px; display:block; margin:auto;"></canvas>
     <button onclick="limpiarLienzo('firmaRecibe')">🧽 Limpiar firma</button>
     <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
     <button onclick="cancelarFirmas()">❌ Cancelar</button>
