@@ -218,8 +218,6 @@ body {
 </head>
 <body>
   <div style="max-width: 480px; margin: auto;">
-<body>
-  <div style="max-width: 480px; margin: auto;">
     <p style="text-align:center; font-size:12px; color:gray; margin-top:5px;">
       🛠️ Modificado el 02/07/2025 a las 12:51pm modificada la firma
     </p>
@@ -640,12 +638,6 @@ function cancelarFirmas() {
   document.getElementById("firmasOverlay").style.display = "none";
 }
 <script>
-function mostrarSeccion2() {
-  document.getElementById("seccion1").style.display = "none";
-  document.getElementById("seccion2").style.display = "block";
-}
-</script>
-
     async function guardarConFirmas() {
   const canvasEntrega = document.getElementById("firmaEntrega");
   const canvasRecibe = document.getElementById("firmaRecibe");
@@ -753,23 +745,26 @@ if (!coincidencias.empty) {
 function generarImagenResumen() {
   const resumen = document.getElementById("resumenGuardado");
 
-html2canvas(resumen, {
-  backgroundColor: "#ffffff",
-  scale: 1.5  // puedes reducirlo de 2 a 1.5 o incluso 1 si quieres menor peso
-}).then(canvas => {
-  const imgData = canvas.toDataURL("image/jpeg", 0.8); // calidad 80%, antes estaba en 1.0 (100%)
+  html2canvas(resumen, {
+    backgroundColor: "#ffffff",
+    scale: 1.5
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/jpeg", 0.8);
 
-  const link = document.createElement("a");
-  link.href = imgData;
-  link.download = "resumen.jpg";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-});
+    const link = document.createElement("a");
+    link.href = imgData;
+    link.download = "resumen.jpg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     // Mostrar automáticamente la imagen en una nueva pestaña para imprimir
     const ventana = window.open('', '_blank');
-    ventana.document.write(`<html><head><title>Resumen</title></head><body style="margin:0;"><img src="${imgData}" style="width:100%;"></body></html>`);
+    ventana.document.write(`
+      <html><head><title>Resumen</title></head>
+      <body style="margin:0;">
+        <img src="${imgData}" style="width:100%;">
+      </body></html>`);
     ventana.document.close();
     ventana.focus();
     ventana.onload = function () {
@@ -777,7 +772,6 @@ html2canvas(resumen, {
     };
   });
 }
-
 </script>
 </div> <!-- Cierra mainApp -->
 <div id="resumenGuardado" style="display:none; background:white; padding:20px; border-radius:10px; margin:10px;">
