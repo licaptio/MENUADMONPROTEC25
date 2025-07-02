@@ -201,23 +201,38 @@ body {
   <div id="seccion1">
     <h2>Registrar salida - Almacén Zapata</h2>
     <p>📌 Próximo folio: <strong id="proximoFolio">Cargando...</strong></p>
-  <form id="infoGeneral">
-    <label>Fecha:<br>
-      <input type="date" id="fecha" readonly>
-    </label><br><br>
+<form id="infoGeneral">
+  <label>Fecha:<br>
+    <input type="date" id="fecha" readonly>
+  </label><br><br>
 
-    <label>Responsable que entrega:<br>
-      <input type="text" id="entrega" required>
-    </label><br><br>
+  <label>Responsable que entrega:<br>
+    <select id="entrega" required>
+      <option value="">-- Selecciona --</option>
+      <option value="JOSE MARIA (CHEMA) LOPEZ GONZALEZ">JOSE MARIA (CHEMA) LOPEZ GONZALEZ</option>
+      <option value="ALFREDO GARCIA MEDINA">ALFREDO GARCIA MEDINA</option>
+    </select>
+  </label><br><br>
 
-    <label>Responsable que recibe:<br>
-      <input type="text" id="recibe" required>
-    </label><br><br>
+  <label>Responsable que recibe:<br>
+    <select id="recibe" required>
+      <option value="">-- Selecciona --</option>
+      <option value="LUIS MIGUEL MEDELLIN">LUIS MIGUEL MEDELLIN</option>
+      <option value="SERGIO JAVIER MARAVILLA">SERGIO JAVIER MARAVILLA</option>
+    </select>
+  </label><br><br>
 
-    <label>Destino:<br>
-      <input type="text" id="destino" required>
-    </label><br><br>
-  </form>
+  <label>Destino:<br>
+    <select id="destino" required>
+      <option value="">-- Selecciona --</option>
+      <option value="BODEGA MATRIZ MADERO 690">BODEGA MATRIZ MADERO 690</option>
+      <option value="SUCURSAL GUADALUPE B41">SUCURSAL GUADALUPE B41</option>
+      <option value="SUCURSAL MONTEMORELOS">SUCURSAL MONTEMORELOS</option>
+      <option value="SUCURSAL ALLENDE">SUCURSAL ALLENDE</option>
+    </select>
+  </label><br><br>
+</form>
+
   <button onclick="mostrarSeccion2()">Continuar ➡️</button>
 </div>
 
