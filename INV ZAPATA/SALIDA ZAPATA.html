@@ -298,6 +298,8 @@ body {
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 
   <script>
 const codigosPermitidos = [
@@ -717,6 +719,22 @@ if (!coincidencias.empty) {
     document.getElementById("seccion2").style.display = "block";
     document.getElementById("codigoProducto").focus(); // enfocar directamente
   }
+function generarImagenResumen() {
+  const resumen = document.getElementById("resumenGuardado");
+
+  html2canvas(resumen, {
+    backgroundColor: "#ffffff",
+    scale: 2
+  }).then(canvas => {
+    // Mostrar en pantalla
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const link = document.getElementById("descargarImagen");
+    link.href = imgData;
+    link.style.display = "inline";
+    alert("✅ Imagen generada. Presiona el botón para descargarla o compartir.");
+  });
+}
+
 </script>
 </div> <!-- Cierra mainApp -->
 <div id="resumenGuardado" style="display:none; background:white; padding:20px; border-radius:10px; margin:10px;">
@@ -731,7 +749,9 @@ if (!coincidencias.empty) {
   <p><strong>Firma de quien entrega:</strong><br><img id="imgFirmaEntrega" style="max-width:100%; height:auto;"></p>
   <p><strong>Firma de quien recibe:</strong><br><img id="imgFirmaRecibe" style="max-width:100%; height:auto;"></p>
   <br>
-  <button onclick="window.print()">🖨️ Imprimir</button>
+  <button onclick="generarImagenResumen()">📸 Generar imagen</button>
+<a id="descargarImagen" style="display:none;" download="resumen.jpg">📥 Descargar imagen</a>
+
   <button onclick="location.reload()">🆕 Nueva captura</button>
 </div>
 <div id="firmasOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:9999; padding:20px; overflow:auto;">
