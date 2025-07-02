@@ -184,6 +184,28 @@ body {
     width: 100%;
   }
 }
+@media (orientation: landscape) and (max-width: 900px) {
+  canvas {
+    height: 80vh !important;
+    width: 100vw !important;
+    border-radius: 8px;
+  }
+
+  #firmasOverlay {
+    padding: 10px;
+  }
+
+  #firmasOverlay h3 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  button {
+    font-size: 18px;
+    margin-top: 10px;
+    padding: 12px;
+  }
+}
 
   </style>
 </head>
@@ -572,8 +594,21 @@ function iniciarLienzo(canvas) {
 function mostrarCapturaFirmas() {
   const overlay = document.getElementById("firmasOverlay");
   overlay.style.display = "block";
+
+  document.getElementById("firmaPaso1").style.display = "block";
+  document.getElementById("firmaPaso2").style.display = "none";
+
   iniciarLienzo(document.getElementById("firmaEntrega"));
+}
+function mostrarPaso2() {
+  document.getElementById("firmaPaso1").style.display = "none";
+  document.getElementById("firmaPaso2").style.display = "block";
   iniciarLienzo(document.getElementById("firmaRecibe"));
+}
+function limpiarLienzo(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // Botón cancelar
@@ -700,15 +735,30 @@ if (!coincidencias.empty) {
   <button onclick="location.reload()">🆕 Nueva captura</button>
 </div>
 <div id="firmasOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:9999; padding:20px; overflow:auto;">
-  <h3>✍️ Firmas requeridas</h3>
-  <p>Firma de quien entrega:</p>
-  <canvas id="firmaEntrega" width="300" height="150" style="border:1px solid #ccc;"></canvas>
-  <p>Firma de quien recibe:</p>
-  <canvas id="firmaRecibe" width="300" height="150" style="border:1px solid #ccc;"></canvas>
-  <br>
-  <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
-  <button onclick="cancelarFirmas()">❌ Cancelar</button>
+
+  <div id="firmaPaso1">
+    <h3>✍️ Firma de quien entrega</h3>
+    <p style="color: #d84315; font-size: 14px; margin-bottom: 10px;">
+  📱 Sugerencia: voltea el celular para firmar más cómodamente.
+</p>
+    <canvas id="firmaEntrega" width="1000" height="400" style="border:1px solid #ccc; width:100%;"></canvas>
+    <button onclick="limpiarLienzo('firmaEntrega')">🧽 Limpiar firma</button>
+    <button onclick="mostrarPaso2()">➡️ Continuar</button>
+  </div>
+
+  <div id="firmaPaso2" style="display:none;">
+    <h3>✍️ Firma de quien recibe</h3>
+    <p style="color: #d84315; font-size: 14px; margin-bottom: 10px;">
+  📱 Sugerencia: voltea el celular para firmar más cómodamente.
+</p>
+    <canvas id="firmaRecibe" width="1000" height="400" style="border:1px solid #ccc; width:100%;"></canvas>
+    <button onclick="limpiarLienzo('firmaRecibe')">🧽 Limpiar firma</button>
+    <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
+    <button onclick="cancelarFirmas()">❌ Cancelar</button>
+  </div>
+
 </div>
+
 
 </body>
 </html>
