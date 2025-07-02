@@ -770,14 +770,14 @@ function generarImagenResumen() {
 
   <div id="firmaPaso1">
     <h3>✍️ Firma de quien entrega</h3>
-    <canvas id="firmaEntrega" width="300" height="500" style="border:1px solid #ccc; width:100%; max-width:400px; display:block; margin:auto;"></canvas>
+    <canvas id="firmaEntrega" width="300" height="150" style="border:1px solid #ccc;"></canvas>
     <button onclick="limpiarLienzo('firmaEntrega')">🧽 Limpiar firma</button>
     <button onclick="mostrarPaso2()">➡️ Continuar</button>
   </div>
 
   <div id="firmaPaso2" style="display:none;">
     <h3>✍️ Firma de quien recibe</h3>
-    <canvas id="firmaRecibe" width="300" height="500" style="border:1px solid #ccc; width:100%; max-width:400px; display:block; margin:auto;"></canvas>
+    <canvas id="firmaRecibe" width="300" height="150" style="border:1px solid #ccc;"></canvas>
     <button onclick="limpiarLienzo('firmaRecibe')">🧽 Limpiar firma</button>
     <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
     <button onclick="cancelarFirmas()">❌ Cancelar</button>
