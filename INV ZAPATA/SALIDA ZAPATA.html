@@ -342,13 +342,15 @@ buscador.addEventListener("input", () => {
   indiceSeleccionado = -1;
   const texto = buscador.value.trim().toLowerCase();
   resultados.innerHTML = "";
-  if (texto.length < 3) return;
+  if (texto.length < 2) return;
 
   productosPermitidos.forEach(producto => {
-    if (producto.concepto.toLowerCase().includes(texto)) {
+    const matchTexto = producto.concepto.toLowerCase().includes(texto);
+    const matchCodigo = producto.id.includes(texto);
+    if (matchTexto || matchCodigo) {
       const div = document.createElement("div");
       div.textContent = `${producto.concepto}`;
-      div.onclick = () => seleccionarProducto(producto);  // ✅ solo esto
+      div.onclick = () => seleccionarProducto(producto);
       resultados.appendChild(div);
     }
   });
