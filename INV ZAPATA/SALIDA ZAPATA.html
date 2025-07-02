@@ -219,7 +219,7 @@ body {
 <body>
   <div style="max-width: 480px; margin: auto;">
     <p style="text-align:center; font-size:12px; color:gray; margin-top:5px;">
-      🛠️ Modificado 02/07/2025 1305 del dia 
+      🛠️ Modificado 02/07/2025 01:29pm a ver si ya del dia 
     </p>
 <div id="loaderFolio" style="text-align: center; padding: 20px;">
   <div class="spinner"></div>
@@ -741,6 +741,8 @@ if (!coincidencias.empty) {
     document.getElementById("seccion2").style.display = "block";
     document.getElementById("codigoProducto").focus(); // enfocar directamente
   }
+</script>
+<script>
 function generarImagenResumen() {
   const resumen = document.getElementById("resumenGuardado");
 
@@ -757,7 +759,6 @@ function generarImagenResumen() {
     link.click();
     document.body.removeChild(link);
 
-    // Mostrar automáticamente la imagen en una nueva pestaña para imprimir
     const ventana = window.open('', '_blank');
     ventana.document.write(`
       <html><head><title>Resumen</title></head>
