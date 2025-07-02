@@ -221,7 +221,7 @@ body {
 <body>
   <div style="max-width: 480px; margin: auto;">
     <p style="text-align:center; font-size:12px; color:gray; margin-top:5px;">
-      🛠️ Modificado el 02/07/2025 a las 11:57am — Versión actual optimizada para firma vertical en celular
+      🛠️ Modificado el 02/07/2025 a las 12:19pm modificada la firma
     </p>
 <div id="loaderFolio" style="text-align: center; padding: 20px;">
   <div class="spinner"></div>
@@ -264,6 +264,16 @@ body {
       <option value="SUCURSAL GUADALUPE B41">SUCURSAL GUADALUPE B41</option>
       <option value="SUCURSAL MONTEMORELOS">SUCURSAL MONTEMORELOS</option>
       <option value="SUCURSAL ALLENDE">SUCURSAL ALLENDE</option>
+      <option value="SUPER TIENDAS RICO">SUPER TIENDAS RICO</option>
+      <option value="ROBERTO YADO">ROBERTO YADO</option>
+      <option value="COMERCIALIZADORA CAVAZOS">COMERCIALIZADORA CAVAZOS</option>
+      <option value="EL PARIENTE ALIMENTOS">EL PARIENTE ALIMENTOS</option>
+      <option value="LA MISION SUC DIAZ ORDAZ">LA MISION SUC DIAZ ORDAZ</option>
+      <option value="LA MISION SUC VILLEGAS">EL PARIENTE ALIMENTOS</option>
+      <option value="LA MISION SUC PETACA">EL PARIENTE ALIMENTOS</option>
+      <option value="LA MISION SUC ARBOLEDAS">EL PARIENTE ALIMENTOS</option>
+      <option value="LA MISION SUCR MORELOS">EL PARIENTE ALIMENTOS</option>
+      <option value="LA MISION SUCR ALLENDE">EL PARIENTE ALIMENTOS</option>
     </select>
   </label><br><br>
 </form>
@@ -742,17 +752,19 @@ function generarImagenResumen() {
   }).then(canvas => {
     const imgData = canvas.toDataURL("image/jpeg", 1.0);
     
-    // Crear un enlace temporal y simular el clic
-    const link = document.createElement("a");
-    link.href = imgData;
-    link.download = "resumen.jpg";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Crear una imagen automáticamente y agregarla como vista previa
+    const imgPreview = new Image();
+    imgPreview.src = imgData;
+    imgPreview.style.maxWidth = "100%";
+    imgPreview.style.marginTop = "10px";
+
+    resumen.appendChild(imgPreview);
+
+    // Oculta el botón para evitar clics innecesarios
+    const botonGenerar = document.querySelector('#resumenGuardado button[onclick="generarImagenResumen()"]');
+    if (botonGenerar) botonGenerar.style.display = "none";
   });
 }
-
-
 </script>
 </div> <!-- Cierra mainApp -->
 <div id="resumenGuardado" style="display:none; background:white; padding:20px; border-radius:10px; margin:10px;">
@@ -776,14 +788,14 @@ function generarImagenResumen() {
 
   <div id="firmaPaso1">
     <h3>✍️ Firma de quien entrega</h3>
-    <canvas id="firmaEntrega" width="300" height="150" style="border:1px solid #ccc;"></canvas>
+    <canvas id="firmaEntrega" width="300" height="100" style="border:1px solid #ccc;"></canvas>
     <button onclick="limpiarLienzo('firmaEntrega')">🧽 Limpiar firma</button>
     <button onclick="mostrarPaso2()">➡️ Continuar</button>
   </div>
 
   <div id="firmaPaso2" style="display:none;">
     <h3>✍️ Firma de quien recibe</h3>
-    <canvas id="firmaRecibe" width="300" height="150" style="border:1px solid #ccc;"></canvas>
+    <canvas id="firmaRecibe" width="300" height="100" style="border:1px solid #ccc;"></canvas>
     <button onclick="limpiarLienzo('firmaRecibe')">🧽 Limpiar firma</button>
     <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
     <button onclick="cancelarFirmas()">❌ Cancelar</button>
