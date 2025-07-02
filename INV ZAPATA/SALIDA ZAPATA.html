@@ -746,11 +746,19 @@ if (!coincidencias.empty) {
 function generarImagenResumen() {
   const resumen = document.getElementById("resumenGuardado");
 
-  html2canvas(resumen, {
-    backgroundColor: "#ffffff",
-    scale: 2
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+html2canvas(resumen, {
+  backgroundColor: "#ffffff",
+  scale: 1.5  // puedes reducirlo de 2 a 1.5 o incluso 1 si quieres menor peso
+}).then(canvas => {
+  const imgData = canvas.toDataURL("image/jpeg", 0.8); // calidad 80%, antes estaba en 1.0 (100%)
+
+  const link = document.createElement("a");
+  link.href = imgData;
+  link.download = "resumen.jpg";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
 
     // Mostrar automáticamente la imagen en una nueva pestaña para imprimir
     const ventana = window.open('', '_blank');
