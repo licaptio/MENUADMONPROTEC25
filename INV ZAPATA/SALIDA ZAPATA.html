@@ -756,22 +756,21 @@ function generarImagenResumen() {
 
     const link = document.createElement("a");
     link.href = imgData;
-    link.download = "resumen.jpg";
+    const fecha = new Date();
+const fechaStr = fecha.toISOString().split('T')[0];
+const horaStr = fecha.toTimeString().split(' ')[0].replace(/:/g, '-');
+
+const entrega = document.getElementById("entregaResumen").textContent.trim().replace(/\s+/g, '_');
+const folio = document.getElementById("folioResumen").textContent.trim().replace(/\s+/g, '_');
+
+// Ejemplo: resumen_PDDZAP-0123_CHEMA_2025-07-02_13-45-22.jpg
+const nombreArchivo = `resumen_${folio}_${entrega}_${fechaStr}_${horaStr}.jpg`;
+
+link.download = nombreArchivo;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    const ventana = window.open('', '_blank');
-    ventana.document.write(`
-      <html><head><title>Resumen</title></head>
-      <body style="margin:0;">
-        <img src="${imgData}" style="width:100%;">
-      </body></html>`);
-    ventana.document.close();
-    ventana.focus();
-    ventana.onload = function () {
-      ventana.print();
-    };
   });
 }
 </script>
