@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buscar y editar factura</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
+    input, select, textarea, button { width: 100%; margin: 10px 0; padding: 8px; }
+    .preview-img { width: 100px; margin: 5px; }
+    #result { border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+  footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    padding: 6px 12px;
+    font-size: 0.8em;
+    color: #777;
+    background: #f5f5f5;
+    border-top-left-radius: 8px;
+    box-shadow: -2px -2px 6px rgba(0,0,0,0.1);
+    z-index: 999;
+  }
+</style>
+
+</head>
+
+
+<body>
+  <h2>Buscar factura por UUID</h2>
+
+  <input type="text" id="uuidInput" placeholder="Escribe el UUID del SAT" />
+  <button onclick="buscarFactura()">Buscar</button>
+
+<div id="result" style="display:none;">
+  <h3>Editar información</h3>
+<div style="background:#eef; padding:10px; border-radius:5px; margin-bottom:10px;">
+  <p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
+  <p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
+  <p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
+  <p><strong>Folio Factura:</strong> <span id="facturaTexto"></span></p>
+</div>
+
+  <label>Factura físicamente:</label>
+  <select id="fisicaSelect">
+    <option value="SI">SI</option>
+    <option value="NO">NO</option>
+  </select>
+
+  <label>Comentario:</label>
+  <input type="text" id="comentarioInput" placeholder="Factura físicamente, pero sin comentarios" style="color: #888;" />
+
+  <label>Factura pagada:</label>
+  <p id="pagadaTexto" style="font-weight: bold; margin-bottom: 10px;"></p>
+
+  <label>Concepto:</label>
+  <p id="conceptoTexto" style="font-style: italic; background-color: #f0f0f0; padding: 8px;"></p>
+
+  <label>Fotos:</label>
+  <input type="file" id="fotoInput" multiple accept="image/*" />
+  <div id="fotosPreview"></div>
+
+  <button onclick="guardarCambios()">Guardar cambios</button>
+</div>
+
+<script>
+    const supabaseClient = window.supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    let currentId = null;
+    let currentFotos = [];
+
+async function buscarFactura() {
+  const raw = document.getElementById('uuidInput').value;
+  const uuid = raw.trim().toUpperCase().replace(/\s/g, '');
+
+  const { data, error } = await supabaseClient
+    .from('deuda_limpia_pdd')
+.select('*')
+.eq('uuid', uuid)
+.maybeSingle();  // No lanza error si no hay resultados
+
+  if (error || !data) {
+    alert('Factura no encontrada');
+    return;
+  }
+
+  currentId = data.id;
+  currentFotos = data.fotos || [];
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('fisicaSelect').value = data.factura_fisicamente || 'NO';
+
+  const comentarioField = document.getElementById('comentarioInput');
+  if (!data.comentario_factura_fisica || data.comentario_factura_fisica === 'EMPTY') {
+    comentarioField.value = '';
+    comentarioField.placeholder = 'Factura físicamente, pero sin comentarios';
+    comentarioField.style.color = '#888';
+  } else {
+    comentarioField.value = data.comentario_factura_fisica;
+    comentarioField.style.color = '#000';
+  }
+
+  document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
+  document.getElementById('conceptoTexto').innerText = data.concepto || '—';
+document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
+document.getElementById('rfcTexto').innerText = data.rfc_emisor;
+document.getElementById('razonTexto').innerText = data.razon_social_emisor;
+document.getElementById('facturaTexto').innerText = data.factura;
+
+  mostrarFotos();
+}
+
+async function actualizarFila(fisica, comentario) {
+  const { error } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .update({
+      factura_fisicamente: fisica,
+      comentario_factura_fisica: comentario,
+      fotos: currentFotos
+    })
+    .eq('id', currentId);
+
+  if (error) {
+    alert('Error al guardar');
+  } else {
+    alert('Cambios guardados');
+    mostrarFotos();
+  }
+}
+
+
+    function mostrarFotos() {
+      const contenedor = document.getElementById('fotosPreview');
+      contenedor.innerHTML = '';
+      currentFotos.forEach(foto => {
+        const img = document.createElement('img');
+        img.src = foto;
+        img.className = 'preview-img';
+        contenedor.appendChild(img);
+      });
+    }
+
+    async function guardarCambios() {
+const fisica = document.getElementById('fisicaSelect').value;
+const comentario = document.getElementById('comentarioInput').value;
+
+await actualizarFila(fisica, comentario);
+
+const nuevasFotos = document.getElementById('fotoInput').files;
+
+if (nuevasFotos.length > 0) {
+  let filesProcessed = 0;
+
+  for (let file of nuevasFotos) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      currentFotos.push(reader.result);
+      filesProcessed++;
+      if (filesProcessed === nuevasFotos.length) {
+        actualizarFila(fisica, comentario);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+} else {
+  await actualizarFila(fisica, comentario);
+}
+
+    }
+
+  </script>
+<footer>
+  v1.0 · 030725 · 08:16AM
+</footer>
+</body>
+</html>
