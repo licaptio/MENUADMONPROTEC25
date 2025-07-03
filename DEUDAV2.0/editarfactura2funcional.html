@@ -115,16 +115,52 @@
     mostrarFotos();
   }
 
-  function mostrarFotos() {
-    const contenedor = document.getElementById('fotosPreview');
-    contenedor.innerHTML = '';
-    currentFotos.forEach(foto => {
-      const img = document.createElement('img');
-      img.src = foto;
-      img.className = 'preview-img';
-      contenedor.appendChild(img);
-    });
-  }
+function mostrarFotos() {
+  const contenedor = document.getElementById('fotosPreview');
+  contenedor.innerHTML = '';
+  currentFotos.forEach((fotoUrl, index) => {
+    const div = document.createElement('div');
+    div.style.display = 'inline-block';
+    div.style.position = 'relative';
+    div.style.margin = '5px';
+
+    const img = document.createElement('img');
+    img.src = fotoUrl;
+    img.className = 'preview-img';
+
+    const btn = document.createElement('button');
+    btn.innerText = '✖';
+    btn.style.position = 'absolute';
+    btn.style.top = '0';
+    btn.style.right = '0';
+    btn.style.background = 'red';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.cursor = 'pointer';
+    btn.onclick = async () => {
+      if (confirm('¿Eliminar esta foto?')) {
+        // Eliminar visualmente y de la base
+        const fotoEliminada = currentFotos.splice(index, 1)[0];
+        await actualizarFila(
+          document.getElementById('fisicaSelect').value,
+          document.getElementById('comentarioInput').value
+        );
+
+        // Intentar borrar del bucket (si deseas)
+        const nombreArchivo = fotoEliminada.split('/').pop();
+        await supabaseClient.storage
+          .from('fotos-facturas')
+          .remove([nombreArchivo]);
+
+        mostrarFotos();
+      }
+    };
+
+    div.appendChild(img);
+    div.appendChild(btn);
+    contenedor.appendChild(div);
+  });
+}
 
   async function actualizarFila(fisica, comentario) {
     const { error } = await supabaseClient
