@@ -170,7 +170,7 @@ document.getElementById('export-img').addEventListener('click', () => {
 const tBody = tempTable.createTBody();
 filas.forEach(r => {
   const pedido = r.cells[3].querySelector('input').value.trim();
-  if (pedido !== '') {
+  if (pedido !== '' && pedido !== '0') {
     const nuevaFila = tBody.insertRow();
     const producto = r.cells[0].textContent;
     [producto, pedido].forEach((text, idx) => {
