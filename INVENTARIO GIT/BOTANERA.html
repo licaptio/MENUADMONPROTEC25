@@ -155,38 +155,60 @@ document.getElementById('export-img').addEventListener('click', () => {
   tempTable.style.margin = '1rem auto';
   tempTable.style.fontFamily = 'Arial';
 
+  // Agregar encabezado "MEGA ALIMENTOS"
+  const caption = document.createElement('caption');
+  caption.textContent = 'MEGA ALIMENTOS';
+  caption.style.fontSize = '20px';
+  caption.style.fontWeight = 'bold';
+  caption.style.padding = '8px';
+  caption.style.textAlign = 'center';
+  caption.style.color = '#333';
+  tempTable.appendChild(caption);
+
+  // Encabezado tabla
   const thead = tempTable.createTHead();
   const hRow = thead.insertRow();
-['PRODUCTO', 'PED'].forEach(text => {
-  const th = document.createElement('th');
-  th.textContent = text;
-  th.style.border = '1px solid #ccc';
-  th.style.padding = '4px 8px';
-  th.style.background = '#e6e6e6';
-  th.style.fontSize = '14px';
-  hRow.appendChild(th);
-});
+  ['PRODUCTO', 'PED'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    th.style.border = '1px solid #ccc';
+    th.style.padding = '4px 8px';
+    th.style.background = '#e6e6e6';
+    th.style.fontSize = '14px';
+    hRow.appendChild(th);
+  });
 
-const tBody = tempTable.createTBody();
-filas.forEach(r => {
-  const pedido = r.cells[3].querySelector('input').value.trim();
-  if (pedido !== '' && pedido !== '0') {
-    const nuevaFila = tBody.insertRow();
-    const producto = r.cells[0].textContent;
-    [producto, pedido].forEach((text, idx) => {
-      const td = document.createElement('td');
-      td.textContent = text;
-      td.style.border = '1px solid #ccc';
-      td.style.padding = '2px 6px';
-      td.style.fontSize = '14px';
-      if (idx === 0) {
-        td.style.maxWidth = '280px';
-        td.style.whiteSpace = 'nowrap';
-        td.style.overflow = 'hidden';
-      }
-      nuevaFila.appendChild(td);
-    });
-  }
+  // Filas con PED != 0 o vacío
+  const tBody = tempTable.createTBody();
+  filas.forEach(r => {
+    const pedido = r.cells[3].querySelector('input').value.trim();
+    if (pedido !== '' && pedido !== '0') {
+      const nuevaFila = tBody.insertRow();
+      const producto = r.cells[0].textContent;
+      [producto, pedido].forEach((text, idx) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        td.style.border = '1px solid #ccc';
+        td.style.padding = '2px 6px';
+        td.style.fontSize = '14px';
+        if (idx === 0) {
+          td.style.maxWidth = '280px';
+          td.style.whiteSpace = 'nowrap';
+          td.style.overflow = 'hidden';
+        }
+        nuevaFila.appendChild(td);
+      });
+    }
+  });
+
+  document.body.appendChild(tempTable);
+  html2canvas(tempTable).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'pedido_mega.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+    tempTable.remove();
+  });
 });
 
 
