@@ -66,116 +66,121 @@
 </div>
 
 <script>
-    const supabaseClient = window.supabase.createClient(
-      'https://cvpbtjlupswbyxenugpz.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-    );
+  const supabaseClient = window.supabase.createClient(
+    'https://cvpbtjlupswbyxenugpz.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+  );
 
-    let currentId = null;
-    let currentFotos = [];
+  let currentId = null;
+  let currentFotos = [];
 
-async function buscarFactura() {
-  const raw = document.getElementById('uuidInput').value;
-  const uuid = raw.trim().toUpperCase().replace(/\s/g, '');
+  async function buscarFactura() {
+    const raw = document.getElementById('uuidInput').value;
+    const uuid = raw.trim().toUpperCase().replace(/\s/g, '');
 
-  const { data, error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-.select('*')
-.eq('uuid', uuid)
-.maybeSingle();  // No lanza error si no hay resultados
+    const { data, error } = await supabaseClient
+      .from('deuda_limpia_pdd')
+      .select('*')
+      .eq('uuid', uuid)
+      .maybeSingle();
 
-  if (error || !data) {
-    alert('Factura no encontrada');
-    return;
-  }
+    if (error || !data) {
+      alert('Factura no encontrada');
+      return;
+    }
 
-  currentId = data.id;
-  currentFotos = data.fotos || [];
+    currentId = data.id;
+    currentFotos = data.fotos || [];
 
-  document.getElementById('result').style.display = 'block';
-  document.getElementById('fisicaSelect').value = data.factura_fisicamente || 'NO';
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('fisicaSelect').value = data.factura_fisicamente || 'NO';
 
-  const comentarioField = document.getElementById('comentarioInput');
-  if (!data.comentario_factura_fisica || data.comentario_factura_fisica === 'EMPTY') {
-    comentarioField.value = '';
-    comentarioField.placeholder = 'Factura físicamente, pero sin comentarios';
-    comentarioField.style.color = '#888';
-  } else {
-    comentarioField.value = data.comentario_factura_fisica;
-    comentarioField.style.color = '#000';
-  }
+    const comentarioField = document.getElementById('comentarioInput');
+    if (!data.comentario_factura_fisica || data.comentario_factura_fisica === 'EMPTY') {
+      comentarioField.value = '';
+      comentarioField.placeholder = 'Factura físicamente, pero sin comentarios';
+      comentarioField.style.color = '#888';
+    } else {
+      comentarioField.value = data.comentario_factura_fisica;
+      comentarioField.style.color = '#000';
+    }
 
-  document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
-  document.getElementById('conceptoTexto').innerText = data.concepto || '—';
-document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
-document.getElementById('rfcTexto').innerText = data.rfc_emisor;
-document.getElementById('razonTexto').innerText = data.razon_social_emisor;
-document.getElementById('facturaTexto').innerText = data.factura;
+    document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
+    document.getElementById('conceptoTexto').innerText = data.concepto || '—';
+    document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
+    document.getElementById('rfcTexto').innerText = data.rfc_emisor;
+    document.getElementById('razonTexto').innerText = data.razon_social_emisor;
+    document.getElementById('facturaTexto').innerText = data.factura;
 
-  mostrarFotos();
-}
-
-async function actualizarFila(fisica, comentario) {
-  const { error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({
-      factura_fisicamente: fisica,
-      comentario_factura_fisica: comentario,
-      fotos: currentFotos
-    })
-    .eq('id', currentId);
-
-  if (error) {
-    alert('Error al guardar');
-  } else {
-    alert('Cambios guardados');
     mostrarFotos();
   }
-}
 
-
-    function mostrarFotos() {
-      const contenedor = document.getElementById('fotosPreview');
-      contenedor.innerHTML = '';
-      currentFotos.forEach(foto => {
-        const img = document.createElement('img');
-        img.src = foto;
-        img.className = 'preview-img';
-        contenedor.appendChild(img);
-      });
-    }
-
-    async function guardarCambios() {
-const fisica = document.getElementById('fisicaSelect').value;
-const comentario = document.getElementById('comentarioInput').value;
-
-await actualizarFila(fisica, comentario);
-
-const nuevasFotos = document.getElementById('fotoInput').files;
-
-if (nuevasFotos.length > 0) {
-  let filesProcessed = 0;
-
-  for (let file of nuevasFotos) {
-    const reader = new FileReader();
-    reader.onload = function () {
-      currentFotos.push(reader.result);
-      filesProcessed++;
-      if (filesProcessed === nuevasFotos.length) {
-        actualizarFila(fisica, comentario);
-      }
-    };
-    reader.readAsDataURL(file);
+  function mostrarFotos() {
+    const contenedor = document.getElementById('fotosPreview');
+    contenedor.innerHTML = '';
+    currentFotos.forEach(foto => {
+      const img = document.createElement('img');
+      img.src = foto;
+      img.className = 'preview-img';
+      contenedor.appendChild(img);
+    });
   }
-} else {
-  await actualizarFila(fisica, comentario);
-}
 
+  async function actualizarFila(fisica, comentario) {
+    const { error } = await supabaseClient
+      .from('deuda_limpia_pdd')
+      .update({
+        factura_fisicamente: fisica,
+        comentario_factura_fisica: comentario,
+        fotos: currentFotos
+      })
+      .eq('id', currentId);
+
+    if (error) {
+      alert('Error al guardar');
+    } else {
+      alert('Cambios guardados');
+      mostrarFotos();
+    }
+  }
+
+  async function guardarCambios() {
+    const fisica = document.getElementById('fisicaSelect').value;
+    const comentario = document.getElementById('comentarioInput').value;
+    const nuevasFotos = document.getElementById('fotoInput').files;
+
+    if (nuevasFotos.length > 0) {
+      for (let file of nuevasFotos) {
+        const nombreArchivo = `${currentId}_${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from('fotos-facturas')  // nombre exacto del bucket
+          .upload(nombreArchivo, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error(uploadError);
+          alert(`Error al subir ${file.name}`);
+          continue;
+        }
+
+        const { data: publicUrlData } = supabaseClient
+          .storage
+          .from('fotos-facturas')
+          .getPublicUrl(nombreArchivo);
+
+        if (publicUrlData?.publicUrl) {
+          currentFotos.push(publicUrlData.publicUrl);
+        }
+      }
     }
 
-  </script>
+    await actualizarFila(fisica, comentario);
+  }
+</script>
 <footer>
-  v1.0 · 030725 · 08:16AM
+  v1.0 · 030725 · 17:31
 </footer>
 </body>
 </html>
