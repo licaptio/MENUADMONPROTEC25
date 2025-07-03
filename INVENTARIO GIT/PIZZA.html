@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedido Cajas de Pizza</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f8f8f8; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #ddd; }
+    input[type=number] { width: 60px; text-align: right; }
+    .yellow { background-color: yellow; }
+    button { margin: 10px 5px; padding: 10px 15px; }
+  </style>
+</head>
+<body>
+
+<h2>Pedido de Cajas de Pizza</h2>
+
+<table id="tabla">
+  <thead>
+    <tr>
+      <th>CAJAS DE PIZZAS</th>
+      <th>INV</th>
+      <th>STOCK</th>
+      <th class="yellow">PEDIDO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>CAJAS DE PIZZA 8</td><td><input type="number"></td><td>100</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 10</td><td><input type="number"></td><td>150</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 12</td><td><input type="number"></td><td>200</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 14</td><td><input type="number"></td><td>250</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 16</td><td><input type="number"></td><td>150</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 18</td><td><input type="number"></td><td>100</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 10 BLANCO</td><td><input type="number"></td><td>50</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 12 BLANCO</td><td><input type="number"></td><td>50</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 14 BLANCO</td><td><input type="number"></td><td>50</td><td><input type="number" class="yellow"></td></tr>
+    <tr><td>CAJAS DE PIZZA 16 BLANCO</td><td><input type="number"></td><td>50</td><td><input type="number" class="yellow"></td></tr>
+  </tbody>
+</table>
+
+<button onclick="limpiar()">Limpiar</button>
+<button onclick="generarImagen()">Crear imagen del pedido</button>
+
+<!-- Librería html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+  function limpiar() {
+    document.querySelectorAll('input[type=number]').forEach(input => input.value = '');
+  }
+
+  // Navegación entre celdas editable con flechas y Enter
+  document.addEventListener('keydown', function (e) {
+    const inputs = Array.from(document.querySelectorAll('input[type=number]'));
+    const index = inputs.indexOf(document.activeElement);
+    if (index === -1) return;
+
+    const cols = 2;
+    let newIndex = index;
+
+    switch (e.key) {
+      case 'ArrowRight':
+        newIndex = index + 1;
+        break;
+      case 'ArrowLeft':
+        newIndex = index - 1;
+        break;
+      case 'ArrowDown':
+      case 'Enter':
+        e.preventDefault();
+        newIndex = index + cols;
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        newIndex = index - cols;
+        break;
+    }
+
+    if (inputs[newIndex]) {
+      inputs[newIndex].focus();
+    }
+  });
+
+  // Generar imagen SOLO de CAJAS DE PIZZAS y PEDIDO
+  function generarImagen() {
+    const tabla = document.getElementById('tabla');
+    const rows = Array.from(tabla.rows).slice(1); // Omitir encabezado
+    const pedidoFilas = rows.filter(row => {
+      const pedido = row.cells[3].querySelector('input').value;
+      return pedido && Number(pedido) > 0;
+    });
+
+    if (pedidoFilas.length === 0) {
+      alert('No hay pedidos para mostrar.');
+      return;
+    }
+
+    const tablaTemp = document.createElement('table');
+    tablaTemp.style.borderCollapse = 'collapse';
+    tablaTemp.style.fontFamily = 'Arial';
+    tablaTemp.style.fontSize = '14px';
+    tablaTemp.innerHTML = `
+      <thead><tr>
+        <th>CAJAS DE PIZZAS</th><th>PEDIDO</th>
+      </tr></thead><tbody></tbody>
+    `;
+
+    const tbody = tablaTemp.querySelector('tbody');
+    pedidoFilas.forEach(row => {
+      const desc = row.cells[0].textContent;
+      const pedido = row.cells[3].querySelector('input').value;
+
+      const newRow = document.createElement('tr');
+      const descCell = document.createElement('td');
+      descCell.textContent = desc;
+
+      const pedidoCell = document.createElement('td');
+      pedidoCell.textContent = pedido;
+
+      newRow.appendChild(descCell);
+      newRow.appendChild(pedidoCell);
+      tbody.appendChild(newRow);
+    });
+
+    document.body.appendChild(tablaTemp);
+    html2canvas(tablaTemp).then(canvas => {
+      const img = canvas.toDataURL("image/jpeg");
+      const link = document.createElement('a');
+      link.href = img;
+      link.download = 'pedido_cajas_pizza.jpg';
+      link.click();
+      tablaTemp.remove();
+    });
+  }
+</script>
+
+</body>
+</html>
