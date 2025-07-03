@@ -49,9 +49,9 @@
           const receptor = xml.getElementsByTagNameNS(cfdiNS, "Receptor")[0];
 
           const tipo = comprobante?.getAttribute("TipoDeComprobante");
-          const uuid = timbre?.getAttribute("UUID");
-          const receptorRFC = receptor?.getAttribute("Rfc");
-          const emisorRFC = emisor?.getAttribute("Rfc");
+          const uuid = timbre?.getAttribute("UUID")?.toUpperCase().trim();
+          const receptorRFC = receptor?.getAttribute("Rfc")?.toUpperCase().trim();
+          const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim();
           const razonSocial = emisor?.getAttribute("Nombre");
           const folio = comprobante?.getAttribute("Folio") || '';
           const serie = comprobante?.getAttribute("Serie") || '';
