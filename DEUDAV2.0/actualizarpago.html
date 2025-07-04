@@ -183,7 +183,7 @@
       const filas = datosFiltrados.map(d => `
         <tr>
           <td>${formatearFecha(d.fecha)}</td>
-          <td>${d.uuid}</td>
+          <td><a href="editarfactura.html?uuid=${encodeURIComponent(d.uuid)}" target="_blank">${d.uuid}</a></td>
           <td>${d.razon_social_emisor}</td>
           <td>${d.factura}</td>
           <td>${formato.format(d.total || 0)}</td>
