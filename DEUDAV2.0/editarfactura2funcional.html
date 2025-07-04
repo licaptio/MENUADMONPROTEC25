@@ -220,6 +220,18 @@ function mostrarFotos() {
 
     await actualizarFila(fisica, comentario);
   }
+// Leer UUID automáticamente desde la URL si viene como parámetro
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const uuid = params.get('uuid');
+
+  if (uuid) {
+    const input = document.getElementById('uuidInput');
+    input.value = uuid;
+    buscarFactura(); // Ya tienes esta función, se llama al cargar
+  }
+});
+
 </script>
 <footer>
   v1.0 · 030725 · 17:40
