@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Escáner QR CFDI SAT</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
+    input, select, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
+    #result { background: #eef; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
+    #uuidDetectado { font-weight: bold; color: #003366; margin-top: 10px; }
+    footer {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      padding: 6px 12px;
+      font-size: 0.8em;
+      color: #777;
+      background: #f5f5f5;
+      border-top-left-radius: 8px;
+      box-shadow: -2px -2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h2>Escanear CFDI con QR (SAT)</h2>
+
+  <input type="text" id="qrInput" placeholder="Escanea aquí con Eyoyo..." oninput="procesarQR()" autofocus />
+  <div id="uuidDetectado"></div>
+
+  <div id="result">
+    <h3>Factura encontrada</h3>
+    <p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
+    <p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
+    <p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
+    <p><strong>Folio Factura:</strong> <span id="facturaTexto"></span></p>
+    <p><strong>Total:</strong> <span id="totalTexto"></span></p>
+    <p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
+  </div>
+
+<script>
+  const supabaseClient = window.supabase.createClient(
+    'https://cvpbtjlupswbyxenugpz.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+  );
+
+  async function buscarPorUUID(uuid) {
+    const { data, error } = await supabaseClient
+      .from('deuda_limpia_pdd')
+      .select('*')
+      .eq('uuid', uuid)
+      .maybeSingle();
+
+    if (error || !data) {
+      alert('Factura no encontrada');
+      return;
+    }
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
+    document.getElementById('rfcTexto').innerText = data.rfc_emisor;
+    document.getElementById('razonTexto').innerText = data.razon_social_emisor;
+    document.getElementById('facturaTexto').innerText = data.factura;
+    document.getElementById('totalTexto').innerText = parseFloat(data.total).toFixed(2);
+    document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
+  }
+
+  function procesarQR() {
+    const raw = document.getElementById('qrInput').value.trim();
+
+    const match = raw.match(/id\)([A-F0-9]{8}\/[A-F0-9]{4}\/[A-F0-9]{4}\/[A-F0-9]{4}\/[A-F0-9]{12})/i);
+
+    if (match && match[1]) {
+      const uuid = match[1].replace(/\//g, '-').toUpperCase();
+
+      document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
+      document.getElementById('qrInput').value = '';
+      buscarPorUUID(uuid);
+    } else {
+      document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
+    }
+  }
+</script>
+
+<footer>
+  v1.0 · Escáner QR SAT · 04 Jul 2025
+</footer>
+</body>
+</html>
