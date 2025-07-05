@@ -1,104 +1,340 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MENU ADMINISTRADOR PROTEC 25</title>
+  <meta charset="UTF-8">
+  <title>Calendario de Recordatorios</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2fef2;
-      color: #034503;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-      margin: 0;
-    }
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+
+/* Panel izquierdo */
+#panel-izquierdo {
+  width: 25%;
+  background-color: #f8f8f8;
+  border-right: 1px solid #ccc;
+  padding: 1em;
+  overflow-y: auto;
+}
+
+/* Panel central */
+#panel-central {
+  width: 50%;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Panel derecho */
+#panel-derecho {
+  width: 25%;
+  background-color: #f0f0f0;
+  border-left: 1px solid #ccc;
+  padding: 1em;
+  overflow-y: auto;
+}
+
+#links-derechos a {
+  display: block;
+  margin: 0.5em 0;
+  padding: 0.5em;
+  background-color: #2196f3;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  text-align: center;
+}
+
 
     h1 {
-      font-size: 2em;
-      margin-bottom: 30px;
       text-align: center;
     }
 
-    .botones {
+    table {
+      border-collapse: collapse;
+      margin: auto;
+    }
+
+    td, th {
+      padding: 10px;
+      border: 1px solid #ccc;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    .hoy {
+      background-color: #b3e5fc;
+    }
+
+    .navegacion {
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
-      gap: 15px;
-      max-width: 1000px;
-      width: 100%;
+      gap: 10px;
+      margin-bottom: 1em;
     }
 
-    .boton {
-      flex: 1 1 calc(25% - 20px);
-      min-width: 180px;
-      padding: 15px;
+    #links {
+      margin-top: 2em;
       text-align: center;
-      border-radius: 10px;
-      font-size: 1em;
+    }
+
+    #links a {
+      display: inline-block;
+      margin: 0.5em;
+      padding: 0.5em 1em;
+      background-color: #2196f3;
       color: white;
       text-decoration: none;
-      transition: background-color 0.3s;
-      box-sizing: border-box;
+      border-radius: 5px;
     }
+  td.seleccionado {
+  outline: 2px solid #1976d2;
+  outline-offset: -2px;
+  background-color: #bbdefb;
+}
+#links-izquierdos a {
+  display: block;
+  margin: 0.5em 0;
+  padding: 0.4em;
+  background-color: #1976d2;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-align: center;
+}
 
-    .notas { background-color: #2d882d; }
-    .notas:hover { background-color: #1c601c; }
-
-    .pedidos { background-color: #1e88e5; }
-    .pedidos:hover { background-color: #1565c0; }
-
-    .deuda { background-color: #8e24aa; }
-    .deuda:hover { background-color: #6a1b9a; }
-
-    .inventarios { background-color: #fbc02d; color: #000; }
-    .inventarios:hover { background-color: #f9a825; }
-
-    .pagos { background-color: #c62828; }
-    .pagos:hover { background-color: #a91e1e; }
   </style>
 </head>
 <body>
+  <div style="display: flex; width: 100%; height: 100vh;">
 
-<div id="lockscreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#f2fef2; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999;">
-  <h2>🔒 Ingrese PIN de acceso</h2>
-  <input type="password" id="pinInput" placeholder="PIN" style="font-size:1.5em; padding:10px; text-align:center;" maxlength="6">
-  <button onclick="checkPIN()" style="margin-top:15px; padding:10px 20px; font-size:1.2em;">Acceder</button>
-  <p id="pinError" style="color:red; margin-top:10px; display:none;">PIN incorrecto</p>
-</div>
+    <!-- Panel izquierdo: Recordatorios -->
+    <div id="panel-izquierdo">
+      <h3>📅 Recordatorios del día</h3>
+      <div id="lista-recordatorios">Selecciona un día</div>
+    </div>
 
-<h1>MENU ADMINISTRADOR PROTEC 25</h1>
+    <!-- Panel central: Calendario -->
+    <div id="panel-central">
+      <div class="navegacion">
+        <button onclick="cambiarMes(-1)">⬅️</button>
+        <h1 id="mes-anio"></h1>
+        <button onclick="cambiarMes(1)">➡️</button>
+      </div>
+      <table id="calendario"></table>
+      <div id="links">
+        <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
+        <a href="ver-todo.html">📋 Ver todos</a>
+      </div>
+    </div>
 
-<div class="botones">
-  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="boton notas">LIBRETA NOTAS</a>
-  <a href="https://licaptio.github.io/PEDIDOAZUL/" target="_blank" class="boton pedidos">DIARIO PEDIDOS</a>
-  <a href="https://licaptio.github.io/VEROEDITFACT/" target="_blank" class="boton deuda">CONSULTA FACTURA VERO</a>
-  <a href="https://licaptio.github.io/DEUDAMENU/" target="_blank" class="boton deuda">📊 DEUDA PDD</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="boton inventarios">INVENTARIOS PDD</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/AUDITORIA%20DE%20PRECIOS/TAURO/tauro.html" target="_blank" class="boton pedidos">AUDITORIA PRECIO TAURO</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="boton pagos">💼 DEUDA VERSION 2x</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV ZAPATA/index.html" target="_blank" class="boton pedidos">MONITOR ALMACEN ZAPATA</a>
-</div>
+    <!-- Panel derecho: Accesos rápidos -->
+    <div id="panel-derecho">
+      <h3>🔗 Accesos rápidos</h3>
+      <div id="links-derechos">
+        <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
+        <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
+        <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
+        <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
+      </div>
+    </div>
 
-<script>
-  function checkPIN() {
-    const correctPIN = "1982";
-    const input = document.getElementById("pinInput").value;
-    const errorMsg = document.getElementById("pinError");
+  </div>
+</body>
 
-    if (input === correctPIN) {
-      document.getElementById("lockscreen").style.display = "none";
-    } else {
-      errorMsg.style.display = "block";
+
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+const supabase = createClient(
+  'https://cvpbtjlupswbyxenugpz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+);
+
+
+const calendario = document.getElementById("calendario");
+const mesAnio = document.getElementById("mes-anio");
+const lista = document.getElementById("lista-recordatorios");
+let fechaActual = new Date();
+let diasConRecordatorios = new Set();
+let celdaSeleccionada = null;
+
+(async () => {
+  await cargarCalendario(fechaActual);
+})();
+
+window.cambiarMes = function(direccion) {
+  fechaActual.setMonth(fechaActual.getMonth() + direccion);
+  cargarCalendario(fechaActual);
+}
+
+async function obtenerFechasConRecordatorios(mes, anio) {
+  diasConRecordatorios.clear();
+  const inicio = `${anio}-${String(mes+1).padStart(2, '0')}-01`;
+  const fin = `${anio}-${String(mes+1).padStart(2, '0')}-31`;
+
+  const { data } = await supabase
+    .from("recordatorios")
+    .select("fecha")
+    .gte("fecha", inicio)
+    .lte("fecha", fin);
+
+  if (data) data.forEach(r => diasConRecordatorios.add(r.fecha));
+}
+
+async function cargarCalendario(fecha) {
+  const mes = fecha.getMonth();
+  const anio = fecha.getFullYear();
+  await obtenerFechasConRecordatorios(mes, anio);
+  mesAnio.textContent = `${fecha.toLocaleString('es-MX', { month: 'long' })} ${anio}`;
+
+  const primerDia = new Date(anio, mes, 1).getDay();
+  const diasDelMes = new Date(anio, mes + 1, 0).getDate();
+  const hoy = new Date();
+
+  let html = "<tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr>";
+  let dia = 1;
+  let diaSemana = (primerDia + 6) % 7;
+
+  html += "<tr>";
+  for (let i = 0; i < diaSemana; i++) html += "<td></td>";
+
+  while (dia <= diasDelMes) {
+    if (diaSemana === 7) {
+      html += "</tr><tr>";
+      diaSemana = 0;
     }
+
+    const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const esHoy = hoy.getDate() === dia && hoy.getMonth() === mes && hoy.getFullYear() === anio;
+
+    let clase = esHoy ? "hoy" : "";
+    let contenido = `${dia}`;
+    const fechaCompleta = new Date(fechaStr);
+    const esPasado = fechaCompleta < new Date(new Date().setHours(0, 0, 0, 0));
+
+    if (esPasado && !esHoy) {
+      contenido = "❌";
+    } else if (diasConRecordatorios.has(fechaStr)) {
+      contenido += "<br><span style='font-size:10px; color:green;'>•</span>";
+    }
+
+    html += `<td class="${clase}" data-fecha="${fechaStr}" onclick="mostrarRecordatorios('${fechaStr}', this)">${contenido}</td>`;
+
+    dia++;
+    diaSemana++;
+  }
+  while (diaSemana < 7) html += "<td></td>", diaSemana++;
+  html += "</tr>";
+
+  calendario.innerHTML = html;
+
+const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+const celdas = calendario.querySelectorAll("td[data-fecha]");
+
+celdas.forEach(celda => {
+  if (celda.dataset.fecha === hoyStr) {
+    if (celdaSeleccionada) {
+      celdaSeleccionada.classList.remove("seleccionado");
+    }
+    celda.classList.add("seleccionado");
+    celdaSeleccionada = celda;
+    mostrarRecordatorios(hoyStr, celda);
+  }
+});
+
+}
+
+window.mostrarRecordatorios = async function(fecha, celda = null) {
+  if (celdaSeleccionada) {
+    celdaSeleccionada.classList.remove("seleccionado");
+  }
+  if (celda) {
+    celda.classList.add("seleccionado");
+    celdaSeleccionada = celda;
   }
 
-  document.addEventListener("keydown", function(event) {
-    if (event.key === "Enter") checkPIN();
-  });
-</script>
+  lista.innerHTML = "⏳ Buscando...";
+  const { data, error } = await supabase
+    .from("recordatorios")
+    .select("mensaje, hora, atendido") // ✅ importante
+    .eq("fecha", fecha)
+    .order("hora", { ascending: true });
 
+  if (error) return lista.innerHTML = "❌ Error al cargar.";
+  if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
+
+  lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, index) =>
+    `<li>
+      ${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}
+      ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${fecha}', ${index})">✅</button>`}
+    </li>`
+  ).join("") + "</ul>";
+
+  const noAtendidos = data.filter(r => !r.atendido);
+  if (noAtendidos.length) {
+    const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
+    enviarTelegram(`📅 Recordatorios del ${fecha}:\n` + resumen);
+  }
+}
+window.marcarAtendido = async function(fecha, index) {
+  const { data, error } = await supabase
+    .from("recordatorios")
+    .select("id") // o el identificador correcto
+    .eq("fecha", fecha)
+    .eq("atendido", false)
+    .order("hora", { ascending: true });
+
+  if (data && data[index]) {
+    const id = data[index].id;
+    const { error: updateError } = await supabase
+      .from("recordatorios")
+      .update({ atendido: true })
+      .eq("id", id);
+
+    if (!updateError) {
+      mostrarRecordatorios(fecha, celdaSeleccionada);
+    }
+  }
+}
+
+function enviarTelegram(mensaje) {
+  const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
+  const chatId = "6617988297";
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: mensaje
+    })
+  }).then(res => res.json())
+    .then(data => console.log("Telegram OK:", data))
+    .catch(err => console.error("Error Telegram:", err));
+}
+
+
+</script>
 </body>
 </html>
