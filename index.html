@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <meta charset="UTF-8">
   <title>Calendario de Recordatorios</title>
   <style>
@@ -117,6 +119,35 @@ body {
   border-radius: 4px;
   font-size: 0.9em;
   text-align: center;
+}
+/* Adaptar a celular */
+@media (max-width: 768px) {
+  body > div {
+    flex-direction: column;
+  }
+
+  #panel-izquierdo, #panel-central, #panel-derecho {
+    width: 100%;
+    padding: 10px;
+    border: none;
+  }
+
+  #panel-izquierdo, #panel-derecho {
+    background-color: #f8f8f8;
+  }
+
+  #panel-central {
+    order: -1; /* Calendario arriba */
+  }
+
+  .navegacion {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  table {
+    width: 100%;
+  }
 }
 
   </style>
@@ -273,10 +304,11 @@ window.mostrarRecordatorios = async function(fecha, celda = null) {
 
   lista.innerHTML = "⏳ Buscando...";
   const { data, error } = await supabase
-    .from("recordatorios")
-    .select("mensaje, hora, atendido") // ✅ importante
-    .eq("fecha", fecha)
-    .order("hora", { ascending: true });
+  .from("recordatorios")
+  .select("id, mensaje, hora, atendido")
+  .eq("fecha", fecha)
+  .order("hora", { ascending: true });
+
 
   if (error) return lista.innerHTML = "❌ Error al cargar.";
   if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
@@ -284,7 +316,7 @@ window.mostrarRecordatorios = async function(fecha, celda = null) {
   lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, index) =>
     `<li>
       ${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}
-      ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${fecha}', ${index})">✅</button>`}
+      ${r.atendido ? "✅" : `<button onclick="marcarAtendido(${r.id}, '${fecha}')">✅</button>`}
     </li>`
   ).join("") + "</ul>";
 
@@ -294,24 +326,14 @@ window.mostrarRecordatorios = async function(fecha, celda = null) {
     enviarTelegram(`📅 Recordatorios del ${fecha}:\n` + resumen);
   }
 }
-window.marcarAtendido = async function(fecha, index) {
-  const { data, error } = await supabase
+window.marcarAtendido = async function(id, fecha) {
+  const { error } = await supabase
     .from("recordatorios")
-    .select("id") // o el identificador correcto
-    .eq("fecha", fecha)
-    .eq("atendido", false)
-    .order("hora", { ascending: true });
+    .update({ atendido: true })
+    .eq("id", id);
 
-  if (data && data[index]) {
-    const id = data[index].id;
-    const { error: updateError } = await supabase
-      .from("recordatorios")
-      .update({ atendido: true })
-      .eq("id", id);
-
-    if (!updateError) {
-      mostrarRecordatorios(fecha, celdaSeleccionada);
-    }
+  if (!error) {
+    mostrarRecordatorios(fecha, celdaSeleccionada);
   }
 }
 
