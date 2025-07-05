@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nuevo Recordatorio</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 400px;
+      margin: auto;
+      padding-top: 40px;
+    }
+    h2 {
+      text-align: center;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 16px;
+    }
+  textarea {
+  height: 150px; /* Ajusta según quieras más o menos altura */
+  resize: vertical;
+  font-size: 16px;
+  padding: 10px;
+  line-height: 1.5;
+}
+button:first-of-type {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:first-of-type:hover {
+  background-color: #0056b3;
+}
+button:last-of-type {
+  background-color: #e9e9e9;
+  border: 1px solid #ccc;
+  color: black;
+}
+body {
+  font-family: sans-serif;
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+  </style>
+</head>
+<body>
+  <h2>Agregar Recordatorio</h2>
+
+  <label>Fecha:</label>
+  <input type="date" id="fecha" required />
+
+  <label>Hora:</label>
+  <input type="text" id="hora" placeholder="Ej: 08:30 o 17:45" pattern="^([01]\d|2[0-3]):([0-5]\d)$" required />
+<small style="color: gray;">Formato 24h (HH:MM)</small>
+
+
+  <label>Mensaje:</label>
+  <textarea id="mensaje" placeholder="¿Qué quieres recordar?" required></textarea>
+
+  <button onclick="guardar()">Guardar</button>
+  <button onclick="window.location.href='index.html'">Cancelar</button>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    window.guardar = async function () {
+      const fecha = document.getElementById("fecha").value;
+      const hora = document.getElementById("hora").value;
+      const horaValida = /^([01]\d|2[0-3]):([0-5]\d)$/.test(hora);
+if (!horaValida) {
+  alert("Por favor ingresa una hora válida en formato 24 hrs (ej. 14:30).");
+  return;
+}
+
+      const mensaje = document.getElementById("mensaje").value;
+
+      if (!fecha || !mensaje) {
+        alert("Por favor completa todos los campos obligatorios.");
+        return;
+      }
+
+      const data = {
+        fecha,
+        hora,
+        mensaje,
+        enviado: false
+      };
+
+      const { error } = await supabase.from("recordatorios").insert(data);
+
+      if (error) {
+        alert("Error al guardar: " + error.message);
+      } else {
+        alert("✅ Recordatorio guardado");
+        window.location.href = "index.html";
+      }
+    };
+  </script>
+
+</body>
+</html>
