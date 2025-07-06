@@ -115,17 +115,25 @@ if (!horaValida) {
         enviado: false
       };
 
-      let error;
+let resultado;
 
 if (recordatorioId) {
-  ({ error } = await supabase
+  resultado = await supabase
     .from("recordatorios")
     .update(data)
-    .eq("id", recordatorioId));
+    .eq("id", recordatorioId);
 } else {
-  ({ error } = await supabase.from("recordatorios").insert(data));
+  resultado = await supabase
+    .from("recordatorios")
+    .insert(data);
 }
 
+if (resultado.error) {
+  alert("Error al guardar: " + resultado.error.message);
+} else {
+  alert("✅ Recordatorio guardado");
+  window.location.href = "index.html";
+}
 
       if (error) {
         alert("Error al guardar: " + error.message);
