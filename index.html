@@ -93,6 +93,9 @@
 <div id="recordatorios-container">
   <h3>📅 Recordatorios del día</h3>
   <input type="text" id="busqueda" placeholder="Buscar palabra clave..." oninput="filtrarLista()">
+  <button onclick="enviarRecordatoriosManualmente()" style="margin-top: 8px;">
+  📤 Enviar recordatorios del día a Telegram
+</button>
   <div id="lista-recordatorios">Selecciona un día</div>
 </div>
 
@@ -122,6 +125,7 @@
   let diasConRecordatorios = new Set();
   let celdaSeleccionada = null;
   let recordatoriosDelDia = []; // Para guardar la lista sin filtrar
+  let recordatoriosNotificados = new Set(); // Para evitar duplicados en Telegram
 
   (async () => {
     await cargarCalendario(fechaActual);
@@ -211,12 +215,7 @@ lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
     <button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
   </li>`
 ).join("") + "</ul>";
-    const noAtendidos = data.filter(r => !r.atendido);
-    if (noAtendidos.length) {
-      const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
-      enviarTelegram(`📅 Recordatorios del ${fecha}:\n` + resumen);
-    }
-  }
+verificarVencimientos(); // Ejecuta una revisión inmediata de vencidos
 
 window.marcarAtendido = async function(id, fecha) {
   await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
@@ -243,6 +242,7 @@ window.marcarAtendido = async function(id, fecha) {
   }
   actualizarFechaHora();
   setInterval(actualizarFechaHora, 1000);
+setInterval(verificarVencimientos, 60000); // Ejecuta cada 60 segundos    
 window.filtrarLista = function() {
   const palabra = document.getElementById("busqueda").value.toLowerCase();
   const fecha = lista.querySelector("h4")?.textContent || "";
@@ -269,6 +269,39 @@ window.eliminarRecordatorio = async function(id, fecha) {
   if (!confirmar) return;
   await supabase.from("recordatorios").delete().eq("id", id);
   if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
+window.enviarRecordatoriosManualmente = function () {
+  if (!recordatoriosDelDia.length) {
+    alert("No hay recordatorios cargados para enviar.");
+    return;
+  }
+
+  const fecha = lista.querySelector("h4")?.textContent || "Sin fecha";
+  const resumen = recordatoriosDelDia.map(r =>
+    `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`
+  ).join("\n");
+
+  const mensaje = `📅 Recordatorios del ${fecha}:\n${resumen}`;
+
+  enviarTelegram(mensaje);
+  alert("📤 Recordatorios enviados a Telegram.");
+};
+function verificarVencimientos() {
+  const ahora = new Date();
+  const horaActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+
+  recordatoriosDelDia.forEach(r => {
+    if (
+      !r.atendido &&
+      r.hora &&
+      r.hora <= horaActual &&
+      !recordatoriosNotificados.has(r.id)
+    ) {
+      const mensaje = `⏰ Vencido:\n${r.hora} → ${r.mensaje}`;
+      enviarTelegram(mensaje);
+      recordatoriosNotificados.add(r.id);
+    }
+  });
 }
 
 </script>
