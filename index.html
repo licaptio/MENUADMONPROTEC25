@@ -203,9 +203,11 @@ lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
     ${r.hora ? r.hora.substring(0,5) + " → " : ""}
     ${r.mensaje}
     ${r.atendido 
-      ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>` 
-      : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}
-    <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
+<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button> 
+<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>
+<button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
+<button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
+
   </li>`
 ).join("") + "</ul>";
 
