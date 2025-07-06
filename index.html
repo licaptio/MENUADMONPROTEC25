@@ -108,7 +108,7 @@
 </div>
 
 <div id="version-fecha-hora">
-  <div>📦 v1.0 06 Julio 2025 11:10AM las mejoras de telegram</div>
+  <div>📦 v1.0 06 Julio 2025 11:20AM las mejoras de telegram y quitar el buscador</div>
   <div id="fecha-hora">⏳</div>
 </div>
 
@@ -300,10 +300,15 @@ function verificarVencimientos() {
       const mensaje = `⏰ Vencido:\n${r.hora} → ${r.mensaje}`;
       enviarTelegram(mensaje);
       recordatoriosNotificados.add(r.id);
+
+      // ✅ Marcar como atendido en Supabase
+      supabase
+        .from("recordatorios")
+        .update({ atendido: true })
+        .eq("id", r.id);
     }
   });
 }
-
 </script>
 </body>
 </html>
