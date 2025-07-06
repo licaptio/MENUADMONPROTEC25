@@ -179,7 +179,7 @@
         if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
         celda.classList.add("seleccionado");
         celdaSeleccionada = celda;
-        mostrarRecordatorios(hoyStr, celda);
+        mostrarRecordatorios(hoyStr, calendario.querySelector(`td[data-fecha="${hoyStr}"]`));
       }
     });
   }
@@ -195,7 +195,8 @@
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
     lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
-      `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${fecha}', ${i})">✅</button>`}</li>`
+      `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}')">✅</button>
+
     ).join("") + "</ul>";
     const noAtendidos = data.filter(r => !r.atendido);
     if (noAtendidos.length) {
@@ -204,14 +205,13 @@
     }
   }
 
-  window.marcarAtendido = async function(fecha, index) {
-    const { data } = await supabase.from("recordatorios").select("id").eq("fecha", fecha).eq("atendido", false).order("hora");
-    if (data && data[index]) {
-      const id = data[index].id;
-      await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
-      mostrarRecordatorios(fecha, celdaSeleccionada);
-    }
+window.marcarAtendido = async function(id) {
+  await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
+  if (celdaSeleccionada) {
+    const fecha = celdaSeleccionada.dataset.fecha;
+    mostrarRecordatorios(fecha, celdaSeleccionada);
   }
+}
 
   function enviarTelegram(mensaje) {
     const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
