@@ -105,7 +105,7 @@
 </div>
 
 <div id="version-fecha-hora">
-  <div>📦 v1.0 06 Julio 2025 649AM</div>
+  <div>📦 v1.0 06 Julio 2025 6:53AM</div>
   <div id="fecha-hora">⏳</div>
 </div>
 
@@ -246,7 +246,7 @@ window.filtrarLista = function() {
 
   lista.innerHTML = `<h4>${fecha}</h4><ul>` + listaFiltrada.map(r =>
     `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
-  ).join("") + "</ul>`;
+  ).join("") + "</ul>";
 };
 
 </script>
