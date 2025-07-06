@@ -92,6 +92,7 @@
 
 <div id="recordatorios-container">
   <h3>📅 Recordatorios del día</h3>
+  <input type="text" id="busqueda" placeholder="Buscar palabra clave..." oninput="filtrarLista()">
   <div id="lista-recordatorios">Selecciona un día</div>
 </div>
 
@@ -119,6 +120,7 @@
   let fechaActual = new Date();
   let diasConRecordatorios = new Set();
   let celdaSeleccionada = null;
+  let recordatoriosDelDia = []; // Para guardar la lista sin filtrar
 
   (async () => {
     await cargarCalendario(fechaActual);
@@ -179,7 +181,7 @@
         if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
         celda.classList.add("seleccionado");
         celdaSeleccionada = celda;
-        mostrarRecordatorios(hoyStr, calendario.querySelector(`td[data-fecha="${hoyStr}"]`));
+        mostrarRecordatorios(hoyStr, celda);
       }
     });
   }
@@ -194,6 +196,7 @@
     const { data, error } = await supabase.from("recordatorios").select("id, mensaje, hora, atendido").eq("fecha", fecha).order("hora");
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
+    recordatoriosDelDia = data;
 lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
   `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
 ).join("") + "</ul>";
@@ -229,6 +232,23 @@ window.marcarAtendido = async function(id, fecha) {
   }
   actualizarFechaHora();
   setInterval(actualizarFechaHora, 1000);
+window.filtrarLista = function() {
+  const palabra = document.getElementById("busqueda").value.toLowerCase();
+  const fecha = lista.querySelector("h4")?.textContent || "";
+  const listaFiltrada = recordatoriosDelDia.filter(r =>
+    r.mensaje.toLowerCase().includes(palabra)
+  );
+
+  if (!listaFiltrada.length) {
+    lista.innerHTML = `<h4>${fecha}</h4><p>🔍 Sin resultados</p>`;
+    return;
+  }
+
+  lista.innerHTML = `<h4>${fecha}</h4><ul>` + listaFiltrada.map(r =>
+    `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
+  ).join("") + "</ul>`;
+};
+
 </script>
 </body>
 </html>
