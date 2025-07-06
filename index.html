@@ -1,86 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
   <title>Calendario de Recordatorios</title>
   <style>
-* {
-  box-sizing: border-box;
-}
+    * { box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-}
+    #calendario-container, #recordatorios-container, #accesos-container {
+      width: 100%;
+      max-width: 600px;
+      padding: 1em;
+    }
 
-
-/* Panel izquierdo */
-#panel-izquierdo {
-  width: 25%;
-  background-color: #f8f8f8;
-  border-right: 1px solid #ccc;
-  padding: 1em;
-  overflow-y: auto;
-}
-
-/* Panel central */
-#panel-central {
-  width: 50%;
-  padding: 1em;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Panel derecho */
-#panel-derecho {
-  width: 25%;
-  background-color: #f0f0f0;
-  border-left: 1px solid #ccc;
-  padding: 1em;
-  overflow-y: auto;
-}
-
-#links-derechos a {
-  display: block;
-  margin: 0.5em 0;
-  padding: 0.5em;
-  background-color: #2196f3;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  text-align: center;
-}
-
-
-    h1 {
+    h1, h3 {
       text-align: center;
-    }
-
-    table {
-      border-collapse: collapse;
-      margin: auto;
-    }
-
-    td, th {
-      padding: 10px;
-      border: 1px solid #ccc;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-
-    .hoy {
-      background-color: #b3e5fc;
     }
 
     .navegacion {
@@ -90,273 +32,207 @@ body {
       margin-bottom: 1em;
     }
 
-    #links {
-      margin-top: 2em;
-      text-align: center;
+    table {
+      border-collapse: collapse;
+      width: 100%;
     }
 
-    #links a {
-      display: inline-block;
-      margin: 0.5em;
-      padding: 0.5em 1em;
+    td, th {
+      border: 1px solid #ccc;
+      width: 14.28%;
+      height: 60px;
+      text-align: center;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+
+    th { background-color: #f0f0f0; }
+    .hoy { background-color: #b3e5fc; }
+    td.seleccionado { background-color: #bbdefb; outline: 2px solid #1976d2; }
+
+    #links a, #accesos-container a {
+      display: block;
+      margin: 0.5em 0;
+      padding: 0.6em;
       background-color: #2196f3;
       color: white;
       text-decoration: none;
-      border-radius: 5px;
+      border-radius: 4px;
+      text-align: center;
     }
-  td.seleccionado {
-  outline: 2px solid #1976d2;
-  outline-offset: -2px;
-  background-color: #bbdefb;
-}
-#links-izquierdos a {
-  display: block;
-  margin: 0.5em 0;
-  padding: 0.4em;
-  background-color: #1976d2;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 0.9em;
-  text-align: center;
-}
-/* Adaptar a celular */
-@media (max-width: 768px) {
-  body > div {
-    flex-direction: column;
-  }
 
-  #panel-izquierdo, #panel-central, #panel-derecho {
-    width: 100%;
-    padding: 10px;
-    border: none;
-  }
-
-  #panel-izquierdo, #panel-derecho {
-    background-color: #f8f8f8;
-  }
-
-  #panel-central {
-    order: -1; /* Calendario arriba */
-  }
-
-  .navegacion {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  table {
-    width: 100%;
-  }
-}
-
+    #version-fecha-hora {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      background-color: rgba(0,0,0,0.7);
+      color: white;
+      padding: 8px 12px;
+      font-size: 14px;
+      border-top-left-radius: 8px;
+      z-index: 9999;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
-  <div style="display: flex; width: 100%; height: 100vh;">
 
-    <!-- Panel izquierdo: Recordatorios -->
-    <div id="panel-izquierdo">
-      <h3>📅 Recordatorios del día</h3>
-      <div id="lista-recordatorios">Selecciona un día</div>
-    </div>
-
-    <!-- Panel central: Calendario -->
-    <div id="panel-central">
-      <div class="navegacion">
-        <button onclick="cambiarMes(-1)">⬅️</button>
-        <h1 id="mes-anio"></h1>
-        <button onclick="cambiarMes(1)">➡️</button>
-      </div>
-      <table id="calendario"></table>
-      <div id="links">
-        <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
-        <a href="ver-todo.html">📋 Ver todos</a>
-      </div>
-    </div>
-
-    <!-- Panel derecho: Accesos rápidos -->
-    <div id="panel-derecho">
-      <h3>🔗 Accesos rápidos</h3>
-      <div id="links-derechos">
-        <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
-        <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
-        <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
-        <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
-      </div>
-    </div>
-
+<div id="calendario-container">
+  <div class="navegacion">
+    <button onclick="cambiarMes(-1)">⬅️</button>
+    <h1 id="mes-anio"></h1>
+    <button onclick="cambiarMes(1)">➡️</button>
   </div>
-</body>
+  <table id="calendario"></table>
+  <div id="links">
+    <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
+    <a href="ver-todo.html">📋 Ver todos</a>
+  </div>
+</div>
 
+<div id="recordatorios-container">
+  <h3>📅 Recordatorios del día</h3>
+  <div id="lista-recordatorios">Selecciona un día</div>
+</div>
 
+<div id="accesos-container">
+  <h3>🔗 Accesos rápidos</h3>
+  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
+</div>
+
+<div id="version-fecha-hora">
+  <div>📦 v1.0 Julio 2025</div>
+  <div id="fecha-hora">⏳</div>
+</div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const supabase = createClient(
-  'https://cvpbtjlupswbyxenugpz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-);
+  const supabase = createClient('https://cvpbtjlupswbyxenugpz.supabase.co', 'eyJhbGciOiJIUzI1Ni...');
 
+  const calendario = document.getElementById("calendario");
+  const mesAnio = document.getElementById("mes-anio");
+  const lista = document.getElementById("lista-recordatorios");
+  let fechaActual = new Date();
+  let diasConRecordatorios = new Set();
+  let celdaSeleccionada = null;
 
-const calendario = document.getElementById("calendario");
-const mesAnio = document.getElementById("mes-anio");
-const lista = document.getElementById("lista-recordatorios");
-let fechaActual = new Date();
-let diasConRecordatorios = new Set();
-let celdaSeleccionada = null;
+  (async () => {
+    await cargarCalendario(fechaActual);
+  })();
 
-(async () => {
-  await cargarCalendario(fechaActual);
-})();
+  window.cambiarMes = function(direccion) {
+    fechaActual.setMonth(fechaActual.getMonth() + direccion);
+    cargarCalendario(fechaActual);
+  }
 
-window.cambiarMes = function(direccion) {
-  fechaActual.setMonth(fechaActual.getMonth() + direccion);
-  cargarCalendario(fechaActual);
-}
+  async function obtenerFechasConRecordatorios(mes, anio) {
+    diasConRecordatorios.clear();
+    const inicio = `${anio}-${String(mes+1).padStart(2, '0')}-01`;
+    const fin = `${anio}-${String(mes+1).padStart(2, '0')}-31`;
+    const { data } = await supabase.from("recordatorios").select("fecha").gte("fecha", inicio).lte("fecha", fin);
+    if (data) data.forEach(r => diasConRecordatorios.add(r.fecha));
+  }
 
-async function obtenerFechasConRecordatorios(mes, anio) {
-  diasConRecordatorios.clear();
-  const inicio = `${anio}-${String(mes+1).padStart(2, '0')}-01`;
-  const fin = `${anio}-${String(mes+1).padStart(2, '0')}-31`;
+  async function cargarCalendario(fecha) {
+    const mes = fecha.getMonth();
+    const anio = fecha.getFullYear();
+    await obtenerFechasConRecordatorios(mes, anio);
+    mesAnio.textContent = `${fecha.toLocaleString('es-MX', { month: 'long' })} ${anio}`;
+    const primerDia = new Date(anio, mes, 1).getDay();
+    const diasDelMes = new Date(anio, mes + 1, 0).getDate();
+    const hoy = new Date();
 
-  const { data } = await supabase
-    .from("recordatorios")
-    .select("fecha")
-    .gte("fecha", inicio)
-    .lte("fecha", fin);
+    let html = "<tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr>";
+    let dia = 1;
+    let diaSemana = (primerDia + 6) % 7;
+    html += "<tr>";
+    for (let i = 0; i < diaSemana; i++) html += "<td></td>";
 
-  if (data) data.forEach(r => diasConRecordatorios.add(r.fecha));
-}
-
-async function cargarCalendario(fecha) {
-  const mes = fecha.getMonth();
-  const anio = fecha.getFullYear();
-  await obtenerFechasConRecordatorios(mes, anio);
-  mesAnio.textContent = `${fecha.toLocaleString('es-MX', { month: 'long' })} ${anio}`;
-
-  const primerDia = new Date(anio, mes, 1).getDay();
-  const diasDelMes = new Date(anio, mes + 1, 0).getDate();
-  const hoy = new Date();
-
-  let html = "<tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr>";
-  let dia = 1;
-  let diaSemana = (primerDia + 6) % 7;
-
-  html += "<tr>";
-  for (let i = 0; i < diaSemana; i++) html += "<td></td>";
-
-  while (dia <= diasDelMes) {
-    if (diaSemana === 7) {
-      html += "</tr><tr>";
-      diaSemana = 0;
+    while (dia <= diasDelMes) {
+      if (diaSemana === 7) {
+        html += "</tr><tr>";
+        diaSemana = 0;
+      }
+      const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const esHoy = hoy.getDate() === dia && hoy.getMonth() === mes && hoy.getFullYear() === anio;
+      let clase = esHoy ? "hoy" : "";
+      let contenido = `${dia}`;
+      const fechaCompleta = new Date(fechaStr);
+      const esPasado = fechaCompleta < new Date(new Date().setHours(0, 0, 0, 0));
+      if (esPasado && !esHoy) contenido = "❌";
+      else if (diasConRecordatorios.has(fechaStr)) contenido += "<br><span style='font-size:10px; color:green;'>•</span>";
+      html += `<td class="${clase}" data-fecha="${fechaStr}" onclick="mostrarRecordatorios('${fechaStr}', this)">${contenido}</td>`;
+      dia++;
+      diaSemana++;
     }
+    while (diaSemana < 7) html += "<td></td>", diaSemana++;
+    html += "</tr>";
+    calendario.innerHTML = html;
 
-    const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-    const esHoy = hoy.getDate() === dia && hoy.getMonth() === mes && hoy.getFullYear() === anio;
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    calendario.querySelectorAll("td[data-fecha]").forEach(celda => {
+      if (celda.dataset.fecha === hoyStr) {
+        if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
+        celda.classList.add("seleccionado");
+        celdaSeleccionada = celda;
+        mostrarRecordatorios(hoyStr, celda);
+      }
+    });
+  }
 
-    let clase = esHoy ? "hoy" : "";
-    let contenido = `${dia}`;
-    const fechaCompleta = new Date(fechaStr);
-    const esPasado = fechaCompleta < new Date(new Date().setHours(0, 0, 0, 0));
-
-    if (esPasado && !esHoy) {
-      contenido = "❌";
-    } else if (diasConRecordatorios.has(fechaStr)) {
-      contenido += "<br><span style='font-size:10px; color:green;'>•</span>";
+  window.mostrarRecordatorios = async function(fecha, celda = null) {
+    if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
+    if (celda) {
+      celda.classList.add("seleccionado");
+      celdaSeleccionada = celda;
     }
-
-    html += `<td class="${clase}" data-fecha="${fechaStr}" onclick="mostrarRecordatorios('${fechaStr}', this)">${contenido}</td>`;
-
-    dia++;
-    diaSemana++;
-  }
-  while (diaSemana < 7) html += "<td></td>", diaSemana++;
-  html += "</tr>";
-
-  calendario.innerHTML = html;
-
-const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-const celdas = calendario.querySelectorAll("td[data-fecha]");
-
-celdas.forEach(celda => {
-  if (celda.dataset.fecha === hoyStr) {
-    if (celdaSeleccionada) {
-      celdaSeleccionada.classList.remove("seleccionado");
+    lista.innerHTML = "⏳ Buscando...";
+    const { data, error } = await supabase.from("recordatorios").select("mensaje, hora, atendido").eq("fecha", fecha).order("hora");
+    if (error) return lista.innerHTML = "❌ Error al cargar.";
+    if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
+    lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
+      `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${fecha}', ${i})">✅</button>`}</li>`
+    ).join("") + "</ul>";
+    const noAtendidos = data.filter(r => !r.atendido);
+    if (noAtendidos.length) {
+      const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
+      enviarTelegram(`📅 Recordatorios del ${fecha}:\n` + resumen);
     }
-    celda.classList.add("seleccionado");
-    celdaSeleccionada = celda;
-    mostrarRecordatorios(hoyStr, celda);
-  }
-});
-
-}
-
-window.mostrarRecordatorios = async function(fecha, celda = null) {
-  if (celdaSeleccionada) {
-    celdaSeleccionada.classList.remove("seleccionado");
-  }
-  if (celda) {
-    celda.classList.add("seleccionado");
-    celdaSeleccionada = celda;
   }
 
-  lista.innerHTML = "⏳ Buscando...";
-  const { data, error } = await supabase
-  .from("recordatorios")
-  .select("id, mensaje, hora, atendido")
-  .eq("fecha", fecha)
-  .order("hora", { ascending: true });
-
-
-  if (error) return lista.innerHTML = "❌ Error al cargar.";
-  if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
-
-  lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, index) =>
-    `<li>
-      ${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}
-      ${r.atendido ? "✅" : `<button onclick="marcarAtendido(${r.id}, '${fecha}')">✅</button>`}
-    </li>`
-  ).join("") + "</ul>";
-
-  const noAtendidos = data.filter(r => !r.atendido);
-  if (noAtendidos.length) {
-    const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
-    enviarTelegram(`📅 Recordatorios del ${fecha}:\n` + resumen);
+  window.marcarAtendido = async function(fecha, index) {
+    const { data } = await supabase.from("recordatorios").select("id").eq("fecha", fecha).eq("atendido", false).order("hora");
+    if (data && data[index]) {
+      const id = data[index].id;
+      await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
+      mostrarRecordatorios(fecha, celdaSeleccionada);
+    }
   }
-}
-window.marcarAtendido = async function(id, fecha) {
-  const { error } = await supabase
-    .from("recordatorios")
-    .update({ atendido: true })
-    .eq("id", id);
 
-  if (!error) {
-    mostrarRecordatorios(fecha, celdaSeleccionada);
+  function enviarTelegram(mensaje) {
+    const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
+    const chatId = "6617988297";
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: mensaje })
+    });
   }
-}
 
-function enviarTelegram(mensaje) {
-  const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
-  const chatId = "6617988297";
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
-
-  fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: mensaje
-    })
-  }).then(res => res.json())
-    .then(data => console.log("Telegram OK:", data))
-    .catch(err => console.error("Error Telegram:", err));
-}
-
-
+  // Fecha y hora viva
+  function actualizarFechaHora() {
+    const ahora = new Date();
+    const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+    const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
+    const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
+  }
+  actualizarFechaHora();
+  setInterval(actualizarFechaHora, 1000);
 </script>
 </body>
 </html>
