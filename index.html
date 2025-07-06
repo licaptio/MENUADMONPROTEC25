@@ -92,7 +92,7 @@
 
 <div id="recordatorios-container">
   <h3>📅 Recordatorios del día</h3>
-  <input type="text" id="busqueda" placeholder="Buscar palabra clave..." oninput="filtrarLista()">
+  
   <button onclick="enviarRecordatoriosManualmente()" style="margin-top: 8px;">
   📤 Enviar recordatorios del día a Telegram
 </button>
@@ -243,22 +243,7 @@ window.marcarAtendido = async function(id, fecha) {
   actualizarFechaHora();
   setInterval(actualizarFechaHora, 1000);
 setInterval(verificarVencimientos, 60000); // Ejecuta cada 60 segundos    
-window.filtrarLista = function() {
-  const palabra = document.getElementById("busqueda").value.toLowerCase();
-  const fecha = lista.querySelector("h4")?.textContent || "";
-  const listaFiltrada = recordatoriosDelDia.filter(r =>
-    r.mensaje.toLowerCase().includes(palabra)
-  );
 
-  if (!listaFiltrada.length) {
-    lista.innerHTML = `<h4>${fecha}</h4><p>🔍 Sin resultados</p>`;
-    return;
-  }
-
-  lista.innerHTML = `<h4>${fecha}</h4><ul>` + listaFiltrada.map(r =>
-    `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
-  ).join("") + "</ul>";
-};
 window.marcarNoAtendido = async function(id, fecha) {
   await supabase.from("recordatorios").update({ atendido: false }).eq("id", id);
   if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
