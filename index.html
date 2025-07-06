@@ -221,7 +221,7 @@ window.marcarAtendido = async function(id, fecha) {
   await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
   if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
 }
-
+}
   function enviarTelegram(mensaje) {
     const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
     const chatId = "6617988297";
