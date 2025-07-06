@@ -14,18 +14,20 @@
       padding: 8px;
       font-size: 16px;
     }
-  textarea {
-  height: 250px;            /* más alto */
-  resize: both;             /* permite agrandarlo en ambos sentidos */
+textarea {
+  width: 100%;                /* ✅ Ocupar todo el ancho disponible */
+  box-sizing: border-box;     /* ✅ Incluir padding y borde en el ancho total */
+  height: 250px;
+  resize: vertical;           /* Solo permitir redimensionar verticalmente */
   font-size: 16px;
   padding: 15px;
   line-height: 1.6;
-  font-family: 'Georgia', serif;  /* más estilo "Word" */
+  font-family: 'Georgia', serif;
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 6px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  white-space: pre-wrap;    /* para respetar saltos de línea */
+  white-space: pre-wrap;
 }
 
 button:first-of-type {
@@ -58,7 +60,7 @@ body {
 <body>
   <h2>Agregar Recordatorio</h2>
   <p style="text-align:center; font-size: 14px; color: gray;">
-    Versión 1.0 – 06/07/2025 – 10:46 AM
+    Versión 1.0 – 06/07/2025 – 10:53 AM CUADRO DE TEXTO APLIO
   </p>
 
   <label>Fecha:</label>
