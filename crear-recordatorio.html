@@ -72,6 +72,25 @@ body {
       'https://cvpbtjlupswbyxenugpz.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     );
+// Obtener ID de la URL si es edición
+const params = new URLSearchParams(window.location.search);
+const recordatorioId = params.get("id");
+
+if (recordatorioId) {
+  document.querySelector("h2").textContent = "Editar Recordatorio";
+
+  const { data, error } = await supabase
+    .from("recordatorios")
+    .select("*")
+    .eq("id", recordatorioId)
+    .single();
+
+  if (data) {
+    document.getElementById("fecha").value = data.fecha;
+    document.getElementById("hora").value = data.hora;
+    document.getElementById("mensaje").value = data.mensaje;
+  }
+}
 
     window.guardar = async function () {
       const fecha = document.getElementById("fecha").value;
@@ -96,7 +115,17 @@ if (!horaValida) {
         enviado: false
       };
 
-      const { error } = await supabase.from("recordatorios").insert(data);
+      let error;
+
+if (recordatorioId) {
+  ({ error } = await supabase
+    .from("recordatorios")
+    .update(data)
+    .eq("id", recordatorioId));
+} else {
+  ({ error } = await supabase.from("recordatorios").insert(data));
+}
+
 
       if (error) {
         alert("Error al guardar: " + error.message);
