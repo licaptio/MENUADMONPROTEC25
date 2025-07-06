@@ -194,10 +194,9 @@
     const { data, error } = await supabase.from("recordatorios").select("id, mensaje, hora, atendido").eq("fecha", fecha).order("hora");
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
-    lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
-      `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}')">✅</button>
-
-    ).join("") + "</ul>";
+lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
+  `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
+).join("") + "</ul>";
     const noAtendidos = data.filter(r => !r.atendido);
     if (noAtendidos.length) {
       const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
@@ -205,12 +204,9 @@
     }
   }
 
-window.marcarAtendido = async function(id) {
+window.marcarAtendido = async function(id, fecha) {
   await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
-  if (celdaSeleccionada) {
-    const fecha = celdaSeleccionada.dataset.fecha;
-    mostrarRecordatorios(fecha, celdaSeleccionada);
-  }
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
 }
 
   function enviarTelegram(mensaje) {
