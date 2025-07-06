@@ -67,24 +67,22 @@
   }
 
   function procesarQR() {
-    const raw = document.getElementById('qrInput').value.trim();
+  const raw = document.getElementById('qrInput').value.trim();
+  const match = raw.match(/id=([a-f0-9\-]{36})/i);
 
-    const match = raw.match(/id\)([A-F0-9]{8}\/[A-F0-9]{4}\/[A-F0-9]{4}\/[A-F0-9]{4}\/[A-F0-9]{12})/i);
-
-    if (match && match[1]) {
-      const uuid = match[1].replace(/\//g, '-').toUpperCase();
-
-      document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
-      document.getElementById('qrInput').value = '';
-      buscarPorUUID(uuid);
-    } else {
-      document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
-    }
+  if (match && match[1]) {
+    const uuid = match[1].toUpperCase();
+    document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
+    document.getElementById('qrInput').value = '';
+    buscarPorUUID(uuid);
+  } else {
+    document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
   }
+}
 </script>
 
 <footer>
-  v1.0 · Escáner QR SAT · 04 Jul 2025
+  v1.0 · Escáner QR SAT · 06 Jul 2025 TODAVIA NO JALA
 </footer>
 </body>
 </html>
