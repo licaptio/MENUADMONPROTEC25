@@ -105,7 +105,7 @@
 </div>
 
 <div id="version-fecha-hora">
-  <div>📦 v1.0 06 Julio 2025 09:20AM</div>
+  <div>📦 v1.0 06 Julio 2025 10:06AM</div>
   <div id="fecha-hora">⏳</div>
 </div>
 
@@ -197,20 +197,20 @@
     const { data, error } = await supabase.from("recordatorios").select("id, mensaje, hora, atendido").eq("fecha", fecha).order("hora");
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
-    recordatoriosDelDia = data;
+recordatoriosDelDia = data;
 lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
   `<li>
     ${r.hora ? r.hora.substring(0,5) + " → " : ""}
     ${r.mensaje}
-    ${r.atendido 
-<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button> 
-<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>
-<button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
-<button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
-
+    ${
+      r.atendido
+        ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
+        : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`
+    }
+    <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
+    <button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
   </li>`
 ).join("") + "</ul>";
-
     const noAtendidos = data.filter(r => !r.atendido);
     if (noAtendidos.length) {
       const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
