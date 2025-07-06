@@ -198,9 +198,17 @@
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
     recordatoriosDelDia = data;
-lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
-  `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
+lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
+  `<li>
+    ${r.hora ? r.hora.substring(0,5) + " → " : ""}
+    ${r.mensaje}
+    ${r.atendido 
+      ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>` 
+      : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}
+    <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
+  </li>`
 ).join("") + "</ul>";
+
     const noAtendidos = data.filter(r => !r.atendido);
     if (noAtendidos.length) {
       const resumen = noAtendidos.map(r => `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`).join("\n");
@@ -249,6 +257,17 @@ window.filtrarLista = function() {
     `<li>${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje} ${r.atendido ? "✅" : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}</li>`
   ).join("") + "</ul>";
 };
+window.marcarNoAtendido = async function(id, fecha) {
+  await supabase.from("recordatorios").update({ atendido: false }).eq("id", id);
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
+
+window.eliminarRecordatorio = async function(id, fecha) {
+  const confirmar = confirm("¿Eliminar este recordatorio?");
+  if (!confirmar) return;
+  await supabase.from("recordatorios").delete().eq("id", id);
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
 
 </script>
 </body>
