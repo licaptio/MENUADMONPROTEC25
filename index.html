@@ -191,7 +191,7 @@
       celdaSeleccionada = celda;
     }
     lista.innerHTML = "⏳ Buscando...";
-    const { data, error } = await supabase.from("recordatorios").select("mensaje, hora, atendido").eq("fecha", fecha).order("hora");
+    const { data, error } = await supabase.from("recordatorios").select("id, mensaje, hora, atendido").eq("fecha", fecha).order("hora");
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
     lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r, i) =>
