@@ -261,7 +261,7 @@ async function guardarCambios() {
     alert("Error al guardar los cambios");
   } else {
     alert("Cambios guardados correctamente");
-    buscarPorUUID(uuidActual); // Refresca la vista
+    limpiarFormulario(); // ✅ Esto faltaba
   }
 }
 let stream = null;
@@ -370,7 +370,6 @@ function limpiarFormulario() {
 </script>
 
 <footer>
-  v1.0 VERONICA fotos 0709AM 07072025
-  footer>
+  v1.0 VERONICA fotos 0715AM 07072025
 </body>
 </html>
