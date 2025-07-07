@@ -83,9 +83,10 @@
   document.getElementById('uuidDetectado').style.color = '#003366';
   document.getElementById('qrInput').value = '';
   buscarPorUUID(uuid);
-  } else {
-    document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
-  }
+} else {
+  document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
+  document.getElementById('uuidDetectado').style.color = 'darkred';
+}
 }
 
 </script>
