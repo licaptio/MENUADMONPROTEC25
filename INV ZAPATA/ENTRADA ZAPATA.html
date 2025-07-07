@@ -262,12 +262,7 @@ body {
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    const codigosPermitidos = [
-      "365", "7221", "7689", "7686", "2096", "1886", "2097", "1655", "1901", "2188",
-      "2408", "2190", "3261", "7572", "20270", "450065", "750182", "2397", "2395", "4898",
-      "4410", "5078", "1502", "1623", "4395", "450086"
-    ];
-
+    const codigosPermitidos = [];
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -295,14 +290,7 @@ const mensaje = document.getElementById("mensaje");
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById("fecha").value = hoy;
 
-    async function cargarProductosPermitidos() {
-      const snapshot = await db.collection("productos").get();
-      productosPermitidos = snapshot.docs
-        .filter(doc => codigosPermitidos.includes(doc.id))
-        .map(doc => ({ id: doc.id, concepto: doc.data().Concepto || "", costo: doc.data()["Costo sin Impuesto"] || 0 }));
-    }
-
-buscador.addEventListener("input", () => {
+    buscador.addEventListener("input", () => {
   indiceSeleccionado = -1;
   const texto = buscador.value.trim().toLowerCase();
   resultados.innerHTML = "";
