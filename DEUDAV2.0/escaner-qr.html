@@ -61,11 +61,13 @@
   <h4>Fotos adjuntas:</h4>
   <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
 
-  <input type="file" id="inputFoto" accept="image/*" capture="environment" />
-  <button onclick="subirFoto()" style="margin-top: 10px;">Subir Foto</button>
-  <button onclick="guardarCambios()" style="margin-top: 10px; background-color: green; color: white;">
-  Guardar Cambios
-</button>
+<input type="file" id="inputFoto" accept="image/*" capture="environment" />
+
+<div style="margin-top: 10px; display: flex; gap: 10px;">
+  <button onclick="subirFoto()" style="flex: 1;">Subir Foto</button>
+  <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
+    Guardar Cambios
+  </button>
 </div>
 
 </div>
@@ -160,14 +162,13 @@ function mostrarFotos(fotos) {
       wrapper.appendChild(btn);
       contenedor.appendChild(wrapper);
     });
-
-    galeria.style.display = 'block';
-  } else {
-    galeria.style.display = 'none';
   }
+
+  // 🔧 Siempre mostrar la galería, incluso si está vacía
+  galeria.style.display = 'block';
 }
 
-async function subirFoto() {
+  async function subirFoto() {
   const archivo = document.getElementById('inputFoto').files[0];
   if (!archivo || !uuidActual) return alert('Selecciona una imagen');
 
@@ -263,7 +264,7 @@ async function guardarCambios() {
 </script>
 
 <footer>
-  v1.0 alika fotos 1114pm 060725 
-</footer>
+  v1.0 alika fotos 1120pm 06072025 
+  footer>
 </body>
 </html>
