@@ -56,13 +56,21 @@
             placeholder="Factura física recibida completa, pero sin comentarios"
             style="width: 100%; font-size: 1rem; padding: 8px; border-radius: 6px;"></textarea>
 </div>
-  </div>
+<div id="galeriaFotos" style="margin-top: 20px;">
+  <h4>Fotos adjuntas:</h4>
+  <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+
+  <input type="file" id="inputFoto" accept="image/*" />
+  <button onclick="subirFoto()" style="margin-top: 10px;">Subir Foto</button>
+</div>
+
+</div>
 <script>
   const supabaseClient = window.supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
-
+let uuidActual = null;
 async function buscarPorUUID(uuid) {
   const { data, error } = await supabaseClient
     .from('deuda_limpia_pdd')
@@ -85,6 +93,11 @@ async function buscarPorUUID(uuid) {
   document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
   document.getElementById('fisicaTexto').value = data.factura_fisicamente || 'NO';
   document.getElementById('comentarioTexto').value = data.comentario_factura_fisica || '';
+
+// 👇 NUEVAS LÍNEAS
+uuidActual = uuid;
+mostrarFotos(data.fotos);
+
   }
 
   function procesarQR() {
@@ -109,11 +122,122 @@ async function buscarPorUUID(uuid) {
   document.getElementById('uuidDetectado').style.color = 'darkred';
 }
 }
+function mostrarFotos(fotos) {
+  const galeria = document.getElementById('galeriaFotos');
+  const contenedor = document.getElementById('contenedorFotos');
+  contenedor.innerHTML = '';
+
+  if (Array.isArray(fotos) && fotos.length > 0) {
+    fotos.forEach(url => {
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'foto';
+      img.style.width = '100px';
+      img.style.border = '1px solid #ccc';
+      img.style.borderRadius = '4px';
+      img.style.cursor = 'pointer';
+
+      const btn = document.createElement('button');
+      btn.innerText = '✖';
+      btn.style.position = 'absolute';
+      btn.style.top = '-8px';
+      btn.style.right = '-8px';
+      btn.style.background = 'crimson';
+      btn.style.color = 'white';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '50%';
+      btn.style.cursor = 'pointer';
+      btn.onclick = () => eliminarFoto(url);
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(btn);
+      contenedor.appendChild(wrapper);
+    });
+
+    galeria.style.display = 'block';
+  } else {
+    galeria.style.display = 'none';
+  }
+}
+
+async function subirFoto() {
+  const archivo = document.getElementById('inputFoto').files[0];
+  if (!archivo || !uuidActual) return alert('Selecciona una imagen');
+
+  const nombreArchivo = `${uuidActual}_${Date.now()}_${archivo.name}`;
+  const bucket = 'fotos-facturas';
+
+  const { error: errorUpload } = await supabaseClient
+    .storage
+    .from(bucket)
+    .upload(nombreArchivo, archivo);
+
+  if (errorUpload) {
+    console.error(errorUpload);
+    return alert('Error al subir imagen');
+  }
+
+  const { data: publicUrlData } = supabaseClient
+    .storage
+    .from(bucket)
+    .getPublicUrl(nombreArchivo);
+
+  const nuevaFoto = publicUrlData.publicUrl;
+
+  const { data: filaActual } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .select('fotos')
+    .eq('uuid', uuidActual)
+    .maybeSingle();
+
+  const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
+  fotosActuales.push(nuevaFoto);
+
+  const { error: errorUpdate } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .update({ fotos: fotosActuales })
+    .eq('uuid', uuidActual);
+
+  if (errorUpdate) {
+    console.error(errorUpdate);
+    alert('Error al actualizar la lista de fotos');
+  } else {
+    alert('Foto subida correctamente');
+    buscarPorUUID(uuidActual);
+  }
+}
+
+async function eliminarFoto(urlEliminar) {
+  if (!confirm('¿Eliminar esta imagen?')) return;
+
+  const { data: filaActual } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .select('fotos')
+    .eq('uuid', uuidActual)
+    .maybeSingle();
+
+  const nuevasFotos = filaActual.fotos.filter(foto => foto !== urlEliminar);
+
+  const { error } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .update({ fotos: nuevasFotos })
+    .eq('uuid', uuidActual);
+
+  if (error) {
+    alert('Error al eliminar la imagen');
+  } else {
+    alert('Foto eliminada correctamente');
+    buscarPorUUID(uuidActual);
+  }
+}
 
 </script>
 
 <footer>
-  v1.0 river sin concepto 06072025 0625pm
+  v1.0 casper fotos 06072025 0631pm
 </footer>
 </body>
 </html>
