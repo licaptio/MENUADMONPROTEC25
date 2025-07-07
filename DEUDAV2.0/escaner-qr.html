@@ -61,12 +61,8 @@
   <h4>Fotos adjuntas:</h4>
   <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
 
-<video id="video" width="100%" autoplay playsinline style="display:none;"></video>
-<canvas id="canvas" style="display:none;"></canvas>
-
-<div style="margin-top: 10px; display: flex; gap: 10px;">
-  <button onclick="iniciarCamara()" style="flex: 1;">📷 Iniciar Cámara</button>
-<button onclick="capturarFoto()" style="flex: 1; background-color: #444; color: white;">📸 Capturar</button>
+<input type="file" id="fotoExterna" accept="image/*" capture="environment" style="display: none;" />
+<button onclick="document.getElementById('fotoExterna').click()" style="flex: 1;">📸 Tomar Foto</button>
   <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
     Guardar Cambios
   </button>
@@ -283,61 +279,6 @@ async function guardarCambios() {
     limpiarFormulario();
   }, 1500); // Espera 1 segundo y limpia
 }
-let stream = null;
-
-async function iniciarCamara() {
-  try {
-    const video = document.getElementById('video');
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    video.srcObject = stream;
-    video.style.display = 'block';
-  } catch (err) {
-    console.error("No se pudo acceder a la cámara:", err);
-    alert("Error al acceder a la cámara.");
-  }
-}
-
-function capturarFoto() {
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob(blob => {
-    subirFotoDesdeBlob(blob);
-  }, 'image/jpeg');
-
-  detenerCamara();
-}
-
-function detenerCamara() {
-  const video = document.getElementById('video');
-  video.style.display = 'none';
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
-}
-
-async function subirFotoDesdeBlob(blob) {
-  if (!blob || !uuidActual) return alert('No hay imagen para subir');
-
-  const nombreArchivo = `${uuidActual}_${Date.now()}.jpg`;
-  const bucket = 'fotos-facturas';
-
-  const { error: errorUpload } = await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(nombreArchivo, blob);
-
-  if (errorUpload) {
-    console.error(errorUpload);
-    return alert('Error al subir imagen');
-  }
-
   const { data: publicUrlData } = supabaseClient
     .storage
     .from(bucket)
@@ -385,10 +326,56 @@ function limpiarFormulario() {
   document.getElementById('qrInput').focus();
 }
 
+document.getElementById('fotoExterna').addEventListener('change', async function () {
+  const archivo = this.files[0];
+  if (!archivo || !uuidActual) return;
+
+  const nombreArchivo = `${uuidActual}_${Date.now()}_${archivo.name}`;
+  const bucket = 'fotos-facturas';
+
+  const { error: errorUpload } = await supabaseClient
+    .storage
+    .from(bucket)
+    .upload(nombreArchivo, archivo);
+
+  if (errorUpload) {
+    console.error(errorUpload);
+    return alert('Error al subir imagen');
+  }
+
+  const { data: publicUrlData } = supabaseClient
+    .storage
+    .from(bucket)
+    .getPublicUrl(nombreArchivo);
+
+  const nuevaFoto = publicUrlData.publicUrl;
+
+  const { data: filaActual } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .select('fotos')
+    .eq('uuid', uuidActual)
+    .maybeSingle();
+
+  const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
+  fotosActuales.push(nuevaFoto);
+
+  const { error: errorUpdate } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .update({ fotos: fotosActuales })
+    .eq('uuid', uuidActual);
+
+  if (errorUpdate) {
+    console.error(errorUpdate);
+    alert('Error al actualizar la lista de fotos');
+  } else {
+    alert('Foto subida correctamente');
+    buscarPorUUID(uuidActual);
+  }
+});
   
 </script>
 
 <footer>
-  v1.0 VERONICA y sus cambios 0723AM 07072025
+  v1.0 VERONICA fotosnew 0733AM 07072025
 </body>
 </html>
