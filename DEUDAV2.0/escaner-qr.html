@@ -29,15 +29,26 @@
   <input type="text" id="qrInput" placeholder="Escanea aquí con Eyoyo..." oninput="procesarQR()" autofocus />
   <div id="uuidDetectado"></div>
 
-  <div id="result">
-    <h3>Factura encontrada</h3>
-    <p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
-    <p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
-    <p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
-    <p><strong>Folio Factura:</strong> <span id="facturaTexto"></span></p>
-    <p><strong>Total:</strong> <span id="totalTexto"></span></p>
-    <p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
-  </div>
+<h3>Factura encontrada</h3>
+<p><strong>UUID:</strong> <span id="uuidTexto"></span></p>
+<p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
+<p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
+<p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
+<p><strong>Factura:</strong> <span id="facturaTexto"></span></p>
+<p><strong>Total:</strong> $<span id="totalTexto"></span></p>
+<p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
+
+<label for="fisicaTexto"><strong>Física:</strong></label>
+<select id="fisicaTexto">
+  <option value="NO">NO</option>
+  <option value="SI">SÍ</option>
+</select>
+
+<label for="comentarioTexto"><strong>Comentario:</strong></label>
+<textarea id="comentarioTexto" rows="3" placeholder="Factura física recibida completa, pero sin comentarios"></textarea>
+
+<p><strong>Concepto:</strong> <span id="conceptoTexto"></span></p>
+
 
 <script>
   const supabaseClient = window.supabase.createClient(
@@ -45,26 +56,30 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
 
-  async function buscarPorUUID(uuid) {
-    const { data, error } = await supabaseClient
-      .from('deuda_limpia_pdd')
-      .select('*')
-      .eq('uuid', uuid)
-      .maybeSingle();
+async function buscarPorUUID(uuid) {
+  const { data, error } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .select('*')
+    .eq('uuid', uuid)
+    .maybeSingle();
 
-    if (error || !data) {
-      alert('Factura no encontrada');
-      return;
-    }
-
-    document.getElementById('result').style.display = 'block';
-    document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
-    document.getElementById('rfcTexto').innerText = data.rfc_emisor;
-    document.getElementById('razonTexto').innerText = data.razon_social_emisor;
-    document.getElementById('facturaTexto').innerText = data.factura;
-    document.getElementById('totalTexto').innerText = parseFloat(data.total).toFixed(2);
-    document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
+  if (error || !data) {
+    alert('Factura no encontrada');
+    return;
   }
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('uuidTexto').innerText = uuid;
+  document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
+  document.getElementById('rfcTexto').innerText = data.rfc_emisor;
+  document.getElementById('razonTexto').innerText = data.razon_social_emisor;
+  document.getElementById('facturaTexto').innerText = data.factura;
+  document.getElementById('totalTexto').innerText = parseFloat(data.total).toFixed(2);
+  document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
+  document.getElementById('fisicaTexto').value = data.factura_fisicamente || 'NO';
+  document.getElementById('comentarioTexto').value = data.comentario_factura_fisica || '';
+  document.getElementById('conceptoTexto').innerText = data.concepto || '';
+}
 
   function procesarQR() {
   const raw = document.getElementById('qrInput').value.trim();
@@ -92,7 +107,7 @@
 </script>
 
 <footer>
-  v1.0 · Escáner QR SAT · 06 Jul 2025 0602pm
+  v1.0 MODIFICADO PARA ESCANEAR Y VER DATOS 0609PM 060725
 </footer>
 </body>
 </html>
