@@ -99,8 +99,10 @@ async function buscarPorUUID(uuid) {
   document.getElementById('facturaTexto').innerText = data.factura;
   document.getElementById('totalTexto').innerText = parseFloat(data.total).toFixed(2);
   document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
-  document.getElementById('fisicaTexto').value = data.factura_fisicamente || 'NO';
+  document.getElementById('fisicaTexto').value = 'SI'; // Se establece SI por defecto
   document.getElementById('comentarioTexto').value = data.comentario_factura_fisica || '';
+  document.getElementById('contenedorFotos').innerHTML = '';
+  uuidActual = null;
 
 // 👇 NUEVAS LÍNEAS
 uuidActual = uuid;
@@ -346,11 +348,29 @@ async function subirFotoDesdeBlob(blob) {
     buscarPorUUID(uuidActual);
   }
 }
+function limpiarFormulario() {
+  uuidActual = null;
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('uuidTexto').innerText = '';
+  document.getElementById('fechaTexto').innerText = '';
+  document.getElementById('rfcTexto').innerText = '';
+  document.getElementById('razonTexto').innerText = '';
+  document.getElementById('facturaTexto').innerText = '';
+  document.getElementById('totalTexto').innerText = '';
+  document.getElementById('pagadaTexto').innerText = '';
+  document.getElementById('fisicaTexto').value = 'NO';
+  document.getElementById('comentarioTexto').value = '';
+  document.getElementById('contenedorFotos').innerHTML = '';
+  document.getElementById('uuidDetectado').innerText = '';
+  document.getElementById('qrInput').value = '';
+  document.getElementById('qrInput').focus();
+}
 
+  
 </script>
 
 <footer>
-  v1.0 alika fotos 1131pm 06072025 
+  v1.0 VERONICA fotos 0709AM 07072025
   footer>
 </body>
 </html>
