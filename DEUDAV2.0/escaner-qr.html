@@ -260,8 +260,9 @@ async function guardarCambios() {
     console.error(error);
     alert("Error al guardar los cambios");
   } else {
-    alert("Cambios guardados correctamente");
-    limpiarFormulario(); // ✅ Esto faltaba
+    setTimeout(() => {
+      limpiarFormulario(); // ✅ Se limpia sin alertas
+    }, 1000); // Espera 1 segundo (1000 ms)
   }
 }
 let stream = null;
