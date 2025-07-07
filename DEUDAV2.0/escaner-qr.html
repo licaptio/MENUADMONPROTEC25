@@ -87,8 +87,7 @@ async function buscarPorUUID(uuid) {
   document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
   document.getElementById('fisicaTexto').value = data.factura_fisicamente || 'NO';
   document.getElementById('comentarioTexto').value = data.comentario_factura_fisica || '';
-  document.getElementById('conceptoTexto').innerText = data.concepto || '';
-}
+  }
 
   function procesarQR() {
   const raw = document.getElementById('qrInput').value.trim();
@@ -116,7 +115,7 @@ async function buscarPorUUID(uuid) {
 </script>
 
 <footer>
-  v1.0 BLANCA huerfana 0619 PM 060725
+  v1.0 anker sin concepto 0622 PM 060725
 </footer>
 </body>
 </html>
