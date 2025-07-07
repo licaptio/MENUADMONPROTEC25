@@ -1,244 +1,292 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Escáner QR CFDI SAT</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Calendario de Recordatorios</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
-    input, select, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
-    #result { background: #eef; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
-    #uuidDetectado { font-weight: bold; color: #003366; margin-top: 10px; }
-    footer {
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      padding: 6px 12px;
-      font-size: 0.8em;
-      color: #777;
-      background: #f5f5f5;
-      border-top-left-radius: 8px;
-      box-shadow: -2px -2px 6px rgba(0,0,0,0.1);
+    * { box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
+    #calendario-container, #recordatorios-container, #accesos-container {
+      width: 100%;
+      max-width: 600px;
+      padding: 1em;
+    }
+
+    h1, h3 {
+      text-align: center;
+    }
+
+    .navegacion {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1em;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td, th {
+      border: 1px solid #ccc;
+      width: 14.28%;
+      height: 60px;
+      text-align: center;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+
+    th { background-color: #f0f0f0; }
+    .hoy { background-color: #b3e5fc; }
+    td.seleccionado { background-color: #bbdefb; outline: 2px solid #1976d2; }
+
+    #links a, #accesos-container a {
+      display: block;
+      margin: 0.5em 0;
+      padding: 0.6em;
+      background-color: #2196f3;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+#version-fecha-hora {
+  margin-top: 1em;
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+}
   </style>
 </head>
 <body>
-  <h2>Escanear CFDI con QR (SAT)</h2>
 
-  <input type="text" id="qrInput" placeholder="Escanea aquí con Eyoyo..." oninput="procesarQR()" autofocus />
-  <div id="uuidDetectado"></div>
-
-<div id="result" style="display:none; background:#eef; padding:10px; border-radius:6px; margin-top:20px;">
-  <h3>Factura encontrada</h3>
-  <p><strong>UUID:</strong> <span id="uuidTexto"></span></p>
-  <p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
-  <p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
-  <p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
-  <p><strong>Factura:</strong> <span id="facturaTexto"></span></p>
-  <p><strong>Total:</strong> $<span id="totalTexto"></span></p>
-  <p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
-
-<!-- Línea para Física -->
-<div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-  <label for="fisicaTexto" style="min-width: 60px;"><strong>Física:</strong></label>
-  <select id="fisicaTexto" style="width: 100px; padding: 6px;">
-    <option value="NO">NO</option>
-    <option value="SI">SÍ</option>
-  </select>
+<div id="calendario-container">
+  <div class="navegacion">
+    <button onclick="cambiarMes(-1)">⬅️</button>
+    <h1 id="mes-anio"></h1>
+    <button onclick="cambiarMes(1)">➡️</button>
+  </div>
+  <table id="calendario"></table>
+  <div id="links">
+    <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
+    <a href="ver-todo.html">📋 Ver todos</a>
+  </div>
 </div>
 
-<!-- Línea para Comentario -->
-<div style="margin-top: 10px;">
-  <label for="comentarioTexto"><strong>Comentario:</strong></label>
-  <textarea id="comentarioTexto"
-            rows="4"
-            placeholder="Factura física recibida completa, pero sin comentarios"
-            style="width: 100%; font-size: 1rem; padding: 8px; border-radius: 6px;"></textarea>
-</div>
-<div id="galeriaFotos" style="margin-top: 20px;">
-  <h4>Fotos adjuntas:</h4>
-  <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-
-  <input type="file" id="inputFoto" accept="image/*" />
-  <button onclick="subirFoto()" style="margin-top: 10px;">Subir Foto</button>
+<div id="recordatorios-container">
+  <h3>📅 Recordatorios del día</h3>
+  
+  <button onclick="enviarRecordatoriosManualmente()" style="margin-top: 8px;">
+  📤 Enviar recordatorios del día a Telegram
+</button>
+  <div id="lista-recordatorios">Selecciona un día</div>
 </div>
 
+<div id="accesos-container">
+  <h3>🔗 Accesos rápidos</h3>
+  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
+  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
 </div>
-<script>
-  const supabaseClient = window.supabase.createClient(
-    'https://cvpbtjlupswbyxenugpz.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-  );
-let uuidActual = null;
-async function buscarPorUUID(uuid) {
-  const { data, error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('*')
-    .eq('uuid', uuid)
-    .maybeSingle();
+<div id="version-fecha-hora">
+  <div>📦 v1.0 06 Julio 2025 16:50 HORAS MODIFICADO EL MARCADOR</div>
+  <div id="fecha-hora">⏳</div>
+</div>
 
-  if (error || !data) {
-    alert('Factura no encontrada');
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient('https://cvpbtjlupswbyxenugpz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY');
+
+
+  const calendario = document.getElementById("calendario");
+  const mesAnio = document.getElementById("mes-anio");
+  const lista = document.getElementById("lista-recordatorios");
+  let fechaActual = new Date();
+  let diasConRecordatorios = new Set();
+  let celdaSeleccionada = null;
+  let recordatoriosDelDia = []; // Para guardar la lista sin filtrar
+  let recordatoriosNotificados = new Set(); // Para evitar duplicados en Telegram
+
+  (async () => {
+    await cargarCalendario(fechaActual);
+  })();
+
+  window.cambiarMes = function(direccion) {
+    fechaActual.setMonth(fechaActual.getMonth() + direccion);
+    cargarCalendario(fechaActual);
+  }
+
+  async function obtenerFechasConRecordatorios(mes, anio) {
+    diasConRecordatorios.clear();
+    const inicio = `${anio}-${String(mes+1).padStart(2, '0')}-01`;
+    const fin = `${anio}-${String(mes+1).padStart(2, '0')}-31`;
+    const { data } = await supabase.from("recordatorios").select("fecha").gte("fecha", inicio).lte("fecha", fin);
+    if (data) data.forEach(r => diasConRecordatorios.add(r.fecha));
+  }
+
+  async function cargarCalendario(fecha) {
+    const mes = fecha.getMonth();
+    const anio = fecha.getFullYear();
+    await obtenerFechasConRecordatorios(mes, anio);
+    mesAnio.textContent = `${fecha.toLocaleString('es-MX', { month: 'long' })} ${anio}`;
+    const primerDia = new Date(anio, mes, 1).getDay();
+    const diasDelMes = new Date(anio, mes + 1, 0).getDate();
+    const hoy = new Date();
+
+    let html = "<tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr>";
+    let dia = 1;
+    let diaSemana = (primerDia + 6) % 7;
+    html += "<tr>";
+    for (let i = 0; i < diaSemana; i++) html += "<td></td>";
+
+    while (dia <= diasDelMes) {
+      if (diaSemana === 7) {
+        html += "</tr><tr>";
+        diaSemana = 0;
+      }
+      const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const esHoy = hoy.getDate() === dia && hoy.getMonth() === mes && hoy.getFullYear() === anio;
+      let clase = esHoy ? "hoy" : "";
+      let contenido = `${dia}`;
+      const fechaCompleta = new Date(fechaStr);
+      const esPasado = fechaCompleta < new Date(new Date().setHours(0, 0, 0, 0));
+      if (esPasado && !esHoy) contenido = "❌";
+      else if (diasConRecordatorios.has(fechaStr)) contenido += "<br><span style='font-size:10px; color:green;'>•</span>";
+      html += `<td class="${clase}" data-fecha="${fechaStr}" onclick="mostrarRecordatorios('${fechaStr}', this)">${contenido}</td>`;
+      dia++;
+      diaSemana++;
+    }
+    while (diaSemana < 7) html += "<td></td>", diaSemana++;
+    html += "</tr>";
+    calendario.innerHTML = html;
+
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    calendario.querySelectorAll("td[data-fecha]").forEach(celda => {
+      if (celda.dataset.fecha === hoyStr) {
+        if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
+        celda.classList.add("seleccionado");
+        celdaSeleccionada = celda;
+        mostrarRecordatorios(hoyStr, celda);
+      }
+    });
+  }
+
+  window.mostrarRecordatorios = async function(fecha, celda = null) {
+    if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
+    if (celda) {
+      celda.classList.add("seleccionado");
+      celdaSeleccionada = celda;
+    }
+    lista.innerHTML = "⏳ Buscando...";
+    const { data, error } = await supabase.from("recordatorios").select("id, mensaje, hora, atendido").eq("fecha", fecha).order("hora");
+    if (error) return lista.innerHTML = "❌ Error al cargar.";
+    if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
+recordatoriosDelDia = data;
+lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
+  `<li>
+    ${r.hora ? r.hora.substring(0,5) + " → " : ""}
+    ${r.mensaje}
+    ${
+      r.atendido
+        ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
+        : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`
+    }
+    <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
+    <button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
+  </li>`
+).join("") + "</ul>";
+verificarVencimientos(); // Ejecuta una revisión inmediata de vencidos
+
+window.marcarAtendido = async function(id, fecha) {
+  await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
+}
+  function enviarTelegram(mensaje) {
+    const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
+    const chatId = "6617988297";
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: mensaje })
+    });
+  }
+
+  // Fecha y hora viva
+  function actualizarFechaHora() {
+    const ahora = new Date();
+    const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+    const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
+    const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
+  }
+  actualizarFechaHora();
+  setInterval(actualizarFechaHora, 1000);
+setInterval(verificarVencimientos, 60000); // Ejecuta cada 60 segundos    
+
+window.marcarNoAtendido = async function(id, fecha) {
+  await supabase.from("recordatorios").update({ atendido: false }).eq("id", id);
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
+
+window.eliminarRecordatorio = async function(id, fecha) {
+  const confirmar = confirm("¿Eliminar este recordatorio?");
+  if (!confirmar) return;
+  await supabase.from("recordatorios").delete().eq("id", id);
+  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
+}
+window.enviarRecordatoriosManualmente = function () {
+  if (!recordatoriosDelDia.length) {
+    alert("No hay recordatorios cargados para enviar.");
     return;
   }
 
-  document.getElementById('result').style.display = 'block';
-  document.getElementById('uuidTexto').innerText = uuid;
-  document.getElementById('fechaTexto').innerText = new Date(data.fecha).toLocaleString();
-  document.getElementById('rfcTexto').innerText = data.rfc_emisor;
-  document.getElementById('razonTexto').innerText = data.razon_social_emisor;
-  document.getElementById('facturaTexto').innerText = data.factura;
-  document.getElementById('totalTexto').innerText = parseFloat(data.total).toFixed(2);
-  document.getElementById('pagadaTexto').innerText = data.factura_pagada || 'NO';
-  document.getElementById('fisicaTexto').value = data.factura_fisicamente || 'NO';
-  document.getElementById('comentarioTexto').value = data.comentario_factura_fisica || '';
+  const fecha = lista.querySelector("h4")?.textContent || "Sin fecha";
+  const resumen = recordatoriosDelDia.map(r =>
+    `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`
+  ).join("\n");
 
-// 👇 NUEVAS LÍNEAS
-uuidActual = uuid;
-mostrarFotos(data.fotos);
+  const mensaje = `📅 Recordatorios del ${fecha}:\n${resumen}`;
 
-  }
+  enviarTelegram(mensaje);
+  alert("📤 Recordatorios enviados a Telegram.");
+};
+function verificarVencimientos() {
+  const ahora = new Date();
+  const horaActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
 
-  function procesarQR() {
-  const raw = document.getElementById('qrInput').value.trim();
+  recordatoriosDelDia.forEach(r => {
+    if (
+      !r.atendido &&
+      r.hora &&
+      r.hora <= horaActual &&
+      !recordatoriosNotificados.has(r.id)
+    ) {
+      const mensaje = `⏰ Vencido:\n${r.hora} → ${r.mensaje}`;
+      enviarTelegram(mensaje);
+      recordatoriosNotificados.add(r.id);
 
-  // Primero intenta formato estándar con guiones
-  let match = raw.match(/id=([a-f0-9\-]{36})/i);
-
-  // Si no encontró, intenta con formato con slash y paréntesis
-  if (!match) {
-    match = raw.match(/id\)([a-f0-9]{8}\/[a-f0-9]{4}\/[a-f0-9]{4}\/[a-f0-9]{4}\/[a-f0-9]{12})/i);
-  }
-
-  if (match && match[1]) {
-    const uuid = match[1].replace(/\//g, '-').toUpperCase();
-  document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
-  document.getElementById('uuidDetectado').style.color = '#003366';
-  document.getElementById('qrInput').value = '';
-  buscarPorUUID(uuid);
-} else {
-  document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
-  document.getElementById('uuidDetectado').style.color = 'darkred';
+      // ✅ Marcar como atendido en Supabase
+      supabase
+        .from("recordatorios")
+        .update({ atendido: true })
+        .eq("id", r.id);
+    }
+  });
 }
-}
-function mostrarFotos(fotos) {
-  const galeria = document.getElementById('galeriaFotos');
-  const contenedor = document.getElementById('contenedorFotos');
-  contenedor.innerHTML = '';
-
-  if (Array.isArray(fotos) && fotos.length > 0) {
-    fotos.forEach(url => {
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'relative';
-
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'foto';
-      img.style.width = '100px';
-      img.style.border = '1px solid #ccc';
-      img.style.borderRadius = '4px';
-      img.style.cursor = 'pointer';
-
-      const btn = document.createElement('button');
-      btn.innerText = '✖';
-      btn.style.position = 'absolute';
-      btn.style.top = '-8px';
-      btn.style.right = '-8px';
-      btn.style.background = 'crimson';
-      btn.style.color = 'white';
-      btn.style.border = 'none';
-      btn.style.borderRadius = '50%';
-      btn.style.cursor = 'pointer';
-      btn.onclick = () => eliminarFoto(url);
-
-      wrapper.appendChild(img);
-      wrapper.appendChild(btn);
-      contenedor.appendChild(wrapper);
-    });
-
-    galeria.style.display = 'block';
-  } else {
-    galeria.style.display = 'none';
-  }
-}
-
-async function subirFoto() {
-  const archivo = document.getElementById('inputFoto').files[0];
-  if (!archivo || !uuidActual) return alert('Selecciona una imagen');
-
-  const nombreArchivo = `${uuidActual}_${Date.now()}_${archivo.name}`;
-  const bucket = 'fotos-facturas';
-
-  const { error: errorUpload } = await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(nombreArchivo, archivo);
-
-  if (errorUpload) {
-    console.error(errorUpload);
-    return alert('Error al subir imagen');
-  }
-
-  const { data: publicUrlData } = supabaseClient
-    .storage
-    .from(bucket)
-    .getPublicUrl(nombreArchivo);
-
-  const nuevaFoto = publicUrlData.publicUrl;
-
-  const { data: filaActual } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('fotos')
-    .eq('uuid', uuidActual)
-    .maybeSingle();
-
-  const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
-  fotosActuales.push(nuevaFoto);
-
-  const { error: errorUpdate } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({ fotos: fotosActuales })
-    .eq('uuid', uuidActual);
-
-  if (errorUpdate) {
-    console.error(errorUpdate);
-    alert('Error al actualizar la lista de fotos');
-  } else {
-    alert('Foto subida correctamente');
-    buscarPorUUID(uuidActual);
-  }
-}
-
-async function eliminarFoto(urlEliminar) {
-  if (!confirm('¿Eliminar esta imagen?')) return;
-
-  const { data: filaActual } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('fotos')
-    .eq('uuid', uuidActual)
-    .maybeSingle();
-
-  const nuevasFotos = filaActual.fotos.filter(foto => foto !== urlEliminar);
-
-  const { error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({ fotos: nuevasFotos })
-    .eq('uuid', uuidActual);
-
-  if (error) {
-    alert('Error al eliminar la imagen');
-  } else {
-    alert('Foto eliminada correctamente');
-    buscarPorUUID(uuidActual);
-  }
-}
-
 </script>
-
-<footer>
-  v1.0 casper fotosbucket 06072025 1057pm
-</footer>
 </body>
 </html>
