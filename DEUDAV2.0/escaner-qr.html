@@ -79,9 +79,10 @@
 
   if (match && match[1]) {
     const uuid = match[1].replace(/\//g, '-').toUpperCase();
-    document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
-    document.getElementById('qrInput').value = '';
-    buscarPorUUID(uuid);
+  document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
+  document.getElementById('uuidDetectado').style.color = '#003366';
+  document.getElementById('qrInput').value = '';
+  buscarPorUUID(uuid);
   } else {
     document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
   }
@@ -90,7 +91,7 @@
 </script>
 
 <footer>
-  v1.0 · Escáner QR SAT · 06 Jul 2025
+  v1.0 · Escáner QR SAT · 06 Jul 2025 0602pm
 </footer>
 </body>
 </html>
