@@ -262,7 +262,27 @@ body {
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    const codigosPermitidos = [];
+    const codigosPermitidos = [
+  "2382", "7503000134506", "3062", "7503000134803", "3217", "4451", "60028",
+  "7501508800237", "131825", "132030", "134060", "7503009154307", "142535",
+  "142540", "144060", "145070", "147090", "7702", "150101", "7503009154239",
+  "150104", "13609", "150103", "7503024644951", "4660", "150102",
+  "7503020773860", "150100", "7503024644128", "7702200", "7701200",
+  "8802200", "8801200", "9901200", "5282", "20025", "750182", "352", "3864",
+  "3866", "3865", "2178", "5283", "706706", "708708", "712712", "716716",
+  "732732", "406406", "410410", "412412", "516516", "104104", "106106",
+  "108108", "110110", "112112", "114114", "116116", "120120", "132132",
+  "1355", "1356", "760760", "12021", "20100", "20054", "210004", "20319",
+  "7016", "20318", "450079", "450081", "355", "1349", "2351", "357",
+  "855500500", "2350", "363", "7689", "20306", "7686", "20297", "364",
+  "7417", "1347", "20127", "365", "20124", "7572", "20126", "14578", "2096",
+  "1886", "2097", "20312", "1655", "1901", "7221", "20066", "450083", "5866",
+  "2411", "2408", "2190", "2188", "3987", "20013", "2409", "2410", "2395",
+  "4898", "4410", "5078", "1502", "1623", "4395", "1386413864", "450095",
+  "32322050", "290005", "75022088021", "450053", "2397", "450091", "450090",
+  "141450", "450086", "450087", "450006", "7560", "7011", "7013"
+];
+
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -289,6 +309,18 @@ const mensaje = document.getElementById("mensaje");
 
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById("fecha").value = hoy;
+
+async function cargarProductosPermitidos() {
+  const snapshot = await db.collection("productos").get();
+  productosPermitidos = snapshot.docs
+    .filter(doc => codigosPermitidos.includes(doc.id))
+    .map(doc => ({
+      id: doc.id,
+      concepto: doc.data().Concepto || "",
+      costo: doc.data()["Costo sin Impuesto"] || 0
+    }));
+}
+
 
     buscador.addEventListener("input", () => {
   indiceSeleccionado = -1;
@@ -659,8 +691,9 @@ if (!coincidencias.empty) {
   <button onclick="guardarConFirmas()">✅ Confirmar y guardar</button>
   <button onclick="cancelarFirmas()">❌ Cancelar</button>
 </div>
-<footer style="text-align: center; font-size: 0.8em; color: #777; padding: 15px 0;">
-  Versión 1.0 - 07072025 - 04:40 PM
+  <footer style="text-align: center; font-size: 0.8em; color: #777; padding: 15px 0;">
+  Versión 1.0 - 07072025 cambios de funcion  - 04:48 PM
 </footer>
+
 </body>
 </html>
