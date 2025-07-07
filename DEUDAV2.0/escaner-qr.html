@@ -29,27 +29,27 @@
   <input type="text" id="qrInput" placeholder="Escanea aquí con Eyoyo..." oninput="procesarQR()" autofocus />
   <div id="uuidDetectado"></div>
 
-<h3>Factura encontrada</h3>
-<p><strong>UUID:</strong> <span id="uuidTexto"></span></p>
-<p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
-<p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
-<p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
-<p><strong>Factura:</strong> <span id="facturaTexto"></span></p>
-<p><strong>Total:</strong> $<span id="totalTexto"></span></p>
-<p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
+<div id="result" style="display:none; background:#eef; padding:10px; border-radius:6px; margin-top:20px;">
+  <h3>Factura encontrada</h3>
+  <p><strong>UUID:</strong> <span id="uuidTexto"></span></p>
+  <p><strong>Fecha:</strong> <span id="fechaTexto"></span></p>
+  <p><strong>RFC Emisor:</strong> <span id="rfcTexto"></span></p>
+  <p><strong>Razón Social:</strong> <span id="razonTexto"></span></p>
+  <p><strong>Factura:</strong> <span id="facturaTexto"></span></p>
+  <p><strong>Total:</strong> $<span id="totalTexto"></span></p>
+  <p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
 
-<label for="fisicaTexto"><strong>Física:</strong></label>
-<select id="fisicaTexto">
-  <option value="NO">NO</option>
-  <option value="SI">SÍ</option>
-</select>
+  <label for="fisicaTexto"><strong>Física:</strong></label>
+  <select id="fisicaTexto">
+    <option value="NO">NO</option>
+    <option value="SI">SÍ</option>
+  </select>
 
-<label for="comentarioTexto"><strong>Comentario:</strong></label>
-<textarea id="comentarioTexto" rows="3" placeholder="Factura física recibida completa, pero sin comentarios"></textarea>
+  <label for="comentarioTexto"><strong>Comentario:</strong></label>
+  <textarea id="comentarioTexto" rows="3" placeholder="Factura física recibida completa, pero sin comentarios"></textarea>
 
-<p><strong>Concepto:</strong> <span id="conceptoTexto"></span></p>
-
-
+  <p><strong>Concepto:</strong> <span id="conceptoTexto"></span></p>
+</div>
 <script>
   const supabaseClient = window.supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
@@ -107,7 +107,7 @@ async function buscarPorUUID(uuid) {
 </script>
 
 <footer>
-  v1.0 MODIFICADO PARA ESCANEAR Y VER DATOS 0609PM 060725
+  v1.0 MODIFICADO PARA ESCANEAR Y VER DATOS 0613PM 060725
 </footer>
 </body>
 </html>
