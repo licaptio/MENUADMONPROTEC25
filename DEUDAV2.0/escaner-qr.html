@@ -279,35 +279,6 @@ async function guardarCambios() {
     limpiarFormulario();
   }, 1500); // Espera 1 segundo y limpia
 }
-  const { data: publicUrlData } = supabaseClient
-    .storage
-    .from(bucket)
-    .getPublicUrl(nombreArchivo);
-
-  const nuevaFoto = publicUrlData.publicUrl;
-
-  const { data: filaActual } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('fotos')
-    .eq('uuid', uuidActual)
-    .maybeSingle();
-
-  const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
-  fotosActuales.push(nuevaFoto);
-
-  const { error: errorUpdate } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({ fotos: fotosActuales })
-    .eq('uuid', uuidActual);
-
-  if (errorUpdate) {
-    console.error(errorUpdate);
-    alert('Error al actualizar la lista de fotos');
-  } else {
-    alert('Foto subida correctamente');
-    buscarPorUUID(uuidActual);
-  }
-}
 function limpiarFormulario() {
   uuidActual = null;
   document.getElementById('result').style.display = 'none';
@@ -376,6 +347,7 @@ document.getElementById('fotoExterna').addEventListener('change', async function
 </script>
 
 <footer>
-  v1.0 VERONICA fotosnew 0733AM 07072025
+  v1.0 VERONICA fotosnew 0736AM 07072025
+<footer>
 </body>
 </html>
