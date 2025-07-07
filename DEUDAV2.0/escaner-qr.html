@@ -61,8 +61,11 @@
   <h4>Fotos adjuntas:</h4>
   <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
 
-  <input type="file" id="inputFoto" accept="image/*" />
+  <input type="file" id="inputFoto" accept="image/*" capture="environment" />
   <button onclick="subirFoto()" style="margin-top: 10px;">Subir Foto</button>
+  <button onclick="guardarCambios()" style="margin-top: 10px; background-color: green; color: white;">
+  Guardar Cambios
+</button>
 </div>
 
 </div>
@@ -234,11 +237,33 @@ async function eliminarFoto(urlEliminar) {
     buscarPorUUID(uuidActual);
   }
 }
+async function guardarCambios() {
+  if (!uuidActual) return alert("No hay factura cargada");
+
+  const fisica = document.getElementById("fisicaTexto").value;
+  const comentario = document.getElementById("comentarioTexto").value;
+
+  const { error } = await supabaseClient
+    .from("deuda_limpia_pdd")
+    .update({
+      factura_fisicamente: fisica,
+      comentario_factura_fisica: comentario
+    })
+    .eq("uuid", uuidActual);
+
+  if (error) {
+    console.error(error);
+    alert("Error al guardar los cambios");
+  } else {
+    alert("Cambios guardados correctamente");
+    buscarPorUUID(uuidActual); // Refresca la vista
+  }
+}
 
 </script>
 
 <footer>
-  v1.0 casper fotos buckets 06072025 1107pm 
+  v1.0 alika fotos 1114pm 060725 
 </footer>
 </body>
 </html>
