@@ -39,14 +39,23 @@
   <p><strong>Total:</strong> $<span id="totalTexto"></span></p>
   <p><strong>Pagada:</strong> <span id="pagadaTexto"></span></p>
 
-  <label for="fisicaTexto"><strong>Física:</strong></label>
-  <select id="fisicaTexto">
+<!-- Línea para Física -->
+<div style="display: flex; align-items: center; margin-top: 10px;">
+  <label for="fisicaTexto" style="flex: 1;"><strong>Física:</strong></label>
+  <select id="fisicaTexto" style="width: 120px;">
     <option value="NO">NO</option>
     <option value="SI">SÍ</option>
   </select>
+</div>
 
+<!-- Línea para Comentario -->
+<div style="margin-top: 10px;">
   <label for="comentarioTexto"><strong>Comentario:</strong></label>
-  <textarea id="comentarioTexto" rows="3" placeholder="Factura física recibida completa, pero sin comentarios"></textarea>
+  <textarea id="comentarioTexto"
+            rows="4"
+            placeholder="Factura física recibida completa, pero sin comentarios"
+            style="width: 100%; font-size: 1rem; padding: 8px; border-radius: 6px;"></textarea>
+</div>
 
   <p><strong>Concepto:</strong> <span id="conceptoTexto"></span></p>
 </div>
@@ -107,7 +116,7 @@ async function buscarPorUUID(uuid) {
 </script>
 
 <footer>
-  v1.0 MODIFICADO PARA ESCANEAR Y VER DATOS 0613PM 060725
+  v1.0 BLANCA MOON 0619 PM 060725
 </footer>
 </body>
 </html>
