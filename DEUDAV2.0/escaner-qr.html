@@ -61,10 +61,11 @@
   <h4>Fotos adjuntas:</h4>
   <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
 
-<input type="file" id="inputFoto" accept="image/*" capture="environment" />
+<video id="video" width="100%" autoplay playsinline style="display:none;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
 <div style="margin-top: 10px; display: flex; gap: 10px;">
-  <button onclick="subirFoto()" style="flex: 1;">Subir Foto</button>
+  <button onclick="iniciarCamara()" style="flex: 1;">📷 Tomar Foto</button>
   <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
     Guardar Cambios
   </button>
@@ -260,11 +261,102 @@ async function guardarCambios() {
     buscarPorUUID(uuidActual); // Refresca la vista
   }
 }
+let stream = null;
+
+async function iniciarCamara() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.style.display = 'block';
+
+    const tomar = confirm("Presiona Aceptar para tomar la foto con la cámara");
+    if (tomar) {
+      capturarFoto();
+    } else {
+      detenerCamara();
+    }
+  } catch (err) {
+    console.error("No se pudo acceder a la cámara:", err);
+    alert("Error al acceder a la cámara.");
+  }
+}
+
+function capturarFoto() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(blob => {
+    subirFotoDesdeBlob(blob);
+  }, 'image/jpeg');
+
+  detenerCamara();
+}
+
+function detenerCamara() {
+  const video = document.getElementById('video');
+  video.style.display = 'none';
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+}
+
+async function subirFotoDesdeBlob(blob) {
+  if (!blob || !uuidActual) return alert('No hay imagen para subir');
+
+  const nombreArchivo = `${uuidActual}_${Date.now()}.jpg`;
+  const bucket = 'fotos-facturas';
+
+  const { error: errorUpload } = await supabaseClient
+    .storage
+    .from(bucket)
+    .upload(nombreArchivo, blob);
+
+  if (errorUpload) {
+    console.error(errorUpload);
+    return alert('Error al subir imagen');
+  }
+
+  const { data: publicUrlData } = supabaseClient
+    .storage
+    .from(bucket)
+    .getPublicUrl(nombreArchivo);
+
+  const nuevaFoto = publicUrlData.publicUrl;
+
+  const { data: filaActual } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .select('fotos')
+    .eq('uuid', uuidActual)
+    .maybeSingle();
+
+  const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
+  fotosActuales.push(nuevaFoto);
+
+  const { error: errorUpdate } = await supabaseClient
+    .from('deuda_limpia_pdd')
+    .update({ fotos: fotosActuales })
+    .eq('uuid', uuidActual);
+
+  if (errorUpdate) {
+    console.error(errorUpdate);
+    alert('Error al actualizar la lista de fotos');
+  } else {
+    alert('Foto subida correctamente');
+    buscarPorUUID(uuidActual);
+  }
+}
 
 </script>
 
 <footer>
-  v1.0 alika fotos 1120pm 06072025 
+  v1.0 alika fotos 1123pm 06072025 
   footer>
 </body>
 </html>
