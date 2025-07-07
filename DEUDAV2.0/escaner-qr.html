@@ -28,6 +28,10 @@
   <h2>Escanear CFDI con QR (SAT)</h2>
 
   <input type="text" id="qrInput" placeholder="Escanea aquí con Eyoyo..." oninput="procesarQR()" autofocus />
+  <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
+  Guardar Cambios
+</button>
+
   <div id="uuidDetectado"></div>
 
 <div id="result" style="display:none; background:#eef; padding:10px; border-radius:6px; margin-top:20px;">
@@ -63,9 +67,6 @@
 
 <input type="file" id="fotoExterna" accept="image/*" capture="environment" style="display: none;" />
 <button onclick="document.getElementById('fotoExterna').click()" style="flex: 1;">📸 Tomar Foto</button>
-  <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
-    Guardar Cambios
-  </button>
 </div>
 
 </div>
