@@ -243,10 +243,24 @@ async function eliminarFoto(urlEliminar) {
   }
 }
 async function guardarCambios() {
-  if (!uuidActual) return alert("No hay factura cargada");
+  if (!uuidActual) return;
 
   const fisica = document.getElementById("fisicaTexto").value;
   const comentario = document.getElementById("comentarioTexto").value;
+
+  // Mostrar mensaje temporal
+  const guardandoMsg = document.createElement('div');
+  guardandoMsg.id = 'mensajeGuardando';
+  guardandoMsg.textContent = 'Guardando cambios...';
+  guardandoMsg.style.position = 'fixed';
+  guardandoMsg.style.top = '10px';
+  guardandoMsg.style.right = '10px';
+  guardandoMsg.style.background = '#007700';
+  guardandoMsg.style.color = 'white';
+  guardandoMsg.style.padding = '10px 20px';
+  guardandoMsg.style.borderRadius = '6px';
+  guardandoMsg.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+  document.body.appendChild(guardandoMsg);
 
   const { error } = await supabaseClient
     .from("deuda_limpia_pdd")
@@ -258,12 +272,16 @@ async function guardarCambios() {
 
   if (error) {
     console.error(error);
-    alert("Error al guardar los cambios");
-  } else {
-    setTimeout(() => {
-      limpiarFormulario(); // ✅ Se limpia sin alertas
-    }, 1000); // Espera 1 segundo (1000 ms)
+    guardandoMsg.textContent = '❌ Error al guardar';
+    guardandoMsg.style.background = '#990000';
+    setTimeout(() => guardandoMsg.remove(), 2000);
+    return;
   }
+
+  setTimeout(() => {
+    guardandoMsg.remove();
+    limpiarFormulario();
+  }, 1500); // Espera 1 segundo y limpia
 }
 let stream = null;
 
@@ -371,6 +389,6 @@ function limpiarFormulario() {
 </script>
 
 <footer>
-  v1.0 VERONICA fotos 0715AM 07072025
+  v1.0 VERONICA y sus cambios 0723AM 07072025
 </body>
 </html>
