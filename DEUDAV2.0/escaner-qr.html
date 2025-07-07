@@ -65,7 +65,8 @@
 <canvas id="canvas" style="display:none;"></canvas>
 
 <div style="margin-top: 10px; display: flex; gap: 10px;">
-  <button onclick="iniciarCamara()" style="flex: 1;">📷 Tomar Foto</button>
+  <button onclick="iniciarCamara()" style="flex: 1;">📷 Iniciar Cámara</button>
+<button onclick="capturarFoto()" style="flex: 1; background-color: #444; color: white;">📸 Capturar</button>
   <button onclick="guardarCambios()" style="flex: 1; background-color: green; color: white;">
     Guardar Cambios
   </button>
@@ -265,17 +266,10 @@ let stream = null;
 
 async function iniciarCamara() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const video = document.getElementById('video');
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     video.srcObject = stream;
     video.style.display = 'block';
-
-    const tomar = confirm("Presiona Aceptar para tomar la foto con la cámara");
-    if (tomar) {
-      capturarFoto();
-    } else {
-      detenerCamara();
-    }
   } catch (err) {
     console.error("No se pudo acceder a la cámara:", err);
     alert("Error al acceder a la cámara.");
@@ -356,7 +350,7 @@ async function subirFotoDesdeBlob(blob) {
 </script>
 
 <footer>
-  v1.0 alika fotos 1123pm 06072025 
+  v1.0 alika fotos 1131pm 06072025 
   footer>
 </body>
 </html>
