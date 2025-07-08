@@ -97,13 +97,13 @@
 <body>
   <main>
     <h2>Agregar Recordatorio</h2>
-    <div class="version">Versión 1.0 – 06/07/2025 – 11:39AM OPTIMIZADO PARA CELULAR</div>
+    <div class="version">Versión 1.5 – 08072025 MEJORA DE HORA</div>
 
     <label for="fecha">Fecha:</label>
     <input type="date" id="fecha" required />
 
     <label for="hora">Hora:</label>
-    <input type="text" id="hora" placeholder="Ej: 08:30 o 17:45" pattern="^([01]\d|2[0-3]):([0-5]\d)$" required />
+    <input type="text" id="hora" placeholder="Ej: 08:30 o 0830 o 17:45 o 1745" required />
     <small>Formato 24h (HH:MM)</small>
 
     <label for="mensaje">Mensaje:</label>
@@ -142,8 +142,15 @@
 
     window.guardar = async function () {
       const fecha = document.getElementById("fecha").value;
-      const hora = document.getElementById("hora").value;
-      const horaValida = /^([01]\d|2[0-3]):([0-5]\d)$/.test(hora);
+let hora = document.getElementById("hora").value.trim();
+
+// Si la hora tiene 4 dígitos sin dos puntos (ej: 1623), conviértela a 16:23
+if (/^\d{4}$/.test(hora)) {
+  hora = hora.slice(0, 2) + ":" + hora.slice(2);
+  document.getElementById("hora").value = hora; // actualiza el input visible
+}
+
+const horaValida = /^([01]\d|2[0-3]):([0-5]\d)$/.test(hora);
       if (!horaValida) {
         alert("Por favor ingresa una hora válida en formato 24 hrs (ej. 14:30).");
         return;
