@@ -67,6 +67,10 @@
   font-size: 14px;
   color: #555;
 }
+.prioridad {
+  background-color: #fff59d;
+  font-weight: bold;
+}  
   </style>
 </head>
 <body>
@@ -99,10 +103,6 @@
   <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
   <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
   <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
-</div>
-<div id="version-fecha-hora">
-  <div>📦 v1.0 06 Julio 2025 16:50 HORAS MODIFICADO EL MARCADOR</div>
-  <div id="fecha-hora">⏳</div>
 </div>
 
 <script type="module">
@@ -195,19 +195,23 @@
     if (error) return lista.innerHTML = "❌ Error al cargar.";
     if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
 recordatoriosDelDia = data;
-lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) =>
-  `<li>
-    ${r.hora ? r.hora.substring(0,5) + " → " : ""}
-    ${r.mensaje}
-    ${
-      r.atendido
-        ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
-        : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`
-    }
+lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) => {
+  const hora = r.hora ? r.hora.substring(0, 5) + " → " : "";
+  const claseAtendido = r.atendido ? "recordatorio-atendido" : "";
+  const clasePrioridad = r.prioridad ? "prioridad" : "";
+  const icono = !r.atendido ? "<span class='parpadea'>🔔</span> " : "";
+
+  return `<li class="${claseAtendido} ${clasePrioridad}" id="li-${r.id}">
+    <input type="checkbox" ${r.prioridad ? "checked" : ""} onchange="togglePrioridad('${r.id}', this.checked)">
+    ${icono}${hora}${r.mensaje}
+    ${r.atendido
+      ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
+      : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}
     <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
     <button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
-  </li>`
-).join("") + "</ul>";
+  </li>`;
+}).join("") + "</ul>";
+
 verificarVencimientos(); // Ejecuta una revisión inmediata de vencidos
 
 window.marcarAtendido = async function(id, fecha) {
@@ -287,6 +291,25 @@ function verificarVencimientos() {
     }
   });
 }
+window.togglePrioridad = async function(id, estado) {
+  const li = document.getElementById(`li-${id}`);
+  const { error } = await supabase.from("recordatorios").update({ prioridad: estado }).eq("id", id);
+  if (error) {
+    alert("❌ No se pudo actualizar prioridad.");
+    return;
+  }
+  if (estado) {
+    li.classList.add("prioridad");
+  } else {
+    li.classList.remove("prioridad");
+  }
+};
+
 </script>
+<footer id="version-fecha-hora" style="margin-top: auto; text-align: center; padding: 1em; font-size: 14px; color: #555;">
+  <div>📦 v1.0 08Julio2025 16:12 VAMOS ALLA DIJO JHONSON</div>
+  <div id="fecha-hora">⏳</div>
+</footer>
+
 </body>
 </html>
