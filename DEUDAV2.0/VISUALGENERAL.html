@@ -155,7 +155,12 @@ function mostrarTodos() {
 </td>
 
       <td class="comentario">${f.comentario_factura_fisica || ""}</td>
-      <td>${Array.isArray(f.fotos) && f.fotos[0] ? `<a href="${f.fotos[0]}" target="_blank">🔗</a>` : ""}</td>
+      <td>
+  ${Array.isArray(f.fotos) && f.fotos.length > 0
+    ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(' ')
+    : ""}
+</td>
+
     </tr>`;
   }).join("");
 
