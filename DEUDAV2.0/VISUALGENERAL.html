@@ -88,6 +88,17 @@
   100% { background-color: purple; }
 }
 
+.factura-naranja {
+  animation: parpadeo-naranja 1s infinite;
+  color: black;
+}
+
+@keyframes parpadeo-naranja {
+  0% { background-color: orange; }
+  50% { background-color: transparent; }
+  100% { background-color: orange; }
+}
+
   </style>
 </head>
 <body>
@@ -146,13 +157,18 @@ function mostrarTodos() {
   const filas = datosFiltrados.map(f => {
     totalTotal += f.total;
 let clase = '';
-if (f.razon_social_emisor?.toUpperCase() === 'DECASA DEL CENTRO' && f.dias >= 21) {
+const proveedor = (f.razon_social_emisor || "").toUpperCase();
+
+if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 20) {
   clase = 'factura-morada';
+} else if (proveedor === 'DISTRIBUIDORA DE DULCES DEL NORTE' && f.dias >= 27) {
+  clase = 'factura-naranja';
 } else if (f.dias > 40) {
   clase = 'factura-vencida-critica';
 } else if (f.dias > 30) {
   clase = 'factura-vencida';
 }
+
     return `<tr class="${clase}">
       <td>${f.fecha_formateada}</td>
       <td>${f.dias ?? ""}</td>
