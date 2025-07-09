@@ -133,11 +133,11 @@
         .eq("id", recordatorioId)
         .single();
 
-      if (data) {
-        document.getElementById("fecha").value = data.fecha;
-        document.getElementById("hora").value = data.hora;
-        document.getElementById("mensaje").value = data.mensaje;
-      }
+if (data) {
+  document.getElementById("fecha").value = data.fecha;
+  document.getElementById("hora").value = data.hora?.slice(0, 5);  // ← recorta a HH:MM
+  document.getElementById("mensaje").value = data.mensaje;
+}
     }
 
     window.guardar = async function () {
