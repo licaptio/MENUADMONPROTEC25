@@ -139,6 +139,16 @@
   50% { background-color: transparent; }
   100% { background-color: #e2725b; }
 }
+.factura-azul-cielo {
+  animation: parpadeo-azul-cielo 1s infinite;
+  color: white;
+}
+
+@keyframes parpadeo-azul-cielo {
+  0% { background-color: #00bfff; }
+  50% { background-color: transparent; }
+  100% { background-color: #00bfff; }
+}
 
   </style>
 </head>
@@ -215,6 +225,8 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-azul-oscuro';
 } else if (proveedor === 'GRUPO CHI-SO' && f.dias >= 13) {
   clase = 'factura-terracota';
+} else if (proveedor === 'GRUPO CONVERMEX' && f.dias >= 33) {
+  clase = 'factura-azul-cielo';
 } else if (f.dias > 40) {
   clase = 'factura-vencida-critica';
 } else if (f.dias > 30) {
