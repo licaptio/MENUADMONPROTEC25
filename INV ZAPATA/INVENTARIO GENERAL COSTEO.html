@@ -30,6 +30,17 @@
       th { background: #e0e0e0 !important; color: black !important; }
       h2::before { content: "🧾 Inventario Impreso — "; }
     }
+.fila-parpadeo-rojo {
+  animation: parpadeoFila 1s infinite;
+  background-color: #ffcccc;
+}
+
+@keyframes parpadeoFila {
+  0%, 100% { background-color: #ffcccc; }
+  50% { background-color: white; }
+}
+
+    
   </style>
 </head>
 <body>
@@ -159,14 +170,16 @@ async function renderTabla(nombre, codigos, productosSnap, entradasSnap, salidas
     const totalCosteado = p.costo * inventario;
     totalInventarioCosteado += totalCosteado;
     totalGlobalInventario += totalCosteado;
-    tablaHTML += `<tr>
-      <td>${codigo}</td>
-      <td>${p.descripcion}</td>
-      <td>${formatter.format(p.costo)}</td>
-      <td>${p.impuesto}</td>
-      <td><strong>${inventario}</strong></td>
-      <td><strong>${formatter.format(totalCosteado)}</strong></td>
-    </tr>`;
+    const claseFila = inventario < 0 ? 'fila-parpadeo-rojo' : '';
+tablaHTML += `<tr class="${claseFila}">
+  <td>${codigo}</td>
+  <td>${p.descripcion}</td>
+  <td>${formatter.format(p.costo)}</td>
+  <td>${p.impuesto}</td>
+  <td><strong>${inventario}</strong></td>
+  <td><strong>${formatter.format(totalCosteado)}</strong></td>
+</tr>`;
+
   });
 
   tablaHTML = tablaHTML.replace(
