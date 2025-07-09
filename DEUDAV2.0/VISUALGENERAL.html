@@ -149,6 +149,17 @@
   50% { background-color: transparent; }
   100% { background-color: #00bfff; }
 }
+.factura-super-alerta {
+  animation: parpadeo-super-alerta 0.6s infinite;
+  color: #ffff00; /* amarillo fuerte */
+  font-weight: bold;
+}
+
+@keyframes parpadeo-super-alerta {
+  0% { background-color: #ff0000; }
+  50% { background-color: transparent; }
+  100% { background-color: #ff0000; }
+}
 
   </style>
 </head>
@@ -224,12 +235,13 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-terracota';
 } else if (proveedor === 'GRUPO CONVERMEX' && f.dias >= 33) {
   clase = 'factura-azul-cielo';
+} else if (proveedor === 'LA IMPERIAL' && f.dias >= 5) {
+  clase = 'factura-super-alerta';
 } else if (f.dias > 40) {
   clase = 'factura-vencida-critica';
 } else if (f.dias > 30) {
   clase = 'factura-vencida';
 }
-
     return `<tr class="${clase}">
       <td>${f.fecha_formateada}</td>
       <td>${f.dias ?? ""}</td>
