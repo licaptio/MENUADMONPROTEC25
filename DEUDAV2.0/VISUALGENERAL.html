@@ -129,6 +129,16 @@
   50% { background-color: transparent; }
   100% { background-color: #001f4d; }
 }
+.factura-terracota {
+  animation: parpadeo-terracota 1s infinite;
+  color: white;
+}
+
+@keyframes parpadeo-terracota {
+  0% { background-color: #e2725b; }
+  50% { background-color: transparent; }
+  100% { background-color: #e2725b; }
+}
 
   </style>
 </head>
@@ -203,6 +213,8 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-rosa-pastel';
 } else if (proveedor === 'FABRICAS SELECTAS DEL CENTRO' && f.dias >= 40) {
   clase = 'factura-azul-oscuro';
+} else if (proveedor === 'GRUPO CHI-SO' && f.dias >= 13) {
+  clase = 'factura-terracota';
 } else if (f.dias > 40) {
   clase = 'factura-vencida-critica';
 } else if (f.dias > 30) {
