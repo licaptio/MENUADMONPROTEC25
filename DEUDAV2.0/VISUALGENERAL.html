@@ -99,6 +99,27 @@
   100% { background-color: orange; }
 }
 
+.factura-verde-limon {
+  animation: parpadeo-verde-limon 1s infinite;
+  color: black;
+}
+
+@keyframes parpadeo-verde-limon {
+  0% { background-color: #ccff00; }  /* verde limón */
+  50% { background-color: transparent; }
+  100% { background-color: #ccff00; }
+}
+.factura-rosa-pastel {
+  animation: parpadeo-rosa-pastel 1s infinite;
+  color: black;
+}
+
+@keyframes parpadeo-rosa-pastel {
+  0% { background-color: #ffc0cb; } /* rosa pastel */
+  50% { background-color: transparent; }
+  100% { background-color: #ffc0cb; }
+}
+    
   </style>
 </head>
 <body>
@@ -159,10 +180,14 @@ function mostrarTodos() {
 let clase = '';
 const proveedor = (f.razon_social_emisor || "").toUpperCase();
 
-if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 20) {
+if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-morada';
 } else if (proveedor === 'DISTRIBUIDORA DE DULCES DEL NORTE' && f.dias >= 27) {
   clase = 'factura-naranja';
+} else if (proveedor === 'DISTRIBUIDORA DE LA ROSA' && f.dias >= 17) {
+  clase = 'factura-verde-limon';
+} else if (proveedor === 'DISTRIBUIDORA DE PRODUCTOS DESHIDRATADOS' && f.dias >= 28) {
+  clase = 'factura-rosa-pastel';
 } else if (f.dias > 40) {
   clase = 'factura-vencida-critica';
 } else if (f.dias > 30) {
