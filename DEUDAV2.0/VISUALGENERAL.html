@@ -77,6 +77,17 @@
       font-weight: bold;
       cursor: pointer;
     }
+.factura-morada {
+  animation: parpadeo-morado 1s infinite;
+  color: white;
+}
+
+@keyframes parpadeo-morado {
+  0% { background-color: purple; }
+  50% { background-color: transparent; }
+  100% { background-color: purple; }
+}
+
   </style>
 </head>
 <body>
@@ -134,9 +145,14 @@ function mostrarTodos() {
 
   const filas = datosFiltrados.map(f => {
     totalTotal += f.total;
-    let clase = '';
-    if (f.dias > 40) clase = 'factura-vencida-critica';
-    else if (f.dias > 30) clase = 'factura-vencida';
+let clase = '';
+if (f.razon_social_emisor?.toUpperCase() === 'DECASA DEL CENTRO' && f.dias >= 21) {
+  clase = 'factura-morada';
+} else if (f.dias > 40) {
+  clase = 'factura-vencida-critica';
+} else if (f.dias > 30) {
+  clase = 'factura-vencida';
+}
     return `<tr class="${clase}">
       <td>${f.fecha_formateada}</td>
       <td>${f.dias ?? ""}</td>
