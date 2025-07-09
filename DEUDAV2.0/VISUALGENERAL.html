@@ -210,9 +210,6 @@ function mostrarTodos() {
 let clase = '';
 const proveedor = (f.razon_social_emisor || "").toUpperCase();
 
-let clase = '';
-const proveedor = (f.razon_social_emisor || "").toUpperCase();
-
 if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-morada';
 } else if (proveedor === 'DISTRIBUIDORA DE DULCES DEL NORTE' && f.dias >= 27) {
