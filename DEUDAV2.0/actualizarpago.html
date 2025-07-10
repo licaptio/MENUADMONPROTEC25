@@ -170,10 +170,7 @@
 
     function renderTabla() {
       const filtro = document.getElementById('filtroProveedor').value;
-      const datosFiltrados = filtro === "TODOS"
-        ? datos
-        : datos.filter(d => d.razon_social_emisor === filtro);
-
+const proveedoresUnicos = [...new Set(datos.map(d => (d.razon_social_emisor || "").trim().toUpperCase()))].sort();
       if (datosFiltrados.length === 0) {
         document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
         return;
@@ -261,7 +258,7 @@ const filas = datosFiltrados.map(d => {
     }
   </script>
 <footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-  Versión 1.5 · Última actualización: 10/07/2025 12:55AM
+  Versión 1.5 · Última actualización: 10/07/2025 16:08
 </footer>
 
 </body>
