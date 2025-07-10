@@ -180,36 +180,40 @@
       }
 
       const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
-const filas = datosFiltrados.map(d => `
-  <tr>
-    <td>${formatearFecha(d.fecha)}</td>
-    <td>
-      ${
-        (() => {
-          const uuidLimpio = (d.uuid || '')
-  .replace(/[\u200B-\u200D\uFEFF]/g, '')  // quita caracteres invisibles
-  .replace(/[^\x20-\x7E]/g, '')           // quita cualquier otro carácter no imprimible
-  .trim()
-  .toUpperCase();
-console.log("UUID original:", d.uuid, "| UUID limpio:", uuidLimpio);
-          const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
-          return uuidValido
+const filas = datosFiltrados.map(d => {
+  const uuidLimpio = (d.uuid || '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[^\x20-\x7E]/g, '')
+    .trim()
+    .toUpperCase();
+
+  const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
+  const totalNumerico = parseFloat(d.total) || 0;
+
+  return `
+    <tr>
+      <td>${formatearFecha(d.fecha)}</td>
+      <td>
+        ${
+          uuidValido
             ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
-            : `<span style="color:red;">UUID inválido</span>`;
-        })()
-      }
-    </td>
-    <td>${d.razon_social_emisor}</td>
-    <td>${d.factura}</td>
-    <td>${formato.format(d.total || 0)}</td>
-    <td>
-      <select onchange="actualizarPago('${d.id}', this.value)">
-        <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
-        <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
-      </select>
-    </td>
-  </tr>
-`).join('');
+            : `<span style="color:red;">UUID inválido</span>`
+        }
+      </td>
+      <td>${d.razon_social_emisor}</td>
+      <td>${d.factura}</td>
+      <td>${formato.format(totalNumerico)}</td>
+      <td>
+        <select onchange="actualizarPago('${d.id}', this.value)">
+          <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
+          <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+        </select>
+      </td>
+    </tr>
+  `;
+}).join('');
+
 
       document.getElementById('tablaFacturas').innerHTML = `
         <table>
@@ -257,7 +261,7 @@ console.log("UUID original:", d.uuid, "| UUID limpio:", uuidLimpio);
     }
   </script>
 <footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-  Versión 1.5 · Última actualización: 10/07/2025 11:30AM
+  Versión 1.5 · Última actualización: 10/07/2025 12:44AM
 </footer>
 
 </body>
