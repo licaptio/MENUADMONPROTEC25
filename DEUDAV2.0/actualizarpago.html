@@ -186,8 +186,13 @@ const filas = datosFiltrados.map(d => `
     <td>
       ${
         (() => {
-          const uuidLimpio = (d.uuid || '').trim().toUpperCase();
-          const uuidValido = uuidLimpio.length === 36 && /^[0-9A-F\-]+$/.test(uuidLimpio);
+          const uuidLimpio = (d.uuid || '')
+  .replace(/[\u200B-\u200D\uFEFF]/g, '')  // quita caracteres invisibles
+  .replace(/[^\x20-\x7E]/g, '')           // quita cualquier otro carácter no imprimible
+  .trim()
+  .toUpperCase();
+console.log("UUID original:", d.uuid, "| UUID limpio:", uuidLimpio);
+          const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
           return uuidValido
             ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
             : `<span style="color:red;">UUID inválido</span>`;
@@ -252,7 +257,7 @@ const filas = datosFiltrados.map(d => `
     }
   </script>
 <footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-  Versión 1.5 · Última actualización: 10/07/2025 11:18
+  Versión 1.5 · Última actualización: 10/07/2025 11:30AM
 </footer>
 
 </body>
