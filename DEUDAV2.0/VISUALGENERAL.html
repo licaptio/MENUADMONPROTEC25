@@ -180,8 +180,9 @@ fetch('https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?select=
 })
 .then(r => r.json())
 .then(json => {
+  console.log("DATOS CARGADOS:", json); // <- agrega esto
   datos = json;
-  mostrarTodos();
+  mostrarTodos(); // <- ¿esto se ejecuta?
 });
 
 function formatearFecha(fechaStr) {
@@ -190,6 +191,7 @@ function formatearFecha(fechaStr) {
 }
 
 function mostrarTodos() {
+  console.log("🚀 Ejecutando mostrarTodos()");
   const hoy = new Date();
   const datosFiltrados = datos
     .filter(d => (d.factura_pagada || "").trim().toUpperCase() !== "SI")
