@@ -168,68 +168,69 @@
       });
     }
 
-    function renderTabla() {
-const filtro = document.getElementById('filtroProveedor').value;
-const datosFiltrados = filtro === "TODOS"
-  ? datos
-  : datos.filter(d => (d.razon_social_emisor || "").trim().toUpperCase() === filtro.trim().toUpperCase());
+function renderTabla() {
+  const filtro = document.getElementById('filtroProveedor').value;
+  const datosFiltrados = filtro === "TODOS"
+    ? datos
+    : datos.filter(d => (d.razon_social_emisor || "").trim().toUpperCase() === filtro.trim().toUpperCase());
 
-        document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
-        return;
-      }
+  if (datosFiltrados.length === 0) {
+    document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
+    return;
+  }
 
-      const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
-const filas = datosFiltrados.map(d => {
-  const uuidLimpio = (d.uuid || '')
-    .normalize('NFKC')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/[^\x20-\x7E]/g, '')
-    .trim()
-    .toUpperCase();
+  const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+  const filas = datosFiltrados.map(d => {
+    const uuidLimpio = (d.uuid || '')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/[^\x20-\x7E]/g, '')
+      .trim()
+      .toUpperCase();
 
-  const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
-  const totalNumerico = parseFloat(d.total) || 0;
+    const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
+    const totalNumerico = parseFloat(d.total) || 0;
 
-  return `
-    <tr>
-      <td>${formatearFecha(d.fecha)}</td>
-      <td>
-        ${
-          uuidValido
-            ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
-            : `<span style="color:red;">UUID inválido</span>`
-        }
-      </td>
-      <td>${d.razon_social_emisor}</td>
-      <td>${d.factura}</td>
-      <td>${formato.format(totalNumerico)}</td>
-      <td>
-        <select onchange="actualizarPago('${d.id}', this.value)">
-          <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
-          <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
-        </select>
-      </td>
-    </tr>
+    return `
+      <tr>
+        <td>${formatearFecha(d.fecha)}</td>
+        <td>
+          ${
+            uuidValido
+              ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
+              : `<span style="color:red;">UUID inválido</span>`
+          }
+        </td>
+        <td>${d.razon_social_emisor}</td>
+        <td>${d.factura}</td>
+        <td>${formato.format(totalNumerico)}</td>
+        <td>
+          <select onchange="actualizarPago('${d.id}', this.value)">
+            <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
+            <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+          </select>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('tablaFacturas').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>UUID</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Total</th>
+          <th>¿Pagado?</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>
   `;
-}).join('');
+}
 
-
-      document.getElementById('tablaFacturas').innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>UUID</th>
-              <th>Proveedor</th>
-              <th>Factura</th>
-              <th>Total</th>
-              <th>¿Pagado?</th>
-            </tr>
-          </thead>
-          <tbody>${filas}</tbody>
-        </table>
-      `;
-    }
 
     function actualizarPago(id, nuevoEstado) {
       fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
@@ -260,7 +261,7 @@ const filas = datosFiltrados.map(d => {
     }
   </script>
 <footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-  Versión 1.5 · Última actualización: 10/07/2025 16:11
+  Versión 1.5 · Última actualización: 10/07/2025 16:15
 </footer>
 
 </body>
