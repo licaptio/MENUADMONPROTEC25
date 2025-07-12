@@ -272,9 +272,10 @@ window.enviarRecordatoriosManualmente = function () {
   enviarTelegram(mensaje);
   alert("📤 Recordatorios enviados a Telegram.");
 };
+// DESACTIVAR ENVÍO AUTOMÁTICO:
 function verificarVencimientos() {
-  const ahora = new Date();
-  const horaActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+  return; // 👈 Esto detiene toda la función automática
+}
 
   recordatoriosDelDia.forEach(r => {
     if (
@@ -311,7 +312,7 @@ window.togglePrioridad = async function(id, estado) {
 
 </script>
 <footer id="version-fecha-hora" style="margin-top: auto; text-align: center; padding: 1em; font-size: 14px; color: #555;">
-  <div>📦 v1.0 08Julio2025 16:23 VAMOS ALLA DIJO CORTANA</div>
+  <div>📦 v1.0 12Julio2025 0508 fox1</div>
   <div id="fecha-hora">⏳</div>
 </footer>
 
