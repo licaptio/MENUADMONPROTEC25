@@ -277,26 +277,7 @@ function verificarVencimientos() {
   return; // 👈 Esto detiene toda la función automática
 }
 
-  recordatoriosDelDia.forEach(r => {
-    if (
-      !r.atendido &&
-      r.hora &&
-      r.hora <= horaActual &&
-      !recordatoriosNotificados.has(r.id)
-    ) {
-      const mensaje = `⏰ Vencido:\n${r.hora} → ${r.mensaje}`;
-      enviarTelegram(mensaje);
-      recordatoriosNotificados.add(r.id);
-
-      // ✅ Marcar como atendido en Supabase
-      supabase
-        .from("recordatorios")
-        .update({ atendido: true })
-        .eq("id", r.id);
-    }
-  });
-}
-window.togglePrioridad = async function(id, estado) {
+  window.togglePrioridad = async function(id, estado) {
   const li = document.getElementById(`li-${id}`);
   const { error } = await supabase.from("recordatorios").update({ prioridad: estado }).eq("id", id);
   if (error) {
