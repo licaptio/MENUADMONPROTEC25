@@ -165,7 +165,10 @@
 </head>
 <body>
 <h2>Reporte Deuda Limpia</h2>
-<div id="contenedorTabla"></div>
+
+<!-- BOTÓN PARA ENVIAR TELEGRAM -->
+<button onclick="enviarTelegramVencidos()">📤 Enviar vencidos +31 días a Telegram</button>
+  <div id="contenedorTabla"></div>
 
 <script>
 const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
@@ -314,7 +317,59 @@ function exportarPDF() {
   });
   doc.save("reporte_deuda_limpia.pdf");
 }
+function enviarTelegramVencidos() {
+  const hoy = new Date();
+  const vencidos = datos
+    .filter(d => {
+      const fechaObj = new Date(d.fecha);
+      const dias = isNaN(fechaObj.getTime()) ? 0 : Math.floor((hoy - fechaObj) / (1000 * 60 * 60 * 24));
+      return (d.factura_pagada || "").trim().toUpperCase() !== "SI" && dias > 31;
+    });
+
+  if (vencidos.length === 0) {
+    alert("No hay facturas vencidas con más de 31 días.");
+    return;
+  }
+
+  const resumen = vencidos.map(f => {
+    const dias = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
+    const proveedor = (f.razon_social_emisor || "").substring(0, 25);
+    const factura = ((f.serie || "") + (f.factura || "")).trim();
+    const total = Number(f.total || 0).toFixed(2);
+    return `📅 ${f.fecha.substring(0, 10)} (${dias} días)\n🏢 ${proveedor}\n💳 ${factura} - $${total}`;
+  }).join("\n\n");
+
+  const mensaje = `⚠️ FACTURAS VENCIDAS +31 DÍAS (${vencidos.length}):\n\n${resumen}`;
+
+  const token = "7294752765:AAGFBX6JDrDMyTiBEYpBtBYLVnTGTtMpy2k";
+  const chatId = "6617988297";
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: mensaje,
+      parse_mode: "HTML"
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    console.log("✅ Enviado a Telegram:", data);
+    alert("Enviado a Telegram correctamente.");
+  })
+  .catch(e => {
+    console.error("❌ Error al enviar:", e);
+    alert("Error al enviar a Telegram.");
+  });
+}
 </script>
+<footer style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+  <hr style="margin-bottom: 10px;">
+  <p>🔄 Última actualización: Integración con Telegram para alertas de facturas vencidas +31 días.</p>
+  <p>Bot conectado: <strong>@Deudapddbot</strong> | Chat ID: <code>6617988297</code></p>
+  <p>© 2025 Plataforma Deuda PDD | <span style="color:#003366;">versión automatizada</span></p>
+</footer>
 
 </body>
 </html>
