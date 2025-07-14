@@ -323,11 +323,16 @@ function enviarTelegramVencidos() {
     .filter(d => {
       const fechaObj = new Date(d.fecha);
       const dias = isNaN(fechaObj.getTime()) ? 0 : Math.floor((hoy - fechaObj) / (1000 * 60 * 60 * 24));
-      return (
+return (
   (d.factura_pagada || "").trim().toUpperCase() !== "SI" &&
   (
     dias > 31 ||
-    ((d.razon_social_emisor || "").toUpperCase() === "DECASA DEL CENTRO" && dias >= 21)
+    (
+      ((d.razon_social_emisor || "").toUpperCase() === "DECASA DEL CENTRO") && dias >= 21
+    ) ||
+    (
+      ((d.razon_social_emisor || "").toUpperCase() === "DISTRIBUIDORA DE LA ROSA") && dias >= 21
+    )
   )
 );
 
@@ -348,7 +353,7 @@ vencidos.forEach(f => {
   agrupado[proveedor].push({ fecha: f.fecha, linea });
 });
   // Crear mensaje ordenado por proveedor
-  let mensaje = `⚠️ FACTURAS VENCIDAS +31 DÍAS o DECASA +21 DÍAS (${vencidos.length}):\n\n`;
+  let mensaje = `⚠️ FACTURAS VENCIDAS y PRONTOS PAGOS (${vencidos.length}):\n\n`;
 for (const proveedor in agrupado) {
   const lineasOrdenadas = agrupado[proveedor]
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
