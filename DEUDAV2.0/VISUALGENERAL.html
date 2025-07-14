@@ -332,9 +332,16 @@ return (
     ) ||
     (
       ((d.razon_social_emisor || "").toUpperCase() === "DISTRIBUIDORA DE LA ROSA") && dias >= 21
+    ) ||
+    (
+      ((d.razon_social_emisor || "").toUpperCase() === "CANEL'S") && dias >= 21
+    ) ||
+    (
+      ((d.razon_social_emisor || "").toUpperCase() === "ABARROTES") && dias >= 21
     )
   )
 );
+
 
     });
 
