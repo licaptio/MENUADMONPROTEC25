@@ -43,11 +43,15 @@
 <body>
   <h2>➕ Crear Rápido</h2>
 
-  <form id="form-rapido">
-    <label for="mensaje">Mensaje:</label>
-    <textarea id="mensaje" required placeholder="Escribe el recordatorio..."></textarea>
-    <button type="submit">💾 Guardar Recordatorio</button>
-  </form>
+<form id="form-rapido">
+  <label for="mensaje">Mensaje:</label>
+  <textarea id="mensaje" required placeholder="Escribe el recordatorio..."></textarea>
+
+  <label for="imagen">📎 Imagen (opcional):</label>
+  <input type="file" id="imagen" accept="image/*">
+
+  <button type="submit">💾 Guardar Recordatorio</button>
+</form>
 
   <div class="info" id="info-auto"></div>
 
@@ -71,27 +75,54 @@
 
     info.textContent = `📅 Fecha: ${fecha} / 🕒 Hora: ${hora} (automáticos)`;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const mensaje = mensajeInput.value.trim();
-      if (!mensaje) return alert("Debes escribir algo.");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const mensaje = mensajeInput.value.trim();
+  if (!mensaje) return alert("Debes escribir algo.");
 
-      const { error } = await supabase.from("recordatorios").insert([{
-        mensaje,
-        fecha,
-        hora,
-        atendido: false,
-        prioridad: false
-      }]);
+  const imagenInput = document.getElementById("imagen");
+  let imagen_url = null;
 
-      if (error) {
-        alert("❌ Error al guardar.");
-        return;
-      }
+  if (imagenInput.files.length > 0) {
+    const archivo = imagenInput.files[0];
+    const nombreUnico = `${Date.now()}_${archivo.name}`;
 
-      alert("✅ Recordatorio guardado.");
-      window.location.href = "index.html"; // Regresa al calendario
-    });
+    const { error: uploadError } = await supabase
+      .storage
+      .from("imagenes-recordatorios")
+      .upload(nombreUnico, archivo);
+
+    if (uploadError) {
+      alert("❌ Error al subir la imagen.");
+      return;
+    }
+
+    const { data: publicUrlData } = supabase
+      .storage
+      .from("imagenes-recordatorios")
+      .getPublicUrl(nombreUnico);
+
+    imagen_url = publicUrlData.publicUrl;
+  }
+
+  const { error } = await supabase.from("recordatorios").insert([{
+    mensaje,
+    fecha,
+    hora,
+    atendido: false,
+    prioridad: false,
+    imagen_url // nuevo campo
+  }]);
+
+  if (error) {
+    alert("❌ Error al guardar.");
+    return;
+  }
+
+  alert("✅ Recordatorio guardado.");
+  window.location.href = "index.html";
+});
+
   </script>
 </body>
 </html>
