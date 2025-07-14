@@ -71,6 +71,16 @@
   background-color: #fff59d;
   font-weight: bold;
 }  
+@keyframes parpadeo {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.parpadea-link {
+  animation: parpadeo 1.2s infinite;
+  font-weight: bold;
+}
   </style>
 </head>
 <body>
@@ -84,7 +94,7 @@
   <table id="calendario"></table>
   <div id="links">
     <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
-    <a href="crear-rapido.html">⚡ Crear rápido</a>
+    <a href="crear-rapido.html" class="parpadea-link">⚡ Crear rápido</a>
     <a href="ver-todo.html">📋 Ver todos</a>
   </div>
 </div>
