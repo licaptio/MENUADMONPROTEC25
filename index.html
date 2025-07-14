@@ -219,6 +219,7 @@ lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) => {
   return `<li class="${claseAtendido} ${clasePrioridad}" id="li-${r.id}">
     <input type="checkbox" ${r.prioridad ? "checked" : ""} onchange="togglePrioridad('${r.id}', this.checked)">
     ${icono}${hora}${r.mensaje}
+    ${r.imagen_url ? ` <a href="${r.imagen_url}" target="_blank" title="Ver imagen">📷</a>` : ""}
     ${r.atendido
       ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
       : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}
@@ -304,7 +305,7 @@ function verificarVencimientos() {
 
 </script>
 <footer id="version-fecha-hora" style="margin-top: auto; text-align: center; padding: 1em; font-size: 14px; color: #555;">
-  <div>📦 v1.0 140725 1519</div>
+  <div>📦 v1.0 140725 03:40pm</div>
   <div id="fecha-hora">⏳</div>
 </footer>
 
