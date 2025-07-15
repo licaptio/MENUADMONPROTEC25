@@ -89,4 +89,76 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     );
 
-    async fu
+    async function cargarDetalle() {
+      const params = new URLSearchParams(window.location.search);
+      const uuid = params.get("uuid");
+
+      if (!uuid) {
+        document.getElementById("cabecera").innerText = "UUID no especificado.";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("xml_inge_sergio")
+        .select("*")
+        .eq("uuid", uuid)
+        .single();
+
+      if (error || !data) {
+        document.getElementById("cabecera").innerText = "Factura no encontrada.";
+        return;
+      }
+
+      const cab = document.getElementById("cabecera");
+      cab.innerHTML = `
+        <div><span class="label">UUID:</span> ${data.uuid}</div>
+        <div><span class="label">Fecha:</span> ${new Date(data.fecha).toLocaleString()}</div>
+        <div><span class="label">Proveedor:</span> ${data.razon_social_emisor}</div>
+        <div><span class="label">Factura:</span> ${data.factura || '(Sin número)'}</div>
+        <div><span class="label">¿Gasto Médico?:</span> ${data.es_gasto_medico ? '✅ Sí' : '❌ No'}</div>
+      `;
+
+      if (data.conceptos_detalle && Array.isArray(data.conceptos_detalle)) {
+        const tbody = document.querySelector("#tablaConceptos tbody");
+        const tabla = document.getElementById("tablaConceptos");
+        tbody.innerHTML = "";
+
+        let subtotal = 0;
+        let ivaTotal = 0;
+
+        data.conceptos_detalle.forEach(c => {
+          const cantidad = c.cantidad || 1;
+          const valorUnitario = parseFloat(c.costoUnitario || 0);
+          const tasaIVA = parseFloat(c.tasaImpuesto || 0);
+          const iva = valorUnitario * tasaIVA;
+          const totalUnitario = valorUnitario + iva;
+          const totalLinea = totalUnitario * cantidad;
+
+          subtotal += valorUnitario * cantidad;
+          ivaTotal += iva * cantidad;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${cantidad}</td>
+            <td>${c.codigoSAT || ''}</td>
+            <td>${c.descripcion || ''}</td>
+            <td>$${valorUnitario.toFixed(2)}</td>
+            <td>${(tasaIVA * 100).toFixed(0)}%</td>
+            <td>$${(iva).toFixed(2)}</td>
+            <td>$${totalLinea.toFixed(2)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("subtotal").textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById("ivatotal").textContent = `$${ivaTotal.toFixed(2)}`;
+        document.getElementById("totalfinal").textContent = `$${(subtotal + ivaTotal).toFixed(2)}`;
+
+        tabla.style.display = "table";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", cargarDetalle);
+  </script>
+</body>
+</html>
