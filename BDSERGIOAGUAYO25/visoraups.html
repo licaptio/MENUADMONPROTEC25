@@ -143,34 +143,32 @@
       });
 
       // Evento para los botones "Guardar"
-      tbody.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('guardar')) {
-          const row = e.target.closest('tr');
-          const uuid = row.getAttribute('data-uuid');
+tbody.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('guardar')) {
+    const row = e.target.closest('tr');
+    const uuid = row.getAttribute('data-uuid');
 
-          const es_gasto_medico = row.querySelector('.check-medico').checked;
-          const gasto_reclamado = row.querySelector('.check-reclamado').checked;
-          const nota_reclamacion = row.querySelector('.nota-reclamacion').value;
-          const especialidad = row.querySelector('.select-especialidad').value;
+    const es_gasto_medico = row.querySelector('.check-medico').checked;
+    const gasto_reclamado = row.querySelector('.check-reclamado').checked;
+    const especialidad = row.querySelector('.select-especialidad').value;
 
-          const { error } = await supabase
-            .from('xml_inge_sergio')
-            .update({
-              es_gasto_medico,
-              gasto_reclamado,
-              nota_reclamacion,
-              especialidad
-            })
-            .eq('uuid', uuid);
+    const { error } = await supabase
+      .from('xml_inge_sergio')
+      .update({
+        es_gasto_medico,
+        gasto_reclamado,
+        especialidad
+      })
+      .eq('uuid', uuid);
 
-          if (error) {
-            alert('❌ Error al guardar: ' + error.message);
-          } else {
-            e.target.textContent = '✅ Guardado';
-            setTimeout(() => e.target.textContent = 'Guardar', 1500);
-          }
-        }
-      });
+    if (error) {
+      alert('❌ Error al guardar: ' + error.message);
+    } else {
+      e.target.textContent = '✅ Guardado';
+      setTimeout(() => e.target.textContent = 'Guardar', 1500);
+    }
+  }
+});
     });
   </script>
 </body>
