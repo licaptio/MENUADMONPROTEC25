@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resumen XML Inge Sergio</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.5/dist/umd/supabase.min.js"></script>
@@ -10,13 +10,12 @@
       font-family: Arial, sans-serif;
       background: #f9f9f9;
       padding: 1rem;
-      font-size: 16px;
+      font-size: 15px;
     }
     h2 {
       color: #003366;
       text-align: center;
       margin-bottom: 1rem;
-      font-size: 20px;
     }
     .tabla-contenedor {
       overflow-x: auto;
@@ -28,35 +27,50 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 1050px;
     }
     th, td {
-      padding: 10px 12px;
+      padding: 8px;
       border: 1px solid #ccc;
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
     }
     th {
       background: #003366;
       color: white;
-      font-size: 14px;
     }
     tr:nth-child(even) {
       background: #f4f4f4;
     }
     input[type="checkbox"] {
-      transform: scale(1.4);
-      cursor: pointer;
+      transform: scale(1.2);
+    }
+    input[type="text"], select {
+      font-size: 13px;
+      padding: 4px;
+      width: 100%;
+      box-sizing: border-box;
     }
     a {
       color: #0066cc;
       text-decoration: none;
-      word-break: break-all;
+      word-break: break-word;
+    }
+    button.guardar {
+      padding: 4px 10px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    button.guardar:hover {
+      background-color: #004c99;
     }
   </style>
 </head>
 <body>
-
   <h2>XML Cargados - Inge Sergio</h2>
 
   <div class="tabla-contenedor">
@@ -69,6 +83,10 @@
           <th>Factura</th>
           <th>Total</th>
           <th>¿Gasto Médico?</th>
+          <th>¿Reclamado?</th>
+          <th>Nota</th>
+          <th>Especialidad</th>
+          <th>Guardar</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -76,6 +94,10 @@
   </div>
 
   <script>
+    const especialidades = [
+      "", "Cardiología", "Urología", "Ginecología", "Oncología", "Endocrinología"
+    ];
+
     document.addEventListener('DOMContentLoaded', async () => {
       const supabase = window.supabase.createClient(
         'https://cvpbtjlupswbyxenugpz.supabase.co',
@@ -84,7 +106,7 @@
 
       const { data, error } = await supabase
         .from('xml_inge_sergio')
-        .select('uuid, fecha, razon_social_emisor, factura, total, es_gasto_medico')
+        .select('*')
         .order('fecha', { ascending: true });
 
       if (error) {
@@ -97,32 +119,55 @@
 
       data.forEach(row => {
         const tr = document.createElement('tr');
+        tr.setAttribute('data-uuid', row.uuid);
+
+        const selectEspecialidad = `<select class="select-especialidad">
+          ${especialidades.map(op => `
+            <option value="${op}" ${op === row.especialidad ? 'selected' : ''}>${op}</option>
+          `).join('')}
+        </select>`;
+
         tr.innerHTML = `
           <td>${new Date(row.fecha).toLocaleString()}</td>
           <td><a href="detalle.html?uuid=${row.uuid}" target="_blank">${row.uuid}</a></td>
           <td>${row.razon_social_emisor}</td>
           <td>${row.factura || ''}</td>
           <td>$${parseFloat(row.total).toFixed(2)}</td>
-          <td>
-            <input type="checkbox" ${row.es_gasto_medico ? 'checked' : ''} data-uuid="${row.uuid}">
-          </td>
+          <td><input type="checkbox" class="check-medico" ${row.es_gasto_medico ? 'checked' : ''}></td>
+          <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
+          <td><a href="nota.html?uuid=${row.uuid}" target="_blank">📝</a></td>
+          <td>${selectEspecialidad}</td>
+          <td><button class="guardar">Guardar</button></td>
         `;
         tbody.appendChild(tr);
       });
 
-      tbody.addEventListener('change', async (e) => {
-        if (e.target.type === 'checkbox') {
-          const uuid = e.target.dataset.uuid;
-          const checked = e.target.checked;
+      // Evento para los botones "Guardar"
+      tbody.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('guardar')) {
+          const row = e.target.closest('tr');
+          const uuid = row.getAttribute('data-uuid');
+
+          const es_gasto_medico = row.querySelector('.check-medico').checked;
+          const gasto_reclamado = row.querySelector('.check-reclamado').checked;
+          const nota_reclamacion = row.querySelector('.nota-reclamacion').value;
+          const especialidad = row.querySelector('.select-especialidad').value;
 
           const { error } = await supabase
             .from('xml_inge_sergio')
-            .update({ es_gasto_medico: checked })
+            .update({
+              es_gasto_medico,
+              gasto_reclamado,
+              nota_reclamacion,
+              especialidad
+            })
             .eq('uuid', uuid);
 
           if (error) {
-            alert('Error al actualizar: ' + error.message);
-            e.target.checked = !checked;
+            alert('❌ Error al guardar: ' + error.message);
+          } else {
+            e.target.textContent = '✅ Guardado';
+            setTimeout(() => e.target.textContent = 'Guardar', 1500);
           }
         }
       });
