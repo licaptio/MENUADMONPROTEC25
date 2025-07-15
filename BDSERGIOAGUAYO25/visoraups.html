@@ -2,36 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resumen XML Inge Sergio</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.5/dist/umd/supabase.min.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    h2 { color: #003366; }
-    table { border-collapse: collapse; width: 100%; background: white; }
-    th, td { padding: 8px 12px; border: 1px solid #ccc; font-size: 14px; }
-    th { background: #003366; color: white; text-align: left; }
-    tr:nth-child(even) { background: #f9f9f9; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 1rem;
+      font-size: 16px;
+    }
+    h2 {
+      color: #003366;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 20px;
+    }
+    .tabla-contenedor {
+      overflow-x: auto;
+      max-width: 100%;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 4px #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      text-align: center;
+    }
+    th {
+      background: #003366;
+      color: white;
+      font-size: 14px;
+    }
+    tr:nth-child(even) {
+      background: #f4f4f4;
+    }
     input[type="checkbox"] {
-      transform: scale(1.2);
+      transform: scale(1.4);
+      cursor: pointer;
+    }
+    a {
+      color: #0066cc;
+      text-decoration: none;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
+
   <h2>XML Cargados - Inge Sergio</h2>
 
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>UUID</th>
-        <th>Proveedor</th>
-        <th>Factura</th>
-        <th>Total</th>
-        <th>¿Gasto Médico?</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="tabla-contenedor">
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>UUID</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Total</th>
+          <th>¿Gasto Médico?</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -61,14 +103,13 @@
           <td>${row.razon_social_emisor}</td>
           <td>${row.factura || ''}</td>
           <td>$${parseFloat(row.total).toFixed(2)}</td>
-          <td style="text-align:center">
+          <td>
             <input type="checkbox" ${row.es_gasto_medico ? 'checked' : ''} data-uuid="${row.uuid}">
           </td>
         `;
         tbody.appendChild(tr);
       });
 
-      // Escuchar los clics en todos los checkboxes
       tbody.addEventListener('change', async (e) => {
         if (e.target.type === 'checkbox') {
           const uuid = e.target.dataset.uuid;
@@ -81,7 +122,7 @@
 
           if (error) {
             alert('Error al actualizar: ' + error.message);
-            e.target.checked = !checked; // revertir si falla
+            e.target.checked = !checked;
           }
         }
       });
