@@ -11,23 +11,27 @@
     th, td { padding: 8px 12px; border: 1px solid #ccc; font-size: 14px; }
     th { background: #003366; color: white; text-align: left; }
     tr:nth-child(even) { background: #f9f9f9; }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    }
   </style>
 </head>
 <body>
   <h2>XML Cargados - Inge Sergio</h2>
-<table id="tabla">
-  <thead>
-    <tr>
-      <th>Fecha</th>
-      <th>UUID</th>
-      <th>Proveedor</th>
-      <th>Factura</th>
-      <th>Total</th>
-      <th>¿Gasto Médico?</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>UUID</th>
+        <th>Proveedor</th>
+        <th>Factura</th>
+        <th>Total</th>
+        <th>¿Gasto Médico?</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -38,7 +42,7 @@
 
       const { data, error } = await supabase
         .from('xml_inge_sergio')
-        .select('fecha, uuid, razon_social_emisor, factura, total')
+        .select('uuid, fecha, razon_social_emisor, factura, total, es_gasto_medico')
         .order('fecha', { ascending: true });
 
       if (error) {
@@ -51,15 +55,35 @@
 
       data.forEach(row => {
         const tr = document.createElement('tr');
-tr.innerHTML = `
-  <td>${new Date(row.fecha).toLocaleString()}</td>
-  <td>${row.uuid}</td>
-  <td>${row.razon_social_emisor}</td>
-  <td>${row.factura || ''}</td>
-  <td>$${parseFloat(row.total).toFixed(2)}</td>
-  <td style="text-align:center">${row.es_gasto_medico ? '✅' : '❌'}</td>
-`;
+        tr.innerHTML = `
+          <td>${new Date(row.fecha).toLocaleString()}</td>
+          <td>${row.uuid}</td>
+          <td>${row.razon_social_emisor}</td>
+          <td>${row.factura || ''}</td>
+          <td>$${parseFloat(row.total).toFixed(2)}</td>
+          <td style="text-align:center">
+            <input type="checkbox" ${row.es_gasto_medico ? 'checked' : ''} data-uuid="${row.uuid}">
+          </td>
+        `;
         tbody.appendChild(tr);
+      });
+
+      // Escuchar los clics en todos los checkboxes
+      tbody.addEventListener('change', async (e) => {
+        if (e.target.type === 'checkbox') {
+          const uuid = e.target.dataset.uuid;
+          const checked = e.target.checked;
+
+          const { error } = await supabase
+            .from('xml_inge_sergio')
+            .update({ es_gasto_medico: checked })
+            .eq('uuid', uuid);
+
+          if (error) {
+            alert('Error al actualizar: ' + error.message);
+            e.target.checked = !checked; // revertir si falla
+          }
+        }
       });
     });
   </script>
