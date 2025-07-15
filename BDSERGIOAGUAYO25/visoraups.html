@@ -57,7 +57,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${new Date(row.fecha).toLocaleString()}</td>
-          <td>${row.uuid}</td>
+          <td><a href="detalle.html?uuid=${row.uuid}" target="_blank">${row.uuid}</a></td>
           <td>${row.razon_social_emisor}</td>
           <td>${row.factura || ''}</td>
           <td>$${parseFloat(row.total).toFixed(2)}</td>
