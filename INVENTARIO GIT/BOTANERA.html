@@ -39,9 +39,9 @@
   </thead>
   <tbody id="contenido"></tbody>
 </table>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
   const productos = [
     { nombre: "SALSA BOT 1 LTO. C/12", stock: 150 },
     { nombre: "SALSA BOT 1.5 C/12", stock: 40 },
@@ -63,37 +63,20 @@ document.addEventListener('DOMContentLoaded', function () {
     { nombre: "MOSTAZA MEGA 6/3.7", stock: 15 }
   ];
 
-  function obtenerDatos() {
-    const guardados = JSON.parse(localStorage.getItem('inv_mega')) || [];
-    return productos.map((prod, i) => ({
-      producto: prod.nombre,
-      stock: prod.stock,
-      inv: guardados[i]?.inv || '',
-      ped: guardados[i]?.ped || ''
-    }));
-  }
-
-  function guardarDatos(datos) {
-    localStorage.setItem('inv_mega', JSON.stringify(datos));
-  }
-
   const tbody = document.getElementById('contenido');
 
   function cargarTabla() {
-    const datos = obtenerDatos();
     tbody.innerHTML = '';
-    datos.forEach((fila, i) => {
+    productos.forEach((prod, i) => {
       const tr = document.createElement('tr');
-      ['producto', 'inv', 'stock', 'ped'].forEach(campo => {
+      ['nombre', 'inv', 'stock', 'ped'].forEach((campo, idx) => {
         const td = document.createElement('td');
-        td.className = (campo === 'producto') ? 'largo' : 'corto';
-        if (campo === 'producto' || campo === 'stock') {
-          td.textContent = fila[campo];
-        } else {
+        td.className = (idx === 0) ? 'largo' : 'corto';
+        if (campo === 'nombre') td.textContent = prod.nombre;
+        else if (campo === 'stock') td.textContent = prod.stock;
+        else {
           const input = document.createElement('input');
-          input.value = fila[campo];
-          input.dataset.fila = i;
-          input.dataset.campo = campo;
+          input.type = 'text';
           td.appendChild(input);
         }
         tr.appendChild(td);
@@ -115,19 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 100);
   }
 
-  tbody.addEventListener('input', (e) => {
-    const input = e.target;
-    const fila = parseInt(input.dataset.fila);
-    const campo = input.dataset.campo;
-    const datos = obtenerDatos();
-    datos[fila][campo] = input.value;
-    guardarDatos(datos);
-  });
-
-  document.getElementById('limpiar').addEventListener('click', () => {
-    localStorage.removeItem('inv_mega');
-    cargarTabla();
-  });
+  document.getElementById('limpiar').addEventListener('click', cargarTabla);
 
   document.getElementById('export-img').addEventListener('click', () => {
     const filas = document.querySelectorAll('#tabla tbody tr');
