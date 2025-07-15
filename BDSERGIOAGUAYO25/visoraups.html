@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Resumen XML Inge Sergio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.5/dist/umd/supabase.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    h2 { color: #003366; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { padding: 8px 12px; border: 1px solid #ccc; font-size: 14px; }
+    th { background: #003366; color: white; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h2>XML Cargados - Inge Sergio</h2>
+<table id="tabla">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>UUID</th>
+      <th>Proveedor</th>
+      <th>Factura</th>
+      <th>Total</th>
+      <th>¿Gasto Médico?</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const supabase = window.supabase.createClient(
+        'https://cvpbtjlupswbyxenugpz.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+      );
+
+      const { data, error } = await supabase
+        .from('xml_inge_sergio')
+        .select('fecha, uuid, razon_social_emisor, factura, total')
+        .order('fecha', { ascending: true });
+
+      if (error) {
+        alert('Error al cargar datos: ' + error.message);
+        return;
+      }
+
+      const tbody = document.querySelector('#tabla tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+tr.innerHTML = `
+  <td>${new Date(row.fecha).toLocaleString()}</td>
+  <td>${row.uuid}</td>
+  <td>${row.razon_social_emisor}</td>
+  <td>${row.factura || ''}</td>
+  <td>$${parseFloat(row.total).toFixed(2)}</td>
+  <td style="text-align:center">${row.es_gasto_medico ? '✅' : '❌'}</td>
+`;
+        tbody.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
