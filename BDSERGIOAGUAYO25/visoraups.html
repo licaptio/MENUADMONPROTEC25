@@ -69,6 +69,11 @@
       background-color: #004c99;
     }
   </style>
+<!-- Librerías para PDF y Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
   <h2>XML Cargados - Inge Sergio</h2>
@@ -76,7 +81,26 @@
   <label>
     <input type="checkbox" id="filtroGastoMedico" />
     🔍 Mostrar solo gastos médicos
+    <div style="text-align:center; margin-bottom: 1rem;">
+  <button id="btnImprimir" style="padding:8px 12px; background:#0066cc; color:white; border:none; border-radius:5px; font-weight:bold;">
+    🖨️ Imprimir Filtrados
+  </button>
+  <button id="exportarPDF" style="padding:8px 12px; background:#d9534f; color:white; border:none; border-radius:5px; font-weight:bold; margin-left:10px;">
+    📄 Exportar PDF
+  </button>
+  <button id="exportarExcel" style="padding:8px 12px; background:#5cb85c; color:white; border:none; border-radius:5px; font-weight:bold; margin-left:10px;">
+    📊 Exportar Excel
+  </button>
+</div>
+
   </label>
+  <br><br>
+  <button id="filtrarEspecialidad" style="padding:8px 12px; background:#007bff; color:white; border:none; border-radius:5px; font-weight:bold; margin-right:8px;">
+    📋 Ver No Reclamados con Especialidad
+  </button>
+  <button id="mostrarTodos" style="padding:8px 12px; background:#6c757d; color:white; border:none; border-radius:5px; font-weight:bold;">
+    🔄 Mostrar Todos
+  </button>
 </div>
 
   <div class="tabla-contenedor">
@@ -188,6 +212,23 @@ checkFiltro.addEventListener('change', (e) => {
     ? datosGlobales.filter(row => row.es_gasto_medico)
     : datosGlobales;
   renderTabla(datosFiltrados);
+});
+document.getElementById("filtrarEspecialidad").addEventListener("click", () => {
+  const filtrados = datosGlobales.filter(row =>
+    !row.gasto_reclamado &&
+    row.especialidad &&
+    row.especialidad.trim() !== ""
+  );
+
+  if (filtrados.length === 0) {
+    alert("No hay registros que cumplan con los criterios.");
+  }
+
+  renderTabla(filtrados);
+});
+
+document.getElementById("mostrarTodos").addEventListener("click", () => {
+  renderTabla(datosGlobales);
 });
 
       // Evento para los botones "Guardar"
@@ -325,5 +366,80 @@ async function autoGuardar(uuid) {
       }, 2000);
     }
   </script>
+<script>
+  // Imprimir filtrados
+  document.getElementById("btnImprimir").addEventListener("click", () => {
+    const rows = document.querySelectorAll("#tabla tbody tr");
+    rows.forEach(row => {
+      const reclamado = row.querySelector(".check-reclamado")?.checked;
+      const especialidad = row.querySelector(".select-especialidad")?.value;
+      if (!reclamado && especialidad !== "") {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+    window.print();
+    rows.forEach(row => row.style.display = ""); // Restaurar
+  });
+
+  // Exportar a PDF
+  document.getElementById("exportarPDF").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const headers = [["Fecha", "UUID", "Proveedor", "Factura", "Total", "Especialidad"]];
+    const rows = [];
+
+    document.querySelectorAll("#tabla tbody tr").forEach(tr => {
+      const tds = tr.querySelectorAll("td");
+      const reclamado = tr.querySelector('.check-reclamado')?.checked;
+      const especialidad = tr.querySelector('.select-especialidad')?.value;
+      if (!reclamado && especialidad !== "") {
+        rows.push([
+          tds[0].textContent.trim(),
+          tds[1].textContent.trim(),
+          tds[2].textContent.trim(),
+          tds[3].textContent.trim(),
+          tds[4].textContent.trim(),
+          especialidad
+        ]);
+      }
+    });
+
+    if (rows.length === 0) return alert("No hay registros filtrados.");
+
+    doc.text("Registros filtrados", 14, 10);
+    doc.autoTable({ head: headers, body: rows, startY: 20 });
+    doc.save("filtrados.pdf");
+  });
+
+  // Exportar a Excel
+  document.getElementById("exportarExcel").addEventListener("click", () => {
+    const rows = [["Fecha", "UUID", "Proveedor", "Factura", "Total", "Especialidad"]];
+    document.querySelectorAll("#tabla tbody tr").forEach(tr => {
+      const tds = tr.querySelectorAll("td");
+      const reclamado = tr.querySelector('.check-reclamado')?.checked;
+      const especialidad = tr.querySelector('.select-especialidad')?.value;
+      if (!reclamado && especialidad !== "") {
+        rows.push([
+          tds[0].textContent.trim(),
+          tds[1].textContent.trim(),
+          tds[2].textContent.trim(),
+          tds[3].textContent.trim(),
+          tds[4].textContent.trim(),
+          especialidad
+        ]);
+      }
+    });
+
+    if (rows.length === 1) return alert("No hay registros filtrados.");
+
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtrados");
+    XLSX.writeFile(workbook, "filtrados.xlsx");
+  });
+</script>
+
 </body>
 </html>
