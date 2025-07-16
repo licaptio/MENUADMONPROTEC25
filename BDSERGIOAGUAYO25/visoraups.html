@@ -231,13 +231,13 @@ if (e.target.classList.contains('guardar-nota')) {
 
   const nota = textareaNota.value.trim();
 
-  const { error } = await supabase
-    .from('xml_inge_sergio')
-    .update({
-      nota_reclamacion: nota,
-      ultima_modificacion: new Date().toISOString(),
-      modificado_por: "Gera Quezaa"
-    })
+const { error } = await supabase
+  .from('xml_inge_sergio')
+  .update({
+    es_gasto_medico,
+    gasto_reclamado,
+    especialidad
+  })
     .eq('uuid', uuid);
 
   if (error) {
@@ -263,15 +263,11 @@ async function autoGuardar(uuid) {
   const gasto_reclamado = row.querySelector('.check-reclamado')?.checked || false;
   const especialidad = row.querySelector('.select-especialidad')?.value || '';
 
-  const { error } = await supabase
-    .from('xml_inge_sergio')
-    .update({
-      es_gasto_medico,
-      gasto_reclamado,
-      especialidad,
-      ultima_modificacion: new Date().toISOString(),
-      modificado_por: "Gera Quezaa"
-    })
+const { error } = await supabase
+  .from('xml_inge_sergio')
+  .update({
+    nota_reclamacion: nota
+  })
     .eq('uuid', uuid);
 
   if (error) {
