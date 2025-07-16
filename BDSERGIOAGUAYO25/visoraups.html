@@ -272,44 +272,47 @@ async function autoGuardar(uuid) {
   }
 }
 
+    }); // <-- Cierra bien el script
+  </script>
+
+  <!-- FOOTER -->
+  <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
+    Hecho con 💙 por Gera Quezaa 0820160725 · 
+    <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
+    <span>Última actualización: <span id="fechaActual"></span></span>
+  </footer>
+
+  <!-- Fecha -->
+  <script>
+    document.getElementById("fechaActual").textContent = new Date().toLocaleDateString("es-MX", {
+      year: "numeric", month: "long", day: "numeric"
     });
+  </script>
 
-<footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
-  Hecho con 💙 por Gera Quezaa 0820160725· 
-  <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
-  <span style="display:inline-block;">Última actualización: <span id="fechaActual"></span></span>
-</footer>
+  <!-- Toast -->
+  <div id="toast" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: none;
+    font-size: 14px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.2);">
+    Guardado
+  </div>
 
-<script>
-  document.getElementById("fechaActual").textContent = new Date().toLocaleDateString("es-MX", {
-    year: "numeric", month: "long", day: "numeric"
-  });
-</script>
-
-<!-- Este div debe ir fuera del <script> -->
-<div id="toast" style="
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #4CAF50;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  display: none;
-  font-size: 14px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.2);">
-  Guardado
-</div>
-
-<script>
-  function mostrarToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.style.display = 'block';
-    setTimeout(() => {
-      toast.style.display = 'none';
-    }, 2000);
-  }
-</script>
+  <script>
+    function mostrarToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2000);
+    }
+  </script>
 </body>
 </html>
