@@ -268,8 +268,6 @@ if (notaDiv && notaTextarea) {
   const editarBtn = row.querySelector('.editar-nota');
   if (editarBtn) editarBtn.textContent = '✏️ Editar';
 }
-
-  }
 });
 async function autoGuardar(uuid) {
   const row = document.querySelector(`tr[data-uuid='${uuid}']`);
