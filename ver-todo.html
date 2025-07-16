@@ -53,7 +53,8 @@
       const { data, error } = await supabase
         .from("recordatorios")
         .select("*")
-        .order("fecha", { ascending: false });
+        .order("fecha", { ascending: false })
+        .order("hora", { ascending: false });
 
       if (error || !data.length) {
         lista.innerHTML = "❌ No se pudieron cargar los recordatorios.";
