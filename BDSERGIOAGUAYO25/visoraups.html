@@ -234,9 +234,9 @@ if (e.target.classList.contains('guardar-nota')) {
 const { error } = await supabase
   .from('xml_inge_sergio')
   .update({
-    nota_reclamacion: nota,
-    ultima_modificacion: new Date().toISOString(),
-    modificado_por: "Gera Quezaa"
+    es_gasto_medico,
+    gasto_reclamado,
+    especialidad
   })
   .eq('uuid', uuid);
 
@@ -266,14 +266,9 @@ async function autoGuardar(uuid) {
 const { error } = await supabase
   .from('xml_inge_sergio')
   .update({
-    es_gasto_medico,
-    gasto_reclamado,
-    especialidad,
-    ultima_modificacion: new Date().toISOString(),
-    modificado_por: "Gera Quezaa"
+    nota_reclamacion: nota
   })
   .eq('uuid', uuid);
-
 
   if (error) {
     alert('❌ Error al guardar automáticamente: ' + error.message);
@@ -287,7 +282,7 @@ const { error } = await supabase
 
   <!-- FOOTER -->
   <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
-    Hecho con 💙 por Gera Quezaa 160725 1001 · 
+    Hecho con 💙 por Gera Quezaa 160725 1005 · 
     <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
     <span>Última actualización: <span id="fechaActual"></span></span>
   </footer>
