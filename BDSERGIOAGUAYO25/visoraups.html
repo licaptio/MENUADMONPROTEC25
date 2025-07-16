@@ -252,7 +252,8 @@ if (e.target.classList.contains('guardar-nota')) {
   editarBtn.style.display = 'inline-block';
   mostrarToast("✅ Nota guardada");
   return;
-}
+  });
+
 async function autoGuardar(uuid) {
   const row = document.querySelector(`tr[data-uuid='${uuid}']`);
   if (!row) return;
@@ -266,7 +267,9 @@ async function autoGuardar(uuid) {
     .update({
       es_gasto_medico,
       gasto_reclamado,
-      especialidad
+      especialidad,
+      ultima_modificacion: new Date().toISOString(),
+      modificado_por: "Gera Quezaa"
     })
     .eq('uuid', uuid);
 
@@ -282,7 +285,7 @@ async function autoGuardar(uuid) {
 
   <!-- FOOTER -->
   <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
-    Hecho con 💙 por Gera Quezaa 160725 0925 · 
+    Hecho con 💙 por Gera Quezaa 160725 0930 · 
     <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
     <span>Última actualización: <span id="fechaActual"></span></span>
   </footer>
