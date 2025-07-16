@@ -234,11 +234,9 @@ if (e.target.classList.contains('guardar-nota')) {
 const { error } = await supabase
   .from('xml_inge_sergio')
   .update({
-    es_gasto_medico,
-    gasto_reclamado,
-    especialidad
+    nota_reclamacion: nota
   })
-    .eq('uuid', uuid);
+  .eq('uuid', uuid);
 
   if (error) {
     alert('❌ Error al guardar: ' + error.message);
@@ -266,9 +264,14 @@ async function autoGuardar(uuid) {
 const { error } = await supabase
   .from('xml_inge_sergio')
   .update({
-    nota_reclamacion: nota
+    es_gasto_medico,
+    gasto_reclamado,
+    especialidad,
+    ultima_modificacion: new Date().toISOString(),
+    modificado_por: "Gera Quezaa"
   })
-    .eq('uuid', uuid);
+  .eq('uuid', uuid);
+
 
   if (error) {
     alert('❌ Error al guardar automáticamente: ' + error.message);
