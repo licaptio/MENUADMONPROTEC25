@@ -68,6 +68,14 @@
     button.guardar:hover {
       background-color: #004c99;
     }
+<style>
+  @media print {
+    @page {
+      size: landscape;
+    }
+  }
+</style>
+
   </style>
 <!-- Librerías para PDF y Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -368,79 +376,101 @@ async function autoGuardar(uuid) {
     }
   </script>
 <script>
-  // Imprimir filtrados
-  document.getElementById("btnImprimir").addEventListener("click", () => {
-    const rows = document.querySelectorAll("#tabla tbody tr");
-    rows.forEach(row => {
-      const reclamado = row.querySelector(".check-reclamado")?.checked;
-      const especialidad = row.querySelector(".select-especialidad")?.value;
-      if (!reclamado && especialidad !== "") {
-        row.style.display = "";
-      } else {
-        row.style.display = "none";
-      }
-    });
-    window.print();
-    rows.forEach(row => row.style.display = ""); // Restaurar
+document.getElementById("btnImprimir").addEventListener("click", () => {
+  const filtrados = Array.from(document.querySelectorAll("#tabla tbody tr")).filter(row => {
+    const reclamado = row.querySelector(".check-reclamado")?.checked;
+    const especialidad = row.querySelector(".select-especialidad")?.value;
+    return !reclamado && especialidad !== "";
   });
 
-  // Exportar a PDF
-  document.getElementById("exportarPDF").addEventListener("click", () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const headers = [["Fecha", "UUID", "Proveedor", "Factura", "Total", "Especialidad"]];
-    const rows = [];
+  if (filtrados.length === 0) {
+    alert("No hay registros filtrados.");
+    return;
+  }
 
-    document.querySelectorAll("#tabla tbody tr").forEach(tr => {
-      const tds = tr.querySelectorAll("td");
-      const reclamado = tr.querySelector('.check-reclamado')?.checked;
-      const especialidad = tr.querySelector('.select-especialidad')?.value;
-      if (!reclamado && especialidad !== "") {
-        rows.push([
-          tds[0].textContent.trim(),
-          tds[1].textContent.trim(),
-          tds[2].textContent.trim(),
-          tds[3].textContent.trim(),
-          tds[4].textContent.trim(),
-          especialidad
-        ]);
+const ventana = window.open('', '', 'width=1200,height=800');
+ventana.document.write(`
+  <html>
+  <head>
+    <title>Impresión de Filtrados</title>
+    <style>
+      @media print {
+        @page {
+          size: landscape;
+        }
       }
-    });
-
-    if (rows.length === 0) return alert("No hay registros filtrados.");
-
-    doc.text("Registros filtrados", 14, 10);
-    doc.autoTable({ head: headers, body: rows, startY: 20 });
-    doc.save("filtrados.pdf");
-  });
-
-  // Exportar a Excel
-  document.getElementById("exportarExcel").addEventListener("click", () => {
-    const rows = [["Fecha", "UUID", "Proveedor", "Factura", "Total", "Especialidad"]];
-    document.querySelectorAll("#tabla tbody tr").forEach(tr => {
-      const tds = tr.querySelectorAll("td");
-      const reclamado = tr.querySelector('.check-reclamado')?.checked;
-      const especialidad = tr.querySelector('.select-especialidad')?.value;
-      if (!reclamado && especialidad !== "") {
-        rows.push([
-          tds[0].textContent.trim(),
-          tds[1].textContent.trim(),
-          tds[2].textContent.trim(),
-          tds[3].textContent.trim(),
-          tds[4].textContent.trim(),
-          especialidad
-        ]);
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        padding: 20px;
       }
-    });
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 6px;
+        text-align: center;
+      }
+      th {
+        background: #003366;
+        color: white;
+      }
+      h2 {
+        text-align: center;
+        color: #003366;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📋 Facturas No Reclamadas con Especialidad</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>UUID</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Total</th>
+          <th>¿Gasto Médico?</th>
+          <th>¿Reclamado?</th>
+          <th>Nota</th>
+          <th>Especialidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          filtrados.map(row => {
+            const tds = row.querySelectorAll("td");
+            const check = (selector) => row.querySelector(selector)?.checked ? '✅' : '❌';
+            const nota = row.querySelector(".nota-texto")?.textContent || '';
+            const especialidad = row.querySelector(".select-especialidad")?.value || '';
+            return `<tr>
+              <td>${tds[0].textContent}</td>
+              <td>${tds[1].textContent}</td>
+              <td>${tds[2].textContent}</td>
+              <td>${tds[3].textContent}</td>
+              <td>${tds[4].textContent}</td>
+              <td>${check(".check-medico")}</td>
+              <td>${check(".check-reclamado")}</td>
+              <td>${nota}</td>
+              <td>${especialidad}</td>
+            </tr>`;
+          }).join('')
+        }
+      </tbody>
+    </table>
+    <script>window.onload = () => { window.print(); }</script>
+  </body>
+  </html>
+`);
+ventana.document.close();
 
-    if (rows.length === 1) return alert("No hay registros filtrados.");
-
-    const worksheet = XLSX.utils.aoa_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtrados");
-    XLSX.writeFile(workbook, "filtrados.xlsx");
-  });
+});
 </script>
+
 
 </body>
 </html>
