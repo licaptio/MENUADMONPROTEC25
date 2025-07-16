@@ -92,7 +92,6 @@
           <th>¿Reclamado?</th>
           <th>Nota</th>
           <th>Especialidad</th>
-          <th>Guardar</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -125,6 +124,8 @@ function renderTabla(datos) {
   tbody.innerHTML = '';
   datos.forEach(row => {
     const tr = document.createElement('tr');
+    // Detectar cambios y guardar automáticamente
+
     tr.setAttribute('data-uuid', row.uuid);
 
     const selectEspecialidad = `<select class="select-especialidad">
@@ -148,9 +149,17 @@ function renderTabla(datos) {
 </td>
 
       <td>${selectEspecialidad}</td>
-      <button class="guardar" title="Guardar cambios">Guardar</button>
     `;
     tbody.appendChild(tr);
+// Agregar listeners después de insertar la fila
+const checkMedico = tr.querySelector('.check-medico');
+const checkReclamado = tr.querySelector('.check-reclamado');
+const selectEsp = tr.querySelector('.select-especialidad');
+
+if (checkMedico) checkMedico.addEventListener('change', () => autoGuardar(row.uuid));
+if (checkReclamado) checkReclamado.addEventListener('change', () => autoGuardar(row.uuid));
+if (selectEsp) selectEsp.addEventListener('change', () => autoGuardar(row.uuid));
+
   });
 }
 const checkFiltro = document.getElementById('filtroGastoMedico');
@@ -214,10 +223,7 @@ const nota = notaTextarea ? notaTextarea.value.trim() : '';
 const { error } = await supabase
   .from('xml_inge_sergio')
   .update({
-    es_gasto_medico,
-    gasto_reclamado,
-    especialidad,
-    nota_reclamacion: nota   // <--- este es el cambio
+    nota_reclamacion: nota
   })
   .eq('uuid', uuid);
 
@@ -242,8 +248,32 @@ if (notaDiv && notaTextarea) {
 
   }
 });
+async function autoGuardar(uuid) {
+  const row = document.querySelector(`tr[data-uuid='${uuid}']`);
+  if (!row) return;
+
+  const es_gasto_medico = row.querySelector('.check-medico')?.checked || false;
+  const gasto_reclamado = row.querySelector('.check-reclamado')?.checked || false;
+  const especialidad = row.querySelector('.select-especialidad')?.value || '';
+
+  const { error } = await supabase
+    .from('xml_inge_sergio')
+    .update({
+      es_gasto_medico,
+      gasto_reclamado,
+      especialidad
+    })
+    .eq('uuid', uuid);
+
+  if (error) {
+    alert('❌ Error al guardar automáticamente: ' + error.message);
+  } else {
+    mostrarToast("✅ Cambios guardados");
+  }
+}
+
     });
-  </script>
+
 <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
   Hecho con 💙 por Gera Quezaa · 
   <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
@@ -256,5 +286,30 @@ if (notaDiv && notaTextarea) {
   });
 </script>
 
+<!-- Este div debe ir fuera del <script> -->
+<div id="toast" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  display: none;
+  font-size: 14px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.2);">
+  Guardado
+</div>
+
+<script>
+  function mostrarToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2000);
+  }
+</script>
 </body>
 </html>
