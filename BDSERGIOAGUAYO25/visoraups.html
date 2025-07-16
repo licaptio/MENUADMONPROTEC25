@@ -120,7 +120,7 @@ const { data, error } = await supabase
       }
 let datosGlobales = data;
       const tbody = document.querySelector('#tabla tbody');
-      renderTabla(datosGlobales);
+
 function renderTabla(datos) {
   tbody.innerHTML = '';
   datos.forEach(row => {
@@ -134,16 +134,21 @@ function renderTabla(datos) {
     </select>`;
 
     tr.innerHTML = `
-      <td>${new Date(row.fecha).toLocaleString()}</td>
+      <td>${row.fecha ? new Date(row.fecha).toLocaleString() : ''}</td>
       <td><a href="detalle.html?uuid=${row.uuid}" target="_blank">${row.uuid}</a></td>
       <td>${row.razon_social_emisor}</td>
       <td>${row.factura || ''}</td>
       <td>$${parseFloat(row.total).toFixed(2)}</td>
       <td><input type="checkbox" class="check-medico" ${row.es_gasto_medico ? 'checked' : ''}></td>
       <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
-      <td><a href="nota.html?uuid=${row.uuid}" target="_blank">📝</a></td>
+<td>
+  <div class="nota-texto">${row.nota || ''}</div>
+  <textarea class="nota-editar" placeholder="Escribe una nota..." style="display:none;" rows="2">${row.nota || ''}</textarea>
+  <button class="editar-nota" title="Editar nota">✏️ Editar</button>
+</td>
+
       <td>${selectEspecialidad}</td>
-      <td><button class="guardar">Guardar</button></td>
+      <button class="guardar" title="Guardar cambios">Guardar</button>
     `;
     tbody.appendChild(tr);
   });
@@ -174,6 +179,27 @@ checkFiltro.addEventListener('change', (e) => {
 
       // Evento para los botones "Guardar"
 tbody.addEventListener('click', async (e) => {
+  // Si se hace clic en el botón "Editar"
+if (e.target.classList.contains('editar-nota')) {
+  const row = e.target.closest('tr');
+  const divNota = row.querySelector('.nota-texto');
+  const textareaNota = row.querySelector('.nota-editar');
+
+  if (textareaNota.style.display === 'none') {
+    // Entrar en modo edición
+    divNota.style.display = 'none';
+    textareaNota.style.display = 'block';
+    e.target.textContent = '❌ Cancelar';
+  } else {
+    // Salir sin guardar
+    textareaNota.value = divNota.textContent;
+    textareaNota.style.display = 'none';
+    divNota.style.display = 'block';
+    e.target.textContent = '✏️ Editar';
+  }
+  return;
+}
+
   if (e.target.classList.contains('guardar')) {
     const row = e.target.closest('tr');
     const uuid = row.getAttribute('data-uuid');
@@ -181,22 +207,39 @@ tbody.addEventListener('click', async (e) => {
     const es_gasto_medico = row.querySelector('.check-medico').checked;
     const gasto_reclamado = row.querySelector('.check-reclamado').checked;
     const especialidad = row.querySelector('.select-especialidad').value;
+const notaTextarea = row.querySelector('.nota-editar');
+const notaDiv = row.querySelector('.nota-texto');
+const nota = notaTextarea ? notaTextarea.value.trim() : '';
 
     const { error } = await supabase
       .from('xml_inge_sergio')
       .update({
         es_gasto_medico,
         gasto_reclamado,
-        especialidad
+        especialidad,
+        nota
       })
       .eq('uuid', uuid);
 
     if (error) {
       alert('❌ Error al guardar: ' + error.message);
     } else {
-      e.target.textContent = '✅ Guardado';
-      setTimeout(() => e.target.textContent = 'Guardar', 1500);
+const boton = e.target;
+boton.disabled = true;
+boton.textContent = '✅ Guardado';
+setTimeout(() => {
+  boton.textContent = 'Guardar';
+  boton.disabled = false;
+}, 1500);
     }
+if (notaDiv && notaTextarea) {
+  notaDiv.textContent = nota;
+  notaDiv.style.display = 'block';
+  notaTextarea.style.display = 'none';
+  const editarBtn = row.querySelector('.editar-nota');
+  if (editarBtn) editarBtn.textContent = '✏️ Editar';
+}
+
   }
 });
     });
