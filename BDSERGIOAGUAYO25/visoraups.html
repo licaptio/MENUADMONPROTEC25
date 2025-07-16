@@ -142,8 +142,8 @@ function renderTabla(datos) {
       <td><input type="checkbox" class="check-medico" ${row.es_gasto_medico ? 'checked' : ''}></td>
       <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
 <td>
-  <div class="nota-texto">${row.nota || ''}</div>
-  <textarea class="nota-editar" placeholder="Escribe una nota..." style="display:none;" rows="2">${row.nota || ''}</textarea>
+<div class="nota-texto">${row.nota_reclamacion || ''}</div>
+<textarea class="nota-editar">${row.nota_reclamacion || ''}</textarea>
   <button class="editar-nota" title="Editar nota">✏️ Editar</button>
 </td>
 
@@ -211,15 +211,15 @@ const notaTextarea = row.querySelector('.nota-editar');
 const notaDiv = row.querySelector('.nota-texto');
 const nota = notaTextarea ? notaTextarea.value.trim() : '';
 
-    const { error } = await supabase
-      .from('xml_inge_sergio')
-      .update({
-        es_gasto_medico,
-        gasto_reclamado,
-        especialidad,
-        nota
-      })
-      .eq('uuid', uuid);
+const { error } = await supabase
+  .from('xml_inge_sergio')
+  .update({
+    es_gasto_medico,
+    gasto_reclamado,
+    especialidad,
+    nota_reclamacion: nota   // <--- este es el cambio
+  })
+  .eq('uuid', uuid);
 
     if (error) {
       alert('❌ Error al guardar: ' + error.message);
