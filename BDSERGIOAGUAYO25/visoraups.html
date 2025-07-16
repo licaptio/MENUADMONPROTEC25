@@ -337,7 +337,7 @@ async function autoGuardar(uuid) {
 
 <!-- FOOTER -->
 <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
-  Hecho con 💙 por Gera Quezaa 160725 1207 · 
+  Hecho con 💙 por Gera Quezaa 160725 1210 · 
   <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
   <span>Última actualización: <span id="fechaActual"></span></span>
 </footer>
@@ -462,15 +462,17 @@ ventana.document.write(`
         }
       </tbody>
     </table>
-    <script>window.onload = () => { window.print(); }</script>
+    <script>
+window.onload = function() {
+  window.print();
+};
+<\/script>
+
   </body>
   </html>
 `);
 ventana.document.close();
-
 });
 </script>
-
-
 </body>
 </html>
