@@ -143,7 +143,7 @@ function renderTabla(datos) {
       <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
 <td>
 <div class="nota-texto">${row.nota_reclamacion || ''}</div>
-<textarea class="nota-editar">${row.nota_reclamacion || ''}</textarea>
+<textarea class="nota-editar" style="display:none;">${row.nota_reclamacion || ''}</textarea>
   <button class="editar-nota" title="Editar nota">✏️ Editar</button>
 </td>
 
