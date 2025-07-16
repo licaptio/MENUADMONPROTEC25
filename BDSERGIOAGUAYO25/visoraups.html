@@ -252,7 +252,8 @@ if (e.target.classList.contains('guardar-nota')) {
   editarBtn.style.display = 'inline-block';
   mostrarToast("✅ Nota guardada");
   return;
-  });
+  }
+});
 
 async function autoGuardar(uuid) {
   const row = document.querySelector(`tr[data-uuid='${uuid}']`);
