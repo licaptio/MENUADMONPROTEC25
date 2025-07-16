@@ -50,11 +50,12 @@
     const lista = document.getElementById("lista-todos");
 
     async function cargarRecordatorios() {
-      const { data, error } = await supabase
-        .from("recordatorios")
-        .select("*")
-        .order("fecha", { ascending: false })
-        .order("hora", { ascending: false });
+const { data, error } = await supabase
+  .from("recordatorios")
+  .select("*")
+  .order("prioridad", { ascending: false })
+  .order("fecha", { ascending: false })
+  .order("hora", { ascending: false });
 
       if (error || !data.length) {
         lista.innerHTML = "❌ No se pudieron cargar los recordatorios.";
