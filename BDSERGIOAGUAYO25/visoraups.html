@@ -72,6 +72,12 @@
 </head>
 <body>
   <h2>XML Cargados - Inge Sergio</h2>
+<div style="text-align:center; margin-bottom: 1rem;">
+  <label>
+    <input type="checkbox" id="filtroGastoMedico" />
+    🔍 Mostrar solo gastos médicos
+  </label>
+</div>
 
   <div class="tabla-contenedor">
     <table id="tabla">
@@ -104,43 +110,67 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
       );
 
-      const { data, error } = await supabase
-        .from('xml_inge_sergio')
-        .select('*')
-        .order('fecha', { ascending: true });
-
-      if (error) {
+const { data, error } = await supabase
+  .from('xml_inge_sergio')
+  .select('*')
+  .order('fecha', { ascending: true });
+     if (error) {
         alert('Error al cargar datos: ' + error.message);
         return;
       }
-
+let datosGlobales = data;
       const tbody = document.querySelector('#tabla tbody');
-      tbody.innerHTML = '';
+      renderTabla(datosGlobales);
+function renderTabla(datos) {
+  tbody.innerHTML = '';
+  datos.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-uuid', row.uuid);
 
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-uuid', row.uuid);
+    const selectEspecialidad = `<select class="select-especialidad">
+      ${especialidades.map(op => `
+        <option value="${op}" ${op === row.especialidad ? 'selected' : ''}>${op}</option>
+      `).join('')}
+    </select>`;
 
-        const selectEspecialidad = `<select class="select-especialidad">
-          ${especialidades.map(op => `
-            <option value="${op}" ${op === row.especialidad ? 'selected' : ''}>${op}</option>
-          `).join('')}
-        </select>`;
+    tr.innerHTML = `
+      <td>${new Date(row.fecha).toLocaleString()}</td>
+      <td><a href="detalle.html?uuid=${row.uuid}" target="_blank">${row.uuid}</a></td>
+      <td>${row.razon_social_emisor}</td>
+      <td>${row.factura || ''}</td>
+      <td>$${parseFloat(row.total).toFixed(2)}</td>
+      <td><input type="checkbox" class="check-medico" ${row.es_gasto_medico ? 'checked' : ''}></td>
+      <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
+      <td><a href="nota.html?uuid=${row.uuid}" target="_blank">📝</a></td>
+      <td>${selectEspecialidad}</td>
+      <td><button class="guardar">Guardar</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+const checkFiltro = document.getElementById('filtroGastoMedico');
 
-        tr.innerHTML = `
-          <td>${new Date(row.fecha).toLocaleString()}</td>
-          <td><a href="detalle.html?uuid=${row.uuid}" target="_blank">${row.uuid}</a></td>
-          <td>${row.razon_social_emisor}</td>
-          <td>${row.factura || ''}</td>
-          <td>$${parseFloat(row.total).toFixed(2)}</td>
-          <td><input type="checkbox" class="check-medico" ${row.es_gasto_medico ? 'checked' : ''}></td>
-          <td><input type="checkbox" class="check-reclamado" ${row.gasto_reclamado ? 'checked' : ''}></td>
-          <td><a href="nota.html?uuid=${row.uuid}" target="_blank">📝</a></td>
-          <td>${selectEspecialidad}</td>
-          <td><button class="guardar">Guardar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
+// Recuperar estado guardado en localStorage
+const estadoGuardado = localStorage.getItem('filtroGastoMedico') === 'true';
+checkFiltro.checked = estadoGuardado;
+
+// Mostrar datos según el filtro guardado
+if (estadoGuardado) {
+  const filtrados = datosGlobales.filter(row => row.es_gasto_medico);
+  renderTabla(filtrados);
+} else {
+  renderTabla(datosGlobales);
+}
+
+// Evento al cambiar el checkbox
+checkFiltro.addEventListener('change', (e) => {
+  const mostrarFiltrados = e.target.checked;
+  localStorage.setItem('filtroGastoMedico', mostrarFiltrados);
+  const datosFiltrados = mostrarFiltrados
+    ? datosGlobales.filter(row => row.es_gasto_medico)
+    : datosGlobales;
+  renderTabla(datosFiltrados);
+});
 
       // Evento para los botones "Guardar"
 tbody.addEventListener('click', async (e) => {
@@ -171,5 +201,17 @@ tbody.addEventListener('click', async (e) => {
 });
     });
   </script>
+<footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
+  Hecho con 💙 por Gera Quezaa · 
+  <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
+  <span style="display:inline-block;">Última actualización: <span id="fechaActual"></span></span>
+</footer>
+
+<script>
+  document.getElementById("fechaActual").textContent = new Date().toLocaleDateString("es-MX", {
+    year: "numeric", month: "long", day: "numeric"
+  });
+</script>
+
 </body>
 </html>
