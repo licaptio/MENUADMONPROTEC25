@@ -252,23 +252,9 @@ if (e.target.classList.contains('guardar-nota')) {
   editarBtn.style.display = 'inline-block';
   mostrarToast("✅ Nota guardada");
 }
-else {
-const boton = e.target;
-boton.disabled = true;
-boton.textContent = '✅ Guardado';
-setTimeout(() => {
-  boton.textContent = 'Guardar';
-  boton.disabled = false;
-}, 1500);
-    }
-if (notaDiv && notaTextarea) {
-  notaDiv.textContent = nota;
-  notaDiv.style.display = 'block';
-  notaTextarea.style.display = 'none';
-  const editarBtn = row.querySelector('.editar-nota');
-  if (editarBtn) editarBtn.textContent = '✏️ Editar';
+mostrarToast("✅ Nota guardada");
 }
-});
+}); // ← AQUÍ CIERRA CORRECTAMENTE
 async function autoGuardar(uuid) {
   const row = document.querySelector(`tr[data-uuid='${uuid}']`);
   if (!row) return;
