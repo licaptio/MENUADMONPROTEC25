@@ -61,21 +61,27 @@
         return;
       }
 
-      lista.innerHTML = data.map(r => `
-        <li>
-          <strong>${r.fecha}</strong> ${r.hora ? "🕒 " + r.hora : ""}<br>
-          ${r.mensaje}<br>
-          <small>${r.atendido ? "✅ Atendido" : "⏳ No atendido"}</small>
-          <div class="acciones">
-            <button onclick="editar('${r.id}')">✏️ Editar</button>
-            <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
-            <button onclick="toggleAtendido('${r.id}', ${r.atendido})">
-              ${r.atendido ? "❌ No Atendido" : "✅ Atendido"}
-            </button>
-          </div>
-        </li>
-      `).join("");
-    }
+lista.innerHTML = data.map(r => `
+  <li style="background: ${r.prioridad ? '#fff8e1' : 'white'};">
+    <strong>${r.fecha}</strong> ${r.hora ? "🕒 " + r.hora : ""}<br>
+    ${r.mensaje}<br>
+    <small>
+      ${r.atendido ? "✅ Atendido" : "⏳ No atendido"} · 
+      ${r.prioridad ? "🔥 Prioridad" : "🟦 Normal"}
+    </small>
+    <div class="acciones">
+      <button onclick="editar('${r.id}')">✏️ Editar</button>
+      <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
+      <button onclick="toggleAtendido('${r.id}', ${r.atendido})">
+        ${r.atendido ? "❌ No Atendido" : "✅ Atendido"}
+      </button>
+      <button onclick="togglePrioridad('${r.id}', ${r.prioridad})">
+        ${r.prioridad ? "🔵 Quitar Prioridad" : "🔴 Marcar Prioridad"}
+      </button>
+    </div>
+  </li>
+`).join("");
+
 
     window.editar = function(id) {
       window.location.href = `crear-recordatorio.html?id=${id}`;
@@ -92,11 +98,15 @@
       await supabase.from("recordatorios").update({ atendido: !actual }).eq("id", id);
       cargarRecordatorios();
     };
+window.togglePrioridad = async function(id, actual) {
+  await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
+  cargarRecordatorios();
+};
 
     cargarRecordatorios();
   </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
-  Hecho con 💙 por GERA QUEZAA · <a href="index.html" style="color: #007bff; text-decoration: none;">Volver al inicio</a>
+  Hecho con 💙 por GERA QUEZADA 160725 0558 · <a href="index.html" style="color: #007bff; text-decoration: none;">Volver al inicio</a>
 </footer>
 
 </body>
