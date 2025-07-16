@@ -230,15 +230,19 @@ if (e.target.classList.contains('guardar-nota')) {
   const editarBtn = row.querySelector('.editar-nota');
 
   const nota = textareaNota.value.trim();
+  const es_gasto_medico = row.querySelector('.check-medico')?.checked || false;
+  const gasto_reclamado = row.querySelector('.check-reclamado')?.checked || false;
+  const especialidad = row.querySelector('.select-especialidad')?.value || '';
 
-const { error } = await supabase
-  .from('xml_inge_sergio')
-  .update({
-    es_gasto_medico,
-    gasto_reclamado,
-    especialidad
-  })
-  .eq('uuid', uuid);
+  const { error } = await supabase
+    .from('xml_inge_sergio')
+    .update({
+      nota_reclamacion: nota,
+      es_gasto_medico,
+      gasto_reclamado,
+      especialidad
+    })
+    .eq('uuid', uuid);
 
   if (error) {
     alert('❌ Error al guardar: ' + error.message);
@@ -252,7 +256,8 @@ const { error } = await supabase
   editarBtn.style.display = 'inline-block';
   mostrarToast("✅ Nota guardada");
   return;
-  }
+}
+
 });
 
 async function autoGuardar(uuid) {
