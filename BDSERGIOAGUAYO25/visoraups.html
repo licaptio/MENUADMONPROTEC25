@@ -251,10 +251,8 @@ if (e.target.classList.contains('guardar-nota')) {
   divNota.style.display = 'block';
   editarBtn.style.display = 'inline-block';
   mostrarToast("✅ Nota guardada");
+  return;
 }
-mostrarToast("✅ Nota guardada");
-}
-}); // ← AQUÍ CIERRA CORRECTAMENTE
 async function autoGuardar(uuid) {
   const row = document.querySelector(`tr[data-uuid='${uuid}']`);
   if (!row) return;
@@ -284,7 +282,7 @@ async function autoGuardar(uuid) {
 
   <!-- FOOTER -->
   <footer style="margin-top: 2rem; text-align: center; font-size: 13px; color: #777;">
-    Hecho con 💙 por Gera Quezaa 0820160725 0916 · 
+    Hecho con 💙 por Gera Quezaa 160725 0925 · 
     <a href="https://github.com/licaptio" target="_blank" style="color: #0066cc; text-decoration: none;">GitHub</a> · 
     <span>Última actualización: <span id="fechaActual"></span></span>
   </footer>
