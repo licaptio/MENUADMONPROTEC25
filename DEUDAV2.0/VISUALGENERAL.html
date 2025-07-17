@@ -356,6 +356,7 @@ vencidos.forEach(f => {
   const proveedor = (f.razon_social_emisor || "SIN PROVEEDOR").toUpperCase().substring(0, 35);
   const dias = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
   const linea = `📅 ${f.fecha.substring(0, 10)} (${dias} días)\n💳 ${((f.serie || "") + (f.factura || "")).trim()} - $${Number(f.total || 0).toFixed(2)}`;
+  const recibida = ((f.factura_fisicamente || "").toUpperCase() === "SI") ? "📥 FISICA" : "❌ NO FISICA";
   if (!agrupado[proveedor]) agrupado[proveedor] = [];
   agrupado[proveedor].push({ fecha: f.fecha, linea });
 });
