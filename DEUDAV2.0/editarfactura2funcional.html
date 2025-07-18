@@ -64,9 +64,9 @@ textarea {
   <label>Concepto:</label>
   <p id="conceptoTexto" style="font-style: italic; background-color: #f0f0f0; padding: 8px;"></p>
 
-  <label>Fotos:</label>
-  <input type="file" id="fotoInput" multiple accept="image/*" />
-  <div id="fotosPreview"></div>
+<label>Tomar foto o seleccionar:</label>
+<input type="file" id="fotoInput" multiple accept="image/*" capture="environment" />
+<div id="fotosPreview"></div>
 
   <button onclick="guardarCambios()">Guardar cambios</button>
 </div>
