@@ -219,6 +219,8 @@ function mostrarFotos() {
     }
 
     await actualizarFila(fisica, comentario);
+    window.history.back();
+
   }
 // Leer UUID automáticamente desde la URL si viene como parámetro
 window.addEventListener('DOMContentLoaded', () => {
