@@ -378,6 +378,9 @@ return (
       ((d.razon_social_emisor || "").toUpperCase() === "ALIMENTOS ENCO") && dias >= 15
     ) ||
     (
+      ((d.razon_social_emisor || "").toUpperCase() === "DETALLE Y DISTRIBUCIONES") && dias >= 15
+    ) ||
+    (
       ((d.razon_social_emisor || "").toUpperCase() === "ABARROTES") && dias >= 21
     )
   
