@@ -329,9 +329,7 @@ function enviarTelegramVencidos() {
       (d.factura_pagada || "").trim().toUpperCase() !== "SI" &&
       (
         dias > 31 ||
-        (proveedor === "DECASA DEL CENTRO" && dias >= 21) ||
         (proveedor === "DISTRIBUIDORA DE LA ROSA" && dias >= 21) ||
-        (proveedor === "MAS BODEGA Y LOGISTICA" && dias >= 18) ||
         (proveedor === "CANEL'S" && dias >= 21) ||
         (proveedor === "LA IMPERIAL" && dias >= 5) ||
         (proveedor === "GRUPO CHI-SO" && dias >= 14) ||
@@ -345,8 +343,6 @@ function enviarTelegramVencidos() {
         (proveedor === "GARZA ELIZONDO Y COMPAÑIA" && dias >= 28) ||
         (proveedor === "AJEMEX" && dias >= 15) ||
         (proveedor === "ALIMENTOS ENCO" && dias >= 15) ||
-        (proveedor === "DETALLE Y DISTRIBUCIONES" && dias >= 15) ||
-        (proveedor === "ABARROTES" && dias >= 21)
       )
     );
   });
