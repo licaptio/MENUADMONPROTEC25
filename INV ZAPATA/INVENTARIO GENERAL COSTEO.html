@@ -94,8 +94,8 @@ const codigosExentos = ["2382", "3062", "3217", "210004", "7503000134506", "7503
 let totalGlobalInventario = 0;
 
 async function cargarDatos() {
-  const entradasSnap = await db.collection("almacenes").doc("Almacen_Zapata").collection("entradas").get();
-  const salidasSnap = await db.collection("almacenes").doc("Almacen_Zapata").collection("salidas").get();
+ const entradasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("entradas").get();
+const salidasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("salidas").get();
   const productosSnap = await db.collection("productos").get();
 
   const usados = new Set();
