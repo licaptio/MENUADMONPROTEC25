@@ -148,16 +148,14 @@ async function renderTabla(nombre, codigos, productosSnap, entradasSnap, salidas
     }
   });
 
-  entradasSnap.forEach(doc => {
-    const data = doc.data();
-    if (Array.isArray(data.articulos)) {
-      data.articulos.forEach(item => {
-        if (productos[item.codigo]) {
-          productos[item.codigo].entradas += item.cantidad;
-        }
-      });
-    }
-  });
+ entradasSnap.forEach(doc => {
+  const data = doc.data();
+  const codigo = data.codigo;
+  const cantidad = data.cantidad || 0;
+  if (productos[codigo]) {
+    productos[codigo].entradas += cantidad;
+  }
+});
 
   salidasSnap.forEach(doc => {
     const data = doc.data();
