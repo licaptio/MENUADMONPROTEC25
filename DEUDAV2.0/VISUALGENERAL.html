@@ -234,6 +234,8 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-verde-limon';
 } else if (proveedor === 'DISTRIBUIDORA DE PRODUCTOS DESHIDRATADOS' && f.dias >= 28) {
   clase = 'factura-rosa-pastel';
+} else if (proveedor === 'PRODUCTOS VIGAR' && f.dias >= 13) {
+  clase = 'factura-rosa-pastel';
 } else if (proveedor === 'DETALLE Y DISTRIBUCIONES' && f.dias >= 15) {
   clase = 'factura-rosa-pastel';
 } else if (proveedor === 'FABRICAS SELECTAS DEL CENTRO' && f.dias >= 40) {
@@ -246,10 +248,6 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
   clase = 'factura-azul-cielo';
 } else if (proveedor === 'LA IMPERIAL' && f.dias >= 5) {
   clase = 'factura-super-alerta';
-} else if (f.dias > 40) {
-  clase = 'factura-vencida-critica';
-} else if (f.dias > 30) {
-  clase = 'factura-vencida';
 }
     return `<tr class="${clase}">
       <td>${f.fecha_formateada}</td>
@@ -330,7 +328,8 @@ function enviarTelegramVencidos() {
     "MAS BODEGA Y LOGISTICA",
     "DETALLE Y DISTRIBUCIONES",
     "IMPULSORA SAHUAYO",
-"EDDY HERNANDEZ VILLARREAL",
+    "PRODUCTOS VIGAR",
+    "EDDY HERNANDEZ VILLARREAL",
     "DISTRIBUIDORA DE DULCES DEL NORTE"
   ];
 
