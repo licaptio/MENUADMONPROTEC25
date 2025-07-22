@@ -94,13 +94,25 @@ const codigosExentos = ["2382", "3062", "3217", "210004", "7503000134506", "7503
 let totalGlobalInventario = 0;
 
 async function cargarDatos() {
- const entradasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("entradas").get();
-const salidasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("salidas").get();
+  const entradasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("entradas").get();
+  const salidasSnap = await db.collection("almacenes").doc("almacen_zapata").collection("salidas").get();
   const productosSnap = await db.collection("productos").get();
 
   const usados = new Set();
-  entradasSnap.forEach(doc => usados.add(doc.data().codigo));
-  salidasSnap.forEach(doc => usados.add(doc.data().codigo));
+
+  entradasSnap.forEach(doc => {
+    const data = doc.data();
+    if (Array.isArray(data.articulos)) {
+      data.articulos.forEach(item => usados.add(item.codigo));
+    }
+  });
+
+  salidasSnap.forEach(doc => {
+    const data = doc.data();
+    if (Array.isArray(data.articulos)) {
+      data.articulos.forEach(item => usados.add(item.codigo));
+    }
+  });
 
   const codigosTodasLineas = Object.values(lineas).flat();
   const sinCategoria = [];
@@ -111,6 +123,7 @@ const salidasSnap = await db.collection("almacenes").doc("almacen_zapata").colle
   for (const [linea, codigos] of Object.entries(lineas)) {
     await renderTabla(linea, codigos, productosSnap, entradasSnap, salidasSnap);
   }
+
   if (sinCategoria.length > 0) {
     await renderTabla("SIN CATEGORÍA", sinCategoria, productosSnap, entradasSnap, salidasSnap, true);
   }
@@ -136,12 +149,25 @@ async function renderTabla(nombre, codigos, productosSnap, entradasSnap, salidas
   });
 
   entradasSnap.forEach(doc => {
-    const d = doc.data();
-    if (productos[d.codigo]) productos[d.codigo].entradas += d.cantidad;
+    const data = doc.data();
+    if (Array.isArray(data.articulos)) {
+      data.articulos.forEach(item => {
+        if (productos[item.codigo]) {
+          productos[item.codigo].entradas += item.cantidad;
+        }
+      });
+    }
   });
+
   salidasSnap.forEach(doc => {
-    const d = doc.data();
-    if (productos[d.codigo]) productos[d.codigo].salidas += d.cantidad;
+    const data = doc.data();
+    if (Array.isArray(data.articulos)) {
+      data.articulos.forEach(item => {
+        if (productos[item.codigo]) {
+          productos[item.codigo].salidas += item.cantidad;
+        }
+      });
+    }
   });
 
   const filas = Object.entries(productos).filter(([codigo, p]) => {
@@ -171,15 +197,14 @@ async function renderTabla(nombre, codigos, productosSnap, entradasSnap, salidas
     totalInventarioCosteado += totalCosteado;
     totalGlobalInventario += totalCosteado;
     const claseFila = inventario < 0 ? 'fila-parpadeo-rojo' : '';
-tablaHTML += `<tr class="${claseFila}">
-  <td>${codigo}</td>
-  <td>${p.descripcion}</td>
-  <td>${formatter.format(p.costo)}</td>
-  <td>${p.impuesto}</td>
-  <td><strong>${inventario}</strong></td>
-  <td><strong>${formatter.format(totalCosteado)}</strong></td>
-</tr>`;
-
+    tablaHTML += `<tr class="${claseFila}">
+      <td>${codigo}</td>
+      <td>${p.descripcion}</td>
+      <td>${formatter.format(p.costo)}</td>
+      <td>${p.impuesto}</td>
+      <td><strong>${inventario}</strong></td>
+      <td><strong>${formatter.format(totalCosteado)}</strong></td>
+    </tr>`;
   });
 
   tablaHTML = tablaHTML.replace(
