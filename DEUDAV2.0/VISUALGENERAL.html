@@ -251,6 +251,10 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
 } else if (proveedor === 'LA IMPERIAL' && f.dias >= 5) {
   clase = 'factura-super-alerta';
 }
+if (!clase && f.dias > 31) {
+  clase = 'factura-vencida'; // aplica parpadeo amarillo si no se asignó otra clase
+}
+    
     return `<tr class="${clase}">
       <td>${f.fecha_formateada}</td>
       <td>${f.dias ?? ""}</td>
