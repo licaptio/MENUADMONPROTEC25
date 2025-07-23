@@ -87,7 +87,7 @@ textarea {
     const { data, error } = await supabaseClient
       .from('deuda_limpia_pdd')
       .select('*')
-      .eq('uuid', uuid)
+      .eq('uuid_cfdi', uuid)
       .maybeSingle();
 
     if (error || !data) {
@@ -228,7 +228,7 @@ setTimeout(() => {
 // Leer UUID automáticamente desde la URL si viene como parámetro
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const uuid = params.get('uuid');
+  const uuid = params.get('uuid_cfdi');
 
   if (uuid) {
     const input = document.getElementById('uuidInput');
