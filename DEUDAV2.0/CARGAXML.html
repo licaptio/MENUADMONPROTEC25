@@ -151,7 +151,7 @@ async function procesarArchivos() {
         continue;
       }
 
-      const existe = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd?uuid=eq.${data.uuid}`, {
+      const existe = await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${data.uuid}`, {
         headers: {
           apikey: API_KEY,
           Authorization: `Bearer ${API_KEY}`
@@ -173,7 +173,7 @@ async function procesarArchivos() {
       }
 
       const datosInsert = {
-        uuid: data.uuid,
+        uuid_cfdi: data.uuid,
         fecha: data.fecha,
         rfc_emisor: data.emisorRFC,
         razon_social_emisor: data.razonSocial,
