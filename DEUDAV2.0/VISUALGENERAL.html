@@ -49,11 +49,13 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .comentario {
-      white-space: normal;
-      word-break: break-word;
-      text-align: left;
-    }
+.comentario {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;  /* Ajustable */
+  text-align: left;
+}
     .factura-vencida {
       animation: parpadeo 1s infinite;
     }
@@ -205,7 +207,7 @@ function mostrarTodos() {
         ...f,
         fecha_formateada: formatearFecha(f.fecha),
         dias,
-        uuid_corto: f.uuid ? f.uuid.toUpperCase().substring(0, 36) : "",
+        uuid_corto: f.uuid_cfdi ? f.uuid_cfdi.toUpperCase().substring(0, 36) : "",
         factura_corta: ((f.serie || "") + (f.factura || "")).substring(0, 15),
         total: Number(f.total) || 0
       };
@@ -253,10 +255,10 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
       <td>${f.fecha_formateada}</td>
       <td>${f.dias ?? ""}</td>
       <td class="uuid">
-<a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid)}" class="link-factura" target="_blank">
+<a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" class="link-factura" target="_blank">
   ${f.uuid_corto}
 </a>
-      </td>
+</td>
       <td class="proveedor">${f.razon_social_emisor}</td>
       <td>${f.factura_corta}</td>
       <td>${formatoPesos.format(f.total)}</td>
@@ -266,7 +268,10 @@ if (proveedor === 'DECASA DEL CENTRO' && f.dias >= 21) {
     : ''}
 </td>
 
-      <td class="comentario">${f.comentario_factura_fisica || ""}</td>
+      <td class="comentario" title="${f.comentario_factura_fisica || ""}">
+  ${f.comentario_factura_fisica || ""}
+</td>
+
       <td>
   ${Array.isArray(f.fotos) && f.fotos.length > 0
     ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(' ')
