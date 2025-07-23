@@ -130,7 +130,7 @@
     const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
     let datos = [];
 
-    fetch(`${API_URL}?select=id,uuid,fecha,rfc_emisor,razon_social_emisor,factura,total,factura_fisicamente,comentario_factura_fisica,factura_pagada,fecha_certificacion,conceptos_detalle`, {
+    fetch(`${API_URL}?select=id,uuid_cfdi,fecha,rfc_emisor,razon_social_emisor,factura,total,factura_fisicamente,comentario_factura_fisica,factura_pagada,fecha_certificacion,conceptos_detalle`, {
       headers: {
         apikey: API_KEY,
         Authorization: `Bearer ${API_KEY}`
@@ -181,14 +181,14 @@ function renderTabla() {
 
   const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   const filas = datosFiltrados.map(d => {
-    const uuidLimpio = (d.uuid || '')
-      .normalize('NFKC')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      .replace(/[^\x20-\x7E]/g, '')
-      .trim()
-      .toUpperCase();
+const uuidLimpio = (d.uuid_cfdi || '')
+  .normalize('NFKC')
+  .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  .replace(/[^\x20-\x7E]/g, '')
+  .trim()
+  .toUpperCase();
 
-    const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
+const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
     const totalNumerico = parseFloat(d.total) || 0;
 
     return `
