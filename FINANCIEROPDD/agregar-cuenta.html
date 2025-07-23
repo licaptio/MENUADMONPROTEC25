@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agregar Cuenta al Catálogo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(to right, #00416A, #E4E5E6);
+      color: #fff;
+    }
+    h2 { color: #fff; }
+    label {
+      margin-top: 10px;
+      display: block;
+      font-weight: bold;
+    }
+    input, select, button {
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover { background-color: #0056b3; }
+    .ok { color: lightgreen; }
+    .error { color: yellow; }
+  </style>
+</head>
+<body>
+  <h2>Agregar nueva cuenta al catálogo</h2>
+
+  <label for="codigo">Código (formato XXX-XX-XXX o 8 dígitos)</label>
+  <input id="codigo" type="text" placeholder="Ej. 40101001 o 401-01-001">
+
+  <label for="nombre">Nombre</label>
+  <input id="nombre" type="text" placeholder="Ej. Ventas, Compras, etc.">
+
+  <label for="tipo">Tipo</label>
+  <select id="tipo">
+    <option value="Ingreso">Ingreso</option>
+    <option value="Egreso">Egreso</option>
+    <option value="Costo">Costo</option>
+  </select>
+
+  <label for="cuenta_padre">Cuenta Padre (opcional)</label>
+  <select id="cuenta_padre">
+    <option value="">-- Ninguna (cuenta principal) --</option>
+  </select>
+
+  <button id="guardarBtn">Guardar cuenta</button>
+  <p id="mensaje"></p>
+
+  <script>
+    const { createClient } = supabase;
+    const supa = createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    async function cargarCuentasPadre() {
+      const { data, error } = await supa
+        .from('catalogo_cuentas')
+        .select('id, codigo, nombre')
+        .eq('activo', true)
+        .order('codigo', { ascending: true });
+
+      const select = document.getElementById('cuenta_padre');
+      if (data) {
+        data.forEach(cuenta => {
+          const opt = document.createElement('option');
+          opt.value = cuenta.id;
+          opt.textContent = `${cuenta.codigo} - ${cuenta.nombre}`;
+          select.appendChild(opt);
+        });
+      } else {
+        mostrarMensaje('❌ Error al cargar cuentas padre', true);
+      }
+    }
+
+    function mostrarMensaje(texto, esError = false) {
+      const msg = document.getElementById('mensaje');
+      msg.textContent = texto;
+      msg.className = esError ? 'error' : 'ok';
+    }
+
+    async function agregarCuenta() {
+      let codigo = document.getElementById('codigo').value.trim();
+      const nombre = document.getElementById('nombre').value.trim();
+      const tipo = document.getElementById('tipo').value;
+      const cuenta_padre = document.getElementById('cuenta_padre').value || null;
+
+      // Formatear código si son 8 dígitos sin guiones
+      if (/^\d{8}$/.test(codigo)) {
+        codigo = `${codigo.slice(0, 3)}-${codigo.slice(3, 5)}-${codigo.slice(5, 8)}`;
+        document.getElementById('codigo').value = codigo;
+      }
+
+      const formatoCodigo = /^\d{3}-\d{2}-\d{3}$/;
+      if (!formatoCodigo.test(codigo)) {
+        mostrarMensaje('⚠️ El código debe tener formato XXX-XX-XXX (ej. 401-01-001)', true);
+        return;
+      }
+
+      if (!codigo || !nombre || !tipo) {
+        mostrarMensaje('⚠️ Llena todos los campos requeridos.', true);
+        return;
+      }
+
+      const { error } = await supa
+        .from('catalogo_cuentas')
+        .insert([{ codigo, nombre, tipo, activo: true, cuenta_padre }]);
+
+      if (error) {
+        mostrarMensaje('❌ Error al guardar: ' + error.message, true);
+      } else {
+        mostrarMensaje('✅ Cuenta guardada correctamente');
+        document.getElementById('codigo').value = '';
+        document.getElementById('nombre').value = '';
+        document.getElementById('cuenta_padre').value = '';
+      }
+    }
+
+    document.getElementById('guardarBtn').addEventListener('click', agregarCuenta);
+    cargarCuentasPadre();
+  </script>
+</body>
+</html>
