@@ -66,7 +66,13 @@ const supabase = window.supabase.createClient(
 
       const pendientes = data
         .filter(f => f.factura_pagada !== "SI")
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (a.razon_social_emisor || "").localeCompare(b.razon_social_emisor || ""));
+        .sort((a, b) => {
+  const provA = (a.razon_social_emisor || "").toLowerCase();
+  const provB = (b.razon_social_emisor || "").toLowerCase();
+  if (provA !== provB) return provA.localeCompare(provB);
+  return new Date(a.fecha) - new Date(b.fecha);
+});
+
 
       mostrarTabla(pendientes);
       resumenTelegram = generarResumenTexto(pendientes);
