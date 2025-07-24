@@ -59,33 +59,30 @@
 
     const tabla = "deuda_limpia_pdd";
 
-    async function cargar() {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      let { data, error } = await supabase.from(tabla).select("*");
+async function cargar() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
 
-      if (error) return document.getElementById("contenido").innerHTML = "Error al cargar datos";
+  let { data, error } = await supabase
+    .from(tabla)
+    .select("*", { count: "exact", head: false })
+    .range(0, 9999)
+    .order("razon_social_emisor", { ascending: true })
+    .order("fecha", { ascending: true });
 
-      if (id) {
-        const factura = data.find(f => f.id === id);
-        if (!factura) {
-          document.getElementById("contenido").innerHTML = "Factura no encontrada.";
-          return;
-        }
-        renderTarjeta(factura);
-      } else {
-        const ordenado = data.sort((a, b) => {
-          const provA = (a.razon_social_emisor || "").toLowerCase();
-          const provB = (b.razon_social_emisor || "").toLowerCase();
-          if (provA !== provB) return provA.localeCompare(provB);
-          const fechaA = new Date(a.fecha);
-          const fechaB = new Date(b.fecha);
-          return fechaA - fechaB;
-        });
-        renderTabla(ordenado);
-      }
+  if (error) return document.getElementById("contenido").innerHTML = "Error al cargar datos";
+
+  if (id) {
+    const factura = data.find(f => f.id === id);
+    if (!factura) {
+      document.getElementById("contenido").innerHTML = "Factura no encontrada.";
+      return;
     }
-
+    renderTarjeta(factura);
+  } else {
+    renderTabla(data);
+  }
+}
     function renderTabla(data) {
       let html = `<table>
         <tr>
