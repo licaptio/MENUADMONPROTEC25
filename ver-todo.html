@@ -39,78 +39,82 @@
   <h2>📋 Todos los Recordatorios</h2>
   <ul id="lista-todos">Cargando...</ul>
   <a href="index.html">⬅️ Volver al calendario</a>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const supabase = supabase.createClient(
+    'https://cvpbtjlupswbyxenugpz.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+  );
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://cvpbtjlupswbyxenugpz.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-    );
+  const lista = document.getElementById("lista-todos");
 
-    const lista = document.getElementById("lista-todos");
+  async function cargarRecordatorios() {
+    const { data, error } = await supabase
+      .from("recordatorios")
+      .select("*")
+      .eq("archivado", false)
+      .order("prioridad", { ascending: false });
 
-async function cargarRecordatorios() {
-const { data, error } = await supabase
-  .from("recordatorios")
-  .select("*")
-  .eq("archivado", false)
-  .order("prioridad", { ascending: false })
-  .order("fecha", { ascending: false })
-  .order("hora", { ascending: false });
+    if (error || !data.length) {
+      console.error("Error:", error);
+      lista.innerHTML = "❌ No se pudieron cargar los recordatorios.";
+      return;
+    }
 
-  if (error || !data.length) {
-    lista.innerHTML = "❌ No se pudieron cargar los recordatorios.";
-    return;
+    lista.innerHTML = data.map(r => `
+      <li style="background: ${r.prioridad ? '#fff8e1' : 'white'};">
+        <strong>${r.fecha || '📅 Sin fecha'}</strong> ${r.hora ? "🕒 " + r.hora : ""}<br>
+        ${r.mensaje}<br>
+        <small>
+          ${r.atendido ? "✅ Atendido" : "⏳ No atendido"} · 
+          ${r.prioridad ? "🔥 Prioridad" : "🟦 Normal"}
+        </small>
+        <div class="acciones">
+          <button onclick="editar('${r.id}')">✏️ Editar</button>
+          <button onclick="archivar('${r.id}')">📦 Archivar</button>
+          <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
+          <button onclick="toggleAtendido('${r.id}', ${r.atendido})">
+            ${r.atendido ? "❌ No Atendido" : "✅ Atendido"}
+          </button>
+          <button onclick="togglePrioridad('${r.id}', ${r.prioridad})">
+            ${r.prioridad ? "🔵 Quitar Prioridad" : "🔴 Marcar Prioridad"}
+          </button>
+        </div>
+      </li>
+    `).join("");
   }
 
-  lista.innerHTML = data.map(r => `
-    <li style="background: ${r.prioridad ? '#fff8e1' : 'white'};">
-      <strong>${r.fecha}</strong> ${r.hora ? "🕒 " + r.hora : ""}<br>
-      ${r.mensaje}<br>
-      <small>
-        ${r.atendido ? "✅ Atendido" : "⏳ No atendido"} · 
-        ${r.prioridad ? "🔥 Prioridad" : "🟦 Normal"}
-      </small>
-      <div class="acciones">
-        <button onclick="editar('${r.id}')">✏️ Editar</button>
-        <button onclick="archivar('${r.id}')">📦 Archivar</button>
-        <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
-        <button onclick="toggleAtendido('${r.id}', ${r.atendido})">
-          ${r.atendido ? "❌ No Atendido" : "✅ Atendido"}
-        </button>
-        <button onclick="togglePrioridad('${r.id}', ${r.prioridad})">
-          ${r.prioridad ? "🔵 Quitar Prioridad" : "🔴 Marcar Prioridad"}
-        </button>
-      </div>
-    </li>
-  `).join("");
-}
-    window.editar = function(id) {
-      window.location.href = `crear-recordatorio.html?id=${id}`;
-    };
+  window.editar = function(id) {
+    window.location.href = `crear-recordatorio.html?id=${id}`;
+  };
 
-    window.eliminar = async function(id) {
-      const confirmar = confirm("¿Eliminar este recordatorio?");
-      if (!confirmar) return;
-      await supabase.from("recordatorios").delete().eq("id", id);
-      cargarRecordatorios();
-    };
+  window.eliminar = async function(id) {
+    const confirmar = confirm("¿Eliminar este recordatorio?");
+    if (!confirmar) return;
+    await supabase.from("recordatorios").delete().eq("id", id);
+    cargarRecordatorios();
+  };
 
-    window.toggleAtendido = async function(id, actual) {
-      await supabase.from("recordatorios").update({ atendido: !actual }).eq("id", id);
-      cargarRecordatorios();
-    };
-window.togglePrioridad = async function(id, actual) {
-  await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
+  window.toggleAtendido = async function(id, actual) {
+    await supabase.from("recordatorios").update({ atendido: !actual }).eq("id", id);
+    cargarRecordatorios();
+  };
+
+  window.togglePrioridad = async function(id, actual) {
+    await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
+    cargarRecordatorios();
+  };
+
+  window.archivar = async function(id) {
+    const confirmar = confirm("¿Archivar este recordatorio?");
+    if (!confirmar) return;
+    await supabase.from("recordatorios").update({ archivado: true }).eq("id", id);
+    cargarRecordatorios();
+  };
+
+  // Ejecutar al cargar
   cargarRecordatorios();
-};
-
-window.archivar = async function(id) {
-  const confirmar = confirm("¿Archivar este recordatorio?");
-  if (!confirmar) return;
-  await supabase.from("recordatorios").update({ archivado: true }).eq("id", id);
-  cargarRecordatorios();
-};
+</script>
   </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
   Hecho con 💙 por GERA QUEZADA 23072025 0622PM el cierre · <a href="index.html" style="color: #007bff; text-decoration: none;">Volver al inicio</a>
