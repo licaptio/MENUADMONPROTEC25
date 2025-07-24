@@ -54,10 +54,11 @@
   <div id="tabla"></div>
 
   <script>
-const supabase = window.supabase.createClient(
-  'https://cvpbtjlupswbyxenugpz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-);
+    const supabase = supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
     const tabla = "deuda_limpia_pdd";
 
     async function cargar() {
@@ -67,12 +68,11 @@ const supabase = window.supabase.createClient(
       const pendientes = data
         .filter(f => f.factura_pagada !== "SI")
         .sort((a, b) => {
-  const provA = (a.razon_social_emisor || "").toLowerCase();
-  const provB = (b.razon_social_emisor || "").toLowerCase();
-  if (provA !== provB) return provA.localeCompare(provB);
-  return new Date(a.fecha) - new Date(b.fecha);
-});
-
+          const provA = (a.razon_social_emisor || "").toLowerCase();
+          const provB = (b.razon_social_emisor || "").toLowerCase();
+          if (provA !== provB) return provA.localeCompare(provB);
+          return new Date(a.fecha) - new Date(b.fecha);
+        });
 
       mostrarTabla(pendientes);
       resumenTelegram = generarResumenTexto(pendientes);
@@ -80,18 +80,18 @@ const supabase = window.supabase.createClient(
 
     function mostrarTabla(data) {
       let html = `<table><tr>
-        <th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Total</th><th>Días</th><th>UUID</th>
+        <th>Fecha</th><th>Días</th><th>UUID</th><th>Proveedor</th><th>Factura</th><th>Total</th>
       </tr>`;
       for (const f of data) {
         const dias = calcularDias(f.fecha);
         const clase = obtenerClaseVencimiento(dias);
         html += `<tr class="${clase}">
           <td>${formatoFecha(f.fecha)}</td>
+          <td>${dias} días</td>
+          <td>${f.uuid_cfdi || '-'}</td>
           <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
           <td>${f.factura || '-'}</td>
           <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
-          <td>${dias} días</td>
-          <td>${f.uuid_cfdi || '-'}</td>
         </tr>`;
       }
       html += "</table>";
