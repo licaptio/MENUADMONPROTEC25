@@ -44,12 +44,16 @@
       font-size: 0.8em;
       color: #888;
     }
+    #filtro-container {
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
   <h2>Actualizar Estatus de Pago</h2>
+  <div id="filtro-container"></div>
   <div id="contenido"></div>
-  <footer>Sistema Supabase v2.1 - por PUTIN</footer>
+  
 
 <script>
   const supabase = window.supabase.createClient(
@@ -57,90 +61,118 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
 
-    const tabla = "deuda_limpia_pdd";
+  const tabla = "deuda_limpia_pdd";
+  let todasLasFacturas = [];
 
-async function cargar() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
+  async function cargar() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
 
-  let { data, error } = await supabase
-    .from(tabla)
-    .select("*", { count: "exact", head: false })
-    .range(0, 9999)
-    .order("razon_social_emisor", { ascending: true })
-    .order("fecha", { ascending: true });
+    let { data, error } = await supabase
+      .from(tabla)
+      .select("*")
+      .order("razon_social_emisor", { ascending: true })
+      .order("fecha", { ascending: true });
 
-  if (error) return document.getElementById("contenido").innerHTML = "Error al cargar datos";
+    if (error || !data) return document.getElementById("contenido").innerHTML = "Error al cargar datos";
 
-  if (id) {
-    const factura = data.find(f => f.id === id);
-    if (!factura) {
-      document.getElementById("contenido").innerHTML = "Factura no encontrada.";
-      return;
-    }
-    renderTarjeta(factura);
-  } else {
-    renderTabla(data);
-  }
-}
-    function renderTabla(data) {
-      let html = `<table>
-        <tr>
-          <th>Fecha</th>
-          <th>UUID</th>
-          <th>Proveedor</th>
-          <th>Factura</th>
-          <th>Total</th>
-          <th>¿Pagado?</th>
-        </tr>`;
-      for (let f of data) {
-        html += `<tr>
-          <td>${new Date(f.fecha).toLocaleDateString()}</td>
-          <td><a href="?id=${f.id}" target="_blank">${f.uuid_cfdi || '-'}</a></td>
-          <td>${f.razon_social_emisor || '-'}</td>
-          <td>${f.factura || '-'}</td>
-          <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
-          <td>
-            <select onchange="actualizarPago('${f.id}', this.value)">
-              <option value="SI" ${f.factura_pagada === "SI" ? "selected" : ""}>SI</option>
-              <option value="NO" ${f.factura_pagada === "NO" ? "selected" : ""}>NO</option>
-            </select>
-          </td>
-        </tr>`;
+    todasLasFacturas = data;
+
+    if (id) {
+      const factura = data.find(f => f.id === id);
+      if (!factura) {
+        document.getElementById("contenido").innerHTML = "Factura no encontrada.";
+        return;
       }
-      html += `</table>`;
-      document.getElementById("contenido").innerHTML = html;
+      renderTarjeta(factura);
+    } else {
+      crearFiltroProveedores(data);
+      renderTabla(data);
     }
+  }
 
-    function renderTarjeta(f) {
-      const html = `
-      <div class="tarjeta">
-        <h3>Factura ${f.factura || '-'}</h3>
-        <p><strong>Fecha:</strong> ${new Date(f.fecha).toLocaleDateString()}</p>
-        <p><strong>Proveedor:</strong> ${f.razon_social_emisor || '-'}</p>
-        <p><strong>Total:</strong> $${parseFloat(f.total || 0).toFixed(2)}</p>
-        <p><strong>¿Pagada?:</strong>
+  function crearFiltroProveedores(data) {
+    const cont = document.getElementById("filtro-container");
+    const proveedoresUnicos = [...new Set(data.map(f => f.razon_social_emisor).filter(Boolean))].sort();
+
+    let html = `<label>Filtrar por proveedor: </label>
+    <select onchange="filtrarProveedor(this.value)">
+      <option value="TODOS">-- TODOS --</option>`;
+    for (let p of proveedoresUnicos) {
+      html += `<option value="${p}">${p}</option>`;
+    }
+    html += `</select>`;
+    cont.innerHTML = html;
+  }
+
+  function filtrarProveedor(nombre) {
+    if (nombre === "TODOS") {
+      renderTabla(todasLasFacturas);
+    } else {
+      const filtradas = todasLasFacturas.filter(f => f.razon_social_emisor === nombre);
+      renderTabla(filtradas);
+    }
+  }
+
+  function renderTabla(data) {
+    let html = `<table>
+      <tr>
+        <th>Fecha</th>
+        <th>UUID</th>
+        <th>Proveedor</th>
+        <th>Factura</th>
+        <th>Total</th>
+        <th>¿Pagado?</th>
+      </tr>`;
+    for (let f of data) {
+      html += `<tr>
+        <td>${new Date(f.fecha).toLocaleDateString()}</td>
+        <td><a href="?id=${f.id}" target="_blank">${f.uuid_cfdi || '-'}</a></td>
+        <td>${f.razon_social_emisor || '-'}</td>
+        <td>${f.factura || '-'}</td>
+        <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
+        <td>
           <select onchange="actualizarPago('${f.id}', this.value)">
             <option value="SI" ${f.factura_pagada === "SI" ? "selected" : ""}>SI</option>
             <option value="NO" ${f.factura_pagada === "NO" ? "selected" : ""}>NO</option>
           </select>
-        </p>
-        <p><strong>UUID:</strong> ${f.uuid_cfdi || '-'}</p>
-      </div>`;
-      document.getElementById("contenido").innerHTML = html;
+        </td>
+      </tr>`;
     }
+    html += `</table>`;
+    document.getElementById("contenido").innerHTML = html;
+  }
 
-    async function actualizarPago(id, valor) {
-      const { error } = await supabase.from(tabla).update({ factura_pagada: valor }).eq("id", id);
-      if (error) {
-        alert("Error al actualizar");
-      } else {
-        alert("Actualizado");
-        location.reload();
-      }
+  function renderTarjeta(f) {
+    const html = `
+    <div class="tarjeta">
+      <h3>Factura ${f.factura || '-'}</h3>
+      <p><strong>Fecha:</strong> ${new Date(f.fecha).toLocaleDateString()}</p>
+      <p><strong>Proveedor:</strong> ${f.razon_social_emisor || '-'}</p>
+      <p><strong>Total:</strong> $${parseFloat(f.total || 0).toFixed(2)}</p>
+      <p><strong>¿Pagada?:</strong>
+        <select onchange="actualizarPago('${f.id}', this.value)">
+          <option value="SI" ${f.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+          <option value="NO" ${f.factura_pagada === "NO" ? "selected" : ""}>NO</option>
+        </select>
+      </p>
+      <p><strong>UUID:</strong> ${f.uuid_cfdi || '-'}</p>
+    </div>`;
+    document.getElementById("contenido").innerHTML = html;
+  }
+
+  async function actualizarPago(id, valor) {
+    const { error } = await supabase.from(tabla).update({ factura_pagada: valor }).eq("id", id);
+    if (error) {
+      alert("Error al actualizar");
+    } else {
+      alert("Actualizado");
+      location.reload();
     }
+  }
 
-    cargar();
-  </script>
+  cargar();
+<footer>Sistema Supabase v2.5111 - por PUTIN</footer>
+</script>
 </body>
 </html>
