@@ -94,7 +94,12 @@
 
   function crearFiltroProveedores(data) {
     const cont = document.getElementById("filtro-container");
-    const proveedoresUnicos = [...new Set(data.map(f => f.razon_social_emisor).filter(Boolean))].sort();
+    const proveedoresUnicos = [...new Set(
+  data
+    .map(f => (f.razon_social_emisor || "").trim().toUpperCase())
+    .filter(Boolean)
+)].sort();
+
 
     let html = `<label>Filtrar por proveedor: </label>
     <select onchange="filtrarProveedor(this.value)">
@@ -110,7 +115,12 @@
     if (nombre === "TODOS") {
       renderTabla(todasLasFacturas);
     } else {
-      const filtradas = todasLasFacturas.filter(f => f.razon_social_emisor === nombre);
+      const normalizar = txt => (txt || "").trim().toUpperCase();
+
+const filtradas = todasLasFacturas.filter(f =>
+  normalizar(f.razon_social_emisor) === normalizar(nombre)
+);
+
       renderTabla(filtradas);
     }
   }
