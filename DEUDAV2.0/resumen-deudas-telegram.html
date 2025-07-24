@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resumen Deudas No Pagadas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.9em;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    .vencida-30 { background: #fff8e1; }
+    .vencida-60 { background: #ffe082; }
+    .vencida-90 { background: #ffca28; }
+    .vencida-mas { background: #ff7043; color: white; }
+    .proveedor-destacado {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    button {
+      margin: 1rem 0;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+  <h2>📌 Facturas Pendientes</h2>
+  <button onclick="enviarTelegram()">📤 Enviar resumen por Telegram</button>
+  <div id="tabla"></div>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    const tabla = "deuda_limpia_pdd";
+
+    async function cargar() {
+      const { data, error } = await supabase.from(tabla).select("*");
+      if (error) return alert("Error cargando datos");
+
+      const pendientes = data
+        .filter(f => f.factura_pagada !== "SI")
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (a.razon_social_emisor || "").localeCompare(b.razon_social_emisor || ""));
+
+      mostrarTabla(pendientes);
+      resumenTelegram = generarResumenTexto(pendientes);
+    }
+
+    function mostrarTabla(data) {
+      let html = `<table><tr>
+        <th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Total</th><th>Días</th><th>UUID</th>
+      </tr>`;
+      for (const f of data) {
+        const dias = calcularDias(f.fecha);
+        const clase = obtenerClaseVencimiento(dias);
+        html += `<tr class="${clase}">
+          <td>${formatoFecha(f.fecha)}</td>
+          <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
+          <td>${f.factura || '-'}</td>
+          <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
+          <td>${dias} días</td>
+          <td>${f.uuid_cfdi || '-'}</td>
+        </tr>`;
+      }
+      html += "</table>";
+      document.getElementById("tabla").innerHTML = html;
+    }
+
+    function calcularDias(fecha) {
+      const hoy = new Date();
+      const f = new Date(fecha);
+      const diff = (hoy - f) / (1000 * 60 * 60 * 24);
+      return Math.floor(diff);
+    }
+
+    function obtenerClaseVencimiento(d) {
+      if (d > 90) return "vencida-mas";
+      if (d > 60) return "vencida-90";
+      if (d > 30) return "vencida-60";
+      return "vencida-30";
+    }
+
+    function formatoFecha(f) {
+      return new Date(f).toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    // ------------------ TELEGRAM ------------------
+    const telegramToken = "TU_TOKEN_DEL_BOT";
+    const chatId = "TU_CHAT_ID";
+    let resumenTelegram = "";
+
+    function generarResumenTexto(facturas) {
+      if (facturas.length === 0) return "✅ No hay facturas pendientes.";
+      let texto = "📌 *Resumen de Facturas Pendientes:*\n";
+      for (const f of facturas) {
+        const dias = calcularDias(f.fecha);
+        texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días\n`;
+      }
+      return texto;
+    }
+
+    async function enviarTelegram() {
+      if (!telegramToken || !chatId) {
+        alert("Falta configurar el TOKEN o el CHAT ID.");
+        return;
+      }
+      await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: resumenTelegram,
+          parse_mode: "Markdown"
+        })
+      });
+      alert("Resumen enviado por Telegram ✅");
+    }
+
+    cargar();
+  </script>
+</body>
+</html>
