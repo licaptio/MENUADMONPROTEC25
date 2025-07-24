@@ -50,12 +50,13 @@
     const lista = document.getElementById("lista-todos");
 
 async function cargarRecordatorios() {
-  const { data, error } = await supabase
-    .from("recordatorios")
-    .select("*")
-    .order("prioridad", { ascending: false })
-    .order("fecha", { ascending: false })
-    .order("hora", { ascending: false });
+const { data, error } = await supabase
+  .from("recordatorios")
+  .select("*")
+  .eq("archivado", false)
+  .order("prioridad", { ascending: false })
+  .order("fecha", { ascending: false })
+  .order("hora", { ascending: false });
 
   if (error || !data.length) {
     lista.innerHTML = "❌ No se pudieron cargar los recordatorios.";
@@ -72,6 +73,7 @@ async function cargarRecordatorios() {
       </small>
       <div class="acciones">
         <button onclick="editar('${r.id}')">✏️ Editar</button>
+        <button onclick="archivar('${r.id}')">📦 Archivar</button>
         <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
         <button onclick="toggleAtendido('${r.id}', ${r.atendido})">
           ${r.atendido ? "❌ No Atendido" : "✅ Atendido"}
@@ -101,9 +103,14 @@ async function cargarRecordatorios() {
 window.togglePrioridad = async function(id, actual) {
   await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
   cargarRecordatorios();
+window.archivar = async function(id) {
+  const confirmar = confirm("¿Archivar este recordatorio?");
+  if (!confirmar) return;
+  await supabase.from("recordatorios").update({ archivado: true }).eq("id", id);
+  cargarRecordatorios();
 };
 
-    cargarRecordatorios();
+};
   </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
   Hecho con 💙 por GERA QUEZADA 160725 0604 el cierre · <a href="index.html" style="color: #007bff; text-decoration: none;">Volver al inicio</a>
