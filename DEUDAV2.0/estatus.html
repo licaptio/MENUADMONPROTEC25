@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -67,10 +67,9 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
 
-    let { data, error } = await supabase
-      .from(tabla)
-      .select("*", { count: "exact" }) // ✅ asegura carga completa
-      .order("fecha", { ascending: false });
+let { data, error } = await supabase
+  .from(tabla)
+  .select("*", { count: "exact" });
 
     if (error || !data) {
       document.getElementById("contenido").innerHTML = "Error al cargar datos";
