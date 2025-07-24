@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Capturar nuevo reporte</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to right, #2b5876, #4e4376);
+      color: white;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      max-width: 500px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #00bfff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0099cc;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 25px;
+    }
+    .volver a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📝 Capturar nuevo reporte</h1>
+
+  <form id="form-reporte">
+    <label for="titulo">Título del reporte</label>
+    <input type="text" id="titulo" required>
+
+    <label for="fecha">Fecha</label>
+    <input type="date" id="fecha" required>
+
+    <label for="tipo">Tipo de reporte</label>
+    <select id="tipo" required>
+      <option value="">-- Selecciona --</option>
+      <option>Estado de resultados</option>
+      <option>Balance general</option>
+      <option>Movimientos</option>
+      <option>Otro</option>
+    </select>
+
+    <label for="contenido">Contenido / Comentarios</label>
+    <textarea id="contenido" rows="6" placeholder="Escribe el contenido del reporte o cualquier observación relevante..."></textarea>
+
+    <button type="submit">Guardar reporte</button>
+  </form>
+
+  <div class="volver">
+    <a href="index.html">← Volver al menú de Finanzas</a>
+  </div>
+
+  <script>
+    const form = document.getElementById('form-reporte');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titulo = document.getElementById('titulo').value.trim();
+      const fecha = document.getElementById('fecha').value;
+      const tipo = document.getElementById('tipo').value;
+      const contenido = document.getElementById('contenido').value.trim();
+
+      if (!titulo || !fecha || !tipo) {
+        alert('Por favor llena todos los campos obligatorios.');
+        return;
+      }
+
+      alert('✅ Reporte guardado (simulado). Aquí puedes conectar con Supabase más adelante.');
+      form.reset();
+    });
+  </script>
+
+</body>
+</html>
