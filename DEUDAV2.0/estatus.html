@@ -76,15 +76,16 @@ let { data, error } = await supabase
       return;
     }
 
-    todasLasFacturas = data.sort((a, b) => {
+todasLasFacturas = data;
+
+todasLasFacturas.sort((a, b) => {
   const proveedorA = (a.razon_social_emisor || "").toUpperCase();
   const proveedorB = (b.razon_social_emisor || "").toUpperCase();
 
   if (proveedorA < proveedorB) return -1;
   if (proveedorA > proveedorB) return 1;
 
-  // Si el proveedor es el mismo, ordena por fecha de más vieja a más nueva
-  return new Date(a.fecha) - new Date(b.fecha);
+  return new Date(a.fecha) - new Date(b.fecha); // orden por fecha si es mismo proveedor
 });
 
 
