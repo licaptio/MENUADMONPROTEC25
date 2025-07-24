@@ -117,12 +117,20 @@
 </head>
 <body>
   <h2>Actualizar Estatus de Pago</h2>
-  <div id="filtros">
-    <label for="filtroProveedor">Filtrar por proveedor:</label>
-    <select id="filtroProveedor" onchange="renderTabla()">
-      <option value="TODOS">Todos</option>
-    </select>
-  </div>
+<div id="filtros">
+  <label for="filtroProveedor">Filtrar por proveedor:</label>
+  <select id="filtroProveedor" onchange="renderTabla()">
+    <option value="TODOS">Todos</option>
+  </select>
+
+  <input
+    type="text"
+    id="filtroUUID"
+    placeholder="Filtrar por UUID..."
+    oninput="renderTabla()"
+    style="margin-top: 10px; width: 100%; padding: 8px; box-sizing: border-box;"
+  >
+</div>
   <div id="tablaFacturas"></div>
 
   <script>
