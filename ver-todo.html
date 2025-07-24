@@ -41,7 +41,7 @@
   <a href="index.html">⬅️ Volver al calendario</a>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-  const supabase = supabase.createClient(
+  const client = supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
@@ -49,7 +49,7 @@
   const lista = document.getElementById("lista-todos");
 
   async function cargarRecordatorios() {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("recordatorios")
       .select("*")
       .eq("archivado", false)
@@ -91,31 +91,29 @@
   window.eliminar = async function(id) {
     const confirmar = confirm("¿Eliminar este recordatorio?");
     if (!confirmar) return;
-    await supabase.from("recordatorios").delete().eq("id", id);
+    await client.from("recordatorios").delete().eq("id", id);
     cargarRecordatorios();
   };
 
   window.toggleAtendido = async function(id, actual) {
-    await supabase.from("recordatorios").update({ atendido: !actual }).eq("id", id);
+    await client.from("recordatorios").update({ atendido: !actual }).eq("id", id);
     cargarRecordatorios();
   };
 
   window.togglePrioridad = async function(id, actual) {
-    await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
+    await client.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
     cargarRecordatorios();
   };
 
   window.archivar = async function(id) {
     const confirmar = confirm("¿Archivar este recordatorio?");
     if (!confirmar) return;
-    await supabase.from("recordatorios").update({ archivado: true }).eq("id", id);
+    await client.from("recordatorios").update({ archivado: true }).eq("id", id);
     cargarRecordatorios();
   };
 
-  // Ejecutar al cargar
   cargarRecordatorios();
 </script>
-  </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
   Hecho con 💙 por GERA QUEZADA 23072025 0630PM GORDO GORDO · <a href="index.html" style="color: #007bff; text-decoration: none;">Volver al inicio</a>
 </footer>
