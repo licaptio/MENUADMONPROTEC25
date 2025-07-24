@@ -103,13 +103,13 @@ const { data, error } = await supabase
 window.togglePrioridad = async function(id, actual) {
   await supabase.from("recordatorios").update({ prioridad: !actual }).eq("id", id);
   cargarRecordatorios();
+};
+
 window.archivar = async function(id) {
   const confirmar = confirm("¿Archivar este recordatorio?");
   if (!confirmar) return;
   await supabase.from("recordatorios").update({ archivado: true }).eq("id", id);
   cargarRecordatorios();
-};
-
 };
   </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
