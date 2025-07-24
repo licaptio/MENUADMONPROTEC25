@@ -2,31 +2,62 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Menú de Finanzas</title>
+  <title>Menú Finanzas PDD</title>
   <style>
-    body { font-family: sans-serif; background: #e1e9f0; padding: 2rem; }
-    h1 { color: #002f5f; }
-    a {
-      display: block;
-      margin: 1rem 0;
-      font-size: 1.2rem;
-      color: #003366;
-      text-decoration: none;
-      padding: 10px;
-      border: 1px solid #003366;
-      border-radius: 6px;
-      background-color: #fff;
-      width: fit-content;
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to right, #1f4e69, #6e9ecf);
+      color: white;
+      padding: 2rem;
     }
-    a:hover { background-color: #cde; }
+    h1 {
+      text-align: center;
+    }
+    .menu {
+      max-width: 400px;
+      margin: 3rem auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .menu a {
+      display: block;
+      background: #ffffff;
+      color: #003366;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .menu a:hover {
+      background: #cce0ff;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .volver a {
+      color: #fff;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1>📘 Menú Finanzas / Contabilidad</h1>
 
-  <a href="agregar-cuenta.html">➕ Agregar nueva cuenta</a>
-  <a href="ver-cuentas.html">📄 Ver cuentas registradas</a>
-  <a href="../index.html">🔙 Volver al menú general</a>
+  <h1>📁 Finanzas PDD</h1>
+
+  <div class="menu">
+    <a href="agregar-cuenta.html">➕ Agregar nueva cuenta</a>
+    <a href="ver-cuentas.html">📋 Ver catálogo de cuentas</a>
+  </div>
+
+  <div class="volver">
+    <a href="../index.html">← Volver al menú general</a>
+  </div>
 
 </body>
 </html>
