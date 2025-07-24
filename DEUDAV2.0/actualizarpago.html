@@ -207,6 +207,18 @@ function renderTabla() {
     // 🧠 Si hay UUID escrito, eso manda
     return filtroUUID ? okUUID : okProv;
   });
+// 🔽 ORDENAR datosFiltrados después de aplicar filtros
+datosFiltrados.sort((a, b) => {
+  const fechaA = new Date(a.fecha);
+  const fechaB = new Date(b.fecha);
+  if (fechaA.getTime() !== fechaB.getTime()) {
+    return fechaB - fechaA; // 🗓️ Más recientes primero
+  }
+  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+  return proveedorA.localeCompare(proveedorB); // 🔤 Alfabético si fechas iguales
+});
+
 
   if (datosFiltrados.length === 0) {
     document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
