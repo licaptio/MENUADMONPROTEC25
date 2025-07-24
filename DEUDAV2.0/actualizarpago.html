@@ -168,14 +168,30 @@
       });
     }
 
+function normalizarTexto(texto) {
+  return (texto || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .toUpperCase();
+}
+
 function renderTabla() {
-const datosFiltrados = datos.slice().sort((a, b) => {
-  const fechaA = new Date(a.fecha || 0);
-  const fechaB = new Date(b.fecha || 0);
-  const proveedorA = (a.razon_social_emisor || "").toUpperCase();
-  const proveedorB = (b.razon_social_emisor || "").toUpperCase();
-  return fechaA - fechaB || proveedorA.localeCompare(proveedorB);
-});
+  const filtro = document.getElementById('filtroProveedor').value;
+  const datosFiltrados = datos
+    .filter(d => {
+      if (filtro === "TODOS") return true;
+      return normalizarTexto(d.razon_social_emisor) === normalizarTexto(filtro);
+    })
+    .sort((a, b) => {
+      const fechaA = new Date(a.fecha || 0);
+      const fechaB = new Date(b.fecha || 0);
+      const proveedorA = (a.razon_social_emisor || "").toUpperCase();
+      const proveedorB = (b.razon_social_emisor || "").toUpperCase();
+      return fechaA - fechaB || proveedorA.localeCompare(proveedorB);
+    });
+
   if (datosFiltrados.length === 0) {
     document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
     return;
@@ -183,14 +199,14 @@ const datosFiltrados = datos.slice().sort((a, b) => {
 
   const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
   const filas = datosFiltrados.map(d => {
-const uuidLimpio = (d.uuid_cfdi || '')
-  .normalize('NFKC')
-  .replace(/[\u200B-\u200D\uFEFF]/g, '')
-  .replace(/[^\x20-\x7E]/g, '')
-  .trim()
-  .toUpperCase();
+    const uuidLimpio = (d.uuid_cfdi || '')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/[^\x20-\x7E]/g, '')
+      .trim()
+      .toUpperCase();
 
-const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
+    const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
     const totalNumerico = parseFloat(d.total) || 0;
 
     return `
