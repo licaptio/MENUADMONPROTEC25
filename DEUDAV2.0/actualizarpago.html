@@ -205,17 +205,27 @@
         return filtroUUID ? okUUID : okProv;
       });
 
-      // 🔽 ORDENAR al renderizar
-      datosFiltrados.sort((a, b) => {
-        const fechaA = new Date(a.fecha);
-        const fechaB = new Date(b.fecha);
-        if (fechaA.getTime() !== fechaB.getTime()) {
-          return fechaB - fechaA;
-        }
-        const proveedorA = (a.razon_social_emisor || "").toLowerCase();
-        const proveedorB = (b.razon_social_emisor || "").toLowerCase();
-        return proveedorA.localeCompare(proveedorB);
-      });
+// Ordenar por fecha descendente (más recientes primero), luego proveedor
+datosFiltrados.sort((a, b) => {
+  const fechaA = new Date(a.fecha);
+  const fechaB = new Date(b.fecha);
+
+  const fechaValidaA = !isNaN(fechaA.getTime());
+  const fechaValidaB = !isNaN(fechaB.getTime());
+
+  if (fechaValidaA && fechaValidaB) {
+    if (fechaB - fechaA !== 0) return fechaB - fechaA;
+  } else if (fechaValidaA && !fechaValidaB) {
+    return -1; // A tiene fecha válida, B no → A primero
+  } else if (!fechaValidaA && fechaValidaB) {
+    return 1; // B tiene fecha válida, A no → B primero
+  }
+
+  // Si ambas fechas son inválidas o iguales, ordenar por proveedor
+  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+  return proveedorA.localeCompare(proveedorB);
+});
 
       if (datosFiltrados.length === 0) {
         document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
