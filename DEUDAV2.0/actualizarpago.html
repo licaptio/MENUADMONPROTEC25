@@ -146,12 +146,16 @@
     })
     .then(res => res.json())
     .then(json => {
-      datos = json.sort((a, b) => {
-        const proveedorA = a.razon_social_emisor?.toLowerCase() || "";
-        const proveedorB = b.razon_social_emisor?.toLowerCase() || "";
-        return proveedorA.localeCompare(proveedorB) || new Date(a.fecha) - new Date(b.fecha);
-      });
-
+datos = json.sort((a, b) => {
+  const fechaA = new Date(a.fecha);
+  const fechaB = new Date(b.fecha);
+  if (fechaA.getTime() !== fechaB.getTime()) {
+    return fechaB - fechaA; // 🗓️ Más recientes primero
+  }
+  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+  return proveedorA.localeCompare(proveedorB); // 🔤 Alfabéticamente si la fecha es igual
+});
       llenarSelectProveedores();
       renderTabla();
     })
