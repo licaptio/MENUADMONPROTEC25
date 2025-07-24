@@ -70,7 +70,7 @@
     let { data, error } = await supabase
       .from(tabla)
       .select("*", { count: "exact" }) // ✅ asegura carga completa
-      .order("fecha", { ascending: true }); // ✅ solo una ordenación opcional
+      .order("fecha", { ascending: false });
 
     if (error || !data) {
       document.getElementById("contenido").innerHTML = "Error al cargar datos";
