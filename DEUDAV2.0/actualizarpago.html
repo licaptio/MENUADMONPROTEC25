@@ -153,23 +153,23 @@
       swal("Error", "No se pudo conectar al servidor", "error");
     });
 
-    function ordenarDatos(arr) {
-      return arr.sort((a, b) => {
-        const fechaA = a.fecha ? new Date(a.fecha) : null;
-        const fechaB = b.fecha ? new Date(b.fecha) : null;
+function ordenarDatos(arr) {
+  return arr.sort((a, b) => {
+    const proveedorA = (a.razon_social_emisor || "").trim().toLowerCase();
+    const proveedorB = (b.razon_social_emisor || "").trim().toLowerCase();
+    if (proveedorA !== proveedorB) return proveedorA.localeCompare(proveedorB);
 
-        if (fechaA && !isNaN(fechaA) && fechaB && !isNaN(fechaB)) {
-          if (fechaB - fechaA !== 0) return fechaB - fechaA;
-        }
-
-        if (fechaA && !isNaN(fechaA)) return -1;
-        if (fechaB && !isNaN(fechaB)) return 1;
-
-        const proveedorA = (a.razon_social_emisor || "").trim().toLowerCase();
-        const proveedorB = (b.razon_social_emisor || "").trim().toLowerCase();
-        return proveedorA.localeCompare(proveedorB);
-      });
+    const fechaA = a.fecha ? new Date(a.fecha) : null;
+    const fechaB = b.fecha ? new Date(b.fecha) : null;
+    if (fechaA && fechaB && !isNaN(fechaA) && !isNaN(fechaB)) {
+      return fechaA - fechaB; // Fecha más vieja primero
     }
+    if (fechaA && !isNaN(fechaA)) return -1;
+    if (fechaB && !isNaN(fechaB)) return 1;
+
+    return 0;
+  });
+}
 
     function formatearFecha(fechaStr) {
       const f = new Date(fechaStr);
