@@ -53,7 +53,6 @@
   <h2>Actualizar Estatus de Pago</h2>
   <div id="filtro-container"></div>
   <div id="contenido"></div>
-  
 
 <script>
   const supabase = window.supabase.createClient(
@@ -70,11 +69,13 @@
 
     let { data, error } = await supabase
       .from(tabla)
-      .select("*")
-      .order("razon_social_emisor", { ascending: true })
-      .order("fecha", { ascending: true });
+      .select("*", { count: "exact" }) // ✅ asegura carga completa
+      .order("fecha", { ascending: true }); // ✅ solo una ordenación opcional
 
-    if (error || !data) return document.getElementById("contenido").innerHTML = "Error al cargar datos";
+    if (error || !data) {
+      document.getElementById("contenido").innerHTML = "Error al cargar datos";
+      return;
+    }
 
     todasLasFacturas = data;
 
@@ -174,10 +175,7 @@
   cargar();
 </script>
 
-<footer>Sistema Supabase v2.5111 - por PUTIN</footer>
-
-</body>
-</html>
+<footer>Sistema Supabase v2.5111 - por LISANDRO</footer>
 
 </body>
 </html>
