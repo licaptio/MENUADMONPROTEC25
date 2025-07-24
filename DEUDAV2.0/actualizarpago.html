@@ -178,19 +178,23 @@ function normalizarTexto(texto) {
 }
 
 function renderTabla() {
-  const filtro = document.getElementById('filtroProveedor').value;
-  const datosFiltrados = datos
-    .filter(d => {
-      if (filtro === "TODOS") return true;
-      return normalizarTexto(d.razon_social_emisor) === normalizarTexto(filtro);
-    })
-    .sort((a, b) => {
-      const fechaA = new Date(a.fecha || 0);
-      const fechaB = new Date(b.fecha || 0);
-      const proveedorA = (a.razon_social_emisor || "").toUpperCase();
-      const proveedorB = (b.razon_social_emisor || "").toUpperCase();
-      return fechaA - fechaB || proveedorA.localeCompare(proveedorB);
-    });
+  const filtroProveedor = document.getElementById('filtroProveedor').value;
+  const filtroUUID = document.getElementById('filtroUUID').value.trim().toUpperCase();
+
+  const datosFiltrados = datos.filter(d => {
+    const uuidLimpio = (d.uuid_cfdi || '')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/[^\x20-\x7E]/g, '')
+      .trim()
+      .toUpperCase();
+
+    const okUUID = filtroUUID === "" || uuidLimpio.includes(filtroUUID);
+    const okProv = filtroProveedor === "TODOS" || normalizarTexto(d.razon_social_emisor) === normalizarTexto(filtroProveedor);
+
+    // 🧠 Si hay UUID escrito, eso manda
+    return filtroUUID ? okUUID : okProv;
+  });
 
   if (datosFiltrados.length === 0) {
     document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
@@ -248,8 +252,6 @@ function renderTabla() {
     </table>
   `;
 }
-
-
     function actualizarPago(id, nuevoEstado) {
       fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
         method: 'PATCH',
