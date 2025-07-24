@@ -104,7 +104,6 @@
     td:nth-of-type(5)::before { content: "Total"; }
     td:nth-of-type(6)::before { content: "¿Pagado?"; }
 
-    /* Ajustes específicos para evitar que se desborde la selección */
     td select {
       width: 100%;
       font-size: 13px;
@@ -146,16 +145,16 @@
     })
     .then(res => res.json())
     .then(json => {
-datos = json.sort((a, b) => {
-  const fechaA = new Date(a.fecha);
-  const fechaB = new Date(b.fecha);
-  if (fechaA.getTime() !== fechaB.getTime()) {
-    return fechaB - fechaA; // 🗓️ Más recientes primero
-  }
-  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
-  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
-  return proveedorA.localeCompare(proveedorB); // 🔤 Alfabéticamente si la fecha es igual
-});
+      datos = json.sort((a, b) => {
+        const fechaA = new Date(a.fecha);
+        const fechaB = new Date(b.fecha);
+        if (fechaA.getTime() !== fechaB.getTime()) {
+          return fechaB - fechaA;
+        }
+        const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+        const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+        return proveedorA.localeCompare(proveedorB);
+      });
       llenarSelectProveedores();
       renderTabla();
     })
@@ -180,102 +179,101 @@ datos = json.sort((a, b) => {
       });
     }
 
-function normalizarTexto(texto) {
-  return (texto || "")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .toUpperCase();
-}
+    function normalizarTexto(texto) {
+      return (texto || "")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+    }
 
-function renderTabla() {
-  const filtroProveedor = document.getElementById('filtroProveedor').value;
-  const filtroUUID = document.getElementById('filtroUUID').value.trim().toUpperCase();
+    function renderTabla() {
+      const filtroProveedor = document.getElementById('filtroProveedor').value;
+      const filtroUUID = document.getElementById('filtroUUID').value.trim().toUpperCase();
 
-  const datosFiltrados = datos.filter(d => {
-    const uuidLimpio = (d.uuid_cfdi || '')
-      .normalize('NFKC')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      .replace(/[^\x20-\x7E]/g, '')
-      .trim()
-      .toUpperCase();
+      const datosFiltrados = datos.filter(d => {
+        const uuidLimpio = (d.uuid_cfdi || '')
+          .normalize('NFKC')
+          .replace(/[\u200B-\u200D\uFEFF]/g, '')
+          .replace(/[^\x20-\x7E]/g, '')
+          .trim()
+          .toUpperCase();
 
-    const okUUID = filtroUUID === "" || uuidLimpio.includes(filtroUUID);
-    const okProv = filtroProveedor === "TODOS" || normalizarTexto(d.razon_social_emisor) === normalizarTexto(filtroProveedor);
+        const okUUID = filtroUUID === "" || uuidLimpio.includes(filtroUUID);
+        const okProv = filtroProveedor === "TODOS" || normalizarTexto(d.razon_social_emisor) === normalizarTexto(filtroProveedor);
+        return filtroUUID ? okUUID : okProv;
+      });
 
-    // 🧠 Si hay UUID escrito, eso manda
-    return filtroUUID ? okUUID : okProv;
-  });
-// 🔽 ORDENAR datosFiltrados después de aplicar filtros
-datosFiltrados.sort((a, b) => {
-  const fechaA = new Date(a.fecha);
-  const fechaB = new Date(b.fecha);
-  if (fechaA.getTime() !== fechaB.getTime()) {
-    return fechaB - fechaA; // 🗓️ Más recientes primero
-  }
-  const proveedorA = (a.razon_social_emisor || "").toLowerCase();
-  const proveedorB = (b.razon_social_emisor || "").toLowerCase();
-  return proveedorA.localeCompare(proveedorB); // 🔤 Alfabético si fechas iguales
-});
+      // 🔽 ORDENAR al renderizar
+      datosFiltrados.sort((a, b) => {
+        const fechaA = new Date(a.fecha);
+        const fechaB = new Date(b.fecha);
+        if (fechaA.getTime() !== fechaB.getTime()) {
+          return fechaB - fechaA;
+        }
+        const proveedorA = (a.razon_social_emisor || "").toLowerCase();
+        const proveedorB = (b.razon_social_emisor || "").toLowerCase();
+        return proveedorA.localeCompare(proveedorB);
+      });
 
+      if (datosFiltrados.length === 0) {
+        document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
+        return;
+      }
 
-  if (datosFiltrados.length === 0) {
-    document.getElementById('tablaFacturas').innerHTML = '<p style="text-align:center;">No hay facturas para mostrar.</p>';
-    return;
-  }
+      const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+      const filas = datosFiltrados.map(d => {
+        const uuidLimpio = (d.uuid_cfdi || '')
+          .normalize('NFKC')
+          .replace(/[\u200B-\u200D\uFEFF]/g, '')
+          .replace(/[^\x20-\x7E]/g, '')
+          .trim()
+          .toUpperCase();
 
-  const formato = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
-  const filas = datosFiltrados.map(d => {
-    const uuidLimpio = (d.uuid_cfdi || '')
-      .normalize('NFKC')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      .replace(/[^\x20-\x7E]/g, '')
-      .trim()
-      .toUpperCase();
+        const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
+        const totalNumerico = parseFloat(d.total) || 0;
 
-    const uuidValido = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(uuidLimpio);
-    const totalNumerico = parseFloat(d.total) || 0;
+        return `
+          <tr>
+            <td>${formatearFecha(d.fecha)}</td>
+            <td>
+              ${
+                uuidValido
+                  ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
+                  : `<span style="color:red;">UUID inválido</span>`
+              }
+            </td>
+            <td>${d.razon_social_emisor}</td>
+            <td>${d.factura}</td>
+            <td>${formato.format(totalNumerico)}</td>
+            <td>
+              <select onchange="actualizarPago('${d.id}', this.value)">
+                <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
+                <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
-    return `
-      <tr>
-        <td>${formatearFecha(d.fecha)}</td>
-        <td>
-          ${
-            uuidValido
-              ? `<a href="editarfactura2funcional.html?uuid=${encodeURIComponent(uuidLimpio)}" target="_blank">${uuidLimpio}</a>`
-              : `<span style="color:red;">UUID inválido</span>`
-          }
-        </td>
-        <td>${d.razon_social_emisor}</td>
-        <td>${d.factura}</td>
-        <td>${formato.format(totalNumerico)}</td>
-        <td>
-          <select onchange="actualizarPago('${d.id}', this.value)">
-            <option value="NO" ${d.factura_pagada !== "SI" ? "selected" : ""}>NO</option>
-            <option value="SI" ${d.factura_pagada === "SI" ? "selected" : ""}>SI</option>
-          </select>
-        </td>
-      </tr>
-    `;
-  }).join('');
+      document.getElementById('tablaFacturas').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>UUID</th>
+              <th>Proveedor</th>
+              <th>Factura</th>
+              <th>Total</th>
+              <th>¿Pagado?</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      `;
+    }
 
-  document.getElementById('tablaFacturas').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>UUID</th>
-          <th>Proveedor</th>
-          <th>Factura</th>
-          <th>Total</th>
-          <th>¿Pagado?</th>
-        </tr>
-      </thead>
-      <tbody>${filas}</tbody>
-    </table>
-  `;
-}
     function actualizarPago(id, nuevoEstado) {
       fetch(`${API_URL}?id=eq.${encodeURIComponent(id)}`, {
         method: 'PATCH',
@@ -304,9 +302,10 @@ datosFiltrados.sort((a, b) => {
       });
     }
   </script>
-<footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-  Versión 2.111 · por GERARDO RIOS QUEZADA 1209240725
-</footer>
+
+  <footer style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
+    Sistema Supabase v2.1 · por GERARDO RIOS qqqq
+  </footer>
 
 </body>
 </html>
