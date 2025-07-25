@@ -57,48 +57,47 @@
 
   <a href="index.html">← Volver al menú de Finanzas</a>
 
-  <script>
-    // ✅ Extrae createClient del módulo de Supabase
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+<script>
+  const supabaseUrl = 'https://cvpbtjlupswbyxenugpz.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
 
-const supabaseUrl = 'https://cvpbtjlupswbyxenugpz.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function cargarCuentas() {
-      const tabla = document.getElementById('tabla-cuentas');
-      const { data, error } = await supabase
-        .from('catalogo_cuentas')
-        .select('*')
-        .order('codigo', { ascending: true });
+  async function cargarCuentas() {
+    const tabla = document.getElementById('tabla-cuentas');
+    const { data, error } = await supabase
+      .from('catalogo_cuentas')
+      .select('*')
+      .order('codigo', { ascending: true });
 
-      if (error) {
-        tabla.innerHTML = `<tr><td colspan="4">❌ Error al cargar: ${error.message}</td></tr>`;
-        return;
-      }
-
-      if (data.length === 0) {
-        tabla.innerHTML = `<tr><td colspan="4">No hay cuentas registradas.</td></tr>`;
-        return;
-      }
-
-      tabla.innerHTML = '';
-      data.forEach(cuenta => {
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${cuenta.codigo}</td>
-          <td>${cuenta.nombre}</td>
-          <td>${cuenta.tipo}</td>
-          <td>${cuenta.cuenta_padre || '-'}</td>
-        `;
-        tabla.appendChild(fila);
-      });
+    if (error) {
+      tabla.innerHTML = `<tr><td colspan="4">❌ Error al cargar: ${error.message}</td></tr>`;
+      return;
     }
 
-    cargarCuentas();
+    if (data.length === 0) {
+      tabla.innerHTML = `<tr><td colspan="4">No hay cuentas registradas.</td></tr>`;
+      return;
+    }
+
+    tabla.innerHTML = '';
+    data.forEach(cuenta => {
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${cuenta.codigo}</td>
+        <td>${cuenta.nombre}</td>
+        <td>${cuenta.tipo}</td>
+        <td>${cuenta.cuenta_padre || '-'}</td>
+      `;
+      tabla.appendChild(fila);
+    });
+  }
+
+  cargarCuentas();
+</script>
   </script>
 <footer style="text-align: center; margin-top: 40px; font-size: 0.9em; color: #666;">
-  © 2025 Sistema de Finanzas • Desarrollado por Gera Quezaa
+  © 2025 Sistema de Finanzas • Calvin Harris, Rihanna - This Is What You Came For (Official Video)
 </footer>
 
 </body>
