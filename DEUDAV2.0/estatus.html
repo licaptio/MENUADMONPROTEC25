@@ -2,35 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Pagos por RFC</title>
+  <title>Pagos por Proveedor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f6fff6;
-    }
-    h1 {
-      text-align: center;
-      color: #006400;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f6fff6; }
+    h1 { text-align: center; color: #006400; }
+    label, select { font-size: 16px; margin-top: 10px; display: block; }
+    .tabla-scroll { overflow-x: auto; width: 100%; }
     table {
-      width: 100%;
+      min-width: 1200px;
       border-collapse: collapse;
       margin-top: 1rem;
+      width: 100%;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: left;
-    }
-    th {
-      background: #006400;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background-color: #f0fff0;
-    }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #006400; color: white; }
+    tr:nth-child(even) { background-color: #f0fff0; }
     button {
       padding: 4px 8px;
       background: #006400;
@@ -40,26 +27,42 @@
       cursor: pointer;
     }
     .pagado {
-      background: #888;
+      background: #888 !important;
     }
+    #paginacion { text-align: center; margin-top: 10px; }
+    #paginacion button { margin: 0 10px; }
   </style>
 </head>
 <body>
-  <h1>🧾 Pagos por RFC</h1>
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>UUID</th>
-        <th>RFC</th>
-        <th>Folio</th>
-        <th>Total</th>
-        <th>Pagado</th>
-        <th>Acción</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h1>🧾 Pagos por Proveedor</h1>
+
+  <label for="proveedor">Selecciona proveedor:</label>
+  <select id="proveedor">
+    <option value="">-- Elegir proveedor --</option>
+  </select>
+
+  <div class="tabla-scroll">
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>UUID</th>
+          <th>RFC</th>
+          <th>Proveedor</th>
+          <th>Folio</th>
+          <th>Total</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="paginacion">
+    <button id="anterior">⬅ Anterior</button>
+    <span id="info-pagina">Página 1</span>
+    <button id="siguiente">Siguiente ➡</button>
+  </div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -69,35 +72,99 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     )
 
-    const { data, error } = await supabase
-      .from('deuda_limpia_pdd')
-      .select('id, fecha, uuid_cfdi, rfc_emisor, factura, total, factura_pagada, serie')
-      .order('rfc_emisor', { ascending: true })
-      .order('fecha', { ascending: true })
+    const selector = document.getElementById('proveedor')
+    const tbody = document.querySelector('tbody')
+    const infoPagina = document.getElementById('info-pagina')
+    const btnAnterior = document.getElementById('anterior')
+    const btnSiguiente = document.getElementById('siguiente')
 
-    if (error) {
-      document.querySelector('tbody').innerHTML = '<tr><td colspan="7">Error al cargar datos.</td></tr>'
-      console.error(error)
-    } else {
+    let proveedorActual = ''
+    let pagina = 1
+    const registrosPorPagina = 50
+
+    // Cargar razones sociales únicas
+    const { data: proveedoresRaw } = await supabase
+      .from('deuda_limpia_pdd')
+      .select('razon_social_emisor')
+      .neq('razon_social_emisor', null)
+
+    const razonesUnicas = [...new Set(proveedoresRaw.map(p => p.razon_social_emisor).filter(Boolean))].sort()
+
+    razonesUnicas.forEach(p => {
+      const opt = document.createElement('option')
+      opt.value = p
+      opt.textContent = p
+      selector.appendChild(opt)
+    })
+
+    selector.addEventListener('change', () => {
+      proveedorActual = selector.value
+      pagina = 1
+      cargarTabla()
+    })
+
+    btnAnterior.addEventListener('click', () => {
+      if (pagina > 1) {
+        pagina--
+        cargarTabla()
+      }
+    })
+
+    btnSiguiente.addEventListener('click', () => {
+      pagina++
+      cargarTabla()
+    })
+
+    async function cargarTabla() {
+      if (!proveedorActual) {
+        tbody.innerHTML = '<tr><td colspan="7">Selecciona un proveedor</td></tr>'
+        return
+      }
+
+      const desde = (pagina - 1) * registrosPorPagina
+      const hasta = desde + registrosPorPagina - 1
+
+      const { data, error } = await supabase
+        .from('deuda_limpia_pdd')
+        .select('id, fecha, uuid_cfdi, rfc_emisor, razon_social_emisor, factura, total, factura_pagada, serie')
+        .eq('razon_social_emisor', proveedorActual)
+        .order('fecha', { ascending: true })
+        .range(desde, hasta)
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="7">Error al cargar: ${error.message}</td></tr>`
+        return
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7">Sin resultados</td></tr>`
+        return
+      }
+
       let html = ''
       data.forEach(f => {
         const folio = f.serie ? `${f.serie}-${f.factura}` : f.factura
         const pagado = f.factura_pagada === 'SI'
+
         html += `
           <tr>
             <td>${new Date(f.fecha).toLocaleDateString()}</td>
             <td>${f.uuid_cfdi || '-'}</td>
             <td>${f.rfc_emisor}</td>
+            <td>${f.razon_social_emisor}</td>
             <td>${folio}</td>
             <td>$${Number(f.total).toFixed(2)}</td>
-            <td>${pagado ? '✅' : '❌'}</td>
-            <td><button class="${pagado ? 'pagado' : ''}" onclick="togglePago('${f.id}', ${!pagado})">
-              Marcar como ${pagado ? 'NO pagada' : 'Pagada'}
-            </button></td>
+            <td>
+              <button class="${pagado ? 'pagado' : ''}" onclick="togglePago('${f.id}', ${!pagado})">
+                ${pagado ? '✅ Pagado' : '❌ No pagado'}
+              </button>
+            </td>
           </tr>
         `
       })
-      document.querySelector('tbody').innerHTML = html
+
+      tbody.innerHTML = html
+      infoPagina.textContent = `Página ${pagina}`
     }
 
     window.togglePago = async (id, nuevoEstado) => {
@@ -110,7 +177,7 @@
         alert('Error al actualizar.')
         console.error(error)
       } else {
-        location.reload()
+        cargarTabla()
       }
     }
   </script>
