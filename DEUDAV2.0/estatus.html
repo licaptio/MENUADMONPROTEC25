@@ -48,8 +48,8 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabase = createClient(
-      'https://<TU_URL>.supabase.co',
-      '<TU_API_KEY>'
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     )
 
     const { data, error } = await supabase
@@ -67,12 +67,12 @@
         agrupado[row.rfc_emisor].push(row)
       })
 
-      // Ordenar dentro de cada grupo por fecha
+      // Ordenar dentro de cada grupo por fecha (más vieja primero)
       Object.values(agrupado).forEach(lista => {
         lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
       })
 
-      // Mostrar todo junto, ordenado por RFC
+      // Mostrar todo ordenado por RFC
       const ordenRFC = Object.keys(agrupado).sort()
       let html = ''
       ordenRFC.forEach(rfc => {
@@ -97,6 +97,7 @@
       document.getElementById('lista').innerHTML = html
     }
 
+    // Hacer el botón de marcar pagada funcional
     window.togglePago = async (id, nuevoEstado) => {
       const { error } = await supabase
         .from('deuda_limpia_pdd')
