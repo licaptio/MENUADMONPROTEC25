@@ -95,7 +95,7 @@ function mostrarTabla(data) {
       <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
-      <td>${f.factura || '-'}</td>
+      <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
       <td class="numero">${Number(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
     </tr>`;
   }
