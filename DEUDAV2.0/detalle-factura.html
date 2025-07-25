@@ -52,7 +52,7 @@
       contenedor.innerHTML = '<p class="error">Folio o UUID no proporcionado en la URL.</p>';
     } else {
       const url = uuid
-        ? `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?uuid=eq.${uuid}`
+        ? `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${uuid}`  
         : `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?factura=eq.${folio}`;
 
       fetch(url, {
