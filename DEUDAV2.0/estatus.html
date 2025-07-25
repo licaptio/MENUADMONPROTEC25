@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAGOSPDDRFC</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #f8fff8;
+    }
+    h1 {
+      text-align: center;
+      color: #006400;
+    }
+    .factura {
+      background: #fff;
+      border-left: 5px solid #006400;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .factura span {
+      display: inline-block;
+      min-width: 100px;
+    }
+    button {
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background-color: #006400;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button.pagado {
+      background-color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧾 Pagos por RFC</h1>
+  <div id="lista"></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabase = createClient(
+      'https://<TU_URL>.supabase.co',
+      '<TU_API_KEY>'
+    )
+
+    const { data, error } = await supabase
+      .from('deuda_limpia_pdd')
+      .select('*')
+
+    if (error) {
+      console.error(error)
+      document.getElementById('lista').innerText = 'Error al cargar datos.'
+    } else {
+      // Agrupar por RFC
+      const agrupado = {}
+      data.forEach(row => {
+        if (!agrupado[row.rfc_emisor]) agrupado[row.rfc_emisor] = []
+        agrupado[row.rfc_emisor].push(row)
+      })
+
+      // Ordenar dentro de cada grupo por fecha
+      Object.values(agrupado).forEach(lista => {
+        lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+      })
+
+      // Mostrar todo junto, ordenado por RFC
+      const ordenRFC = Object.keys(agrupado).sort()
+      let html = ''
+      ordenRFC.forEach(rfc => {
+        agrupado[rfc].forEach(factura => {
+          const pagado = factura.factura_pagada === 'SI'
+          html += `
+            <div class="factura">
+              <div><strong>RFC:</strong> ${factura.rfc_emisor}</div>
+              <div><span>UUID:</span> ${factura.uuid}</div>
+              <div><span>Fecha:</span> ${new Date(factura.fecha).toLocaleDateString()}</div>
+              <div><span>Factura:</span> ${factura.factura}</div>
+              <div><span>Total:</span> $${factura.total.toFixed(2)}</div>
+              <div><span>Pagada:</span> ${pagado ? '✅' : '❌'}</div>
+              <button class="${pagado ? 'pagado' : ''}" onclick="togglePago('${factura.id}', ${!pagado})">
+                Marcar como ${pagado ? 'NO pagada' : 'Pagada'}
+              </button>
+            </div>
+          `
+        })
+      })
+
+      document.getElementById('lista').innerHTML = html
+    }
+
+    window.togglePago = async (id, nuevoEstado) => {
+      const { error } = await supabase
+        .from('deuda_limpia_pdd')
+        .update({ factura_pagada: nuevoEstado ? 'SI' : 'NO' })
+        .eq('id', id)
+
+      if (error) {
+        alert('Error al actualizar el estado de pago.')
+      } else {
+        location.reload()
+      }
+    }
+  </script>
+</body>
+</html>
