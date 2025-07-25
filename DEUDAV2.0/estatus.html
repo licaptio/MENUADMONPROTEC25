@@ -127,9 +127,19 @@ todasLasFacturas.sort((a, b) => {
     } else {
       const normalizar = txt => (txt || "").trim().toUpperCase();
 
-const filtradas = todasLasFacturas.filter(f =>
-  normalizar(f.razon_social_emisor) === normalizar(nombre)
-);
+function filtrarProveedor(nombre) {
+  if (nombre === "TODOS") {
+    renderTabla(todasLasFacturas);
+  } else {
+    const normalizar = txt => (txt || "").trim().toUpperCase();
+
+    const filtradas = todasLasFacturas.filter(f =>
+      normalizar(f.razon_social_emisor).localeCompare(normalizar(nombre), undefined, { sensitivity: 'base' }) === 0
+    );
+
+    renderTabla(filtradas);
+  }
+}
 
       renderTabla(filtradas);
     }
