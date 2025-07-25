@@ -46,6 +46,10 @@
       cursor: pointer;
     }
     button:hover { background: #218838; }
+td.numero {
+  text-align: right;
+}
+
   </style>
 </head>
 <body>
@@ -92,7 +96,7 @@ function mostrarTabla(data) {
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.factura || '-'}</td>
-      <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
+      <td class="numero">${Number(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
     </tr>`;
   }
   html += "</table>";
