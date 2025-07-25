@@ -2,74 +2,115 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Reporte Financiero</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <title>Reporte Financiero Anual</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    body { font-family: sans-serif; padding: 20px; background: #eef2f7; }
+    h2 { text-align: center; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    input[type="number"], input[type="text"] { width: 100%; box-sizing: border-box; }
-    button { margin-top: 20px; padding: 10px 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    input { width: 80px; }
+    button { margin-top: 20px; padding: 8px 16px; }
+    .fixed-col { position: sticky; left: 0; background: #fff; }
   </style>
 </head>
 <body>
 
-  <h2>🧾 Reporte Financiero</h2>
+<h2>📊 Reporte Financiero Anual</h2>
 
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Cuenta Código</th>
-        <th>Cuenta Nombre</th>
-        <th>Tipo</th>
-        <th>Año</th>
-        <th>Mes</th>
-        <th>Monto</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><input type="text" id="cuenta_codigo" /></td>
-        <td><input type="text" id="cuenta_nombre" /></td>
-        <td><input type="text" id="tipo" /></td>
-        <td><input type="number" id="anio" /></td>
-        <td><input type="number" id="mes" /></td>
-        <td><input type="number" step="0.01" id="monto" /></td>
-      </tr>
-    </tbody>
-  </table>
+<table id="tabla">
+  <thead>
+    <tr>
+      <th>Cuenta ID</th>
+      <th>Año</th>
+      <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
+      <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
+      <th>💾</th>
+    </tr>
+  </thead>
+  <tbody id="cuerpo-tabla">
+    <tr><td colspan="15">Cargando...</td></tr>
+  </tbody>
+</table>
 
-  <button onclick="guardar()">💾 Guardar</button>
-  <p id="mensaje"></p>
+<script>
+const supabase = window.supabase.createClient(
+  "https://cvpbtjlupswbyxenugpz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+);
 
-  <script>
-    const supabase = supabase.createClient(
-      "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-    );
+// 👇 Cargar datos de la tabla reporte_financiero
+async function cargarDatos() {
+  const { data, error } = await supabase
+    .from('reporte_financiero')
+    .select('*')
+    .order('anio', { ascending: false });
 
-    async function guardar() {
-      const cuenta_codigo = document.getElementById("cuenta_codigo").value;
-      const cuenta_nombre = document.getElementById("cuenta_nombre").value;
-      const tipo = document.getElementById("tipo").value;
-      const anio = parseInt(document.getElementById("anio").value);
-      const mes = parseInt(document.getElementById("mes").value);
-      const monto = parseFloat(document.getElementById("monto").value);
+  const cuerpo = document.getElementById('cuerpo-tabla');
+  cuerpo.innerHTML = '';
 
-      const { data, error } = await supabase.from("reporte_financiero").insert([
-        { cuenta_codigo, cuenta_nombre, tipo, anio, mes, monto }
-      ]);
+  if (error) {
+    cuerpo.innerHTML = `<tr><td colspan="15">❌ Error al cargar: ${error.message}</td></tr>`;
+    return;
+  }
 
-      const mensaje = document.getElementById("mensaje");
-      if (error) {
-        console.error(error);
-        mensaje.textContent = "❌ Error al guardar.";
-      } else {
-        mensaje.textContent = "✅ Guardado exitosamente.";
-      }
-    }
-  </script>
+  if (data.length === 0) {
+    cuerpo.innerHTML = `<tr><td colspan="15">No hay datos disponibles.</td></tr>`;
+    return;
+  }
+
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.cuenta_id}</td>
+      <td>${row.anio}</td>
+      ${crearMesInput(row, 'enero')}
+      ${crearMesInput(row, 'febrero')}
+      ${crearMesInput(row, 'marzo')}
+      ${crearMesInput(row, 'abril')}
+      ${crearMesInput(row, 'mayo')}
+      ${crearMesInput(row, 'junio')}
+      ${crearMesInput(row, 'julio')}
+      ${crearMesInput(row, 'agosto')}
+      ${crearMesInput(row, 'septiembre')}
+      ${crearMesInput(row, 'octubre')}
+      ${crearMesInput(row, 'noviembre')}
+      ${crearMesInput(row, 'diciembre')}
+      <td><button onclick="guardar('${row.id}', this.parentNode.parentNode)">💾</button></td>
+    `;
+    cuerpo.appendChild(tr);
+  });
+}
+
+function crearMesInput(row, mes) {
+  const valor = row[mes] || '';
+  return `<td><input type="number" step="0.01" name="${mes}" value="${valor}"></td>`;
+}
+
+// 👇 Guardar fila modificada
+async function guardar(id, fila) {
+  const inputs = fila.querySelectorAll('input');
+  const datos = {};
+  inputs.forEach(input => {
+    datos[input.name] = parseFloat(input.value) || 0;
+  });
+
+  datos.modificado_por = "Gera Quezaa";
+
+  const { error } = await supabase
+    .from('reporte_financiero')
+    .update(datos)
+    .eq('id', id);
+
+  if (error) {
+    alert("❌ Error al guardar: " + error.message);
+  } else {
+    alert("✅ Cambios guardados.");
+  }
+}
+
+cargarDatos();
+</script>
 
 </body>
 </html>
