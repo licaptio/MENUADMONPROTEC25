@@ -2,47 +2,64 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <title>Pagos por RFC</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PAGOSPDDRFC</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 1rem;
-      background: #f8fff8;
+      padding: 20px;
+      background: #f6fff6;
     }
     h1 {
       text-align: center;
       color: #006400;
     }
-    .factura {
-      background: #fff;
-      border-left: 5px solid #006400;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
     }
-    .factura span {
-      display: inline-block;
-      min-width: 100px;
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th {
+      background: #006400;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f0fff0;
     }
     button {
-      margin-top: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      background-color: #006400;
+      padding: 4px 8px;
+      background: #006400;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
-    button.pagado {
-      background-color: #999;
+    .pagado {
+      background: #888;
     }
   </style>
 </head>
 <body>
   <h1>🧾 Pagos por RFC</h1>
-  <div id="lista"></div>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>UUID</th>
+        <th>RFC</th>
+        <th>Folio</th>
+        <th>Total</th>
+        <th>Pagado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -54,50 +71,35 @@
 
     const { data, error } = await supabase
       .from('deuda_limpia_pdd')
-      .select('*')
+      .select('id, fecha, uuid_cfdi, rfc_emisor, factura, total, factura_pagada, serie')
+      .order('rfc_emisor', { ascending: true })
+      .order('fecha', { ascending: true })
 
     if (error) {
+      document.querySelector('tbody').innerHTML = '<tr><td colspan="7">Error al cargar datos.</td></tr>'
       console.error(error)
-      document.getElementById('lista').innerText = 'Error al cargar datos.'
     } else {
-      // Agrupar por RFC
-      const agrupado = {}
-      data.forEach(row => {
-        if (!agrupado[row.rfc_emisor]) agrupado[row.rfc_emisor] = []
-        agrupado[row.rfc_emisor].push(row)
-      })
-
-      // Ordenar dentro de cada grupo por fecha (más vieja primero)
-      Object.values(agrupado).forEach(lista => {
-        lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-      })
-
-      // Mostrar todo ordenado por RFC
-      const ordenRFC = Object.keys(agrupado).sort()
       let html = ''
-      ordenRFC.forEach(rfc => {
-        agrupado[rfc].forEach(factura => {
-          const pagado = factura.factura_pagada === 'SI'
-          html += `
-            <div class="factura">
-              <div><strong>RFC:</strong> ${factura.rfc_emisor}</div>
-              <div><span>UUID:</span> ${factura.uuid}</div>
-              <div><span>Fecha:</span> ${new Date(factura.fecha).toLocaleDateString()}</div>
-              <div><span>Factura:</span> ${factura.factura}</div>
-              <div><span>Total:</span> $${factura.total.toFixed(2)}</div>
-              <div><span>Pagada:</span> ${pagado ? '✅' : '❌'}</div>
-              <button class="${pagado ? 'pagado' : ''}" onclick="togglePago('${factura.id}', ${!pagado})">
-                Marcar como ${pagado ? 'NO pagada' : 'Pagada'}
-              </button>
-            </div>
-          `
-        })
+      data.forEach(f => {
+        const folio = f.serie ? `${f.serie}-${f.factura}` : f.factura
+        const pagado = f.factura_pagada === 'SI'
+        html += `
+          <tr>
+            <td>${new Date(f.fecha).toLocaleDateString()}</td>
+            <td>${f.uuid_cfdi || '-'}</td>
+            <td>${f.rfc_emisor}</td>
+            <td>${folio}</td>
+            <td>$${Number(f.total).toFixed(2)}</td>
+            <td>${pagado ? '✅' : '❌'}</td>
+            <td><button class="${pagado ? 'pagado' : ''}" onclick="togglePago('${f.id}', ${!pagado})">
+              Marcar como ${pagado ? 'NO pagada' : 'Pagada'}
+            </button></td>
+          </tr>
+        `
       })
-
-      document.getElementById('lista').innerHTML = html
+      document.querySelector('tbody').innerHTML = html
     }
 
-    // Hacer el botón de marcar pagada funcional
     window.togglePago = async (id, nuevoEstado) => {
       const { error } = await supabase
         .from('deuda_limpia_pdd')
@@ -105,7 +107,8 @@
         .eq('id', id)
 
       if (error) {
-        alert('Error al actualizar el estado de pago.')
+        alert('Error al actualizar.')
+        console.error(error)
       } else {
         location.reload()
       }
