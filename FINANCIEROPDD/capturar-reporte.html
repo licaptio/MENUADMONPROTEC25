@@ -2,110 +2,73 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Capturar nuevo reporte</title>
+  <title>Reporte Financiero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      background: linear-gradient(to right, #2b5876, #4e4376);
-      color: white;
-      padding: 2rem;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      max-width: 500px;
-      margin: auto;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: none;
-      font-size: 1rem;
-    }
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 8px;
-      background-color: #00bfff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0099cc;
-    }
-    .volver {
-      text-align: center;
-      margin-top: 25px;
-    }
-    .volver a {
-      color: #ffffff;
-      text-decoration: underline;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    input[type="number"], input[type="text"] { width: 100%; box-sizing: border-box; }
+    button { margin-top: 20px; padding: 10px 20px; }
   </style>
 </head>
 <body>
 
-  <h1>📝 Capturar nuevo reporte</h1>
+  <h2>🧾 Reporte Financiero</h2>
 
-  <form id="form-reporte">
-    <label for="titulo">Título del reporte</label>
-    <input type="text" id="titulo" required>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Cuenta Código</th>
+        <th>Cuenta Nombre</th>
+        <th>Tipo</th>
+        <th>Año</th>
+        <th>Mes</th>
+        <th>Monto</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" id="cuenta_codigo" /></td>
+        <td><input type="text" id="cuenta_nombre" /></td>
+        <td><input type="text" id="tipo" /></td>
+        <td><input type="number" id="anio" /></td>
+        <td><input type="number" id="mes" /></td>
+        <td><input type="number" step="0.01" id="monto" /></td>
+      </tr>
+    </tbody>
+  </table>
 
-    <label for="fecha">Fecha</label>
-    <input type="date" id="fecha" required>
-
-    <label for="tipo">Tipo de reporte</label>
-    <select id="tipo" required>
-      <option value="">-- Selecciona --</option>
-      <option>Estado de resultados</option>
-      <option>Balance general</option>
-      <option>Movimientos</option>
-      <option>Otro</option>
-    </select>
-
-    <label for="contenido">Contenido / Comentarios</label>
-    <textarea id="contenido" rows="6" placeholder="Escribe el contenido del reporte o cualquier observación relevante..."></textarea>
-
-    <button type="submit">Guardar reporte</button>
-  </form>
-
-  <div class="volver">
-    <a href="index.html">← Volver al menú de Finanzas</a>
-  </div>
+  <button onclick="guardar()">💾 Guardar</button>
+  <p id="mensaje"></p>
 
   <script>
-    const form = document.getElementById('form-reporte');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const titulo = document.getElementById('titulo').value.trim();
-      const fecha = document.getElementById('fecha').value;
-      const tipo = document.getElementById('tipo').value;
-      const contenido = document.getElementById('contenido').value.trim();
+    const supabase = supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+    );
 
-      if (!titulo || !fecha || !tipo) {
-        alert('Por favor llena todos los campos obligatorios.');
-        return;
+    async function guardar() {
+      const cuenta_codigo = document.getElementById("cuenta_codigo").value;
+      const cuenta_nombre = document.getElementById("cuenta_nombre").value;
+      const tipo = document.getElementById("tipo").value;
+      const anio = parseInt(document.getElementById("anio").value);
+      const mes = parseInt(document.getElementById("mes").value);
+      const monto = parseFloat(document.getElementById("monto").value);
+
+      const { data, error } = await supabase.from("reporte_financiero").insert([
+        { cuenta_codigo, cuenta_nombre, tipo, anio, mes, monto }
+      ]);
+
+      const mensaje = document.getElementById("mensaje");
+      if (error) {
+        console.error(error);
+        mensaje.textContent = "❌ Error al guardar.";
+      } else {
+        mensaje.textContent = "✅ Guardado exitosamente.";
       }
-
-      alert('✅ Reporte guardado (simulado). Aquí puedes conectar con Supabase más adelante.');
-      form.reset();
-    });
+    }
   </script>
 
 </body>
