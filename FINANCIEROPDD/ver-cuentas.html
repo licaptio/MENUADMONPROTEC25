@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Catálogo de Cuentas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -59,11 +59,11 @@
 
   <script>
     // ✅ Extrae createClient del módulo de Supabase
-    const { createClient } = supabase;
+    const { createClient } = supabase_supabaseJs;
 
     const supabaseUrl = 'https://cvpbtjlupswbyxenugpz.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY';
-    const supabase = createClient(supabaseUrl, supabaseKey); // ✅ Usar createClient
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function cargarCuentas() {
       const tabla = document.getElementById('tabla-cuentas');
