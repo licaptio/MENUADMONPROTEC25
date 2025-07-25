@@ -88,7 +88,7 @@ function mostrarTabla(data) {
     html += `<tr class="${clase}">
       <td>${formatoFecha(f.fecha)}</td>
       <td>${dias} días</td>
-      <td>${f.uuid || '-'}</td>
+      <td>${f.uuid_cfdi || '-'}</td>
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.factura || '-'}</td>
