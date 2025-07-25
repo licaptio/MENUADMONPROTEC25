@@ -71,7 +71,7 @@ const pendientes = data
     const rfcA = (a.rfc_emisor || "").toLowerCase();
     const rfcB = (b.rfc_emisor || "").toLowerCase();
     if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
-    return new Date(b.fecha) - new Date(a.fecha); // más reciente primero
+    return new Date(a.fecha) - new Date(b.fecha);
   });
 
       mostrarTabla(pendientes);
@@ -88,7 +88,7 @@ function mostrarTabla(data) {
     html += `<tr class="${clase}">
       <td>${formatoFecha(f.fecha)}</td>
       <td>${dias}</td>
-      <td>${f.uuid_cfdi || '-'}</td>
+      <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.factura || '-'}</td>
