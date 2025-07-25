@@ -65,38 +65,39 @@ const supabase = window.supabase.createClient(
       const { data, error } = await supabase.from(tabla).select("*");
       if (error) return alert("Error cargando datos");
 
-      const pendientes = data
-        .filter(f => f.factura_pagada !== "SI")
-        .sort((a, b) => {
-          const provA = (a.razon_social_emisor || "").toLowerCase();
-          const provB = (b.razon_social_emisor || "").toLowerCase();
-          if (provA !== provB) return provA.localeCompare(provB);
-          return new Date(a.fecha) - new Date(b.fecha);
-        });
+const pendientes = data
+  .filter(f => f.factura_pagada !== "SI")
+  .sort((a, b) => {
+    const rfcA = (a.rfc_emisor || "").toLowerCase();
+    const rfcB = (b.rfc_emisor || "").toLowerCase();
+    if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
+    return new Date(b.fecha) - new Date(a.fecha); // más reciente primero
+  });
 
       mostrarTabla(pendientes);
       resumenTelegram = generarResumenTexto(pendientes);
     }
 
-    function mostrarTabla(data) {
-      let html = `<table><tr>
-        <th>Fecha</th><th>Días</th><th>UUID</th><th>Proveedor</th><th>Factura</th><th>Total</th>
-      </tr>`;
-      for (const f of data) {
-        const dias = calcularDias(f.fecha);
-        const clase = obtenerClaseVencimiento(dias);
-        html += `<tr class="${clase}">
-          <td>${formatoFecha(f.fecha)}</td>
-          <td>${dias} días</td>
-          <td>${f.uuid_cfdi || '-'}</td>
-          <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
-          <td>${f.factura || '-'}</td>
-          <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
-        </tr>`;
-      }
-      html += "</table>";
-      document.getElementById("tabla").innerHTML = html;
-    }
+function mostrarTabla(data) {
+  let html = `<table><tr>
+    <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th><th>Factura</th><th>Total</th>
+  </tr>`;
+  for (const f of data) {
+    const dias = calcularDias(f.fecha);
+    const clase = obtenerClaseVencimiento(dias);
+    html += `<tr class="${clase}">
+      <td>${formatoFecha(f.fecha)}</td>
+      <td>${dias} días</td>
+      <td>${f.uuid || '-'}</td>
+      <td>${f.rfc_emisor || '-'}</td>
+      <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
+      <td>${f.factura || '-'}</td>
+      <td>$${parseFloat(f.total || 0).toFixed(2)}</td>
+    </tr>`;
+  }
+  html += "</table>";
+  document.getElementById("tabla").innerHTML = html;
+}
 
     function calcularDias(fecha) {
       const hoy = new Date();
