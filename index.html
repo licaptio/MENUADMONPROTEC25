@@ -1,318 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta charset="UTF-8">
-  <title>Calendario de Recordatorios</title>
+  <title>Menú Principal</title>
   <style>
     * { box-sizing: border-box; }
     body {
       font-family: sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 2em 1em;
       display: flex;
       flex-direction: column;
       align-items: center;
+      background-color: #f7f9fc;
     }
 
-    #calendario-container, #recordatorios-container, #accesos-container {
-      width: 100%;
-      max-width: 600px;
-      padding: 1em;
-    }
-
-    h1, h3 {
-      text-align: center;
-    }
-
-    .navegacion {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
+    h1 {
       margin-bottom: 1em;
+      font-size: 1.6em;
     }
 
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    td, th {
-      border: 1px solid #ccc;
-      width: 14.28%;
-      height: 60px;
-      text-align: center;
-      vertical-align: middle;
-      cursor: pointer;
-    }
-
-    th { background-color: #f0f0f0; }
-    .hoy { background-color: #b3e5fc; }
-    td.seleccionado { background-color: #bbdefb; outline: 2px solid #1976d2; }
-
-    #links a, #accesos-container a {
+    .menu-links a {
       display: block;
+      width: 100%;
+      max-width: 500px;
       margin: 0.5em 0;
-      padding: 0.6em;
+      padding: 0.8em;
       background-color: #2196f3;
       color: white;
       text-decoration: none;
-      border-radius: 4px;
+      border-radius: 8px;
       text-align: center;
+      font-size: 1.1em;
+      transition: background 0.3s ease;
     }
 
-#version-fecha-hora {
-  margin-top: 1em;
-  text-align: center;
-  font-size: 14px;
-  color: #555;
-}
-.prioridad {
-  background-color: #fff59d;
-  font-weight: bold;
-}  
-@keyframes parpadeo {
-  0% { opacity: 1; }
-  50% { opacity: 0.3; }
-  100% { opacity: 1; }
-}
+    .menu-links a:hover {
+      background-color: #1976d2;
+    }
 
-.parpadea-link {
-  animation: parpadeo 1.2s infinite;
-  font-weight: bold;
-}
+    .parpadea-link {
+      animation: parpadeo 1.2s infinite;
+      font-weight: bold;
+    }
+
+    @keyframes parpadeo {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      padding: 1em;
+    }
   </style>
 </head>
 <body>
 
-<div id="calendario-container">
-  <div class="navegacion">
-    <button onclick="cambiarMes(-1)">⬅️</button>
-    <h1 id="mes-anio"></h1>
-    <button onclick="cambiarMes(1)">➡️</button>
-  </div>
-  <table id="calendario"></table>
-  <div id="links">
+  <h1>📋 Menú Principal</h1>
+
+  <div class="menu-links">
     <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
     <a href="crear-rapido.html" class="parpadea-link">⚡ Crear rápido</a>
-    <a href="ver-todo.html">📋 Ver todos</a>
+    <a href="ver-todo.html">📋 Ver todos los recordatorios</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank">📘 Sergio Aguayo</a>
+    <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank">📘 PDD Catálogo de Artículos</a>
+    <a href="FINANCIEROPDD/index.html">📘 Finanzas / Cuentas Contables</a>
+    <a href="AUDITPRECIO/CONVERMEX/visorconver.html" target="_blank">📑 Visor CONVERMEX</a>
   </div>
-</div>
 
-<div id="recordatorios-container">
-  <h3>📅 Recordatorios del día</h3>
-  
-  <button onclick="enviarRecordatoriosManualmente()" style="margin-top: 8px;">
-  📤 Enviar recordatorios del día a Telegram
-</button>
-  <div id="lista-recordatorios">Selecciona un día</div>
-</div>
+  <footer>
+    <div>📦 v1.1 · Index limpio · <span id="fecha-hora">⏳</span></div>
+  </footer>
 
-<div id="accesos-container">
-  <h3>🔗 Accesos rápidos</h3>
-  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank">📘 SERGIO AGUAYO</a>
-  <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank">📘 PDD CATALGO ARTICULOS</a>
-  <a href="FINANCIEROPDD/index.html">📘 Finanzas / Cuentas Contables</a>
-  <a href="AUDITPRECIO/CONVERMEX/visorconver.html" target="_blank">📑 Visor CONVERMEX</a>
-
-</div>
-
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  const supabase = createClient('https://cvpbtjlupswbyxenugpz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY');
-
-
-  const calendario = document.getElementById("calendario");
-  const mesAnio = document.getElementById("mes-anio");
-  const lista = document.getElementById("lista-recordatorios");
-  let fechaActual = new Date();
-  let diasConRecordatorios = new Set();
-  let celdaSeleccionada = null;
-  let recordatoriosDelDia = []; // Para guardar la lista sin filtrar
-  let recordatoriosNotificados = new Set(); // Para evitar duplicados en Telegram
-
-  (async () => {
-    await cargarCalendario(fechaActual);
-  })();
-
-  window.cambiarMes = function(direccion) {
-    fechaActual.setMonth(fechaActual.getMonth() + direccion);
-    cargarCalendario(fechaActual);
-  }
-
-  async function obtenerFechasConRecordatorios(mes, anio) {
-    diasConRecordatorios.clear();
-    const inicio = `${anio}-${String(mes+1).padStart(2, '0')}-01`;
-    const fin = `${anio}-${String(mes+1).padStart(2, '0')}-31`;
-    const { data } = await supabase.from("recordatorios").select("fecha").gte("fecha", inicio).lte("fecha", fin);
-    if (data) data.forEach(r => diasConRecordatorios.add(r.fecha));
-  }
-
-  async function cargarCalendario(fecha) {
-    const mes = fecha.getMonth();
-    const anio = fecha.getFullYear();
-    await obtenerFechasConRecordatorios(mes, anio);
-    mesAnio.textContent = `${fecha.toLocaleString('es-MX', { month: 'long' })} ${anio}`;
-    const primerDia = new Date(anio, mes, 1).getDay();
-    const diasDelMes = new Date(anio, mes + 1, 0).getDate();
-    const hoy = new Date();
-
-    let html = "<tr><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr>";
-    let dia = 1;
-    let diaSemana = (primerDia + 6) % 7;
-    html += "<tr>";
-    for (let i = 0; i < diaSemana; i++) html += "<td></td>";
-
-    while (dia <= diasDelMes) {
-      if (diaSemana === 7) {
-        html += "</tr><tr>";
-        diaSemana = 0;
-      }
-      const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-      const esHoy = hoy.getDate() === dia && hoy.getMonth() === mes && hoy.getFullYear() === anio;
-      let clase = esHoy ? "hoy" : "";
-      let contenido = `${dia}`;
-      const fechaCompleta = new Date(fechaStr);
-      const esPasado = fechaCompleta < new Date(new Date().setHours(0, 0, 0, 0));
-      if (esPasado && !esHoy) contenido = "❌";
-      else if (diasConRecordatorios.has(fechaStr)) contenido += "<br><span style='font-size:10px; color:green;'>•</span>";
-      html += `<td class="${clase}" data-fecha="${fechaStr}" onclick="mostrarRecordatorios('${fechaStr}', this)">${contenido}</td>`;
-      dia++;
-      diaSemana++;
+  <script>
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+      const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
+      const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
     }
-    while (diaSemana < 7) html += "<td></td>", diaSemana++;
-    html += "</tr>";
-    calendario.innerHTML = html;
 
-    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-    calendario.querySelectorAll("td[data-fecha]").forEach(celda => {
-      if (celda.dataset.fecha === hoyStr) {
-        if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
-        celda.classList.add("seleccionado");
-        celdaSeleccionada = celda;
-        mostrarRecordatorios(hoyStr, celda);
-      }
-    });
-  }
-
-  window.mostrarRecordatorios = async function(fecha, celda = null) {
-    if (celdaSeleccionada) celdaSeleccionada.classList.remove("seleccionado");
-    if (celda) {
-      celda.classList.add("seleccionado");
-      celdaSeleccionada = celda;
-    }
-    lista.innerHTML = "⏳ Buscando...";
-    const { data, error } = await supabase
-  .from("recordatorios")
-  .select("id, mensaje, hora, atendido, prioridad") // <-- AGREGA prioridad
-  .eq("fecha", fecha)
-  .order("hora");
-    if (error) return lista.innerHTML = "❌ Error al cargar.";
-    if (!data.length) return lista.innerHTML = "📭 No hay recordatorios.";
-recordatoriosDelDia = data;
-lista.innerHTML = `<h4>${fecha}</h4><ul>` + data.map((r) => {
-  const hora = r.hora ? r.hora.substring(0, 5) + " → " : "";
-  const claseAtendido = r.atendido ? "recordatorio-atendido" : "";
-  const clasePrioridad = r.prioridad ? "prioridad" : "";
-  const icono = !r.atendido ? "<span class='parpadea'>🔔</span> " : "";
-
-  return `<li class="${claseAtendido} ${clasePrioridad}" id="li-${r.id}">
-    <input type="checkbox" ${r.prioridad ? "checked" : ""} onchange="togglePrioridad('${r.id}', this.checked)">
-    ${icono}${hora}${r.mensaje}
-    ${r.imagen_url ? ` <a href="${r.imagen_url}" target="_blank" title="Ver imagen">📷</a>` : ""}
-    ${r.atendido
-      ? `<button onclick="marcarNoAtendido('${r.id}', '${fecha}')">❌</button>`
-      : `<button onclick="marcarAtendido('${r.id}', '${fecha}')">✅</button>`}
-    <button onclick="eliminarRecordatorio('${r.id}', '${fecha}')">🗑️</button>
-    <button onclick="window.location.href='crear-recordatorio.html?id=${r.id}'">✏️</button>
-  </li>`;
-}).join("") + "</ul>";
-
-verificarVencimientos(); // Ejecuta una revisión inmediata de vencidos
-
-window.marcarAtendido = async function(id, fecha) {
-  await supabase.from("recordatorios").update({ atendido: true }).eq("id", id);
-  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
-}
-}
-  function enviarTelegram(mensaje) {
-    const token = "7591663029:AAFk4lFkyTO3-cwZVDv_raOv933RKPQxSVg";
-    const chatId = "6617988297";
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: mensaje })
-    });
-  }
-
-  // Fecha y hora viva
-  function actualizarFechaHora() {
-    const ahora = new Date();
-    const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
-    const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
-    const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
-  }
-  actualizarFechaHora();
-  setInterval(actualizarFechaHora, 1000);
-setInterval(verificarVencimientos, 60000); // Ejecuta cada 60 segundos    
-
-window.marcarNoAtendido = async function(id, fecha) {
-  await supabase.from("recordatorios").update({ atendido: false }).eq("id", id);
-  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
-}
-
-window.eliminarRecordatorio = async function(id, fecha) {
-  const confirmar = confirm("¿Eliminar este recordatorio?");
-  if (!confirmar) return;
-  await supabase.from("recordatorios").delete().eq("id", id);
-  if (celdaSeleccionada) mostrarRecordatorios(fecha, celdaSeleccionada);
-}
-window.enviarRecordatoriosManualmente = function () {
-  if (!recordatoriosDelDia.length) {
-    alert("No hay recordatorios cargados para enviar.");
-    return;
-  }
-
-  const fecha = lista.querySelector("h4")?.textContent || "Sin fecha";
-  const resumen = recordatoriosDelDia.map(r =>
-    `${r.hora ? r.hora.substring(0,5) + " → " : ""}${r.mensaje}`
-  ).join("\n");
-
-  const mensaje = `📅 Recordatorios del ${fecha}:\n${resumen}`;
-
-  enviarTelegram(mensaje);
-  alert("📤 Recordatorios enviados a Telegram.");
-};
-// DESACTIVAR ENVÍO AUTOMÁTICO:
-function verificarVencimientos() {
-  return; // 👈 Esto detiene toda la función automática
-}
-
-  window.togglePrioridad = async function(id, estado) {
-  const li = document.getElementById(`li-${id}`);
-  const { error } = await supabase.from("recordatorios").update({ prioridad: estado }).eq("id", id);
-  if (error) {
-    alert("❌ No se pudo actualizar prioridad.");
-    return;
-  }
-  if (estado) {
-    li.classList.add("prioridad");
-  } else {
-    li.classList.remove("prioridad");
-  }
-};
-
-</script>
-<footer id="version-fecha-hora" style="margin-top: auto; text-align: center; padding: 1em; font-size: 14px; color: #555;">
-  <div>📦 v1.0 140725 03:40pm</div>
-  <div id="fecha-hora">⏳</div>
-</footer>
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
+  </script>
 
 </body>
 </html>
