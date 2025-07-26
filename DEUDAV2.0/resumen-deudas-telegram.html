@@ -94,7 +94,7 @@ function mostrarTabla(data) {
     const dias = calcularDias(f.fecha);
     const clase = obtenerClaseVencimiento(dias);
     html += `<tr class="${clase}">
-      <td>${formatoFecha(f.fecha)}</td>
+      <td>${f.fecha}</td>
       <td>${dias}</td>
       <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
       <td>${f.rfc_emisor || '-'}</td>
