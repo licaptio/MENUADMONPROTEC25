@@ -66,7 +66,11 @@ const supabase = window.supabase.createClient(
     const tabla = "deuda_limpia_pdd";
 
     async function cargar() {
-      const { data, error } = await supabase.from(tabla).select("*");
+      const { data, error } = await supabase
+  .from(tabla)
+  .select("*")
+  .neq('factura_pagada', 'SI');
+
       if (error) return alert("Error cargando datos");
 
 const pendientes = data
