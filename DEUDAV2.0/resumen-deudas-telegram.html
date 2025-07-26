@@ -73,17 +73,28 @@ const supabase = window.supabase.createClient(
 
       if (error) return alert("Error cargando datos");
 
-const pendientes = data
-  .filter(f => f.factura_pagada !== "SI")
-  .sort((a, b) => {
-    const rfcA = (a.rfc_emisor || "").toLowerCase();
-    const rfcB = (b.rfc_emisor || "").toLowerCase();
-    if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
-    return new Date(a.fecha) - new Date(b.fecha);
-  });
+console.log("🟡 Total registros en Supabase:", data.length);
+console.log("🔵 Primeros registros crudos:", data.slice(0, 5)); // Muestra ejemplo
+console.log("📦 Datos completos:", data);
 
-      mostrarTabla(pendientes);
-      resumenTelegram = generarResumenTexto(pendientes);
+const pendientes = data.filter(f => (f.factura_pagada || "").toUpperCase().trim() !== "SI");
+
+console.log("🟢 Facturas no pagadas:", pendientes.length);
+
+document.getElementById("tabla").insertAdjacentHTML("beforebegin",
+  `<p><strong>Total en Supabase:</strong> ${data.length} registros<br>
+   <strong>No pagados:</strong> ${pendientes.length} registros</p>`
+);
+
+const ordenados = pendientes.sort((a, b) => {
+  const rfcA = (a.rfc_emisor || "").toLowerCase();
+  const rfcB = (b.rfc_emisor || "").toLowerCase();
+  if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
+  return new Date(a.fecha) - new Date(b.fecha);
+});
+
+mostrarTabla(ordenados);
+resumenTelegram = generarResumenTexto(ordenados);
     }
 
 function mostrarTabla(data) {
@@ -100,7 +111,7 @@ function mostrarTabla(data) {
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
-      <td class="numero">${Number(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      <td class="numero">${f.total}</td>
     </tr>`;
   }
   html += "</table>";
