@@ -7,55 +7,68 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
       padding: 2em 1em;
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-color: #f7f9fc;
+      background-color: #f4f6f8;
     }
 
     h1 {
       margin-bottom: 1em;
-      font-size: 1.6em;
+      font-size: 1.7em;
+      color: #333;
+    }
+
+    .menu-links {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .menu-links a {
-      display: block;
-      width: 100%;
-      max-width: 500px;
-      margin: 0.5em 0;
-      padding: 0.8em;
-      background-color: #2196f3;
+      padding: 0.9em;
       color: white;
       text-decoration: none;
-      border-radius: 8px;
+      border-radius: 10px;
+      font-size: 1.05em;
+      font-weight: 500;
       text-align: center;
-      font-size: 1.1em;
-      transition: background 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
     }
 
     .menu-links a:hover {
-      background-color: #1976d2;
+      transform: scale(1.03);
     }
 
-    .parpadea-link {
-      animation: parpadeo 1.2s infinite;
-      font-weight: bold;
-    }
-
-    @keyframes parpadeo {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    /* Colores únicos */
+    .btn1 { background: #007bff; }   /* azul clásico */
+    .btn2 { background: #17a2b8; }   /* cyan */
+    .btn3 { background: #28a745; }   /* verde */
+    .btn4 { background: #6f42c1; }   /* morado */
+    .btn5 { background: #e83e8c; }   /* rosa */
+    .btn6 { background: #fd7e14; }   /* naranja */
+    .btn7 { background: #20c997; }   /* verde agua */
+    .btn8 { background: #ffc107; color: #212529; }  /* amarillo */
+    .btn9 { background: #6610f2; }   /* púrpura intenso */
+    .btn10 { background: #343a40; }  /* gris oscuro */
+    .btn11 { background: #17a2b8; }  /* repetir cyan */
+    .btn12 { background: #007bff; }  /* repetir azul */
 
     footer {
-      margin-top: auto;
+      margin-top: 3em;
       text-align: center;
-      font-size: 14px;
-      color: #555;
-      padding: 1em;
+      font-size: 13px;
+      color: #666;
+    }
+
+    #fecha-hora {
+      font-weight: bold;
     }
   </style>
 </head>
@@ -64,22 +77,22 @@
   <h1>📋 Menú Principal</h1>
 
   <div class="menu-links">
-    <a href="crear-recordatorio.html">+ Crear nuevo recordatorio</a>
-    <a href="crear-rapido.html" class="parpadea-link">⚡ Crear rápido</a>
-    <a href="ver-todo.html">📋 Ver todos los recordatorios</a>
-    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank">📘 Diario</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank">📦 Inventario GIT</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank">💰 Deuda V2</a>
-    <a href="CALENDARIO20.html">📆 Calendario Completo</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank">🏷️ Inv. Zapata</a>
-    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank">📘 Sergio Aguayo</a>
-    <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank">📘 PDD Catálogo de Artículos</a>
-    <a href="FINANCIEROPDD/index.html">📘 Finanzas / Cuentas Contables</a>
-    <a href="AUDITPRECIO/CONVERMEX/visorconver.html" target="_blank">📑 Visor CONVERMEX</a>
+    <a href="crear-recordatorio.html" class="btn1">+ Crear nuevo recordatorio</a>
+    <a href="crear-rapido.html" class="btn2">⚡ Crear rápido</a>
+    <a href="ver-todo.html" class="btn3">🗂️ Ver todos los recordatorios</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn4">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn5">📦 Inventario GIT</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn6">💰 Deuda V2</a>
+    <a href="CALENDARIO20.html" class="btn7">📅 Calendario Completo</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank" class="btn8">🏷️ Inv. Zapata</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn9">📘 Sergio Aguayo</a>
+    <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank" class="btn10">📘 PDD Catálogo de Artículos</a>
+    <a href="FINANCIEROPDD/index.html" class="btn11">📊 Finanzas / Cuentas Contables</a>
+    <a href="AUDITPRECIO/CONVERMEX/visorconver.html" target="_blank" class="btn12">📑 Visor CONVERMEX</a>
   </div>
 
   <footer>
-    <div>📦 v1.1 · Index limpio · <span id="fecha-hora">⏳</span></div>
+    <div>📦 v1.1 · Menú profesional · <span id="fecha-hora">⏳</span></div>
   </footer>
 
   <script>
