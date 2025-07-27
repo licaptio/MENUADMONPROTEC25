@@ -123,6 +123,15 @@
 
       const desde = (pagina - 1) * registrosPorPagina
       const hasta = desde + registrosPorPagina - 1
+// Contador exacto de registros totales de ese proveedor
+const { count, error: countError } = await supabase
+  .from('deuda_limpia_pdd')
+  .select('*', { count: 'exact', head: true })
+  .eq('razon_social_emisor', proveedorActual)
+
+if (countError) {
+  console.warn("Error al contar registros:", countError)
+}
 
       const { data, error } = await supabase
         .from('deuda_limpia_pdd')
@@ -164,7 +173,7 @@
       })
 
       tbody.innerHTML = html
-      infoPagina.textContent = `Página ${pagina}`
+      infoPagina.textContent = `Página ${pagina} · Mostrando ${data.length} de ${count} registros para este proveedor`
     }
 
     window.togglePago = async (id, nuevoEstado) => {
