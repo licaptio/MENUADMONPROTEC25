@@ -170,8 +170,6 @@ function mostrarFotos(fotos) {
   galeria.style.display = 'block';
 }
 
-  async function subirFoto() {
-  const archivo = document.getElementById('inputFoto').files[0];
   if (!archivo || !uuidActual) return alert('Selecciona una imagen');
 
   const nombreArchivo = `${uuidActual}_${Date.now()}_${archivo.name}`;
