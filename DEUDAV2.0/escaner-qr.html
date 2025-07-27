@@ -197,9 +197,9 @@ function mostrarFotos(fotos) {
 const { data: filaActual } = await supabaseClient
   .from('deuda_limpia_pdd')
   .select('fotos')
-  .eq('uuid', uuidActual);
-  .maybeSingle();
-
+.eq('uuid', uuidActual)
+.maybeSingle();
+    
   const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
   fotosActuales.push(nuevaFoto);
 
@@ -326,7 +326,7 @@ document.getElementById('fotoExterna').addEventListener('change', async function
   const { data: filaActual } = await supabaseClient
     .from('deuda_limpia_pdd')
     .select('fotos')
-    .eq('uuid', uuidActual)
+    .eq('uuid_cfdi', uuidActual)
     .maybeSingle();
 
   const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
