@@ -112,6 +112,8 @@ let html = `<table><tr>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
       <td class="numero">${f.total}</td>
+<td style="text-align:center">${(f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : ''}</td>
+
     </tr>`;
   }
   html += "</table>";
