@@ -194,19 +194,19 @@ function mostrarFotos(fotos) {
 
   const nuevaFoto = publicUrlData.publicUrl;
 
-  const { data: filaActual } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('fotos')
-    .eq('uuid', uuidActual)
-    .maybeSingle();
+const { data: filaActual } = await supabaseClient
+  .from('deuda_limpia_pdd')
+  .select('fotos')
+  .eq('uuid_cfdi', uuidActual)
+  .maybeSingle();
 
   const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
   fotosActuales.push(nuevaFoto);
 
-  const { error: errorUpdate } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({ fotos: fotosActuales })
-    .eq('uuid', uuidActual);
+const { error: errorUpdate } = await supabaseClient
+  .from('deuda_limpia_pdd')
+  .update({ fotos: fotosActuales })
+  .eq('uuid_cfdi', uuidActual);
 
   if (errorUpdate) {
     console.error(errorUpdate);
@@ -220,18 +220,18 @@ function mostrarFotos(fotos) {
 async function eliminarFoto(urlEliminar) {
   if (!confirm('¿Eliminar esta imagen?')) return;
 
-  const { data: filaActual } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('fotos')
-    .eq('uuid', uuidActual)
-    .maybeSingle();
+const { data: filaActual } = await supabaseClient
+  .from('deuda_limpia_pdd')
+  .select('fotos')
+  .eq('uuid_cfdi', uuidActual)
+  .maybeSingle();
 
   const nuevasFotos = filaActual.fotos.filter(foto => foto !== urlEliminar);
 
-  const { error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .update({ fotos: nuevasFotos })
-    .eq('uuid', uuidActual);
+const { error } = await supabaseClient
+  .from('deuda_limpia_pdd')
+  .update({ fotos: nuevasFotos })
+  .eq('uuid_cfdi', uuidActual);
 
   if (error) {
     alert('Error al eliminar la imagen');
