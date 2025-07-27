@@ -206,7 +206,7 @@ const { data: filaActual } = await supabaseClient
 const { error: errorUpdate } = await supabaseClient
   .from('deuda_limpia_pdd')
   .update({ fotos: fotosActuales })
-  .eq('uuid_cfdi', uuidActual);
+  .eq('uuid_cfdi', uuidActual)
 
   if (errorUpdate) {
     console.error(errorUpdate);
@@ -215,7 +215,9 @@ const { error: errorUpdate } = await supabaseClient
     alert('Foto subida correctamente');
     buscarPorUUID(uuidActual);
   }
-}
+document.getElementById('fotoExterna').value = '';
+
+  }
 
 async function eliminarFoto(urlEliminar) {
   if (!confirm('¿Eliminar esta imagen?')) return;
@@ -335,7 +337,7 @@ document.getElementById('fotoExterna').addEventListener('change', async function
   const { error: errorUpdate } = await supabaseClient
     .from('deuda_limpia_pdd')
     .update({ fotos: fotosActuales })
-    .eq('uuid', uuidActual);
+    .eq('uuid_cfdi', uuidActual)
 
   if (errorUpdate) {
     console.error(errorUpdate);
@@ -344,6 +346,9 @@ document.getElementById('fotoExterna').addEventListener('change', async function
     alert('Foto subida correctamente');
     buscarPorUUID(uuidActual);
   }
+
+  // ✅ limpia el input para permitir nueva foto desde cámara
+  document.getElementById('fotoExterna').value = '';
 });
   
 </script>
