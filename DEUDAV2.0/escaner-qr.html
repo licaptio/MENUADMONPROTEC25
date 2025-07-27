@@ -197,7 +197,7 @@ function mostrarFotos(fotos) {
 const { data: filaActual } = await supabaseClient
   .from('deuda_limpia_pdd')
   .select('fotos')
-  .eq('uuid_cfdi', uuidActual)
+  .eq('uuid', uuidActual);
   .maybeSingle();
 
   const fotosActuales = Array.isArray(filaActual?.fotos) ? filaActual.fotos : [];
