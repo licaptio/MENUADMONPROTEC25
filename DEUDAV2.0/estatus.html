@@ -89,15 +89,20 @@
       .select('razon_social_emisor')
       .neq('razon_social_emisor', null)
 
-    const razonesUnicas = [...new Set(proveedoresRaw.map(p => p.razon_social_emisor).filter(Boolean))].sort()
+    const razonesReales = proveedoresRaw
+  .map(p => p.razon_social_emisor)
+  .filter(Boolean) // sin nulls ni undefined
+  .sort() // solo ordenar, sin deduplicar
 
-    razonesUnicas.forEach(p => {
-      const opt = document.createElement('option')
-      opt.value = p
-      opt.textContent = p
-      selector.appendChild(opt)
-    })
-await mostrarResumenGlobal()
+
+razonesReales.forEach(p => {
+  const opt = document.createElement('option')
+  opt.value = p
+  opt.textContent = p
+  selector.appendChild(opt)
+})
+ 
+    await mostrarResumenGlobal()
 
     selector.addEventListener('change', () => {
       proveedorActual = selector.value
