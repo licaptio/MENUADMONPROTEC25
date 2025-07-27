@@ -135,12 +135,11 @@ if (countError) {
   console.warn("Error al contar registros:", countError)
 }
 
-      const { data, error } = await supabase
-        .from('deuda_limpia_pdd')
-        .select('id, fecha, uuid_cfdi, rfc_emisor, razon_social_emisor, factura, total, factura_pagada, serie')
-        .eq('razon_social_emisor', proveedorActual)
-        .order('fecha', { ascending: true })
-        .range(desde, hasta)
+const { data, error } = await supabase
+  .from('deuda_limpia_pdd')
+  .select('id, fecha, uuid_cfdi, rfc_emisor, razon_social_emisor, factura, total, factura_pagada, serie')
+  .eq('razon_social_emisor', proveedorActual)
+  .range(desde, hasta) // 🔥 sin ordenamiento por fecha
 
       if (error) {
         tbody.innerHTML = `<tr><td colspan="7">Error al cargar: ${error.message}</td></tr>`
