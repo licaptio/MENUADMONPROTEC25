@@ -35,6 +35,7 @@
 </head>
 <body>
   <h1>🧾 Pagos por Proveedor</h1>
+<p id="informe-global" style="font-weight: bold; color: #333;"></p>
 
   <label for="proveedor">Selecciona proveedor:</label>
   <select id="proveedor">
@@ -96,6 +97,7 @@
       opt.textContent = p
       selector.appendChild(opt)
     })
+await mostrarResumenGlobal()
 
     selector.addEventListener('change', () => {
       proveedorActual = selector.value
@@ -189,6 +191,28 @@ if (countError) {
         cargarTabla()
       }
     }
+async function mostrarResumenGlobal() {
+  // 1. Contar registros totales (sin traer datos)
+  const { count: totalSupa, error: err1 } = await supabase
+    .from('deuda_limpia_pdd')
+    .select('*', { count: 'exact', head: true });
+
+  // 2. Traer todos los registros reales para ver cuántos llegan
+  const { data: datosReales, error: err2 } = await supabase
+    .from('deuda_limpia_pdd')
+    .select('*');
+
+  if (err1 || err2) {
+    document.getElementById('informe-global').textContent = "❌ Error al obtener resumen global";
+    console.error("Error en resumen global:", err1 || err2);
+    return;
+  }
+
+  // 3. Mostrar resultados
+  document.getElementById('informe-global').textContent =
+    `🧾 Total en Supabase: ${totalSupa} · 📄 Total traídos en esta página: ${datosReales.length}`;
+}
+
   </script>
 </body>
 </html>
