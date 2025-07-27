@@ -98,9 +98,9 @@ resumenTelegram = generarResumenTexto(ordenados);
     }
 
 function mostrarTabla(data) {
-  let html = `<table><tr>
-    <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th><th>Factura</th><th>Total</th>
-  </tr>`;
+let html = `<table><tr>
+  <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th><th>Factura</th><th>Total</th><th>Física</th>
+</tr>`;
   for (const f of data) {
     const dias = calcularDias(f.fecha);
     const clase = obtenerClaseVencimiento(dias);
