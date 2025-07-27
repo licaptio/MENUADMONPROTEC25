@@ -170,16 +170,6 @@ function mostrarFotos(fotos) {
   galeria.style.display = 'block';
 }
 
-  if (!archivo || !uuidActual) return alert('Selecciona una imagen');
-
-  const nombreArchivo = `${uuidActual}_${Date.now()}_${archivo.name}`;
-  const bucket = 'fotos-facturas';
-
-  const { error: errorUpload } = await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(nombreArchivo, archivo);
-
   if (errorUpload) {
     console.error(errorUpload);
     return alert('Error al subir imagen');
