@@ -192,25 +192,53 @@ if (countError) {
       }
     }
 async function mostrarResumenGlobal() {
-  // 1. Contar registros totales (sin traer datos)
+  const tamanoLote = 1000
+  let totalDescargados = 0
+  let desde = 0
+  let datosReales = []
+  let errorDescarga = null
+
+  // Paso 1: Obtener conteo real desde Supabase
   const { count: totalSupa, error: err1 } = await supabase
     .from('deuda_limpia_pdd')
     .select('*', { count: 'exact', head: true });
 
-  // 2. Traer todos los registros reales para ver cuántos llegan
-  const { data: datosReales, error: err2 } = await supabase
-    .from('deuda_limpia_pdd')
-    .select('*');
-
-  if (err1 || err2) {
-    document.getElementById('informe-global').textContent = "❌ Error al obtener resumen global";
-    console.error("Error en resumen global:", err1 || err2);
+  if (err1) {
+    document.getElementById('informe-global').textContent = "❌ Error al contar registros";
+    console.error("Error al contar:", err1);
     return;
   }
 
-  // 3. Mostrar resultados
+  // Paso 2: Descargar todos los registros por bloques de 1000
+  while (true) {
+    const { data, error } = await supabase
+      .from('deuda_limpia_pdd')
+      .select('id') // o "*" si quieres todos los campos, pero pesa más
+      .range(desde, desde + tamanoLote - 1);
+
+    if (error) {
+      errorDescarga = error
+      break;
+    }
+
+    if (!data || data.length === 0) break;
+
+    totalDescargados += data.length;
+    datosReales = datosReales.concat(data);
+
+    if (data.length < tamanoLote) break; // Ya no hay más
+    desde += tamanoLote;
+  }
+
+  if (errorDescarga) {
+    document.getElementById('informe-global').textContent = "❌ Error al descargar registros";
+    console.error("Error al descargar:", errorDescarga);
+    return;
+  }
+
+  // Mostrar resumen global
   document.getElementById('informe-global').textContent =
-    `🧾 Total en Supabase: ${totalSupa} · 📄 Total traídos en esta página: ${datosReales.length}`;
+    `🧾 Total en Supabase: ${totalSupa} · 📄 Total traídos en esta página: ${totalDescargados}`;
 }
 
   </script>
