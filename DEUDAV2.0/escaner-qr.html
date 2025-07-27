@@ -78,12 +78,12 @@
   );
 let uuidActual = null;
 async function buscarPorUUID(uuid) {
-  const { data, error } = await supabaseClient
-    .from('deuda_limpia_pdd')
-    .select('*')
-    .eq('uuid', uuid)
-    .maybeSingle();
-
+const { data, error } = await supabaseClient
+  .from('deuda_limpia_pdd')
+  .select('*')
+  .eq('uuid_cfdi', uuid)
+  .maybeSingle();
+  
   if (error || !data) {
     alert('Factura no encontrada');
     return;
@@ -266,7 +266,7 @@ async function guardarCambios() {
       factura_fisicamente: fisica,
       comentario_factura_fisica: comentario
     })
-    .eq("uuid", uuidActual);
+    .eq("uuid_cfdi", uuidActual)
 
   if (error) {
     console.error(error);
