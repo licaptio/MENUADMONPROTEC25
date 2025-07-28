@@ -98,9 +98,26 @@ resumenTelegram = generarResumenTexto(ordenados);
     }
 
 function mostrarTabla(data) {
-let html = `<table><tr>
-  <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th><th>Factura</th><th>Total</th><th>Física</th><th>Fotos</th>
-</tr>`;
+  const sumaTotal = data.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
+
+  let html = `<table><thead><tr>
+    <th>Fecha</th>
+    <th>Días</th>
+    <th>UUID</th>
+    <th>RFC</th>
+    <th>Proveedor</th>
+    <th>Factura</th>
+    <th>Total</th>
+    <th>Física</th>
+    <th>Fotos</th>
+  </tr>
+  <tr style="background:#e0f7fa; font-weight:bold;">
+    <td colspan="6" style="text-align:right;">TOTAL:</td>
+    <td class="numero">$${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+    <td colspan="2"></td>
+  </tr>
+  </thead><tbody>`;
+
   for (const f of data) {
     const dias = calcularDias(f.fecha);
     const clase = obtenerClaseVencimiento(dias);
@@ -111,18 +128,17 @@ let html = `<table><tr>
       <td>${f.rfc_emisor || '-'}</td>
       <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
       <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
-      <td class="numero">${f.total}</td>
-<td style="text-align:center">${(f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : ''}</td>
-<td style="text-align:center">
-  ${(Array.isArray(f.fotos) && f.fotos.length)
-    ? f.fotos.map(url => `<a href="${url}" target="_blank" title="Ver foto"><span>📷</span></a>`).join(' ')
-    : ''}
-</td>
-
-
+      <td class="numero">${parseFloat(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+      <td style="text-align:center">${(f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : ''}</td>
+      <td style="text-align:center">
+        ${(Array.isArray(f.fotos) && f.fotos.length)
+          ? f.fotos.map(url => `<a href="${url}" target="_blank" title="Ver foto"><span>📷</span></a>`).join(' ')
+          : ''}
+      </td>
     </tr>`;
   }
-  html += "</table>";
+
+  html += "</tbody></table>";
   document.getElementById("tabla").innerHTML = html;
 }
 
