@@ -46,11 +46,17 @@
 <body>
   <h2>🔍 Consulta de Facturas por RFC</h2>
 
-  <label for="rfcFiltro"><strong>Selecciona un RFC:</strong></label>
-  <select id="rfcFiltro">
-    <option value="">-- Selecciona uno --</option>
-  </select>
-  <button onclick="consultarPorRFC()">🔎 Consultar</button>
+<label for="rfcFiltro"><strong>RFC:</strong></label>
+<select id="rfcFiltro" onchange="sincronizarNombre()">
+  <option value="">-- Selecciona uno --</option>
+</select>
+
+<label for="nombreFiltro" style="margin-left: 1rem;"><strong>Nombre:</strong></label>
+<select id="nombreFiltro" onchange="sincronizarRFC()">
+  <option value="">-- Selecciona uno --</option>
+</select>
+
+<button onclick="consultarPorRFC()">🔎 Consultar</button>
 
   <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
   <div id="tablaResultados"></div>
@@ -67,21 +73,40 @@
     cargarRFCs();
 
 async function cargarRFCs() {
-  const { data, error } = await supabase.rpc("obtener_rfc_unicos");
+  const { data, error } = await supabase
+    .from(tabla)
+    .select("rfc_emisor, razon_social_emisor");
 
   if (error) {
     console.error("❌ Error al obtener RFCs:", error);
-    alert("Error al obtener RFCs únicos");
+    alert("Error al obtener datos únicos");
     return;
   }
 
-  const select = document.getElementById("rfcFiltro");
-  data.forEach(({ rfc }) => {
-    const opt = document.createElement("option");
-    opt.value = rfc;
-    opt.textContent = rfc;
-    select.appendChild(opt);
-  });
+  // Eliminar duplicados por RFC
+  const unicos = [];
+  const mapa = new Map();
+  for (const fila of data) {
+    if (!mapa.has(fila.rfc_emisor)) {
+      mapa.set(fila.rfc_emisor, fila.razon_social_emisor);
+      unicos.push(fila);
+    }
+  }
+
+  const selectRFC = document.getElementById("rfcFiltro");
+  const selectNombre = document.getElementById("nombreFiltro");
+
+  for (const fila of unicos) {
+    const opt1 = document.createElement("option");
+    opt1.value = fila.rfc_emisor;
+    opt1.textContent = fila.rfc_emisor;
+    selectRFC.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = fila.rfc_emisor; // ⚠️ mismo value
+    opt2.textContent = fila.razon_social_emisor;
+    selectNombre.appendChild(opt2);
+  }
 }
 
   
@@ -185,6 +210,30 @@ async function togglePago(id, celda) {
   }
 
   celda.textContent = nuevo;
+}
+
+function sincronizarNombre() {
+  const rfc = document.getElementById("rfcFiltro").value;
+  const selectNombre = document.getElementById("nombreFiltro");
+  for (const opt of selectNombre.options) {
+    if (opt.value === rfc) {
+      selectNombre.value = rfc;
+      return;
+    }
+  }
+  selectNombre.value = "";
+}
+
+function sincronizarRFC() {
+  const rfc = document.getElementById("nombreFiltro").value;
+  const selectRFC = document.getElementById("rfcFiltro");
+  for (const opt of selectRFC.options) {
+    if (opt.value === rfc) {
+      selectRFC.value = rfc;
+      return;
+    }
+  }
+  selectRFC.value = "";
 }
 
   </script>
