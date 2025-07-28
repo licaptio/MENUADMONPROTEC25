@@ -67,16 +67,30 @@
     cargarRFCs();
 
 async function cargarRFCs() {
-  const { data, error } = await supabase
-    .from(tabla)
-    .select("rfc_emisor")
-    .neq("rfc_emisor", "")
-    .range(0, 9999) // <--- AÑADIDO para traer más de 1,000 registros
-    .order("rfc_emisor", { ascending: true });
+  let todos = [];
+  let pagina = 0;
+  let porPagina = 1000;
+  let continuar = true;
 
-  if (error) return alert("❌ Error al obtener RFCs");
+  while (continuar) {
+    const { data, error } = await supabase
+      .from(tabla)
+      .select("rfc_emisor")
+      .neq("rfc_emisor", "")
+      .range(pagina * porPagina, (pagina + 1) * porPagina - 1);
 
-  const rfcUnicos = [...new Set(data.map(f => f.rfc_emisor))];
+    if (error) {
+      alert("❌ Error al obtener RFCs");
+      console.error(error);
+      return;
+    }
+
+    todos = todos.concat(data);
+    if (data.length < porPagina) continuar = false;
+    else pagina++;
+  }
+
+  const rfcUnicos = [...new Set(todos.map(f => f.rfc_emisor))].sort();
   const select = document.getElementById("rfcFiltro");
 
   for (const rfc of rfcUnicos) {
