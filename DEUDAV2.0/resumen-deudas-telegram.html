@@ -121,13 +121,6 @@
           </td>
         </tr>`;
       }
-
-      html += `<tr style="background:#e9ecef; font-weight:bold;">
-        <td colspan="6" style="text-align:right;">TOTAL:</td>
-        <td class="numero">$${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-        <td colspan="2"></td>
-      </tr></tbody></table>`;
-
       document.getElementById("tabla").innerHTML = html;
     }
 
