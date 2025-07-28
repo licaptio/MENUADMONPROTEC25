@@ -73,9 +73,7 @@
     cargarRFCs();
 
 async function cargarRFCs() {
-  const { data, error } = await supabase
-    .from(tabla)
-    .select("rfc_emisor, razon_social_emisor");
+  const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
 
   if (error) {
     console.error("❌ Error al obtener RFCs:", error);
@@ -83,34 +81,21 @@ async function cargarRFCs() {
     return;
   }
 
-  // Eliminar duplicados por RFC
-  const unicos = [];
-  const mapa = new Map();
-  for (const fila of data) {
-    if (!mapa.has(fila.rfc_emisor)) {
-      mapa.set(fila.rfc_emisor, fila.razon_social_emisor);
-      unicos.push(fila);
-    }
-  }
-
   const selectRFC = document.getElementById("rfcFiltro");
   const selectNombre = document.getElementById("nombreFiltro");
 
-  for (const fila of unicos) {
+  for (const fila of data) {
     const opt1 = document.createElement("option");
-    opt1.value = fila.rfc_emisor;
-    opt1.textContent = fila.rfc_emisor;
+    opt1.value = fila.rfc;
+    opt1.textContent = fila.rfc;
     selectRFC.appendChild(opt1);
 
     const opt2 = document.createElement("option");
-    opt2.value = fila.rfc_emisor; // ⚠️ mismo value
-    opt2.textContent = fila.razon_social_emisor;
+    opt2.value = fila.rfc;
+    opt2.textContent = fila.nombre;
     selectNombre.appendChild(opt2);
   }
 }
-
-  
-
 
 async function consultarPorRFC() {
   const rfc = document.getElementById("rfcFiltro").value;
