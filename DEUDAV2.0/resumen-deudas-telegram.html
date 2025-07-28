@@ -81,9 +81,14 @@ const pendientes = data.filter(f => (f.factura_pagada || "").toUpperCase().trim(
 
 console.log("🟢 Facturas no pagadas:", pendientes.length);
 
+const sumaTotal = pendientes.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
+
 document.getElementById("tabla").insertAdjacentHTML("beforebegin",
-  `<p><strong>Total en Supabase:</strong> ${data.length} registros<br>
-   <strong>No pagados:</strong> ${pendientes.length} registros</p>`
+  `<p>
+    <strong>Total en Supabase:</strong> ${data.length} registros<br>
+    <strong>No pagados:</strong> ${pendientes.length} registros<br>
+    <strong>Total $ pendiente:</strong> $${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+  </p>`
 );
 
 const ordenados = pendientes.sort((a, b) => {
