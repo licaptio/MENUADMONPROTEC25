@@ -66,25 +66,27 @@
 
     cargarRFCs();
 
-    async function cargarRFCs() {
-      const { data, error } = await supabase
-        .from(tabla)
-        .select("rfc_emisor")
-        .neq("rfc_emisor", "")
-        .order("rfc_emisor", { ascending: true });
+async function cargarRFCs() {
+  const { data, error } = await supabase
+    .from(tabla)
+    .select("rfc_emisor")
+    .neq("rfc_emisor", "")
+    .range(0, 9999) // <--- AÑADIDO para traer más de 1,000 registros
+    .order("rfc_emisor", { ascending: true });
 
-      if (error) return alert("❌ Error al obtener RFCs");
+  if (error) return alert("❌ Error al obtener RFCs");
 
-      const rfcUnicos = [...new Set(data.map(f => f.rfc_emisor))];
-      const select = document.getElementById("rfcFiltro");
+  const rfcUnicos = [...new Set(data.map(f => f.rfc_emisor))];
+  const select = document.getElementById("rfcFiltro");
 
-      for (const rfc of rfcUnicos) {
-        const opt = document.createElement("option");
-        opt.value = rfc;
-        opt.textContent = rfc;
-        select.appendChild(opt);
-      }
-    }
+  for (const rfc of rfcUnicos) {
+    const opt = document.createElement("option");
+    opt.value = rfc;
+    opt.textContent = rfc;
+    select.appendChild(opt);
+  }
+}
+
 
 async function consultarPorRFC() {
   const rfc = document.getElementById("rfcFiltro").value;
