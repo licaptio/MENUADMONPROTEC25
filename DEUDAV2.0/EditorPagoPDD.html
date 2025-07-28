@@ -84,14 +84,22 @@ async function cargarRFCs() {
   const selectRFC = document.getElementById("rfcFiltro");
   const selectNombre = document.getElementById("nombreFiltro");
 
+  // Rellenar RFCs en orden original (por RFC)
   for (const fila of data) {
     const opt1 = document.createElement("option");
     opt1.value = fila.rfc;
     opt1.textContent = fila.rfc;
     selectRFC.appendChild(opt1);
+  }
 
+  // Rellenar nombres ordenados alfabéticamente
+  const ordenadoPorNombre = [...data].sort((a, b) => {
+    return a.nombre.localeCompare(b.nombre);
+  });
+
+  for (const fila of ordenadoPorNombre) {
     const opt2 = document.createElement("option");
-    opt2.value = fila.rfc;
+    opt2.value = fila.rfc; // sigue usando el RFC como value para la sincronización
     opt2.textContent = fila.nombre;
     selectNombre.appendChild(opt2);
   }
