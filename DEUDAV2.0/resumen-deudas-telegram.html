@@ -52,20 +52,19 @@
   <div id="tabla"></div>
 
   <script>
-    const supabase = supabase.createClient(
-      'https://cvpbtjlupswbyxenugpz.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-    );
+const _supabase = window.supabase.createClient(
+  'https://cvpbtjlupswbyxenugpz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+);
 
     const tabla = "deuda_limpia_pdd";
     let resumenTelegram = "";
 
     async function cargar() {
-      const { data, error } = await supabase
-        .from(tabla)
-        .select("*")
-        .neq('factura_pagada', 'SI');
-
+const { data, error } = await _supabase
+  .from(tabla)
+  .select("*")
+  .neq('factura_pagada', 'SI');
       if (error) return alert("Error cargando datos");
 
       const pendientes = data.filter(f => (f.factura_pagada || "").toUpperCase().trim() !== "SI");
