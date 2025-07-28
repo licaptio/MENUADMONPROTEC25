@@ -84,16 +84,7 @@ async function cargarRFCs() {
   });
 }
 
-  const rfcUnicos = [...new Set(todos.map(f => f.rfc_emisor))].sort();
-  const select = document.getElementById("rfcFiltro");
-
-  for (const rfc of rfcUnicos) {
-    const opt = document.createElement("option");
-    opt.value = rfc;
-    opt.textContent = rfc;
-    select.appendChild(opt);
-  }
-}
+  
 
 
 async function consultarPorRFC() {
