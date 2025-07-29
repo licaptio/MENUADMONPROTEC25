@@ -131,11 +131,13 @@ async function consultarPorRFC() {
       }
 
       // Traer hasta 10,000 resultados
-      const { data, error } = await supabase
-        .from(tabla)
-        .select("*")
-        .eq("rfc_emisor", rfc)
-        .range(0, 9999);
+const { data, error } = await supabase
+  .from(tabla)
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .order("fecha", { ascending: true })
+  .range(0, 9999);
+
 
       if (error) {
         console.error("❌ Error al traer datos:", error);
