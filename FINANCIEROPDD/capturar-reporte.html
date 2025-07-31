@@ -138,6 +138,19 @@
     guardar(boton, id);
   }
 });
+document.getElementById("nuevo-registro").addEventListener("click", () => {
+  const cuerpo = document.getElementById("cuerpo-tabla");
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" data-col="cuenta_id" /></td>
+    <td><input type="number" data-col="anio" /></td>
+    ${["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
+      .map(mes => `<td><input type="number" step="0.01" data-col="${mes}" /></td>`).join("")}
+    <td><button class="insertar-btn">💾</button></td>
+  `;
+  cuerpo.prepend(tr);
+});
 
   </script>
 </body>
