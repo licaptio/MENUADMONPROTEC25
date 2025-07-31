@@ -1,119 +1,138 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Reporte Financiero Anual</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <title>📊 Reporte Financiero Anual</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #eef2f7; }
-    h2 { text-align: center; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    input { width: 80px; }
-    button { margin-top: 20px; padding: 8px 16px; }
-    .fixed-col { position: sticky; left: 0; background: #fff; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #eef1f4;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+    }
+    th {
+      background: #f3f3f3;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: right;
+    }
+    button {
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+    footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #666;
+    }
   </style>
 </head>
 <body>
 
-<h2>📊 Reporte Financiero Anual</h2>
+  <h2>📊 Reporte Financiero Anual</h2>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Cuenta ID</th>
+        <th>Año</th>
+        <th>Ene</th>
+        <th>Feb</th>
+        <th>Mar</th>
+        <th>Abr</th>
+        <th>May</th>
+        <th>Jun</th>
+        <th>Jul</th>
+        <th>Ago</th>
+        <th>Sep</th>
+        <th>Oct</th>
+        <th>Nov</th>
+        <th>Dic</th>
+        <th>💾</th>
+      </tr>
+    </thead>
+    <tbody id="cuerpo-tabla">
+      <tr><td colspan="15">Cargando datos...</td></tr>
+    </tbody>
+  </table>
 
-<table id="tabla">
-  <thead>
-    <tr>
-      <th>Cuenta ID</th>
-      <th>Año</th>
-      <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
-      <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
-      <th>💾</th>
-    </tr>
-  </thead>
-  <tbody id="cuerpo-tabla">
-    <tr><td colspan="15">Cargando...</td></tr>
-  </tbody>
-</table>
+  <footer>
+    Hecho con 🧾 por Gera Quezaa · Reporte Financiero · Supabase 2025
+  </footer>
 
-<script>
-const supabase = window.supabase.createClient(
-  "https://cvpbtjlupswbyxenugpz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-);
+  <script>
+    const supabase = supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
 
-// 👇 Cargar datos de la tabla reporte_financiero
-async function cargarDatos() {
-  const { data, error } = await supabase
-    .from('reporte_financiero')
-    .select('*')
-    .order('anio', { ascending: false });
+    async function cargar() {
+      const { data, error } = await supabase
+        .from("reporte_financiero")
+        .select("*")
+        .order("anio", { ascending: false });
 
-  const cuerpo = document.getElementById('cuerpo-tabla');
-  cuerpo.innerHTML = '';
+      const cuerpo = document.getElementById("cuerpo-tabla");
+      cuerpo.innerHTML = "";
 
-  if (error) {
-    cuerpo.innerHTML = `<tr><td colspan="15">❌ Error al cargar: ${error.message}</td></tr>`;
-    return;
-  }
+      if (error || !data || data.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="15">No hay datos disponibles.</td></tr>`;
+        return;
+      }
 
-  if (data.length === 0) {
-    cuerpo.innerHTML = `<tr><td colspan="15">No hay datos disponibles.</td></tr>`;
-    return;
-  }
+      data.forEach((fila) => {
+        const tr = document.createElement("tr");
 
-  data.forEach(row => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.cuenta_id}</td>
-      <td>${row.anio}</td>
-      ${crearMesInput(row, 'enero')}
-      ${crearMesInput(row, 'febrero')}
-      ${crearMesInput(row, 'marzo')}
-      ${crearMesInput(row, 'abril')}
-      ${crearMesInput(row, 'mayo')}
-      ${crearMesInput(row, 'junio')}
-      ${crearMesInput(row, 'julio')}
-      ${crearMesInput(row, 'agosto')}
-      ${crearMesInput(row, 'septiembre')}
-      ${crearMesInput(row, 'octubre')}
-      ${crearMesInput(row, 'noviembre')}
-      ${crearMesInput(row, 'diciembre')}
-      <td><button onclick="guardar('${row.id}', this.parentNode.parentNode)">💾</button></td>
-    `;
-    cuerpo.appendChild(tr);
-  });
-}
+        tr.innerHTML = `
+          <td><input type="text" value="${fila.cuenta_id}" data-col="cuenta_id" /></td>
+          <td><input type="number" value="${fila.anio}" data-col="anio" /></td>
+          ${["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
+            .map(mes => `<td><input type="number" step="0.01" value="${fila[mes] || ""}" data-col="${mes}" /></td>`)
+            .join("")}
+          <td><button onclick="guardar(this, '${fila.id}')">💾</button></td>
+        `;
 
-function crearMesInput(row, mes) {
-  const valor = row[mes] || '';
-  return `<td><input type="number" step="0.01" name="${mes}" value="${valor}"></td>`;
-}
+        cuerpo.appendChild(tr);
+      });
+    }
 
-// 👇 Guardar fila modificada
-async function guardar(id, fila) {
-  const inputs = fila.querySelectorAll('input');
-  const datos = {};
-  inputs.forEach(input => {
-    datos[input.name] = parseFloat(input.value) || 0;
-  });
+    async function guardar(boton, id) {
+      const tr = boton.closest("tr");
+      const inputs = tr.querySelectorAll("input");
+      const objeto = {};
 
-  datos.modificado_por = "Gera Quezaa";
+      inputs.forEach(input => {
+        const key = input.dataset.col;
+        objeto[key] = input.value === "" ? null : (input.type === "number" ? parseFloat(input.value) : input.value);
+      });
 
-  const { error } = await supabase
-    .from('reporte_financiero')
-    .update(datos)
-    .eq('id', id);
+      const { error } = await supabase
+        .from("reporte_financiero")
+        .update(objeto)
+        .eq("id", id);
 
-  if (error) {
-    alert("❌ Error al guardar: " + error.message);
-  } else {
-    alert("✅ Cambios guardados.");
-  }
-}
+      if (error) {
+        alert("❌ Error al guardar");
+        console.error(error);
+      } else {
+        boton.textContent = "✅";
+        setTimeout(() => boton.textContent = "💾", 1000);
+      }
+    }
 
-cargarDatos();
-</script>
-<footer style="margin-top: 40px; text-align: center; font-size: 0.85em; color: #666;">
-  Hecho con 💼 por Gera Quezaa · Reporte Financiero · Supabase 2025
-</footer>
-
+    cargar();
+  </script>
 </body>
 </html>
