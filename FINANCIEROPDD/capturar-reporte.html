@@ -100,13 +100,13 @@
           <td><input type="number" value="${fila.anio}" data-col="anio" /></td>
           ${["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
             .map(mes => `<td><input type="number" step="0.01" value="${fila[mes] || ""}" data-col="${mes}" /></td>`).join("")}
-          <td><button onclick="guardar(this, '${fila.id}')">💾</button></td>
+          <td><button class="guardar-btn" data-id="${fila.id}">💾</button></td>
         `;
         cuerpo.appendChild(tr);
       });
     }
 
-    window.guardar = async function guardar(boton, id) {
+    function guardar(boton, id) {
       const tr = boton.closest("tr");
       const inputs = tr.querySelectorAll("input");
       const objeto = {};
@@ -131,6 +131,14 @@
     }
 
     cargar();
+    document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("guardar-btn")) {
+    const boton = e.target;
+    const id = boton.dataset.id;
+    guardar(boton, id);
+  }
+});
+
   </script>
 </body>
 </html>
