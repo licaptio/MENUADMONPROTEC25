@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>📊 Reporte Financiero Anual</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -72,8 +71,10 @@
     Hecho con 🧾 por Gera Quezaa · Reporte Financiero · Supabase 2025
   </footer>
 
-  <script>
-    const supabase = supabase.createClient(
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(
       'https://cvpbtjlupswbyxenugpz.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
     );
@@ -94,21 +95,18 @@
 
       data.forEach((fila) => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
           <td><input type="text" value="${fila.cuenta_id}" data-col="cuenta_id" /></td>
           <td><input type="number" value="${fila.anio}" data-col="anio" /></td>
           ${["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]
-            .map(mes => `<td><input type="number" step="0.01" value="${fila[mes] || ""}" data-col="${mes}" /></td>`)
-            .join("")}
+            .map(mes => `<td><input type="number" step="0.01" value="${fila[mes] || ""}" data-col="${mes}" /></td>`).join("")}
           <td><button onclick="guardar(this, '${fila.id}')">💾</button></td>
         `;
-
         cuerpo.appendChild(tr);
       });
     }
 
-    async function guardar(boton, id) {
+    window.guardar = async function guardar(boton, id) {
       const tr = boton.closest("tr");
       const inputs = tr.querySelectorAll("input");
       const objeto = {};
