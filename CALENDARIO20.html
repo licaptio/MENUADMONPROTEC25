@@ -206,11 +206,14 @@ const { data, error } = await supabase
           ${r.atendido ? "✅ Atendido" : "⏳ No atendido"} · 
           ${r.prioridad ? "🔥 Prioridad" : "🟦 Normal"}
         </small>
-        <div class="acciones">
-          <button onclick="editar('${r.id}')">✏️ Editar</button>
-          <button onclick="archivar('${r.id}')">📦 Archivar</button>
-          <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
-        </div>
+<div class="acciones">
+  <button onclick="editar('${r.id}')">✏️ Editar</button>
+  <button onclick="cambiarPrioridad('${r.id}', ${r.prioridad})">
+    ${r.prioridad ? '⬇️ Quitar prioridad' : '⬆️ Marcar prioridad'}
+  </button>
+  <button onclick="archivar('${r.id}')">📦 Archivar</button>
+  <button onclick="eliminar('${r.id}')">🗑️ Eliminar</button>
+</div>
       </li>
     `).join("");
   }
@@ -237,6 +240,15 @@ const { data, error } = await supabase
       cargarRecordatorios();
     }
   }
+async function cambiarPrioridad(id, valorActual) {
+  const nuevoValor = !valorActual;
+  await supabase
+    .from("recordatorios")
+    .update({ prioridad: nuevoValor })
+    .eq("id", id);
+
+  cargarRecordatorios();
+}
 
   // Iniciar carga
   cargarCalendario(fechaActual);
