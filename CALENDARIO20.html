@@ -185,11 +185,12 @@
   }
 
   async function cargarRecordatorios() {
-    const { data, error } = await supabase
-      .from("recordatorios")
-      .select("*")
-      .eq("archivado", false)
-      .order("prioridad", { ascending: false });
+const { data, error } = await supabase
+  .from("recordatorios")
+  .select("*")
+  .eq("archivado", false)
+  .order("prioridad", { ascending: false })
+  .order("fecha", { ascending: false });
 
     if (error || !data.length) {
       console.error("Error:", error);
