@@ -131,11 +131,15 @@
     }
 
     cargar();
-    document.addEventListener("click", (e) => {
+document.addEventListener("click", (e) => {
   if (e.target.classList.contains("guardar-btn")) {
     const boton = e.target;
     const id = boton.dataset.id;
     guardar(boton, id);
+  }
+
+  if (e.target.classList.contains("insertar-btn")) {
+    insertar(e.target);
   }
 });
 document.getElementById("nuevo-registro").addEventListener("click", () => {
@@ -151,6 +155,31 @@ document.getElementById("nuevo-registro").addEventListener("click", () => {
   `;
   cuerpo.prepend(tr);
 });
+async function insertar(boton) {
+  const tr = boton.closest("tr");
+  const inputs = tr.querySelectorAll("input");
+  const objeto = {};
+
+  inputs.forEach(input => {
+    const key = input.dataset.col;
+    objeto[key] = input.value === "" ? null : (input.type === "number" ? parseFloat(input.value) : input.value);
+  });
+
+  const { error } = await supabase
+    .from("reporte_financiero")
+    .insert([objeto]);
+
+  if (error) {
+    alert("❌ Error al insertar");
+    console.error(error);
+  } else {
+    boton.textContent = "✅";
+    setTimeout(() => {
+      boton.textContent = "💾";
+      cargar(); // recarga datos después de insertar
+    }, 1000);
+  }
+}
 
   </script>
 </body>
