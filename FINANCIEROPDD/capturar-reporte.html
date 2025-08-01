@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
 window.onload = function () {
-  const supabase = supabase.createClient(
+  const clientSupabase = supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
@@ -19,7 +19,7 @@ window.onload = function () {
   ];
 
   async function cargarDatos() {
-    const { data, error } = await supabase.from('ingresos_fiscales').select('*').order('anio');
+    const { data, error } = await clientSupabase.from('ingresos_fiscales').select('*').order('anio');
     if (error) return alert("Error al cargar: " + error.message);
     cuerpo.innerHTML = "";
     data.forEach(reg => agregarFilaDesdeDB(reg));
@@ -85,8 +85,8 @@ window.onload = function () {
       return acc + (parseFloat(val) || 0);
     }, 0);
     const res = id
-      ? await supabase.from('ingresos_fiscales').update(obj).eq('id', id)
-      : await supabase.from('ingresos_fiscales').insert(obj);
+      ? await clientSupabase.from('ingresos_fiscales').update(obj).eq('id', id)
+      : await clientSupabase.from('ingresos_fiscales').insert(obj);
     if (res.error) {
       alert("Error al guardar: " + res.error.message);
     } else {
@@ -95,7 +95,8 @@ window.onload = function () {
     }
   }
 
-  function agregarFila() {
+  // 👇 expuesta globalmente
+  window.agregarFila = function () {
     const tr = document.createElement("tr");
     campos.forEach(campo => {
       const td = document.createElement("td");
@@ -123,7 +124,7 @@ window.onload = function () {
     tr.appendChild(tdGuardar);
 
     cuerpo.appendChild(tr);
-  }
+  };
 
   cargarDatos();
 };
