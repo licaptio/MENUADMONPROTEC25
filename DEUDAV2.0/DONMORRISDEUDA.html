@@ -167,7 +167,7 @@
       for (const f of data) {
         html += `<tr>
           <td>${f.fecha || "-"}</td>
-          <td>${f.uuid_cfdi || "-"}</td>
+          <td><a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">${f.uuid_cfdi || "-"}</a></td>
           <td>${f.rfc_emisor || "-"}</td>
           <td>${f.razon_social_emisor || "-"}</td>
           <td>${f.factura || "-"}</td>
