@@ -225,47 +225,55 @@ const clientSupabase = supabase.createClient(
     cuerpo.appendChild(tr);
   };
 
-  function graficarComparativaMensual(data) {
-    const ctx = document.getElementById('graficaComparativa').getContext('2d');
-    const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+function graficarComparativaMensual(data) {
+  const ctx = document.getElementById('graficaComparativa').getContext('2d');
+  const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-    const datasets = data.map((registro, index) => {
-      const color = `hsl(${index * 60}, 70%, 50%)`;
-      return {
-        label: registro.anio,
-        data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
-        borderColor: color,
-        backgroundColor: color,
-        fill: false,
-        tension: 0.2
-      };
-    });
+  const datasets = data.map((registro, index) => {
+    const color = `hsl(${index * 60}, 70%, 50%)`;
+    return {
+      label: registro.anio,
+      data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
+      borderColor: color,
+      backgroundColor: color,
+      fill: false,
+      tension: 0.2
+    };
+  });
 
-    if (window.graficaLineal) window.graficaLineal.destroy();
+  if (window.graficaLineal) window.graficaLineal.destroy();
 
-    window.graficaLineal = new Chart(ctx, {
-      type: 'line',
-      data: { labels: meses, datasets },
-options: {
-  responsive: true,
-  plugins: {
-    title: {
-      display: true,
-      text: '📈 Comparativa mensual por año'
-    },
-    legend: {
-      position: 'bottom'
-    },
-    tooltip: {
-      callbacks: {
-        label: function (context) {
-          return `${context.dataset.label}: ${parseFloat(context.raw).toLocaleString("es-MX")}`;
+  window.graficaLineal = new Chart(ctx, {
+    type: 'line',
+    data: { labels: meses, datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: '📈 Comparativa mensual por año'
+        },
+        legend: {
+          position: 'bottom'
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${context.dataset.label}: ${parseFloat(context.raw).toLocaleString("es-MX")}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: val => `$ ${val.toLocaleString("es-MX")}`
+          }
         }
       }
     }
-  }
+  });
 }
-});
   function graficarComparativaHistorica(data) {
     const ctx = document.getElementById('graficaHistorica').getContext('2d');
     data.sort((a, b) => a.anio - b.anio);
