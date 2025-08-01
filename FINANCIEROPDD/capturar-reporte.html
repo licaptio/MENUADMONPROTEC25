@@ -113,7 +113,12 @@ window.onload = function () {
     const tr = document.createElement("tr");
     campos.forEach(campo => {
       const td = document.createElement("td");
-      td.textContent = data[campo] ?? "";
+      if (campo === 'anio' || campo === 'concepto') {
+  td.textContent = data[campo] ?? "";
+} else {
+  td.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+}
+
       td.dataset.campo = campo;
       td.contentEditable = false;
       tr.appendChild(td);
@@ -157,7 +162,7 @@ window.onload = function () {
       const val = parseFloat(tr.children[i].innerText.replace(/,/g, '')) || 0;
       suma += val;
     }
-    tr.children[14].textContent = suma.toLocaleString("es-MX", { minimumFractionDigits: 2 });
+    tr.children[14].textContent = suma.toLocaleString("es-MX", { style: "currency", currency: "MXN" });  
   }
 
   async function guardarFila(tr, id) {
@@ -169,7 +174,7 @@ window.onload = function () {
       } else if (campo === 'concepto') {
         obj[campo] = val;
       } else {
-        obj[campo] = parseFloat(val.replace(/,/g, '')) || 0;
+        obj[campo] = parseFloat(val.replace(/[^0-9.-]+/g, '')) || 0;
       }
     });
     obj.anual = campos.slice(2).reduce((acc, campo, i) => {
