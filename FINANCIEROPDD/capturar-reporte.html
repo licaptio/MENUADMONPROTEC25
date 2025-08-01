@@ -78,7 +78,14 @@ window.onload = function () {
     const obj = {};
     campos.forEach((campo, i) => {
       const val = tr.children[i].innerText.trim();
-      obj[campo] = campo === 'anio' ? parseInt(val) : parseFloat(val.replace(/,/g, '')) || 0;
+      if (campo === 'anio') {
+  obj[campo] = parseInt(val);
+} else if (campo === 'concepto') {
+  obj[campo] = val;
+} else {
+  obj[campo] = parseFloat(val.replace(/,/g, '')) || 0;
+}
+
     });
     obj.anual = campos.slice(2).reduce((acc, campo, i) => {
       const val = tr.children[i + 2].innerText.replace(/,/g, '');
