@@ -116,7 +116,7 @@ window.onload = function () {
       if (campo === 'anio' || campo === 'concepto') {
   td.textContent = data[campo] ?? "";
 } else {
-  td.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+  ttd.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
       td.dataset.campo = campo;
@@ -162,7 +162,7 @@ window.onload = function () {
       const val = parseFloat(tr.children[i].innerText.replace(/,/g, '')) || 0;
       suma += val;
     }
-    tr.children[14].textContent = suma.toLocaleString("es-MX", { style: "currency", currency: "MXN" });  
+    tr.children[14].textContent = suma.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   async function guardarFila(tr, id) {
