@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📈 Estadísticas Ingresos Fiscales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #fdfbfb, #ebedee);
+      margin: 0;
+      padding: 2em;
+    }
+    h2 {
+      text-align: center;
+      color: #34495e;
+    }
+    canvas {
+      margin-top: 3em;
+      background-color: #fff;
+      padding: 1em;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<h2>📊 Estadísticas Ingresos Fiscales</h2>
+
+<canvas id="graficaComparativa" height="100"></canvas>
+<canvas id="graficaHistorica" height="100"></canvas>
+
+<script>
+const supabase = window.supabase.createClient(
+  'https://cvpbtjlupswbyxenugpz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+);
+
+async function cargarDatos() {
+  const { data, error } = await supabase.from('ingresos_fiscales').select('*').order('anio');
+  if (error) return alert("Error al cargar: " + error.message);
+  graficarComparativaMensual(data);
+  graficarComparativaHistorica(data);
+}
+
+function graficarComparativaMensual(data) {
+  const ctx = document.getElementById('graficaComparativa').getContext('2d');
+  const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  const datasets = data.map((registro, index) => {
+    const color = `hsl(${index * 60}, 70%, 50%)`;
+    return {
+      label: registro.anio,
+      data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
+      borderColor: color,
+      backgroundColor: color,
+      fill: false,
+      tension: 0.3
+    };
+  });
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: meses, datasets },
+    options: {
+      plugins: {
+        title: { display: true, text: '📈 Comparativa mensual por año' },
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: val => `$ ${val.toLocaleString("es-MX")}`
+          }
+        }
+      }
+    }
+  });
+}
+
+function graficarComparativaHistorica(data) {
+  const ctx = document.getElementById('graficaHistorica').getContext('2d');
+  data.sort((a, b) => a.anio - b.anio);
+  const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  const etiquetas = [], valores = [];
+  data.forEach(reg => {
+    meses.forEach(mes => {
+      etiquetas.push(`${mes.slice(0,3)} ${reg.anio}`);
+      valores.push(parseFloat(reg[mes.toLowerCase()] || 0));
+    });
+  });
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: etiquetas,
+      datasets: [{
+        label: 'Ingreso Fiscal Mensual',
+        data: valores,
+        fill: true,
+        borderColor: '#2ecc71',
+        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+        tension: 0.3
+      }]
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: '📉 Evolución histórica (tipo acciones)' },
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: val => `$ ${val.toLocaleString("es-MX")}`
+          }
+        }
+      }
+    }
+  });
+}
+
+cargarDatos();
+</script>
+
+</body>
+</html>
