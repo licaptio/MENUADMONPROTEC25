@@ -246,16 +246,17 @@ const clientSupabase = supabase.createClient(
     window.graficaLineal = new Chart(ctx, {
       type: 'line',
       data: { labels: meses, datasets },
-      options: {
-        plugins: {
-          title: { display: true, text: '📈 Comparativa mensual por año' },
-          legend: { position: 'bottom' },
-          tooltip: {
-            callbacks: {
-              label: ctx => `${ctx.dataset.label}: ${parseFloat(ctx.raw).toLocaleString("es-MX")}`
-            }
-          }
-        }
+options: {
+  plugins: {
+    title: { display: true, text: '📉 Evolución Histórica (tipo acciones)' },
+    legend: { display: false }
+  },
+  scales: {
+    y: {
+      ticks: { callback: val => val.toLocaleString("es-MX") }
+    }
+  }
+}
       }
     });
   }
