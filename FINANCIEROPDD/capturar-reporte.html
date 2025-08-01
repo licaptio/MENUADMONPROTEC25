@@ -4,37 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reporte Ingresos Supabase</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 1em; background: #f4f4f4; }
-    table { border-collapse: collapse; width: 100%; background: white; }
-    th, td { border: 1px solid #999; padding: 6px; text-align: right; }
-    th { background: #ffc000; }
-    thead tr:nth-child(2) th { background: #0070c0; color: white; }
-    td.editable { background: #eef; }
-    td.anual { background: #ddd; font-weight: bold; }
-    button { margin: 5px; padding: 4px 10px; }
-  </style>
-</head>
-<body>
-
-<h2>Ingresos Nominales Fiscales</h2>
-<table>
-  <thead>
-    <tr><th colspan="17">INGRESOS NOMINALES FISCALES</th></tr>
-    <tr>
-      <th>CONCEPTO</th><th>AÑO</th>
-      <th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th>
-      <th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th>
-      <th>ANUAL</th><th>Editar</th><th>Guardar</th>
-    </tr>
-  </thead>
-  <tbody id="cuerpo-tabla"></tbody>
-</table>
-
-<button onclick="agregarFila()">+ Agregar fila nueva</button>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
+window.onload = function () {
   const supabase = supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
@@ -154,7 +126,26 @@
   }
 
   cargarDatos();
+};
 </script>
+</head>
+<body>
+
+<h2>Ingresos Nominales Fiscales</h2>
+<table>
+  <thead>
+    <tr><th colspan="17">INGRESOS NOMINALES FISCALES</th></tr>
+    <tr>
+      <th>CONCEPTO</th><th>AÑO</th>
+      <th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th>
+      <th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th>
+      <th>ANUAL</th><th>Editar</th><th>Guardar</th>
+    </tr>
+  </thead>
+  <tbody id="cuerpo-tabla"></tbody>
+</table>
+
+<button onclick="agregarFila()">+ Agregar fila nueva</button>
 
 </body>
 </html>
