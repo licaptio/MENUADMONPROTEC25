@@ -103,7 +103,12 @@ const totalConcepto = totalSinImp + imp;
   }
 
   contenedor.innerHTML = `
-    <div class="campo"><span>UUID:</span> ${f.uuid_cfdi}</div>
+    <div class="campo">
+  <span>UUID:</span> 
+  <span id="uuidTexto">${f.uuid_cfdi}</span>
+  <button onclick="copiarUUID()" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem;">📋 Copiar</button>
+</div>
+
     <div class="campo"><span>Factura:</span> ${f.factura}</div>
     <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
     <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
@@ -169,6 +174,16 @@ const totalConcepto = totalSinImp + imp;
         contenedor.innerHTML = '<p class="error">Error al cargar los datos: ' + err.message + '</p>';
       });
     }
+function copiarUUID() {
+  const texto = document.getElementById("uuidTexto").textContent;
+  navigator.clipboard.writeText(texto)
+    .then(() => {
+      alert("✅ UUID copiado al portapapeles");
+    })
+    .catch(() => {
+      alert("❌ No se pudo copiar el UUID");
+    });
+}
 
 
   </script>
