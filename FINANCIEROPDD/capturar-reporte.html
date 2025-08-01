@@ -232,6 +232,63 @@ window.onload = function () {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function graficarComparativaMensual(data) {
+  const ctx = document.getElementById('graficaComparativa').getContext('2d');
+  const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+  const datasets = data.map((registro, index) => {
+    const color = `hsl(${index * 60}, 70%, 50%)`;
+    return {
+      label: registro.anio,
+      data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
+      borderColor: color,
+      backgroundColor: color,
+      fill: false,
+      tension: 0.2
+    };
+  });
+
+  if (window.graficaLineal) {
+    window.graficaLineal.destroy();
+  }
+
+  window.graficaLineal = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: meses,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: '📈 Comparativa mensual por año',
+          font: { size: 18 }
+        },
+        legend: {
+          position: 'bottom'
+        },
+        tooltip: {
+          callbacks: {
+            label: context => `${context.dataset.label}: ${parseFloat(context.raw).toLocaleString("es-MX")}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => value.toLocaleString("es-MX")
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+
 function graficarComparativaMensual(data) {
   const ctx = document.getElementById('graficaComparativa').getContext('2d');
   const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
