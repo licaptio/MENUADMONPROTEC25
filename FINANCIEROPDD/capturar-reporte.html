@@ -90,14 +90,18 @@
 </div>
 
 <div style="margin-top: 3em;">
-  <canvas id="graficaComparativa" height="120"></canvas>
+  <canvas id="graficaComparativa" height="100"></canvas>
+</div>
+
+<div style="margin-top: 3em;">
+  <canvas id="graficaHistorica" height="100"></canvas>
 </div>
 
 <script>
 window.onload = function () {
   const clientSupabase = supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   );
 
   const cuerpo = document.getElementById("cuerpo-tabla");
@@ -112,6 +116,7 @@ window.onload = function () {
     cuerpo.innerHTML = "";
     data.forEach(reg => agregarFilaDesdeDB(reg));
     graficarComparativaMensual(data);
+    graficarComparativaHistorica(data);
   }
 
   function agregarFilaDesdeDB(data) {
@@ -130,19 +135,19 @@ window.onload = function () {
     tdAnual.className = "anual";
     tr.appendChild(tdAnual);
 
+    const tdEdit = document.createElement("td");
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
     btnEditar.className = "btn-simple";
     btnEditar.onclick = () => habilitarEdicion(tr);
-    const tdEdit = document.createElement("td");
     tdEdit.appendChild(btnEditar);
     tr.appendChild(tdEdit);
 
+    const tdGuardar = document.createElement("td");
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
     btnGuardar.className = "btn-simple";
     btnGuardar.onclick = () => guardarFila(tr, data.id);
-    const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
     tr.appendChild(tdGuardar);
 
@@ -209,11 +214,11 @@ window.onload = function () {
     tdEdit.textContent = "-";
     tr.appendChild(tdEdit);
 
+    const tdGuardar = document.createElement("td");
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
     btnGuardar.className = "btn-secundario";
     btnGuardar.onclick = () => guardarFila(tr, null);
-    const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
     tr.appendChild(tdGuardar);
 
@@ -236,39 +241,62 @@ window.onload = function () {
       };
     });
 
-    if (window.graficaLineal) {
-      window.graficaLineal.destroy();
-    }
+    if (window.graficaLineal) window.graficaLineal.destroy();
 
     window.graficaLineal = new Chart(ctx, {
       type: 'line',
-      data: {
-        labels: meses,
-        datasets: datasets
-      },
+      data: { labels: meses, datasets },
       options: {
-        responsive: true,
         plugins: {
-          title: {
-            display: true,
-            text: '📈 Comparativa mensual por año',
-            font: { size: 18 }
-          },
-          legend: {
-            position: 'bottom'
-          },
+          title: { display: true, text: '📈 Comparativa mensual por año' },
+          legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
-              label: context => `${context.dataset.label}: ${parseFloat(context.raw).toLocaleString("es-MX")}`
+              label: ctx => `${ctx.dataset.label}: ${parseFloat(ctx.raw).toLocaleString("es-MX")}`
             }
           }
+        }
+      }
+    });
+  }
+
+  function graficarComparativaHistorica(data) {
+    const ctx = document.getElementById('graficaHistorica').getContext('2d');
+    data.sort((a, b) => a.anio - b.anio);
+    const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+    const etiquetas = [], valores = [];
+
+    data.forEach(reg => {
+      meses.forEach(mes => {
+        etiquetas.push(`${mes.slice(0,3)} ${reg.anio}`);
+        valores.push(parseFloat(reg[mes.toLowerCase()] || 0));
+      });
+    });
+
+    if (window.graficaHistorica) window.graficaHistorica.destroy();
+
+    window.graficaHistorica = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: etiquetas,
+        datasets: [{
+          label: 'Ingreso Fiscal Mensual',
+          data: valores,
+          fill: true,
+          borderColor: '#2ecc71',
+          backgroundColor: 'rgba(46, 204, 113, 0.2)',
+          tension: 0.3,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        plugins: {
+          title: { display: true, text: '📉 Evolución Histórica (tipo acciones)' },
+          legend: { display: false }
         },
         scales: {
           y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => value.toLocaleString("es-MX")
-            }
+            ticks: { callback: val => `$ ${val.toLocaleString("es-MX")}` }
           }
         }
       }
