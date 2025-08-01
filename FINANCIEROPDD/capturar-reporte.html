@@ -88,13 +88,14 @@
 <div style="margin-top: 1em; text-align:center;">
   <button onclick="agregarFila()" class="btn-secundario">➕ Agregar fila nueva</button>
 </div>
+
 <div style="margin-top: 3em;">
   <canvas id="graficaComparativa" height="120"></canvas>
 </div>
 
 <script>
 window.onload = function () {
-  const supabase = supabase.createClient(
+  const clientSupabase = supabase.createClient(
     'https://cvpbtjlupswbyxenugpz.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
   );
@@ -106,7 +107,7 @@ window.onload = function () {
   ];
 
   async function cargarDatos() {
-    const { data, error } = await supabase.from('ingresos_fiscales').select('*').order('anio');
+    const { data, error } = await clientSupabase.from('ingresos_fiscales').select('*').order('anio');
     if (error) return alert("Error al cargar: " + error.message);
     cuerpo.innerHTML = "";
     data.forEach(reg => agregarFilaDesdeDB(reg));
@@ -117,11 +118,8 @@ window.onload = function () {
     const tr = document.createElement("tr");
     campos.forEach(campo => {
       const td = document.createElement("td");
-      if (campo === 'anio' || campo === 'concepto') {
-        td.textContent = data[campo] ?? "";
-      } else {
-        td.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
-      }
+      td.textContent = (campo === 'anio' || campo === 'concepto') ? data[campo] ?? "" :
+        (data[campo] ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
       td.dataset.campo = campo;
       td.contentEditable = false;
       tr.appendChild(td);
@@ -132,19 +130,19 @@ window.onload = function () {
     tdAnual.className = "anual";
     tr.appendChild(tdAnual);
 
-    const tdEdit = document.createElement("td");
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
     btnEditar.className = "btn-simple";
     btnEditar.onclick = () => habilitarEdicion(tr);
+    const tdEdit = document.createElement("td");
     tdEdit.appendChild(btnEditar);
     tr.appendChild(tdEdit);
 
-    const tdGuardar = document.createElement("td");
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
     btnGuardar.className = "btn-simple";
     btnGuardar.onclick = () => guardarFila(tr, data.id);
+    const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
     tr.appendChild(tdGuardar);
 
@@ -172,21 +170,17 @@ window.onload = function () {
     const obj = {};
     campos.forEach((campo, i) => {
       const val = tr.children[i].innerText.trim();
-      if (campo === 'anio') {
-        obj[campo] = parseInt(val);
-      } else if (campo === 'concepto') {
-        obj[campo] = val;
-      } else {
-        obj[campo] = parseFloat(val.replace(/[^0-9.-]+/g, '')) || 0;
-      }
+      obj[campo] = (campo === 'anio') ? parseInt(val) :
+                   (campo === 'concepto') ? val :
+                   parseFloat(val.replace(/[^0-9.-]+/g, '')) || 0;
     });
     obj.anual = campos.slice(2).reduce((acc, campo, i) => {
       const val = tr.children[i + 2].innerText.replace(/,/g, '');
       return acc + (parseFloat(val) || 0);
     }, 0);
     const res = id
-      ? await supabase.from('ingresos_fiscales').update(obj).eq('id', id)
-      : await supabase.from('ingresos_fiscales').insert(obj);
+      ? await clientSupabase.from('ingresos_fiscales').update(obj).eq('id', id)
+      : await clientSupabase.from('ingresos_fiscales').insert(obj);
     if (res.error) {
       alert("Error al guardar: " + res.error.message);
     } else {
@@ -215,11 +209,11 @@ window.onload = function () {
     tdEdit.textContent = "-";
     tr.appendChild(tdEdit);
 
-    const tdGuardar = document.createElement("td");
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
     btnGuardar.className = "btn-secundario";
     btnGuardar.onclick = () => guardarFila(tr, null);
+    const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
     tr.appendChild(tdGuardar);
 
@@ -231,7 +225,7 @@ window.onload = function () {
     const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
     const datasets = data.map((registro, index) => {
-      const color = `hsl(${index * 360 / data.length}, 70%, 50%)`;
+      const color = `hsl(${index * 60}, 70%, 50%)`;
       return {
         label: registro.anio,
         data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
