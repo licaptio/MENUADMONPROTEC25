@@ -116,7 +116,7 @@ window.onload = function () {
       if (campo === 'anio' || campo === 'concepto') {
   td.textContent = data[campo] ?? "";
 } else {
-  ttd.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  td.textContent = (data[campo] ?? 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
       td.dataset.campo = campo;
