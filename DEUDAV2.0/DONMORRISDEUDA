@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta de Facturas por RFC</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    button {
+      margin: 1rem 0;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.9em;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    td {
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔍 Consulta de Facturas por RFC</h2>
+
+<label for="rfcFiltro"><strong>RFC:</strong></label>
+<select id="rfcFiltro" onchange="sincronizarNombre()">
+  <option value="">-- Selecciona uno --</option>
+</select>
+
+<label for="nombreFiltro" style="margin-left: 1rem;"><strong>Nombre:</strong></label>
+<select id="nombreFiltro" onchange="sincronizarRFC()">
+  <option value="">-- Selecciona uno --</option>
+</select>
+
+<button onclick="consultarPorRFC()">🔎 Consultar</button>
+
+  <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
+  <div id="tablaResultados"></div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    const tabla = "deuda_limpia_pdd";
+    let datosCrudos = [];
+
+    cargarRFCs();
+
+async function cargarRFCs() {
+  const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
+
+  if (error) {
+    console.error("❌ Error al obtener RFCs:", error);
+    alert("Error al obtener datos únicos");
+    return;
+  }
+
+  const selectRFC = document.getElementById("rfcFiltro");
+  const selectNombre = document.getElementById("nombreFiltro");
+
+  // Rellenar RFCs en orden original (por RFC)
+  for (const fila of data) {
+    const opt1 = document.createElement("option");
+    opt1.value = fila.rfc;
+    opt1.textContent = fila.rfc;
+    selectRFC.appendChild(opt1);
+  }
+
+  // Rellenar nombres ordenados alfabéticamente
+  const ordenadoPorNombre = [...data].sort((a, b) => {
+    return a.nombre.localeCompare(b.nombre);
+  });
+
+  for (const fila of ordenadoPorNombre) {
+    const opt2 = document.createElement("option");
+    opt2.value = fila.rfc; // sigue usando el RFC como value para la sincronización
+    opt2.textContent = fila.nombre;
+    selectNombre.appendChild(opt2);
+  }
+}
+
+async function consultarPorRFC() {
+  const rfc = document.getElementById("rfcFiltro").value;
+  if (!rfc) {
+    alert("Selecciona un RFC válido");
+    return;
+  }
+
+  // Limpiar resultados anteriores
+  document.getElementById("resumenConteo").innerText = "";
+  document.getElementById("tablaResultados").innerHTML = "";
+      
+      document.getElementById("tablaResultados").innerHTML = "";
+
+      // Obtener el conteo real sin traer datos
+      const { count, error: errorConteo } = await supabase
+        .from(tabla)
+        .select("*", { count: "exact", head: true })
+        .eq("rfc_emisor", rfc);
+
+      if (errorConteo) {
+        console.error("❌ Error al contar registros:", errorConteo);
+        alert("Error al contar registros");
+        return;
+      }
+
+      // Traer hasta 10,000 resultados
+const { data, error } = await supabase
+  .from(tabla)
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .order("fecha", { ascending: true })
+  .range(0, 9999);
+
+
+      if (error) {
+        console.error("❌ Error al traer datos:", error);
+        alert("Error al traer datos");
+        return;
+      }
+
+      datosCrudos = data;
+
+      let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
+      if (data.length < count) {
+        mensaje += `\n⚠️ Solo se muestran los primeros ${data.length} registros (de ${count})`;
+      }
+
+      document.getElementById("resumenConteo").innerText = mensaje;
+      mostrarTabla(data);
+    }
+
+    function mostrarTabla(data) {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>UUID</th>
+            <th>RFC Emisor</th>
+            <th>Razón Social</th>
+            <th>Factura</th>
+            <th>Total</th>
+            <th>¿Pagada?</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      for (const f of data) {
+        html += `<tr>
+          <td>${f.fecha || "-"}</td>
+          <td>${f.uuid_cfdi || "-"}</td>
+          <td>${f.rfc_emisor || "-"}</td>
+          <td>${f.razon_social_emisor || "-"}</td>
+          <td>${f.factura || "-"}</td>
+          <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
+  ${(f.factura_pagada || 'NO').toUpperCase()}
+</td>
+
+        </tr>`;
+      }
+
+      html += `</tbody></table>`;
+      document.getElementById("tablaResultados").innerHTML = html;
+    }
+async function togglePago(id, celda) {
+  const actual = celda.textContent.trim().toUpperCase();
+  const nuevo = actual === "SI" ? "NO" : "SI";
+
+  const { error } = await supabase
+    .from(tabla)
+    .update({ factura_pagada: nuevo })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Error al actualizar en Supabase");
+    console.error(error);
+    return;
+  }
+
+  celda.textContent = nuevo;
+}
+
+function sincronizarNombre() {
+  const rfc = document.getElementById("rfcFiltro").value;
+  const selectNombre = document.getElementById("nombreFiltro");
+  for (const opt of selectNombre.options) {
+    if (opt.value === rfc) {
+      selectNombre.value = rfc;
+      return;
+    }
+  }
+  selectNombre.value = "";
+}
+
+function sincronizarRFC() {
+  const rfc = document.getElementById("nombreFiltro").value;
+  const selectRFC = document.getElementById("rfcFiltro");
+  for (const opt of selectRFC.options) {
+    if (opt.value === rfc) {
+      selectRFC.value = rfc;
+      return;
+    }
+  }
+  selectRFC.value = "";
+}
+  </script>
+</body>
+</html>
