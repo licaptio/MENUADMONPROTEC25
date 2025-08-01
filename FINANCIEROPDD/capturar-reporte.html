@@ -247,20 +247,25 @@ const clientSupabase = supabase.createClient(
       type: 'line',
       data: { labels: meses, datasets },
 options: {
+  responsive: true,
   plugins: {
-    title: { display: true, text: '📉 Evolución Histórica (tipo acciones)' },
-    legend: { display: false }
-  },
-  scales: {
-    y: {
-      ticks: { callback: val => val.toLocaleString("es-MX") }
+    title: {
+      display: true,
+      text: '📈 Comparativa mensual por año'
+    },
+    legend: {
+      position: 'bottom'
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          return `${context.dataset.label}: ${parseFloat(context.raw).toLocaleString("es-MX")}`;
+        }
+      }
     }
   }
 }
-      }
-    });
-  }
-
+});
   function graficarComparativaHistorica(data) {
     const ctx = document.getElementById('graficaHistorica').getContext('2d');
     data.sort((a, b) => a.anio - b.anio);
