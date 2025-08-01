@@ -3,8 +3,92 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Reporte Ingresos Supabase</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <title>📊 Reporte Ingresos Supabase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 2rem;
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-top: 1em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      text-align: right;
+    }
+    th {
+      background-color: #2980b9;
+      color: white;
+      font-size: 0.9rem;
+    }
+    td.editable {
+      background-color: #f0f8ff;
+    }
+    td.anual {
+      background-color: #f7f7f7;
+      font-weight: bold;
+      color: #34495e;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border: none;
+      background-color: #27ae60;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    .btn-secundario {
+      background-color: #3498db;
+    }
+    .btn-secundario:hover {
+      background-color: #2c80b4;
+    }
+    .btn-simple {
+      background-color: #bdc3c7;
+      color: #2c3e50;
+    }
+    .btn-simple:hover {
+      background-color: #aeb6bf;
+    }
+  </style>
+</head>
+<body>
+
+<h2>📊 Ingresos Nominales Fiscales</h2>
+<table>
+  <thead>
+    <tr><th colspan="17">INGRESOS NOMINALES FISCALES</th></tr>
+    <tr>
+      <th>CONCEPTO</th><th>AÑO</th>
+      <th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th>
+      <th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th>
+      <th>ANUAL</th><th>Editar</th><th>Guardar</th>
+    </tr>
+  </thead>
+  <tbody id="cuerpo-tabla"></tbody>
+</table>
+
+<div style="margin-top: 1em; text-align:center;">
+  <button onclick="agregarFila()" class="btn-secundario">➕ Agregar fila nueva</button>
+</div>
+
 <script>
 window.onload = function () {
   const clientSupabase = supabase.createClient(
@@ -42,6 +126,7 @@ window.onload = function () {
 
     const btnEditar = document.createElement("button");
     btnEditar.textContent = "Editar";
+    btnEditar.className = "btn-simple";
     btnEditar.onclick = () => habilitarEdicion(tr);
     const tdEdit = document.createElement("td");
     tdEdit.appendChild(btnEditar);
@@ -49,6 +134,7 @@ window.onload = function () {
 
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
+    btnGuardar.className = "btn-simple";
     btnGuardar.onclick = () => guardarFila(tr, data.id);
     const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
@@ -79,13 +165,12 @@ window.onload = function () {
     campos.forEach((campo, i) => {
       const val = tr.children[i].innerText.trim();
       if (campo === 'anio') {
-  obj[campo] = parseInt(val);
-} else if (campo === 'concepto') {
-  obj[campo] = val;
-} else {
-  obj[campo] = parseFloat(val.replace(/,/g, '')) || 0;
-}
-
+        obj[campo] = parseInt(val);
+      } else if (campo === 'concepto') {
+        obj[campo] = val;
+      } else {
+        obj[campo] = parseFloat(val.replace(/,/g, '')) || 0;
+      }
     });
     obj.anual = campos.slice(2).reduce((acc, campo, i) => {
       const val = tr.children[i + 2].innerText.replace(/,/g, '');
@@ -102,7 +187,6 @@ window.onload = function () {
     }
   }
 
-  // 👇 expuesta globalmente
   window.agregarFila = function () {
     const tr = document.createElement("tr");
     campos.forEach(campo => {
@@ -125,6 +209,7 @@ window.onload = function () {
 
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "Guardar";
+    btnGuardar.className = "btn-secundario";
     btnGuardar.onclick = () => guardarFila(tr, null);
     const tdGuardar = document.createElement("td");
     tdGuardar.appendChild(btnGuardar);
@@ -136,24 +221,5 @@ window.onload = function () {
   cargarDatos();
 };
 </script>
-</head>
-<body>
-
-<h2>Ingresos Nominales Fiscales</h2>
-<table>
-  <thead>
-    <tr><th colspan="17">INGRESOS NOMINALES FISCALES</th></tr>
-    <tr>
-      <th>CONCEPTO</th><th>AÑO</th>
-      <th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th>
-      <th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th>
-      <th>ANUAL</th><th>Editar</th><th>Guardar</th>
-    </tr>
-  </thead>
-  <tbody id="cuerpo-tabla"></tbody>
-</table>
-
-<button onclick="agregarFila()">+ Agregar fila nueva</button>
-
 </body>
 </html>
