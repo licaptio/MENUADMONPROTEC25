@@ -25,6 +25,21 @@
       margin-top: 0.5em;
     }
 
+    .aviso-movil {
+      text-align: center;
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 1em;
+      margin-top: 0.5em;
+      animation: parpadeo 1s infinite;
+      display: none;
+    }
+
+    @keyframes parpadeo {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
     .chart-container {
       width: 100%;
       overflow-x: auto;
@@ -48,6 +63,12 @@
       aspect-ratio: 2 / 1;
     }
 
+    @media (max-width: 768px) {
+      .aviso-movil {
+        display: block;
+      }
+    }
+
     @media (min-width: 768px) {
       h2 {
         font-size: 2em;
@@ -62,6 +83,7 @@
 <body>
 
 <h2>📊 Estadísticas Ingresos Fiscales</h2>
+<div class="aviso-movil">🔄 Para una mejor visualización, gira tu celular en horizontal</div>
 
 <div class="chart-container">
   <div class="chart-wrapper">
@@ -131,7 +153,6 @@ function graficarComparativaMensual(data) {
     }
   });
 
-  // ✨ Parpadeo línea 2025
   let visible = true;
   setInterval(() => {
     const ds = chart.data.datasets.find(d => d.label === 2025);
