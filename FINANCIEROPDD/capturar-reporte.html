@@ -103,7 +103,7 @@ const campos = [
 
 async function cargarDatos() {
   const { data, error } = await clientSupabase
-    .from('tablaPDDdatos')
+    .from('tablapdddatos')
     .select('*')
     .eq('cuenta', '00000001')
     .order('anio');
@@ -178,8 +178,8 @@ async function guardarFila(tr, id) {
     return acc + (parseFloat(val) || 0);
   }, 0);
   const res = id
-    ? await clientSupabase.from('tablaPDDdatos').update(obj).eq('id', id)
-    : await clientSupabase.from('tablaPDDdatos').insert(obj);
+    ? await clientSupabase.from('tablapdddatos').update(obj).eq('id', id)
+    : await clientSupabase.from('tablapdddatos').insert(obj);
   if (res.error) {
     alert("Error al guardar: " + res.error.message);
   } else {
