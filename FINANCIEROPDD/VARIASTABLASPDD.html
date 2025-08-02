@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -69,14 +68,28 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0ajF1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTY2NzM3NTcsImV4cCI6MjAxMjI0OTc1N30.3ae7lHg3A9N1iSRDKFY22TuQ5kqBzGZ7EZUTAVJ1g0E'
     );
 
-    async function cargarTabla(nombreTabla, divId) {
+    async function cargarYSepararDatos() {
       const { data, error } = await client
-        .from(nombreTabla)
+        .from('tablaPDDdatos')
         .select('*')
         .order('anio', { ascending: true });
 
       if (error) {
-        document.getElementById(divId).innerHTML = '<p>Error al cargar datos.</p>';
+        document.getElementById('tabla-ingresos').innerHTML = '<p>Error al cargar datos.</p>';
+        document.getElementById('tabla-nomina').innerHTML = '<p>Error al cargar datos.</p>';
+        return;
+      }
+
+      const ingresos = data.filter(row => row.cuenta === '00000001');
+      const nomina = data.filter(row => row.cuenta === '00000002');
+
+      renderTabla(ingresos, 'tabla-ingresos');
+      renderTabla(nomina, 'tabla-nomina');
+    }
+
+    function renderTabla(datos, divId) {
+      if (datos.length === 0) {
+        document.getElementById(divId).innerHTML = '<p>Sin datos disponibles.</p>';
         return;
       }
 
@@ -85,7 +98,7 @@
       meses.forEach(m => html += `<th>${m.toUpperCase()}</th>`);
       html += '<th>ANUAL</th></tr></thead><tbody>';
 
-      data.forEach(row => {
+      datos.forEach(row => {
         let total = 0;
         html += `<tr><td>${row.concepto}</td><td>${row.anio}</td>`;
         meses.forEach(m => {
@@ -100,8 +113,7 @@
       document.getElementById(divId).innerHTML = html;
     }
 
-    cargarTabla('ingresos_fiscales', 'tabla-ingresos');
-    cargarTabla('nomina_pdd', 'tabla-nomina');
+    cargarYSepararDatos();
   </script>
 </body>
 </html>
