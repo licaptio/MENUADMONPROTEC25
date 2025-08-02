@@ -15,7 +15,7 @@
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #fdfbfb, #ebedee);
       margin: 0;
-      padding: 1em 1em 2em;
+      padding: 1em;
     }
 
     h2 {
@@ -25,16 +25,27 @@
       margin-top: 0.5em;
     }
 
-    canvas {
-      width: 100% !important;
-      max-width: 800px;
-      height: auto !important;
-      margin: 2em auto;
-      background-color: #fff;
+    .chart-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5em 0;
+    }
+
+    .chart-wrapper {
+      min-width: 300px;
+      max-width: 1000px;
+      margin: 0 auto;
       padding: 1em;
+      background-color: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    canvas {
       display: block;
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 2 / 1;
     }
 
     @media (min-width: 768px) {
@@ -52,8 +63,17 @@
 
 <h2>📊 Estadísticas Ingresos Fiscales</h2>
 
-<canvas id="graficaComparativa"></canvas>
-<canvas id="graficaHistorica"></canvas>
+<div class="chart-container">
+  <div class="chart-wrapper">
+    <canvas id="graficaComparativa"></canvas>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-wrapper">
+    <canvas id="graficaHistorica"></canvas>
+  </div>
+</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -152,7 +172,7 @@ function graficarComparativaHistorica(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: { display: true, text: '📉 Evolución histórica ' },
+        title: { display: true, text: '📉 Evolución histórica' },
         legend: { display: false }
       },
       scales: {
