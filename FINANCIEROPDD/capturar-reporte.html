@@ -102,7 +102,12 @@ const campos = [
 ];
 
 async function cargarDatos() {
-  const { data, error } = await clientSupabase.from('ingresos_fiscales').select('*').order('anio');
+  const { data, error } = await clientSupabase
+    .from('tablaPDDdatos')
+    .select('*')
+    .eq('cuenta', '00000001')
+    .order('anio');
+
   if (error) return alert("Error al cargar: " + error.message);
   cuerpo.innerHTML = "";
   data.forEach(reg => agregarFilaDesdeDB(reg));
@@ -161,7 +166,7 @@ function recalcularAnual(tr) {
 }
 
 async function guardarFila(tr, id) {
-  const obj = {};
+  const obj = { cuenta: '00000001' };  // 👈 Agregamos cuenta fija
   campos.forEach((campo, i) => {
     const val = tr.children[i].innerText.trim();
     obj[campo] = (campo === 'anio') ? parseInt(val) :
@@ -173,8 +178,8 @@ async function guardarFila(tr, id) {
     return acc + (parseFloat(val) || 0);
   }, 0);
   const res = id
-    ? await clientSupabase.from('ingresos_fiscales').update(obj).eq('id', id)
-    : await clientSupabase.from('ingresos_fiscales').insert(obj);
+    ? await clientSupabase.from('tablaPDDdatos').update(obj).eq('id', id)
+    : await clientSupabase.from('tablaPDDdatos').insert(obj);
   if (res.error) {
     alert("Error al guardar: " + res.error.message);
   } else {
