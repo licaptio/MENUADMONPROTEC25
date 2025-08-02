@@ -7,9 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -21,7 +19,6 @@
     h2 {
       text-align: center;
       color: #34495e;
-      font-size: 1.5em;
       margin-top: 0.5em;
     }
 
@@ -63,20 +60,38 @@
       aspect-ratio: 2 / 1;
     }
 
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 100%;
+      margin: 2em auto;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 0.5em;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-size: 0.9em;
+    }
+
+    th {
+      background-color: #2980b9;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+
     @media (max-width: 768px) {
-      .aviso-movil {
-        display: block;
-      }
+      .aviso-movil { display: block; }
     }
 
     @media (min-width: 768px) {
-      h2 {
-        font-size: 2em;
-      }
-
-      body {
-        padding: 2em 3em;
-      }
+      h2 { font-size: 2em; }
+      body { padding: 2em 3em; }
     }
   </style>
 </head>
@@ -97,6 +112,18 @@
   </div>
 </div>
 
+<h2>📋 Tabla de Ingresos Fiscales</h2>
+<div class="chart-container">
+  <table id="tablaDatos">
+    <thead>
+      <tr>
+        <th>CONCEPTO</th><th>AÑO</th><th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th><th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th><th>ANUAL</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
 <script>
 const supabase = window.supabase.createClient(
   'https://cvpbtjlupswbyxenugpz.supabase.co',
@@ -108,6 +135,25 @@ async function cargarDatos() {
   if (error) return alert("Error al cargar: " + error.message);
   graficarComparativaMensual(data);
   graficarComparativaHistorica(data);
+  mostrarTabla(data);
+}
+
+function mostrarTabla(data) {
+  const tbody = document.querySelector("#tablaDatos tbody");
+  tbody.innerHTML = "";
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  data.forEach(registro => {
+    let fila = `<tr><td>${registro.concepto || ''}</td><td>${registro.anio}</td>`;
+    let total = 0;
+    meses.forEach(mes => {
+      const val = parseFloat(registro[mes] || 0);
+      total += val;
+      fila += `<td>$${val.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>`;
+    });
+    fila += `<td><strong>$${total.toLocaleString('es-MX', {minimumFractionDigits:2})}</strong></td></tr>`;
+    tbody.innerHTML += fila;
+  });
 }
 
 function graficarComparativaMensual(data) {
