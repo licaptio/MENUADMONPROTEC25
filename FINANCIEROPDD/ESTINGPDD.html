@@ -7,22 +7,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #fdfbfb, #ebedee);
       margin: 0;
-      padding: 2em;
+      padding: 1em 1em 2em;
     }
+
     h2 {
       text-align: center;
       color: #34495e;
+      font-size: 1.5em;
+      margin-top: 0.5em;
     }
+
     canvas {
-      margin-top: 3em;
+      width: 100% !important;
+      max-width: 800px;
+      height: auto !important;
+      margin: 2em auto;
       background-color: #fff;
       padding: 1em;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: block;
+    }
+
+    @media (min-width: 768px) {
+      h2 {
+        font-size: 2em;
+      }
+
+      body {
+        padding: 2em 3em;
+      }
     }
   </style>
 </head>
@@ -30,8 +52,8 @@
 
 <h2>📊 Estadísticas Ingresos Fiscales</h2>
 
-<canvas id="graficaComparativa" height="100"></canvas>
-<canvas id="graficaHistorica" height="100"></canvas>
+<canvas id="graficaComparativa"></canvas>
+<canvas id="graficaHistorica"></canvas>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -73,6 +95,8 @@ function graficarComparativaMensual(data) {
     type: 'line',
     data: { labels: meses, datasets },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         title: { display: true, text: '📈 Comparativa mensual por año' },
         legend: { position: 'bottom' }
@@ -87,7 +111,7 @@ function graficarComparativaMensual(data) {
     }
   });
 
-  // ✨ Agrega parpadeo a la línea de 2025
+  // ✨ Parpadeo línea 2025
   let visible = true;
   setInterval(() => {
     const ds = chart.data.datasets.find(d => d.label === 2025);
@@ -97,7 +121,7 @@ function graficarComparativaMensual(data) {
       chart.update();
       visible = !visible;
     }
-  }, 700); // cada 700ms
+  }, 700);
 }
 
 function graficarComparativaHistorica(data) {
@@ -125,6 +149,8 @@ function graficarComparativaHistorica(data) {
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         title: { display: true, text: '📉 Evolución histórica ' },
         legend: { display: false }
@@ -145,6 +171,3 @@ cargarDatos();
 
 </body>
 </html>
-
-
-
