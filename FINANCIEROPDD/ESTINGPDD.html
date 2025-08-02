@@ -49,18 +49,27 @@ async function cargarDatos() {
 function graficarComparativaMensual(data) {
   const ctx = document.getElementById('graficaComparativa').getContext('2d');
   const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
   const datasets = data.map((registro, index) => {
-    const color = `hsl(${index * 60}, 70%, 50%)`;
+    const is2025 = registro.anio === 2025;
+    const color = is2025 ? '#2980b9' : `hsl(${index * 60}, 70%, 50%)`;
+
     return {
       label: registro.anio,
       data: meses.map(mes => parseFloat(registro[mes.toLowerCase()] || 0)),
       borderColor: color,
       backgroundColor: color,
       fill: false,
-      tension: 0.3
+      tension: 0.3,
+      borderWidth: is2025 ? 4 : 2,
+      hidden: false,
+      pointRadius: is2025 ? 5 : 3,
+      pointBackgroundColor: is2025 ? '#2980b9' : color,
+      pointBorderColor: is2025 ? '#2980b9' : color,
     };
   });
-  new Chart(ctx, {
+
+  const chart = new Chart(ctx, {
     type: 'line',
     data: { labels: meses, datasets },
     options: {
@@ -77,6 +86,18 @@ function graficarComparativaMensual(data) {
       }
     }
   });
+
+  // ✨ Agrega parpadeo a la línea de 2025
+  let visible = true;
+  setInterval(() => {
+    const ds = chart.data.datasets.find(d => d.label === 2025);
+    if (ds) {
+      ds.borderColor = visible ? '#2980b9' : 'rgba(0,0,0,0)';
+      ds.pointBackgroundColor = visible ? '#2980b9' : 'rgba(0,0,0,0)';
+      chart.update();
+      visible = !visible;
+    }
+  }, 700); // cada 700ms
 }
 
 function graficarComparativaHistorica(data) {
@@ -124,5 +145,6 @@ cargarDatos();
 
 </body>
 </html>
+
 
 
