@@ -117,10 +117,29 @@
       messagingSenderId: "96242533231",
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const recordatorios = [];
+    // Al cargar la página, obtener los recordatorios existentes
+    window.onload = async () => {
+      const lista = document.getElementById('listaRecordatorios');
+      lista.innerHTML = '<p>Cargando...</p>';
+      const snapshot = await db.collection("recordatorios_alika").orderBy("fecha", "desc").get();
+      lista.innerHTML = '';
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        lista.innerHTML += `
+          <div class="recordatorio">
+            <strong>${r.descripcion}</strong><br>
+            Fecha: ${new Date(r.fecha.seconds * 1000).toLocaleString()}<br>
+            Canal: ${r.canal}<br>
+            Tags: ${r.tags?.join(', ')}<br>
+            Activo: ${r.activo ? '✅' : '❌'}<br>
+            Recurrente: ${r.recurrente ? '♻️' : '-'}
+          </div>`;
+      });
+    };
 
     function crearRecordatorio() {
       const descripcion = document.getElementById('descripcion').value.trim();
@@ -137,7 +156,7 @@
       }
 
       const dia = parseInt(fechaTexto.substring(0, 2));
-      const mes = parseInt(fechaTexto.substring(2, 4)) - 1; // JavaScript months = 0-11
+      const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
       const año = parseInt("20" + fechaTexto.substring(4, 6));
       const horas = parseInt(horaTexto.substring(0, 2));
       const minutos = parseInt(horaTexto.substring(2, 4));
@@ -154,31 +173,11 @@
         enviado: false
       };
 
-      console.log("Intentando guardar:", nuevo);
-      recordatorios.push(nuevo);
-      mostrarRecordatorios();
-      guardarEnFirestore(nuevo);
-    }
-
-    function mostrarRecordatorios() {
-      const lista = document.getElementById('listaRecordatorios');
-      lista.innerHTML = "";
-      recordatorios.forEach(r => {
-        lista.innerHTML += `
-          <div class="recordatorio">
-            <strong>${r.descripcion}</strong><br>
-            Fecha: ${new Date(r.fecha).toLocaleString()}<br>
-            Canal: ${r.canal}<br>
-            Tags: ${r.tags}<br>
-            Activo: ${r.activo ? '✅' : '❌'}<br>
-            Recurrente: ${r.recurrente ? '♻️' : '-'}
-          </div>`;
-      });
-    }
-
-    function guardarEnFirestore(recordatorio) {
-      db.collection("recordatorios_alika").add(recordatorio)
-        .then(() => console.log("✅ Guardado en Firestore"))
+      db.collection("recordatorios_alika").add(nuevo)
+        .then(() => {
+          console.log("✅ Guardado en Firestore");
+          location.reload(); // recarga para mostrar el nuevo
+        })
         .catch(e => console.error("❌ Error guardando en Firestore:", e));
     }
   </script>
