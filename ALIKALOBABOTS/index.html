@@ -213,6 +213,12 @@
       messagingSenderId: "96242533231",
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
+const params = new URLSearchParams(window.location.search);
+const idDesdeURL = params.get("id");
+
+if (idDesdeURL) {
+  editarRecordatorio(idDesdeURL);
+}
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -251,25 +257,36 @@
 
       const coleccion = db.collection("recordatorios_alika");
 
-      if (idEditando) {
-        coleccion.doc(idEditando).update(nuevo)
-          .then(() => {
-            console.log("✅ Actualizado");
-            idEditando = null;
-            document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
-            location.reload();
-          })
-          .catch(e => console.error("❌ Error actualizando:", e));
-      } else {
-        coleccion.add(nuevo)
-          .then(() => {
-            console.log("✅ Guardado en Firestore");
-            location.reload();
-          })
-          .catch(e => console.error("❌ Error guardando en Firestore:", e));
-      }
+if (idEditando) {
+  coleccion.doc(idEditando).get().then(doc => {
+    const anterior = doc.data();
+    const fechaAntes = anterior.fecha.toDate().getTime();
+    const fechaNueva = fecha.getTime();
+
+    // Si se modificó la fecha/hora, marcar como no enviado
+    if (fechaAntes !== fechaNueva) {
+      nuevo.enviado = false;
+    } else {
+      nuevo.enviado = anterior.enviado;
     }
 
+    coleccion.doc(idEditando).update(nuevo)
+      .then(() => {
+        console.log("✅ Actualizado");
+        idEditando = null;
+        document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
+        location.href = "ver-recordatorios.html"; // redirigir después de editar
+      })
+      .catch(e => console.error("❌ Error actualizando:", e));
+  });
+} else {
+  coleccion.add(nuevo)
+    .then(() => {
+      console.log("✅ Guardado en Firestore");
+      location.reload();
+    })
+    .catch(e => console.error("❌ Error guardando en Firestore:", e));
+}
     function editarRecordatorio(id) {
       db.collection("recordatorios_alika").doc(id).get().then(doc => {
         if (doc.exists) {
@@ -298,4 +315,5 @@
   </script>
 </body>
 </html>
+
 
