@@ -230,16 +230,15 @@
       messagingSenderId: "96242533231",
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(); // ✅ Primero creamos 'db'
+
 const params = new URLSearchParams(window.location.search);
 const idDesdeURL = params.get("id");
 
 if (idDesdeURL) {
-  editarRecordatorio(idDesdeURL);
+  editarRecordatorio(idDesdeURL); // ✅ Ya existe 'db' cuando se llama
 }
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
     function crearRecordatorio() {
       const descripcion = document.getElementById('descripcion').value.trim();
       const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
@@ -344,3 +343,4 @@ function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
   </script>
 </body>
 </html>
+
