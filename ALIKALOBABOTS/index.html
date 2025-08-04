@@ -285,9 +285,10 @@ if (idEditando) {
       console.log("✅ Guardado en Firestore");
       location.reload();
     })
-    .catch(e => console.error("❌ Error guardando en Firestore:", e));
-}
-    function editarRecordatorio(id) {
+.catch(e => console.error("❌ Error guardando en Firestore:", e));
+} // ← AQUÍ CIERRA crearRecordatorio
+
+function editarRecordatorio(id) {
       db.collection("recordatorios_alika").doc(id).get().then(doc => {
         if (doc.exists) {
           const r = doc.data();
@@ -315,5 +316,6 @@ if (idEditando) {
   </script>
 </body>
 </html>
+
 
 
