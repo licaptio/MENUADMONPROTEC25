@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ver y Editar Recordatorios</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+    .recordatorio {
+      background: #222;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+    .recordatorio input {
+      width: 100%;
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .acciones button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🧠 Todos los recordatorios</h2>
+  <div id="lista"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "notasfoliador.firebaseapp.com",
+      projectId: "notasfoliador"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function cargar() {
+      const lista = document.getElementById('lista');
+      const snapshot = await db.collection("recordatorios_alika").orderBy("fecha", "desc").get();
+      lista.innerHTML = '';
+
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        const id = doc.id;
+        const f = r.fecha.toDate();
+        const fechaStr = `${f.toLocaleDateString()} ${f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+        lista.innerHTML += `
+          <div class="recordatorio" id="r-${id}">
+            <strong>${r.descripcion}</strong><br>
+            Fecha: ${fechaStr}<br>
+            Canal: ${r.canal}<br>
+            Tags: ${r.tags?.join(', ')}<br>
+            Activo: ${r.activo ? '✅' : '❌'} | Recurrente: ${r.recurrente ? '♻️' : '—'}<br>
+            Enviado: ${r.enviado ? '✅' : '❌'}
+            <div class="acciones">
+              <button onclick="reenviar('${id}')">🔁 Reenviar</button>
+              <button onclick="eliminar('${id}')">🗑 Eliminar</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    function reenviar(id) {
+      db.collection("recordatorios_alika").doc(id).update({ enviado: false })
+        .then(() => {
+          alert("🔔 Marcado como no enviado. Se notificará de nuevo.");
+          cargar();
+        });
+    }
+
+    function eliminar(id) {
+      if (confirm("¿Eliminar este recordatorio?")) {
+        db.collection("recordatorios_alika").doc(id).delete().then(() => {
+          document.getElementById(`r-${id}`).remove();
+        });
+      }
+    }
+
+    cargar();
+  </script>
+</body>
+</html>
