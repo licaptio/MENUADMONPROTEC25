@@ -202,6 +202,23 @@
     <button class="crear-btn" onclick="crearRecordatorio()">🔔 Crear recordatorio</button>
     <button onclick="location.href='ver-recordatorios.html'" class="ver-btn">Ver y editar recordatorios</button>
   </div>
+<div id="mensaje-exito" style="
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 9999;
+">
+  ✅ Guardado exitosamente
+</div>
 
   <script>
     let idEditando = null;
@@ -281,10 +298,11 @@ if (idEditando) {
   });
 } else {
   coleccion.add(nuevo)
-    .then(() => {
-      console.log("✅ Guardado en Firestore");
-      location.reload();
-    })
+.then(() => {
+  console.log("✅ Guardado en Firestore");
+  mostrarMensajeExito(); // muestra el mensaje
+  setTimeout(() => location.reload(), 2000); // espera 2s antes de recargar
+})
 .catch(e => console.error("❌ Error guardando en Firestore:", e));
 } // ← AQUÍ CIERRA crearRecordatorio
 } // ← Esta cierra la función crearRecordatorio
@@ -313,10 +331,16 @@ function editarRecordatorio(id) {
         }
       });
     }
+function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
+  const mensaje = document.getElementById("mensaje-exito");
+  mensaje.textContent = texto;
+  mensaje.style.display = "block";
+
+  setTimeout(() => {
+    mensaje.style.display = "none";
+  }, 2000); // Desaparece en 2 segundos
+}
+
   </script>
 </body>
 </html>
-
-
-
-
