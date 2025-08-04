@@ -109,6 +109,7 @@
   </div>
 
   <script>
+    let idEditando = null;
 const firebaseConfig = {
   apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
   authDomain: "notasfoliador.firebaseapp.com",
@@ -129,58 +130,99 @@ const firebaseConfig = {
       lista.innerHTML = '';
       snapshot.forEach(doc => {
         const r = doc.data();
-        lista.innerHTML += `
-          <div class="recordatorio">
-            <strong>${r.descripcion}</strong><br>
-            Fecha: ${new Date(r.fecha.seconds * 1000).toLocaleString()}<br>
-            Canal: ${r.canal}<br>
-            Tags: ${r.tags?.join(', ')}<br>
-            Activo: ${r.activo ? '✅' : '❌'}<br>
-            Recurrente: ${r.recurrente ? '♻️' : '-'}
-          </div>`;
+lista.innerHTML += `
+  <div class="recordatorio">
+    <strong>${r.descripcion}</strong><br>
+    Fecha: ${new Date(r.fecha.seconds * 1000).toLocaleString()}<br>
+    Canal: ${r.canal}<br>
+    Tags: ${r.tags?.join(', ')}<br>
+    Activo: ${r.activo ? '✅' : '❌'}<br>
+    Recurrente: ${r.recurrente ? '♻️' : '-'}<br>
+    <button onclick="editarRecordatorio('${doc.id}')">✏️ Editar</button>
+  </div>`;
       });
     };
 
-    function crearRecordatorio() {
-      const descripcion = document.getElementById('descripcion').value.trim();
-      const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
-      const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
-      const canal = document.getElementById('canal').value;
-      const tags = document.getElementById('tags').value;
-      const activo = document.getElementById('activo').checked;
-      const recurrente = document.getElementById('recurrente').checked;
+function crearRecordatorio() {
+  const descripcion = document.getElementById('descripcion').value.trim();
+  const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
+  const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
+  const canal = document.getElementById('canal').value;
+  const tags = document.getElementById('tags').value;
+  const activo = document.getElementById('activo').checked;
+  const recurrente = document.getElementById('recurrente').checked;
 
-      if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
-        alert("Falta descripción o fecha/hora inválida.");
-        return;
-      }
+  if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
+    alert("Falta descripción o fecha/hora inválida.");
+    return;
+  }
 
-      const dia = parseInt(fechaTexto.substring(0, 2));
-      const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
-      const año = parseInt("20" + fechaTexto.substring(4, 6));
-      const horas = parseInt(horaTexto.substring(0, 2));
-      const minutos = parseInt(horaTexto.substring(2, 4));
+  const dia = parseInt(fechaTexto.substring(0, 2));
+  const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
+  const año = parseInt("20" + fechaTexto.substring(4, 6));
+  const horas = parseInt(horaTexto.substring(0, 2));
+  const minutos = parseInt(horaTexto.substring(2, 4));
 
-      const fecha = new Date(año, mes, dia, horas, minutos);
+  const fecha = new Date(año, mes, dia, horas, minutos);
 
-      const nuevo = {
-        descripcion,
-        fecha,
-        canal,
-        tags: [tags],
-        activo,
-        recurrente,
-        enviado: false
-      };
+  const nuevo = {
+    descripcion,
+    fecha,
+    canal,
+    tags: [tags],
+    activo,
+    recurrente,
+    enviado: false
+  };
 
-      db.collection("recordatorios_alika").add(nuevo)
-        .then(() => {
-          console.log("✅ Guardado en Firestore");
-          location.reload(); // recarga para mostrar el nuevo
-        })
-        .catch(e => console.error("❌ Error guardando en Firestore:", e));
+  const coleccion = db.collection("recordatorios_alika");
+
+  if (idEditando) {
+    coleccion.doc(idEditando).update(nuevo)
+      .then(() => {
+        console.log("✅ Actualizado");
+        idEditando = null;
+        document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
+        location.reload();
+      })
+      .catch(e => console.error("❌ Error actualizando:", e));
+  } else {
+    coleccion.add(nuevo)
+      .then(() => {
+        console.log("✅ Guardado en Firestore");
+        location.reload();
+      })
+      .catch(e => console.error("❌ Error guardando en Firestore:", e));
+  }
+}
+function editarRecordatorio(id) {
+  db.collection("recordatorios_alika").doc(id).get().then(doc => {
+    if (doc.exists) {
+      const r = doc.data();
+      document.getElementById('descripcion').value = r.descripcion;
+      document.getElementById('canal').value = r.canal;
+      document.getElementById('tags').value = r.tags?.[0] || '';
+      document.getElementById('activo').checked = r.activo;
+      document.getElementById('recurrente').checked = r.recurrente;
+
+      const d = r.fecha.toDate();
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+
+      document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+      document.getElementById('horaTexto').value = `${hh}${min}`;
+
+      idEditando = id;
+      document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
     }
+  });
+}
+
   </script>
 </body>
 </html>
+
 
