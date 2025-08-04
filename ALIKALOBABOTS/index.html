@@ -123,26 +123,6 @@ const firebaseConfig = {
     const db = firebase.firestore();
 
     // Al cargar la página, obtener los recordatorios existentes
-    window.onload = async () => {
-      const lista = document.getElementById('listaRecordatorios');
-      lista.innerHTML = '<p>Cargando...</p>';
-      const snapshot = await db.collection("recordatorios_alika").orderBy("fecha", "desc").get();
-      lista.innerHTML = '';
-      snapshot.forEach(doc => {
-        const r = doc.data();
-lista.innerHTML += `
-  <div class="recordatorio">
-    <strong>${r.descripcion}</strong><br>
-    Fecha: ${new Date(r.fecha.seconds * 1000).toLocaleString()}<br>
-    Canal: ${r.canal}<br>
-    Tags: ${r.tags?.join(', ')}<br>
-    Activo: ${r.activo ? '✅' : '❌'}<br>
-    Recurrente: ${r.recurrente ? '♻️' : '-'}<br>
-    <button onclick="editarRecordatorio('${doc.id}')">✏️ Editar</button>
-  </div>`;
-      });
-    };
-
 function crearRecordatorio() {
   const descripcion = document.getElementById('descripcion').value.trim();
   const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
@@ -226,6 +206,7 @@ function editarRecordatorio(id) {
 
 </body>
 </html>
+
 
 
 
