@@ -12,19 +12,44 @@
       color: white;
       padding: 20px;
     }
+
+    h2 {
+      text-align: center;
+    }
+
     .recordatorio {
       background: #222;
       padding: 15px;
       margin-bottom: 10px;
       border-radius: 5px;
     }
-    .recordatorio input {
-      width: 100%;
-      margin: 5px 0;
-      padding: 5px;
+
+    .acciones {
+      margin-top: 10px;
     }
+
     .acciones button {
-      margin-right: 5px;
+      margin-right: 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .acciones button:hover {
+      background-color: #666;
+    }
+
+    .acciones button:nth-child(3) {
+      background-color: #f9c74f;
+      color: black;
+    }
+
+    .acciones button:nth-child(3):hover {
+      background-color: #ffd86a;
     }
   </style>
 </head>
@@ -64,6 +89,7 @@
             <div class="acciones">
               <button onclick="reenviar('${id}')">🔁 Reenviar</button>
               <button onclick="eliminar('${id}')">🗑 Eliminar</button>
+              <button onclick="editar('${id}')">✏️ Editar</button>
             </div>
           </div>`;
       });
@@ -83,6 +109,10 @@
           document.getElementById(`r-${id}`).remove();
         });
       }
+    }
+
+    function editar(id) {
+      window.location.href = `crear-recordatorio.html?id=${id}`;
     }
 
     cargar();
