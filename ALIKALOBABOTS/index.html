@@ -339,8 +339,50 @@ function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
     mensaje.style.display = "none";
   }, 2000); // Desaparece en 2 segundos
 }
+// Al cargar la página: sugerir fecha actual y hora +2
+window.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  const future = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 horas
+
+  const dd = String(future.getDate()).padStart(2, '0');
+  const mm = String(future.getMonth() + 1).padStart(2, '0');
+  const yy = String(future.getFullYear()).slice(-2);
+  const hh = String(future.getHours()).padStart(2, '0');
+  const min = String(future.getMinutes()).padStart(2, '0');
+
+  // Solo si no hay valores previos
+  if (!document.getElementById('fechaTexto').value) {
+    document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+  }
+  if (!document.getElementById('horaTexto').value) {
+    document.getElementById('horaTexto').value = `${hh}${min}`;
+  }
+});
+
+const textarea = document.getElementById('descripcion');
+
+// Requiere navegador compatible (Chrome Android)
+if ('webkitSpeechRecognition' in window) {
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = 'es-MX';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  textarea.addEventListener('click', () => {
+    recognition.start();
+  });
+
+  recognition.onresult = (event) => {
+    const texto = event.results[0][0].transcript;
+    textarea.value += (textarea.value ? ' ' : '') + texto;
+  };
+
+  recognition.onerror = (e) => console.warn("🎤 Error de reconocimiento:", e);
+}
+
 
   </script>
 </body>
 </html>
+
 
