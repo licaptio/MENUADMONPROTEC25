@@ -161,26 +161,55 @@ function generarResumenTexto(facturas) {
   return texto;
 }
 
+async function enviarTelegram() {
+  const telegramToken = "7349070760:AAHYA8YPoDWfUuLMjgUDubRi9CSYZi4Oirg";
+  const chatId = "6617988297";
 
-    async function enviarTelegram() {
-const telegramToken = "7349070760:AAHYA8YPoDWfUuLMjgUDubRi9CSYZi4Oirg";
-const chatId = "6617988297";
+  if (!telegramToken || !chatId) {
+    alert("Falta configurar el TOKEN o el CHAT ID.");
+    return;
+  }
 
-      if (!telegramToken || !chatId) {
-        alert("Falta configurar el TOKEN o el CHAT ID.");
-        return;
-      }
-      await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+  // Sanitiza para Markdown (Telegram lo odia cuando no cierras * o usas caracteres raros)
+  let texto = resumenTelegram
+    .replace(/[_*[\]()~`>#+\-=|{}.!]/g, "") // Limpia caracteres problemáticos para Markdown
+    .trim();
+
+  console.log("Resumen a enviar:", texto);
+  const partes = [];
+  const MAX_LENGTH = 4000;
+
+  for (let i = 0; i < texto.length; i += MAX_LENGTH) {
+    partes.push(texto.slice(i, i + MAX_LENGTH));
+  }
+
+  try {
+    for (const parte of partes) {
+      const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          text: resumenTelegram,
+          text: parte,
           parse_mode: "Markdown"
         })
       });
-      alert("Resumen enviado por Telegram ✅");
+
+      const body = await res.json();
+
+      if (!body.ok) {
+        console.error("❌ Telegram respondió con error:", body);
+        alert("Error al enviar: " + (body.description || "desconocido"));
+        return;
+      }
     }
+
+    alert("Resumen enviado por Telegram ✅");
+  } catch (error) {
+    console.error("❌ Error en el envío:", error);
+    alert("Hubo un error al enviar el resumen");
+  }
+}
 
     document.addEventListener("DOMContentLoaded", cargar);
   </script>
