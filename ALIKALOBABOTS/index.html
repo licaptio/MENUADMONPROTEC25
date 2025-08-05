@@ -236,8 +236,8 @@ const db = firebase.firestore(); // ✅ Primero creamos 'db'
 const params = new URLSearchParams(window.location.search);
 const idDesdeURL = params.get("id");
 
-if (idDesdeURL) {
-  editarRecordatorio(idDesdeURL); // ✅ Ya existe 'db' cuando se llama
+if (idDesdeURL && idDesdeURL !== "nuevo") {
+  editarRecordatorio(idDesdeURL);
 }
     function crearRecordatorio() {
       const descripcion = document.getElementById('descripcion').value.trim();
@@ -420,4 +420,5 @@ function limpiarFormulario() {
   </script>
 </body>
 </html>
+
 
