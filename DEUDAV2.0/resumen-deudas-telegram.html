@@ -137,7 +137,8 @@ const { data, error } = await _supabase
     }
 
 function generarResumenTexto(facturas) {
-  if (facturas.length === 0) return "✅ No hay facturas pendientes.";
+  const vencidas = facturas.filter(f => calcularDias(f.fecha) > 30);
+  if (vencidas.length === 0) return "✅ No hay facturas vencidas mayores a 30 días.";
 
   const frasesMotivacionales = [
     "⚔️ *Con fuerza, como Loba. Cada deuda es una batalla ganada.*",
@@ -149,6 +150,7 @@ function generarResumenTexto(facturas) {
     "🧭 *La deuda no se pierde, solo espera que la señales.*",
     "🪓 *Un tajo a tiempo es mejor que mil excusas.*",
     "🩸 *Deja que Loba marque el camino, pero tú ejecuta sin temblar.*",
+    "📢 *Lo que se calla, se acumula. Cuando actuas, te liberas. ¡Mantente en movimiento!*",
     "🏰 *No hay castillo sin contabilidad. Y tú ya estás tomando el trono.*"
   ];
   const fraseAleatoria = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
