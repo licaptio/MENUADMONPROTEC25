@@ -171,9 +171,9 @@ async function enviarTelegram() {
   }
 
   // Sanitiza para Markdown (Telegram lo odia cuando no cierras * o usas caracteres raros)
-  let texto = resumenTelegram
-    .replace(/[_*[\]()~`>#+\-=|{}.!]/g, "") // Limpia caracteres problemáticos para Markdown
-    .trim();
+let texto = resumenTelegram
+  .replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1")  // Escapa correctamente para Markdown
+  .trim();
 
   console.log("Resumen a enviar:", texto);
   const partes = [];
