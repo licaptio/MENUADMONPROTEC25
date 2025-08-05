@@ -286,14 +286,15 @@ if (idEditando) {
       nuevo.enviado = anterior.enviado;
     }
 
-    coleccion.doc(idEditando).update(nuevo)
-      .then(() => {
-        console.log("✅ Actualizado");
-        idEditando = null;
-        document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
-        location.href = "ver-recordatorios.html"; // redirigir después de editar
-      })
-      .catch(e => console.error("❌ Error actualizando:", e));
+coleccion.doc(idEditando).update(nuevo)
+  .then(() => {
+    console.log("✅ Actualizado");
+    mostrarMensajeExito("✅ Cambios guardados");
+    limpiarFormulario(); // limpia para uno nuevo
+    setTimeout(() => location.reload(), 2000); // recarga la página como nuevo
+  })
+
+  .catch(e => console.error("❌ Error actualizando:", e));
   });
 } else {
   coleccion.add(nuevo)
@@ -416,6 +417,7 @@ function limpiarFormulario() {
   </script>
 </body>
 </html>
+
 
 
 
