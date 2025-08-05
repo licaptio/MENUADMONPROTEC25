@@ -290,10 +290,9 @@ coleccion.doc(idEditando).update(nuevo)
   .then(() => {
     console.log("✅ Actualizado");
     mostrarMensajeExito("✅ Cambios guardados");
-    limpiarFormulario(); // limpia para uno nuevo
-    setTimeout(() => location.reload(), 2000); // recarga la página como nuevo
+    limpiarFormulario();
+    setTimeout(() => location.reload(), 2000); // vuelve a modo nuevo
   })
-
   .catch(e => console.error("❌ Error actualizando:", e));
   });
 } else {
@@ -417,6 +416,7 @@ function limpiarFormulario() {
   </script>
 </body>
 </html>
+
 
 
 
