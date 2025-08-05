@@ -51,6 +51,21 @@
     .acciones button:nth-child(3):hover {
       background-color: #ffd86a;
     }
+ .enviado-parpadeo {
+  animation: parpadeo 1s infinite alternate;
+  border: 2px solid #f9c74f;
+}
+
+@keyframes parpadeo {
+  from {
+    background-color: #222;
+  }
+  to {
+    background-color: #f9c74f;
+    color: black;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -86,8 +101,10 @@ const verEnviados = document.getElementById("verEnviados")?.checked || false;
         if (!verEnviados && r.enviado) return;
         const fechaStr = `${f.toLocaleDateString()} ${f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-        lista.innerHTML += `
-          <div class="recordatorio" id="r-${id}">
+const claseExtra = r.enviado ? 'enviado-parpadeo' : '';
+
+lista.innerHTML += `
+  <div class="recordatorio ${claseExtra}" id="r-${id}">
             <strong>${r.descripcion}</strong><br>
             Fecha: ${fechaStr}<br>
             Canal: ${r.canal}<br>
