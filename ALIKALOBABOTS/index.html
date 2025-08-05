@@ -291,7 +291,11 @@ coleccion.doc(idEditando).update(nuevo)
     console.log("✅ Actualizado");
     mostrarMensajeExito("✅ Cambios guardados");
     limpiarFormulario();
-    setTimeout(() => location.reload(), 2000); // vuelve a modo nuevo
+    setTimeout(() => {
+  window.history.replaceState({}, document.title, window.location.pathname);
+  location.reload();
+}, 2000);
+
   })
   .catch(e => console.error("❌ Error actualizando:", e));
   });
@@ -416,3 +420,4 @@ function limpiarFormulario() {
   </script>
 </body>
 </html>
+
