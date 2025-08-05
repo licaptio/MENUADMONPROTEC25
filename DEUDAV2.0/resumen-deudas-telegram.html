@@ -136,15 +136,31 @@ const { data, error } = await _supabase
       return "vencida-30";
     }
 
-    function generarResumenTexto(facturas) {
-      if (facturas.length === 0) return "✅ No hay facturas pendientes.";
-      let texto = "📌 *Resumen de Facturas Pendientes:*\n";
-      for (const f of facturas) {
-        const dias = calcularDias(f.fecha);
-        texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días\n`;
-      }
-      return texto;
-    }
+function generarResumenTexto(facturas) {
+  if (facturas.length === 0) return "✅ No hay facturas pendientes.";
+
+  const frasesMotivacionales = [
+    "⚔️ *Con fuerza, como Loba. Cada deuda es una batalla ganada.*",
+    "🛡️ *Hoy no retrocedas. Acomoda la armadura y sigue firme.*",
+    "🔥 *Lo que no se paga, se enfrenta. Y tú no le huyes a nada.*",
+    "🐺 *Una loba no duda, actúa. Tú ya sabes qué hacer.*",
+    "🏹 *Hoy es el día de marcar territorio. ¡Hazlo con estilo!*",
+    "💼 *Hoy cobramos. No es presión, es misión.*",
+    "🧭 *La deuda no se pierde, solo espera que la señales.*",
+    "🪓 *Un tajo a tiempo es mejor que mil excusas.*",
+    "🩸 *Deja que Loba marque el camino, pero tú ejecuta sin temblar.*",
+    "🏰 *No hay castillo sin contabilidad. Y tú ya estás tomando el trono.*"
+  ];
+  const fraseAleatoria = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
+
+  let texto = `${fraseAleatoria}\n\n📌 *Resumen de Facturas Pendientes:*\n`;
+  for (const f of facturas) {
+    const dias = calcularDias(f.fecha);
+    texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días\n`;
+  }
+  return texto;
+}
+
 
     async function enviarTelegram() {
 const telegramToken = "7349070760:AAHYA8YPoDWfUuLMjgUDubRi9CSYZi4Oirg";
