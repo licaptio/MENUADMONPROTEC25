@@ -159,7 +159,9 @@ function generarResumenTexto(facturas) {
   let texto = `${fraseAleatoria}\n\n📌 *Resumen de Facturas Pendientes:*\n`;
   for (const f of facturas) {
     const dias = calcularDias(f.fecha);
-    texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días\n`;
+    const fisica = (f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : '❌';
+texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días - Física: ${fisica}\n`;
+
   }
   return texto;
 }
