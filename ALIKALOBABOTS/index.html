@@ -175,6 +175,10 @@
   <div class="fondo"></div>
   <div class="container">
     <h1>🌟 AlikaBot - Nuevo Recordatorio</h1>
+<div id="fecha-hora-actual" style="text-align:center; font-size:16px; margin: 10px 0; color: #f9c74f;">
+  <!-- Aquí se mostrará la fecha y hora -->
+</div>
+
     <label for="descripcion">🎤 Descripción o nota:</label>
 <textarea id="descripcion" placeholder="Toca aquí y habla o escribe..."></textarea>
 <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" placeholder="Fecha (ej. 030825)" />
@@ -416,9 +420,24 @@ function limpiarFormulario() {
   idEditando = null;
   document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
 }
+function actualizarFechaHoraActual() {
+  const ahora = new Date();
+  const dd = String(ahora.getDate()).padStart(2, '0');
+  const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+  const yy = String(ahora.getFullYear()).slice(-2);
+  const hh = String(ahora.getHours()).padStart(2, '0');
+  const min = String(ahora.getMinutes()).padStart(2, '0');
+
+  const texto = `📅 ${dd}/${mm}/${yy} - 🕓 ${hh}:${min}`;
+  document.getElementById("fecha-hora-actual").textContent = texto;
+}
+
+// Mostrarla al cargar la página
+actualizarFechaHoraActual();
 
   </script>
 </body>
 </html>
+
 
 
