@@ -299,8 +299,8 @@ if (idEditando) {
   coleccion.add(nuevo)
 .then(() => {
   console.log("✅ Guardado en Firestore");
-  mostrarMensajeExito(); // muestra el mensaje
-  setTimeout(() => location.reload(), 2000); // espera 2s antes de recargar
+  mostrarMensajeExito();
+  limpiarFormulario();
 })
 .catch(e => console.error("❌ Error guardando en Firestore:", e));
 } // ← AQUÍ CIERRA crearRecordatorio
@@ -388,10 +388,34 @@ recognition.onend = () => {
   recognition.onerror = (e) => console.warn("🎤 Error de reconocimiento:", e);
 }
 
+function limpiarFormulario() {
+  document.getElementById('descripcion').value = "";
+  
+  // Sugerir de nuevo fecha +2 horas
+  const now = new Date();
+  const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const dd = String(future.getDate()).padStart(2, '0');
+  const mm = String(future.getMonth() + 1).padStart(2, '0');
+  const yy = String(future.getFullYear()).slice(-2);
+  const hh = String(future.getHours()).padStart(2, '0');
+  const min = String(future.getMinutes()).padStart(2, '0');
+
+  document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+  document.getElementById('horaTexto').value = `${hh}${min}`;
+  
+  document.getElementById('canal').value = "telegram";
+  document.getElementById('tags').value = "alika";
+  document.getElementById('activo').checked = true;
+  document.getElementById('recurrente').checked = false;
+
+  idEditando = null;
+  document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
+}
 
   </script>
 </body>
 </html>
+
 
 
 
