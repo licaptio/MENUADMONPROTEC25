@@ -369,9 +369,17 @@ if ('webkitSpeechRecognition' in window) {
   recognition.continuous = false;
   recognition.interimResults = false;
 
-  textarea.addEventListener('click', () => {
-    recognition.start();
-  });
+textarea.addEventListener('click', () => {
+  alert("🎤 Habla ahora... (Chrome Android)");
+  recognition.start();
+});
+recognition.onstart = () => {
+  textarea.placeholder = "🎤 Escuchando...";
+};
+
+recognition.onend = () => {
+  textarea.placeholder = "Toca aquí y habla o escribe...";
+};
 
   recognition.onresult = (event) => {
     const texto = event.results[0][0].transcript;
@@ -385,6 +393,7 @@ if ('webkitSpeechRecognition' in window) {
   </script>
 </body>
 </html>
+
 
 
 
