@@ -70,6 +70,7 @@
 </head>
 <body>
   <h2>🧠 Todos los recordatorios</h2>
+  <div id="fechaHoraActual" style="text-align: center; font-size: 1.2em; margin: 10px 0; color: #f9c74f;">Cargando...</div>
   <label style="display: block; text-align: center; margin: 10px 0;">
   <input type="checkbox" id="verEnviados" onchange="cargar()" />
   Mostrar también los enviados ✅
@@ -141,6 +142,20 @@ lista.innerHTML += `
     }
 
     cargar();
+function actualizarFechaHoraActual() {
+  const ahora = new Date();
+  const opcionesFecha = { day: '2-digit', month: '2-digit', year: 'numeric' };
+  const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+
+  const fecha = ahora.toLocaleDateString('es-MX', opcionesFecha);
+  const hora = ahora.toLocaleTimeString('es-MX', opcionesHora);
+
+  document.getElementById('fechaHoraActual').textContent = `📅 ${fecha} ⏰ ${hora}`;
+}
+
+setInterval(actualizarFechaHoraActual, 1000);
+actualizarFechaHoraActual(); // inicial
+
   </script>
 </body>
 </html>
