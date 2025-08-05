@@ -55,6 +55,11 @@
 </head>
 <body>
   <h2>🧠 Todos los recordatorios</h2>
+  <label style="display: block; text-align: center; margin: 10px 0;">
+  <input type="checkbox" id="verEnviados" onchange="cargar()" />
+  Mostrar también los enviados ✅
+</label>
+
   <div id="lista"></div>
 
   <script>
@@ -71,11 +76,14 @@
       const lista = document.getElementById('lista');
       const snapshot = await db.collection("recordatorios_alika").orderBy("fecha", "desc").get();
       lista.innerHTML = '';
+const verEnviados = document.getElementById("verEnviados")?.checked || false;
 
+      
       snapshot.forEach(doc => {
         const r = doc.data();
         const id = doc.id;
         const f = r.fecha.toDate();
+        if (!verEnviados && r.enviado) return;
         const fechaStr = `${f.toLocaleDateString()} ${f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
         lista.innerHTML += `
