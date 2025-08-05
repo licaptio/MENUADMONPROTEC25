@@ -177,9 +177,8 @@
     <h1>🌟 AlikaBot - Nuevo Recordatorio</h1>
     <label for="descripcion">🎤 Descripción o nota:</label>
 <textarea id="descripcion" placeholder="Toca aquí y habla o escribe..."></textarea>
-    <input type="text" id="fechaTexto" placeholder="Fecha (ej. 030825)" />
-    <input type="text" id="horaTexto" placeholder="Hora (ej. 1740)" />
-    <select id="canal">
+<input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" placeholder="Fecha (ej. 030825)" />
+<input type="tel" id="horaTexto" inputmode="numeric" maxlength="4" placeholder="Hora (ej. 1740)" />    <select id="canal">
       <option value="telegram">Telegram</option>
     </select>
     <select id="tags">
@@ -393,6 +392,7 @@ recognition.onend = () => {
   </script>
 </body>
 </html>
+
 
 
 
