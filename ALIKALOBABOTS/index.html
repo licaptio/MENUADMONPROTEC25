@@ -299,8 +299,9 @@ if (idEditando) {
   coleccion.add(nuevo)
 .then(() => {
   console.log("✅ Guardado en Firestore");
-  mostrarMensajeExito();
-  limpiarFormulario();
+mostrarMensajeExito();
+limpiarFormulario();
+setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
 })
 .catch(e => console.error("❌ Error guardando en Firestore:", e));
 } // ← AQUÍ CIERRA crearRecordatorio
@@ -415,6 +416,7 @@ function limpiarFormulario() {
   </script>
 </body>
 </html>
+
 
 
 
