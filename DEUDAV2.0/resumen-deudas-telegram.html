@@ -44,6 +44,25 @@
     }
     button:hover { background: #218838; }
     td.numero { text-align: right; }
+.proveedor-especial {
+  background-color: #d0ecff !important; /* azul claro */
+  animation: parpadeo 1.6s infinite;
+}
+@keyframes parpadeo {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+.proveedor-especial-vencido {
+  background-color: #ede7f6 !important; /* Morado claro */
+  animation: parpadeo-morado 1.6s infinite;
+}
+
+@keyframes parpadeo-morado {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
   </style>
 </head>
 <body>
@@ -136,7 +155,15 @@ resumenTelegram =
 
       for (const f of data) {
         const dias = calcularDias(f.fecha);
-        const clase = obtenerClaseVencimiento(dias);
+        const razon = (f.razon_social_emisor || "").toUpperCase().trim();
+let clase = obtenerClaseVencimiento(dias);
+if (proveedoresEspeciales[razon]) {
+  const limite = proveedoresEspeciales[razon];
+  if (dias >= limite && dias < 30) {
+    clase = "proveedor-especial-vencido"; // Morado claro y parpadeo
+  }
+}
+
         html += `<tr class="${clase}">
           <td>${f.fecha}</td>
           <td>${dias}</td>
