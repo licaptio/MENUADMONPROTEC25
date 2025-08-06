@@ -56,6 +56,19 @@ const _supabase = window.supabase.createClient(
   'https://cvpbtjlupswbyxenugpz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
 );
+const proveedoresEspeciales = {
+  "ROBERTO CANTU OZUNA": 12,
+  "DECASA DEL CENTRO": 20,
+  "DULCES LAS DELICIAS": 28,
+  "DISTRIBUIDORA DE DULCES DEL NORTE": 29,
+  "INOCENCIO DELGADO MARQUEZ": 15,
+  "DUL-TAM PAVITO": 7,
+  "DISTRIBUIDORA DE PRODUCTOS DESHIDRATADOS": 28,
+  "DISTRIBUIDORA DE LA ROSA": 15,
+  "DESFICO": 7,
+  "GRUPO CHI-SO": 15,
+  "ABARROTES": 25
+};
 
     const tabla = "deuda_limpia_pdd";
     let resumenTelegram = "";
@@ -91,8 +104,26 @@ const { data, error } = await _supabase
       });
 
       mostrarTabla(ordenados);
-      const vencidas = ordenados.filter(f => calcularDias(f.fecha) > 30);
-resumenTelegram = generarResumenTexto(vencidas);
+const vencidas30 = ordenados.filter(f => calcularDias(f.fecha) > 30);
+
+// Detectar vencimientos especiales
+const vencidasEspeciales = ordenados.filter(f => {
+  const razon = (f.razon_social_emisor || "").toUpperCase().trim();
+  const dias = calcularDias(f.fecha);
+  return proveedoresEspeciales[razon] && dias > proveedoresEspeciales[razon];
+});
+
+// Quitar duplicados (que ya están en vencidas30)
+const especialesUnicas = vencidasEspeciales.filter(esp => {
+  const diasEsp = calcularDias(esp.fecha);
+  return diasEsp <= 30; // Solo incluir si aún no está en los de 30+
+});
+
+// Unir textos
+resumenTelegram =
+  generarResumenTextoEspeciales(especialesUnicas) +
+  "\n\n" +
+  generarResumenTexto(vencidas30);
 
     }
 
@@ -161,7 +192,23 @@ for (const f of facturas) {
   const fisica = (f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : '❌';
   texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días - Física: ${fisica}\n`;
 }
-return texto;
+function generarResumenTextoEspeciales(facturas) {
+  if (facturas.length === 0) return "✅ No hay vencimientos especiales fuera de plazo.";
+
+  let texto = "📌 *Vencimientos según plazo acordado:*\n";
+
+  for (const f of facturas) {
+    const razon = (f.razon_social_emisor || "").toUpperCase().trim();
+    const dias = calcularDias(f.fecha);
+    const fisica = (f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : '❌';
+    const plazo = proveedoresEspeciales[razon] || '?';
+    texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días (Plazo: ${plazo}) - Física: ${fisica}`;
+  }
+
+  return texto;
+}
+
+  return texto;
 }
 
 async function enviarTelegram() {
