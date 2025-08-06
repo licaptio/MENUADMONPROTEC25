@@ -192,6 +192,8 @@ for (const f of facturas) {
   const fisica = (f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : '❌';
   texto += `\n• *${f.razon_social_emisor}* - ${f.factura || '-'}\n  $${parseFloat(f.total || 0).toFixed(2)} - ${dias} días - Física: ${fisica}\n`;
 }
+  return texto;
+}
 function generarResumenTextoEspeciales(facturas) {
   if (facturas.length === 0) return "✅ No hay vencimientos especiales fuera de plazo.";
 
@@ -208,8 +210,6 @@ function generarResumenTextoEspeciales(facturas) {
   return texto;
 }
 
-  return texto;
-}
 
 async function enviarTelegram() {
   const telegramToken = "7349070760:AAHYA8YPoDWfUuLMjgUDubRi9CSYZi4Oirg";
