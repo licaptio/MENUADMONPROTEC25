@@ -64,9 +64,16 @@
   100% { opacity: 1; }
 }
 .proveedor-contado {
-  background-color: #eeeeee !important;
-  font-style: italic;
-  color: #555;
+  background-color: #ffe0b2 !important; /* naranja claro */
+  animation: parpadeo-naranja 1.5s infinite;
+  color: #333;
+  font-weight: bold;
+}
+
+@keyframes parpadeo-naranja {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
   </style>
