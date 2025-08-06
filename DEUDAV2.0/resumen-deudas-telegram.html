@@ -63,6 +63,12 @@
   50% { opacity: 0.4; }
   100% { opacity: 1; }
 }
+.proveedor-contado {
+  background-color: #eeeeee !important;
+  font-style: italic;
+  color: #555;
+}
+
   </style>
 </head>
 <body>
@@ -88,6 +94,17 @@ const proveedoresEspeciales = {
   "GRUPO CHI-SO": 15,
   "ABARROTES": 25
 };
+const proveedoresContado = [
+  "BBVA MEXICO, S.A., INSTITUCION DE BANCA MULTIPLE, GRUPO FINANCIERO BBVA MEXICO",
+  "BANCO SANTANDER MEXICO S.A., INSTITUCION DE BANCA MULTIPLE, GRUPO FINANCIERO SANTANDER MEXICO",
+  "MARIA IMELDA CHAPA PARAS",
+  "COMERCIALIZADORA PEPSICO MEXICO",
+  "DISTRIBUIDORA ARCA CONTINENTAL",
+  "GASNGO MEXICO",
+  "PEÑAFIEL BEBIDAS",
+  "TELEFONOS DE MEXICO",
+  "COMISION FEDERAL DE ELECTRICIDAD"
+];
 
     const tabla = "deuda_limpia_pdd";
     let resumenTelegram = "";
@@ -143,7 +160,10 @@ resumenTelegram =
   generarResumenTextoEspeciales(especialesUnicas) +
   "\n\n" +
   generarResumenTexto(vencidas30) +
-  "\n\n📩 Reporte generado por *Loba | IA BOT de Operaciones*";
+  "\n\n" +
+  generarResumenTextoContado(ordenados) +
+  "\n\n📩 Reporte generado por *Loba | Ejecutor de Operaciones*";
+  
     }
 
     function mostrarTabla(data) {
@@ -157,7 +177,10 @@ resumenTelegram =
         const dias = calcularDias(f.fecha);
         const razon = (f.razon_social_emisor || "").toUpperCase().trim();
 let clase = obtenerClaseVencimiento(dias);
-if (proveedoresEspeciales[razon]) {
+if (proveedoresContado.includes(razon)) {
+  clase = "proveedor-contado";
+}
+        if (proveedoresEspeciales[razon]) {
   const limite = proveedoresEspeciales[razon];
   if (dias >= limite && dias < 30) {
     clase = "proveedor-especial-vencido"; // Morado claro y parpadeo
@@ -235,6 +258,24 @@ for (const f of facturas) {
   }
 
    return texto;
+}
+function generarResumenTextoContado(facturas) {
+  const encontrados = facturas.filter(f => {
+    const razon = (f.razon_social_emisor || "").toUpperCase().trim();
+    return proveedoresContado.includes(razon);
+  });
+
+  if (encontrados.length === 0) return "";
+
+  let texto = "📌 *Proveedores sin crédito (facturan contado o ya pagado):*\n";
+  texto += "🧹 Favor de depurar si no deben considerarse deuda.\n";
+
+  for (const f of encontrados) {
+    const dias = calcularDias(f.fecha);
+    texto += `\n• ${f.razon_social_emisor} - ${f.factura || '-'} - ${dias} días`;
+  }
+
+  return texto;
 }
 
 
