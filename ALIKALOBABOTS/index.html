@@ -168,6 +168,15 @@
 .ver-btn:hover {
   background-color: #ffd86a;
 }
+#btn-microfono.grabando {
+  background-color:#af3a43;
+  animation:latido 1s infinite;
+}
+@keyframes latido {
+  0% { transform:scale(1); }
+  50% { transform:scale(1.12); }
+  100% { transform:scale(1); }
+}
 
   </style>
 </head>
@@ -179,8 +188,24 @@
   <!-- Aquí se mostrará la fecha y hora -->
 </div>
 
-    <label for="descripcion">🎤 Descripción o nota:</label>
-<textarea id="descripcion" placeholder="Toca aquí y habla o escribe..."></textarea>
+<label for="descripcion">🎤 Descripción o nota:</label>
+<div style="display:flex; align-items:center; gap:10px;">
+  <textarea id="descripcion" placeholder="Toca aquí y habla o escribe..." style="flex:1;"></textarea>
+  <button id="btn-microfono" type="button" aria-label="Micrófono" style="
+    background-color:#555;
+    border:none;
+    border-radius:50%;
+    width:56px;
+    height:56px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:24px;
+    color:white;
+    cursor:pointer;
+    flex:0 0 56px;
+  ">🎤</button>
+</div>
 <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" placeholder="Fecha (ej. 030825)" />
 <input type="tel" id="horaTexto" inputmode="numeric" maxlength="4" placeholder="Hora (ej. 1740)" />    <select id="canal">
       <option value="telegram">Telegram</option>
@@ -369,34 +394,54 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 const textarea = document.getElementById('descripcion');
+const btnMicro = document.getElementById('btn-microfono');
 
-// Requiere navegador compatible (Chrome Android)
+let grabando = false;
+let recognition = null;
+
 if ('webkitSpeechRecognition' in window) {
-  const recognition = new webkitSpeechRecognition();
+  recognition = new webkitSpeechRecognition();
   recognition.lang = 'es-MX';
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  recognition.continuous = true;      // escucha hasta que TÚ pares
+  recognition.interimResults = false; // solo resultados finales
 
-textarea.addEventListener('click', () => {
-  alert("🎤 Habla ahora... (Chrome Android)");
-  recognition.start();
-});
-recognition.onstart = () => {
-  textarea.placeholder = "🎤 Escuchando...";
-};
+  btnMicro.addEventListener('click', () => {
+    if (!grabando) {
+      recognition.start(); // 👉 empezar manual
+    } else {
+      recognition.stop();  // 👉 detener manual
+    }
+  });
 
-recognition.onend = () => {
-  textarea.placeholder = "Toca aquí y habla o escribe...";
-};
+  recognition.onstart = () => {
+    grabando = true;
+    btnMicro.classList.add('grabando');
+    btnMicro.textContent = '🛑'; // indica “grabando”
+  };
+
+  recognition.onend = () => {
+    grabando = false;
+    btnMicro.classList.remove('grabando');
+    btnMicro.textContent = '🎤';
+  };
 
   recognition.onresult = (event) => {
-    const texto = event.results[0][0].transcript;
+    const texto = Array.from(event.results)
+      .map(r => r[0].transcript)
+      .join(' ');
     textarea.value += (textarea.value ? ' ' : '') + texto;
   };
 
-  recognition.onerror = (e) => console.warn("🎤 Error de reconocimiento:", e);
+  recognition.onerror = (e) => {
+    console.warn('🎤 Error de reconocimiento:', e);
+    grabando = false;
+    btnMicro.classList.remove('grabando');
+    btnMicro.textContent = '🎤';
+  };
+} else {
+  btnMicro.disabled = true;
+  btnMicro.title = 'Tu navegador no soporta dictado por voz';
 }
-
 function limpiarFormulario() {
   document.getElementById('descripcion').value = "";
   
@@ -438,6 +483,7 @@ actualizarFechaHoraActual();
   </script>
 </body>
 </html>
+
 
 
 
