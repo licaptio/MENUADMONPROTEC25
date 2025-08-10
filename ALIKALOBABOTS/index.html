@@ -357,26 +357,6 @@ if (btnCal && fechaPicker) {
   fechaPicker.addEventListener('blur', restore);
   fechaPicker.addEventListener('focusout', restore);
 }
-
-  // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa y volver a mostrar
-  fechaPicker.addEventListener('change', () => {
-    if (!fechaPicker.value) return;
-    const [yyyy, mm, dd] = fechaPicker.value.split('-');
-    fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
-    fechaTextoEl.style.opacity = '1';
-  });
-
-  // Por si el usuario cierra el picker sin elegir nada
-  fechaPicker.addEventListener('blur', () => {
-    fechaTextoEl.style.opacity = '1';
-  });
-// Fallback extra (algunos navegadores no disparan blur)
-fechaPicker.addEventListener('focusout', () => {
-  fechaTextoEl.style.opacity = '1';
-});
-
-}
-
 // (Opcional) sincroniza el picker desde el campo ddmmaa existente
 function syncDatePickerFromText() {
   if (!fechaTextoEl || !fechaPicker) return;
@@ -691,6 +671,7 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
+
 
 
 
