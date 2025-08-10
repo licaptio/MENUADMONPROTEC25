@@ -528,16 +528,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${dd}${mm}${yyyy.slice(-2)}`;
       };
 
-      function openSubpage(){
-        let iso = ddmmaaToISO((fechaTextoEl.value || '').trim());
-        if (!iso || isNaN(new Date(iso).getTime())) {
-          const t = new Date();
-          iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
-        }
-        dateModal.value = iso;
-modal.hidden = false;
+function openSubpage(){
+  let iso = ddmmaaToISO((fechaTextoEl.value || '').trim());
+  if (!iso || isNaN(new Date(iso).getTime())) {
+    const t = new Date();
+    iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
+  }
+  dateModal.value = iso;
+  modal.hidden = false;
   modal.setAttribute('aria-hidden', 'false');
-  setTimeout(()=>dateModal.focus(), 0);
+
+  setTimeout(()=>{
+    dateModal.focus();
+    if (dateModal.showPicker) { // Chrome y navegadores modernos
+      dateModal.showPicker();
+    } else {
+      dateModal.click(); // fallback
+    }
+  }, 0);
+
   document.addEventListener('keydown', escHandler);
   document.body.style.overflow = 'hidden';
 }
@@ -703,3 +712,4 @@ btnCal.addEventListener('keydown', (e) => {
 </div>
   </body>
   </html>
+
