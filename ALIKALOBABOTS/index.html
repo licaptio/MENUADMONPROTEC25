@@ -212,7 +212,7 @@
   <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" style="flex:1;" />
   <button id="btn-cal" type="button" class="icon-btn" aria-label="Abrir calendario">📅</button>
   <!-- Picker nativo oculto -->
-  <input type="date" id="fechaPicker" style="position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; pointer-events:none;" />
+  <input type="date" id="fechaPicker" tabindex="-1" style="position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0;" />
 </div>
 
 <input type="tel" id="horaTexto"  inputmode="numeric" maxlength="4" pattern="[0-9]*"  placeholder="Hora (ej. 1740)" />
@@ -633,6 +633,7 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
+
 
 
 
