@@ -462,9 +462,11 @@ coleccion.doc(idEditando).get().then(doc => {
   
             idEditando = id;
             document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
-          }
-        });
-      }
+      // ⬇️ AÑADE ESTA LÍNEA AQUÍ
+      syncDatePickerFromText();
+    }
+  });
+}          
   function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
     const mensaje = document.getElementById("mensaje-exito");
     mensaje.textContent = texto;
@@ -492,8 +494,10 @@ coleccion.doc(idEditando).get().then(doc => {
     if (!document.getElementById('horaTexto').value) {
       document.getElementById('horaTexto').value = `${hh}${min}`;
     }
-  });
- 
+   // ⬇️ AÑADE ESTA LÍNEA AQUÍ
+  syncDatePickerFromText();
+}); // ← cierre de DOMContentLoaded
+   
   const textarea = document.getElementById('descripcion');
   const btnMicro = document.getElementById('btn-microfono');
   btnMicro.title = 'Toca para grabar';
@@ -620,7 +624,3 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
-
-
-
-
