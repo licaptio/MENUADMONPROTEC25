@@ -314,6 +314,8 @@ function syncDatePickerFromText() {
     fechaPicker.value = `20${aa}-${mm}-${dd}`;
   }
 }
+// ⇢ Mantén sincronizado el calendario si escribes ddmmaa a mano
+fechaTextoEl.addEventListener('input', syncDatePickerFromText);
 
   if (idDesdeURL && idDesdeURL !== "nuevo") {
     editarRecordatorio(idDesdeURL);
@@ -608,10 +610,14 @@ coleccion.doc(idEditando).get().then(doc => {
   
     idEditando = null;
     document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
+    // ⇢ Actualiza el <input type="date"> según el ddmmaa recién puesto
+  syncDatePickerFromText();
+
   }
     </script>
   </body>
   </html>
+
 
 
 
