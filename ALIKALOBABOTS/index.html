@@ -1,510 +1,516 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AlikaBot - Nuevo Recordatorio</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      color: white;
-      background-color: black;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 500px;
-      width: 100%;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 1;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: none;
-    }
-
-    textarea {
-      height: 120px;
-      resize: vertical;
-    }
-
-    label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      margin-bottom: 10px;
-    }
-
-    .crear-btn {
-      background-color: #af3a43;
-      border: none;
-      color: white;
-      padding: 12px;
-      font-size: 16px;
-      width: 100%;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .fondo {
-      position: fixed;
-      z-index: -1;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: black;
-      background-image: url("fondo-lobas.jpg");
-      background-repeat: no-repeat;
-      background-size: contain;
-      background-position: center;
-      opacity: 0.7;
-    }
-
-    @media (min-width: 800px) {
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AlikaBot - Nuevo Recordatorio</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
       body {
-        flex-direction: row;
-        justify-content: flex-end;
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        color: white;
+        background-color: black;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
       }
-      .fondo {
-        background-position: left center;
-        background-size: auto 100%;
-      }
+  
       .container {
-        margin-right: 5%;
+        max-width: 500px;
+        width: 100%;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1;
       }
-    }
-
-    @media (max-width: 799px) {
+  
+      h1 {
+        text-align: center;
+      }
+  
+      input, select, textarea {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: none;
+      }
+  
+      textarea {
+        height: 120px;
+        resize: vertical;
+      }
+  
+      label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        margin-bottom: 10px;
+      }
+  
+      .crear-btn {
+        background-color: #af3a43;
+        border: none;
+        color: white;
+        padding: 12px;
+        font-size: 16px;
+        width: 100%;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+  
       .fondo {
-        background-position: bottom center;
-        background-size: 100% auto;
+        position: fixed;
+        z-index: -1;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: black;
+        background-image: url("fondo-lobas.jpg");
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position: center;
+        opacity: 0.7;
       }
-    }
-.switch-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  font-size: 15px;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  background-color: #555;
-  border-radius: 34px;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: .4s;
-}
-
-.switch input:checked + .slider {
-  background-color: #af3a43;
-}
-
-.switch input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.ver-btn {
-  background-color: #f9c74f;
-  color: black;
-  border: none;
-  padding: 12px;
-  width: 100%;
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 20px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.3s ease;
-}
-
-.ver-btn:hover {
-  background-color: #ffd86a;
-}
-#btn-microfono.grabando {
-  background-color:#af3a43;
-  animation:latido 1s infinite;
-}
-@keyframes latido {
-  0% { transform:scale(1); }
-  50% { transform:scale(1.12); }
-  100% { transform:scale(1); }
-}
-
-  </style>
-</head>
-<body>
-  <div class="fondo"></div>
-  <div class="container">
-    <h1>🌟 AlikaBot - Nuevo Recordatorio</h1>
-<div id="fecha-hora-actual" style="text-align:center; font-size:16px; margin: 10px 0; color: #f9c74f;">
-  <!-- Aquí se mostrará la fecha y hora -->
-</div>
-
-<label for="descripcion">🎤 Descripción o nota:</label>
-<div style="display:flex; align-items:center; gap:10px;">
-  <textarea id="descripcion" placeholder="Toca aquí y habla o escribe..." style="flex:1;"></textarea>
-  <button id="btn-microfono" type="button" aria-label="Micrófono" style="
-    background-color:#555;
-    border:none;
-    border-radius:50%;
-    width:56px;
-    height:56px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:24px;
-    color:white;
-    cursor:pointer;
-    flex:0 0 56px;
-  ">🎤</button>
-</div>
-<input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" placeholder="Fecha (ej. 030825)" />
-<input type="tel" id="horaTexto" inputmode="numeric" maxlength="4" placeholder="Hora (ej. 1740)" />    <select id="canal">
-      <option value="telegram">Telegram</option>
-    </select>
-    <select id="tags">
-      <option value="alika">alika</option>
-    </select>
-<div class="switch-wrapper">
-  <span>Activo</span>
-  <label class="switch">
-    <input type="checkbox" id="activo" checked>
-    <span class="slider"></span>
-  </label>
-</div>
-
-<div class="switch-wrapper">
-  <span>Recurrente</span>
-  <label class="switch">
-    <input type="checkbox" id="recurrente">
-    <span class="slider"></span>
-  </label>
-</div>
-    <button class="crear-btn" onclick="crearRecordatorio()">🔔 Crear recordatorio</button>
-    <button onclick="location.href='ver-recordatorios.html'" class="ver-btn">Ver y editar recordatorios</button>
-  </div>
-<div id="mensaje-exito" style="
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #28a745;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  display: none;
-  z-index: 9999;
-">
-  ✅ Guardado exitosamente
-</div>
-
-  <script>
-    let idEditando = null;
-    const firebaseConfig = {
-      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
-      authDomain: "notasfoliador.firebaseapp.com",
-      projectId: "notasfoliador",
-      storageBucket: "notasfoliador.appspot.com",
-      messagingSenderId: "96242533231",
-      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
-    };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(); // ✅ Primero creamos 'db'
-
-const params = new URLSearchParams(window.location.search);
-const idDesdeURL = params.get("id");
-
-if (idDesdeURL && idDesdeURL !== "nuevo") {
-  editarRecordatorio(idDesdeURL);
-}
-    function crearRecordatorio() {
-      const descripcion = document.getElementById('descripcion').value.trim();
-      const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
-      const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
-      const canal = document.getElementById('canal').value;
-      const tags = document.getElementById('tags').value;
-      const activo = document.getElementById('activo').checked;
-      const recurrente = document.getElementById('recurrente').checked;
-
-      if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
-        alert("Falta descripción o fecha/hora inválida.");
-        return;
-      }
-
-      const dia = parseInt(fechaTexto.substring(0, 2));
-      const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
-      const año = parseInt("20" + fechaTexto.substring(4, 6));
-      const horas = parseInt(horaTexto.substring(0, 2));
-      const minutos = parseInt(horaTexto.substring(2, 4));
-
-      const fecha = new Date(año, mes, dia, horas, minutos);
-
-      const nuevo = {
-        descripcion,
-        fecha,
-        canal,
-        tags: [tags],
-        activo,
-        recurrente,
-        enviado: false
-      };
-
-      const coleccion = db.collection("recordatorios_alika");
-
-if (idEditando) {
-  coleccion.doc(idEditando).get().then(doc => {
-    const anterior = doc.data();
-    const fechaAntes = anterior.fecha.toDate().getTime();
-    const fechaNueva = fecha.getTime();
-
-    // Si se modificó la fecha/hora, marcar como no enviado
-    if (fechaAntes !== fechaNueva) {
-      nuevo.enviado = false;
-    } else {
-      nuevo.enviado = anterior.enviado;
-    }
-
-coleccion.doc(idEditando).update(nuevo)
-  .then(() => {
-    console.log("✅ Actualizado");
-    mostrarMensajeExito("✅ Cambios guardados");
-    limpiarFormulario();
-    setTimeout(() => {
-  window.history.replaceState({}, document.title, window.location.pathname);
-  location.reload();
-}, 2000);
-
-  })
-  .catch(e => console.error("❌ Error actualizando:", e));
-  });
-} else {
-  coleccion.add(nuevo)
-.then(() => {
-  console.log("✅ Guardado en Firestore");
-mostrarMensajeExito();
-limpiarFormulario();
-setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
-})
-.catch(e => console.error("❌ Error guardando en Firestore:", e));
-} // ← AQUÍ CIERRA crearRecordatorio
-} // ← Esta cierra la función crearRecordatorio
-function editarRecordatorio(id) {
-      db.collection("recordatorios_alika").doc(id).get().then(doc => {
-        if (doc.exists) {
-          const r = doc.data();
-          document.getElementById('descripcion').value = r.descripcion;
-          document.getElementById('canal').value = r.canal;
-          document.getElementById('tags').value = r.tags?.[0] || '';
-          document.getElementById('activo').checked = r.activo;
-          document.getElementById('recurrente').checked = r.recurrente;
-
-          const d = r.fecha.toDate();
-          const dd = String(d.getDate()).padStart(2, '0');
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const yy = String(d.getFullYear()).slice(-2);
-          const hh = String(d.getHours()).padStart(2, '0');
-          const min = String(d.getMinutes()).padStart(2, '0');
-
-          document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
-          document.getElementById('horaTexto').value = `${hh}${min}`;
-
-          idEditando = id;
-          document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
+  
+      @media (min-width: 800px) {
+        body {
+          flex-direction: row;
+          justify-content: flex-end;
         }
-      });
+        .fondo {
+          background-position: left center;
+          background-size: auto 100%;
+        }
+        .container {
+          margin-right: 5%;
+        }
+      }
+  
+      @media (max-width: 799px) {
+        .fondo {
+          background-position: bottom center;
+          background-size: 100% auto;
+        }
+      }
+  .switch-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 15px;
+  }
+  
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+  
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    background-color: #555;
+    border-radius: 34px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+  }
+  
+  .switch input:checked + .slider {
+    background-color: #af3a43;
+  }
+  
+  .switch input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+  
+  .ver-btn {
+    background-color: #f9c74f;
+    color: black;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+  }
+  
+  .ver-btn:hover {
+    background-color: #ffd86a;
+  }
+  #btn-microfono.grabando {
+    background-color:#af3a43;
+    animation:latido 1s infinite;
+  }
+  @keyframes latido {
+    0% { transform:scale(1); }
+    50% { transform:scale(1.12); }
+    100% { transform:scale(1); }
+  }
+  
+    </style>
+  </head>
+  <body>
+    <div class="fondo"></div>
+    <div class="container">
+      <h1>🌟 AlikaBot - Nuevo Recordatorio</h1>
+  <div id="fecha-hora-actual" style="text-align:center; font-size:16px; margin: 10px 0; color: #f9c74f;">
+    <!-- Aquí se mostrará la fecha y hora -->
+  </div>
+  
+  <label for="descripcion">🎤 Descripción o nota:</label>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <textarea id="descripcion" placeholder="Toca aquí y habla o escribe..." style="flex:1;"></textarea>
+    <button id="btn-microfono" type="button" aria-label="Micrófono" style="
+      background-color:#555;
+      border:none;
+      border-radius:50%;
+      width:56px;
+      height:56px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-size:24px;
+      color:white;
+      cursor:pointer;
+      flex:0 0 56px;
+    ">🎤</button>
+  </div>
+  <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" />
+  <input type="tel" id="horaTexto"  inputmode="numeric" maxlength="4" pattern="[0-9]*"  placeholder="Hora (ej. 1740)" />
+        <option value="telegram">Telegram</option>
+      </select>
+      <select id="tags">
+        <option value="alika">alika</option>
+      </select>
+  <div class="switch-wrapper">
+    <span>Activo</span>
+    <label class="switch">
+      <input type="checkbox" id="activo" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+  
+  <div class="switch-wrapper">
+    <span>Recurrente</span>
+    <label class="switch">
+      <input type="checkbox" id="recurrente">
+      <span class="slider"></span>
+    </label>
+  </div>
+      <button class="crear-btn" onclick="crearRecordatorio()">🔔 Crear recordatorio</button>
+      <button onclick="location.href='ver-recordatorios.html'" class="ver-btn">Ver y editar recordatorios</button>
+    </div>
+  <div id="mensaje-exito" style="
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 9999;
+  ">
+    ✅ Guardado exitosamente
+  </div>
+  
+    <script>
+      let idEditando = null;
+      const firebaseConfig = {
+        apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+        authDomain: "notasfoliador.firebaseapp.com",
+        projectId: "notasfoliador",
+        storageBucket: "notasfoliador.appspot.com",
+        messagingSenderId: "96242533231",
+        appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+      };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore(); // ✅ Primero creamos 'db'
+  
+  const params = new URLSearchParams(window.location.search);
+  const idDesdeURL = params.get("id");
+  
+  if (idDesdeURL && idDesdeURL !== "nuevo") {
+    editarRecordatorio(idDesdeURL);
+  }
+      function crearRecordatorio() {
+        const descripcion = document.getElementById('descripcion').value.trim();
+        const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
+        const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
+        const canal = document.getElementById('canal').value;
+        const tags = document.getElementById('tags').value;
+        const activo = document.getElementById('activo').checked;
+        const recurrente = document.getElementById('recurrente').checked;
+  
+        if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
+          alert("Falta descripción o fecha/hora inválida.");
+          return;
+        }
+  
+        const dia = parseInt(fechaTexto.substring(0, 2));
+        const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
+        const año = parseInt("20" + fechaTexto.substring(4, 6));
+        const horas = parseInt(horaTexto.substring(0, 2));
+        const minutos = parseInt(horaTexto.substring(2, 4));
+  
+        const fecha = new Date(año, mes, dia, horas, minutos);
+  
+        const nuevo = {
+          descripcion,
+          fecha,
+          canal,
+          tags: [tags],
+          activo,
+          recurrente,
+          enviado: false
+        };
+  
+        const coleccion = db.collection("recordatorios_alika");
+  
+  if (idEditando) {
+    coleccion.doc(idEditando).get().then(doc => {
+      const anterior = doc.data();
+      const fechaAntes = anterior.fecha.toDate().getTime();
+      const fechaNueva = fecha.getTime();
+  
+      // Si se modificó la fecha/hora, marcar como no enviado
+      if (fechaAntes !== fechaNueva) {
+        nuevo.enviado = false;
+      } else {
+        nuevo.enviado = anterior.enviado;
+      }
+  
+  coleccion.doc(idEditando).update(nuevo)
+    .then(() => {
+      console.log("✅ Actualizado");
+      mostrarMensajeExito("✅ Cambios guardados");
+      limpiarFormulario();
+      setTimeout(() => {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    location.reload();
+  }, 2000);
+  
+    })
+    .catch(e => console.error("❌ Error actualizando:", e));
+    });
+  } else {
+    coleccion.add(nuevo)
+  .then(() => {
+    console.log("✅ Guardado en Firestore");
+  mostrarMensajeExito();
+  limpiarFormulario();
+  setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
+  })
+  .catch(e => console.error("❌ Error guardando en Firestore:", e));
+  } // ← AQUÍ CIERRA crearRecordatorio
+  } // ← Esta cierra la función crearRecordatorio
+  function editarRecordatorio(id) {
+        db.collection("recordatorios_alika").doc(id).get().then(doc => {
+          if (doc.exists) {
+            const r = doc.data();
+            document.getElementById('descripcion').value = r.descripcion;
+            document.getElementById('canal').value = r.canal;
+            document.getElementById('tags').value = r.tags?.[0] || '';
+            document.getElementById('activo').checked = r.activo;
+            document.getElementById('recurrente').checked = r.recurrente;
+  
+            const d = r.fecha.toDate();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yy = String(d.getFullYear()).slice(-2);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+  
+            document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+            document.getElementById('horaTexto').value = `${hh}${min}`;
+  
+            idEditando = id;
+            document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
+          }
+        });
+      }
+  function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
+    const mensaje = document.getElementById("mensaje-exito");
+    mensaje.textContent = texto;
+    mensaje.style.display = "block";
+  
+    setTimeout(() => {
+      mensaje.style.display = "none";
+    }, 2000); // Desaparece en 2 segundos
+  }
+  // Al cargar la página: sugerir fecha actual y hora +2
+  window.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    const future = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 horas
+  
+    const dd = String(future.getDate()).padStart(2, '0');
+    const mm = String(future.getMonth() + 1).padStart(2, '0');
+    const yy = String(future.getFullYear()).slice(-2);
+    const hh = String(future.getHours()).padStart(2, '0');
+    const min = String(future.getMinutes()).padStart(2, '0');
+  
+    // Solo si no hay valores previos
+    if (!document.getElementById('fechaTexto').value) {
+      document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
     }
-function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
-  const mensaje = document.getElementById("mensaje-exito");
-  mensaje.textContent = texto;
-  mensaje.style.display = "block";
-
-  setTimeout(() => {
-    mensaje.style.display = "none";
-  }, 2000); // Desaparece en 2 segundos
-}
-// Al cargar la página: sugerir fecha actual y hora +2
-window.addEventListener('DOMContentLoaded', () => {
-  const now = new Date();
-  const future = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 horas
-
-  const dd = String(future.getDate()).padStart(2, '0');
-  const mm = String(future.getMonth() + 1).padStart(2, '0');
-  const yy = String(future.getFullYear()).slice(-2);
-  const hh = String(future.getHours()).padStart(2, '0');
-  const min = String(future.getMinutes()).padStart(2, '0');
-
-  // Solo si no hay valores previos
-  if (!document.getElementById('fechaTexto').value) {
-    document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
-  }
-  if (!document.getElementById('horaTexto').value) {
-    document.getElementById('horaTexto').value = `${hh}${min}`;
-  }
-});
-
-const textarea = document.getElementById('descripcion');
-const btnMicro = document.getElementById('btn-microfono');
-
-let grabando = false;
-let recognition = null;
-
-if ('webkitSpeechRecognition' in window) {
-  recognition = new webkitSpeechRecognition();
-  recognition.lang = 'es-MX';
-  recognition.continuous = true;       // tú detienes manualmente
-  recognition.interimResults = false;  // solo finales
-
-  btnMicro.addEventListener('click', () => {
-    if (!grabando) {
-      try {
-        recognition.start();           // 👉 empezar manual
-      } catch (e) {
-        // Evita crash si el usuario toca muy rápido
-        console.warn('start() ignorado:', e);
-      }
-    } else {
-      try {
-        recognition.stop();            // 👉 detener manual
-      } catch (e) {
-        console.warn('stop() ignorado:', e);
-      }
+    if (!document.getElementById('horaTexto').value) {
+      document.getElementById('horaTexto').value = `${hh}${min}`;
     }
   });
-
-  recognition.onstart = () => {
-    grabando = true;
-    btnMicro.classList.add('grabando');
-    btnMicro.textContent = '🛑';
-    btnMicro.setAttribute('aria-pressed', 'true');
-  };
-
-  recognition.onend = () => {
-    grabando = false;
-    btnMicro.classList.remove('grabando');
-    btnMicro.textContent = '🎤';
-    btnMicro.setAttribute('aria-pressed', 'false');
-  };
-
-  recognition.onresult = (event) => {
-    // Agregar solo lo nuevo para evitar duplicados
-    let agregado = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const res = event.results[i];
-      if (res.isFinal) {
-        agregado += (agregado ? ' ' : '') + res[0].transcript;
+  
+  const textarea = document.getElementById('descripcion');
+  const btnMicro = document.getElementById('btn-microfono');
+  btnMicro.title = 'Toca para grabar';
+  btnMicro.setAttribute('aria-pressed', 'false');
+  
+      
+  let grabando = false;
+  let recognition = null;
+  
+  if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'es-MX';
+    recognition.continuous = true;       // tú detienes manualmente
+    recognition.interimResults = false;  // solo finales
+  
+    btnMicro.addEventListener('click', () => {
+      if (!grabando) {
+        try {
+          recognition.start();           // 👉 empezar manual
+        } catch (e) {
+          // Evita crash si el usuario toca muy rápido
+          console.warn('start() ignorado:', e);
+        }
+      } else {
+        try {
+          recognition.stop();            // 👉 detener manual
+        } catch (e) {
+          console.warn('stop() ignorado:', e);
+        }
       }
-    }
-    if (agregado) {
-      textarea.value += (textarea.value ? ' ' : '') + agregado;
-    }
-  };
-
-  recognition.onerror = (e) => {
-    console.warn('🎤 Error de reconocimiento:', e);
-    grabando = false;
-    btnMicro.classList.remove('grabando');
-    btnMicro.textContent = '🎤';
-    btnMicro.setAttribute('aria-pressed', 'false');
-    // Tip: si ves "not-allowed" o "permission-denied", revisa que estés en HTTPS o localhost
-  };
-} else {
-  btnMicro.disabled = true;
-  btnMicro.title = 'Tu navegador no soporta dictado por voz';
-}
-function limpiarFormulario() {
-  document.getElementById('descripcion').value = "";
+    });
   
-  // Sugerir de nuevo fecha +2 horas
-  const now = new Date();
-  const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-  const dd = String(future.getDate()).padStart(2, '0');
-  const mm = String(future.getMonth() + 1).padStart(2, '0');
-  const yy = String(future.getFullYear()).slice(-2);
-  const hh = String(future.getHours()).padStart(2, '0');
-  const min = String(future.getMinutes()).padStart(2, '0');
-
-  document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
-  document.getElementById('horaTexto').value = `${hh}${min}`;
+    recognition.onstart = () => {
+      grabando = true;
+      btnMicro.classList.add('grabando');
+      btnMicro.textContent = '🛑';
+      btnMicro.setAttribute('aria-pressed', 'true');
+      btnMicro.title = 'Toca para detener';
   
-  document.getElementById('canal').value = "telegram";
-  document.getElementById('tags').value = "alika";
-  document.getElementById('activo').checked = true;
-  document.getElementById('recurrente').checked = false;
-
-  idEditando = null;
-  document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
-}
-function actualizarFechaHoraActual() {
-  const ahora = new Date();
-  const dd = String(ahora.getDate()).padStart(2, '0');
-  const mm = String(ahora.getMonth() + 1).padStart(2, '0');
-  const yy = String(ahora.getFullYear()).slice(-2);
-  const hh = String(ahora.getHours()).padStart(2, '0');
-  const min = String(ahora.getMinutes()).padStart(2, '0');
-
-  const texto = `📅 ${dd}/${mm}/${yy} - 🕓 ${hh}:${min}`;
-  document.getElementById("fecha-hora-actual").textContent = texto;
-}
-
-// Mostrarla al cargar la página
-actualizarFechaHoraActual();
-
-  </script>
-</body>
-</html>
-
-
-
-
-
+    };
+  
+    recognition.onend = () => {
+      grabando = false;
+      btnMicro.classList.remove('grabando');
+      btnMicro.textContent = '🎤';
+      btnMicro.setAttribute('aria-pressed', 'false');
+      btnMicro.title = 'Toca para grabar';
+  
+    };
+  
+    recognition.onresult = (event) => {
+      // Agregar solo lo nuevo para evitar duplicados
+      let agregado = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        if (res.isFinal) {
+          agregado += (agregado ? ' ' : '') + res[0].transcript;
+        }
+      }
+      if (agregado) {
+        textarea.value += (textarea.value ? ' ' : '') + agregado;
+      }
+    };
+  
+    recognition.onerror = (e) => {
+      console.warn('🎤 Error de reconocimiento:', e);
+      grabando = false;
+      btnMicro.classList.remove('grabando');
+      btnMicro.textContent = '🎤';
+      btnMicro.setAttribute('aria-pressed', 'false');
+      btnMicro.title = 'Toca para grabar';
+  
+      // Tip: si ves "not-allowed" o "permission-denied", revisa que estés en HTTPS o localhost
+    };
+  } else {
+    btnMicro.disabled = true;
+    btnMicro.title = 'Tu navegador no soporta dictado por voz';
+  }
+  function limpiarFormulario() {
+    document.getElementById('descripcion').value = "";
+    
+    // Sugerir de nuevo fecha +2 horas
+    const now = new Date();
+    const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const dd = String(future.getDate()).padStart(2, '0');
+    const mm = String(future.getMonth() + 1).padStart(2, '0');
+    const yy = String(future.getFullYear()).slice(-2);
+    const hh = String(future.getHours()).padStart(2, '0');
+    const min = String(future.getMinutes()).padStart(2, '0');
+  
+    document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+    document.getElementById('horaTexto').value = `${hh}${min}`;
+    
+    document.getElementById('canal').value = "telegram";
+    document.getElementById('tags').value = "alika";
+    document.getElementById('activo').checked = true;
+    document.getElementById('recurrente').checked = false;
+  
+    idEditando = null;
+    document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
+  }
+  function actualizarFechaHoraActual() {
+    const ahora = new Date();
+    const dd = String(ahora.getDate()).padStart(2, '0');
+    const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+    const yy = String(ahora.getFullYear()).slice(-2);
+    const hh = String(ahora.getHours()).padStart(2, '0');
+    const min = String(ahora.getMinutes()).padStart(2, '0');
+  
+    const texto = `📅 ${dd}/${mm}/${yy} - 🕓 ${hh}:${min}`;
+    document.getElementById("fecha-hora-actual").textContent = texto;
+  }
+  
+  // Mostrarla al cargar la página
+  actualizarFechaHoraActual();
+  // Actualiza cada 30s (o 60s si prefieres)
+  setInterval(actualizarFechaHoraActual, 30000);
+  
+    </script>
+  </body>
+  </html>
