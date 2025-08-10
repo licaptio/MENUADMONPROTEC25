@@ -177,6 +177,11 @@
     50% { transform:scale(1.12); }
     100% { transform:scale(1); }
   }
+.icon-btn{
+  background:#555; border:none; border-radius:10px;
+  width:48px; height:48px; font-size:20px; color:#fff; cursor:pointer;
+}
+.icon-btn:active{ transform:scale(0.98); }
   
     </style>
   </head>
@@ -614,13 +619,8 @@ coleccion.doc(idEditando).get().then(doc => {
   // Mostrarla al cargar la página
   actualizarFechaHoraActual();
   // Actualiza cada 30s (o 60s si prefieres)
-  setInterval(actualizarFechaHoraActual, 30000);
-  .icon-btn{
-  background:#555; border:none; border-radius:10px;
-  width:48px; height:48px; font-size:20px; color:#fff; cursor:pointer;
-}
-.icon-btn:active{ transform:scale(0.98); }
-
+  
     </script>
   </body>
   </html>
+
