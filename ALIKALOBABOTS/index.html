@@ -330,38 +330,43 @@ if (isNaN(fecha.getTime())) {
         const coleccion = db.collection("recordatorios_alika");
   
   if (idEditando) {
-    coleccion.doc(idEditando).get().then(doc => {
-      const anterior = doc.data();
-      const fechaAntes = anterior.fecha.toDate().getTime();
-      const fechaNueva = fecha.getTime();
-  
-      // Si se modificó la fecha/hora, marcar como no enviado
-      if (fechaAntes !== fechaNueva) {
-        nuevo.enviado = false;
-      } else {
-        nuevo.enviado = anterior.enviado;
-      }
-  
+coleccion.doc(idEditando).get().then(doc => {
+  const anterior = doc.data();
+  const fechaAntes = anterior.fecha.toDate().getTime();
+  const fechaNueva = fecha.getTime();
+
+  if (fechaAntes !== fechaNueva) {
+    nuevo.enviado = false;
+  } else {
+    nuevo.enviado = anterior.enviado;
+  }
+
   coleccion.doc(idEditando).update(nuevo)
     .then(() => {
       console.log("✅ Actualizado");
       mostrarMensajeExito("✅ Cambios guardados");
       limpiarFormulario();
-         // ⬇️⬇️ AQUI
-    btnCrear.disabled = false;
-    btnCrear.textContent = '🔔 Crear recordatorio';
+
+      // 🔁 Rehabilitar botón en éxito
+      btnCrear.disabled = false;
+      btnCrear.textContent = '🔔 Crear recordatorio';
 
       setTimeout(() => {
-    window.history.replaceState({}, document.title, window.location.pathname);
-    location.reload();
-  }, 2000);
-  
+        window.history.replaceState({}, document.title, window.location.pathname);
+        location.reload();
+      }, 2000);
     })
-  .catch(e => {
-    console.error("❌ Error actualizando:", e);
-    btnCrear.disabled = false;
-    btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  });
+    .catch(e => {
+      console.error("❌ Error actualizando:", e);
+      // 🔁 Rehabilitar botón en error de update
+      btnCrear.disabled = false;
+      btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+    });
+}).catch(e => {
+  console.error("❌ Error obteniendo documento:", e);
+  // 🔁 Rehabilitar botón en error de get
+  btnCrear.disabled = false;
+  btnCrear.textContent = '💾 Guardar cambios';
 });
   } else {
     coleccion.add(nuevo)
@@ -555,4 +560,5 @@ if (isNaN(fecha.getTime())) {
     </script>
   </body>
   </html>
+
 
