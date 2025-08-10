@@ -297,6 +297,19 @@ if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || hora
         const minutos = parseInt(horaTexto.substring(2, 4));
   
         const fecha = new Date(año, mes, dia, horas, minutos);
+const yyEntrada = parseInt(fechaTexto.slice(4, 6), 10);
+const fechaEstricaOk =
+  fecha.getFullYear() === (2000 + yyEntrada) &&
+  fecha.getMonth() === mes &&
+  fecha.getDate() === dia;
+
+if (!fechaEstricaOk) {
+  alert("La fecha no es válida (día/mes/año). Verifícala.");
+  btnCrear.disabled = false;
+  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  return;
+}
+
         // Validaciones rápidas de fecha/hora
 if ([dia, mes, año, horas, minutos].some(Number.isNaN)) {
   alert("Fecha u hora inválidas.");
@@ -331,6 +344,12 @@ if (isNaN(fecha.getTime())) {
   
   if (idEditando) {
 coleccion.doc(idEditando).get().then(doc => {
+  if (!doc.exists) {
+    alert("El recordatorio a editar no existe.");
+    btnCrear.disabled = false;
+    btnCrear.textContent = '💾 Guardar cambios';
+    return;
+  }
   const anterior = doc.data();
   const fechaAntes = anterior.fecha.toDate().getTime();
   const fechaNueva = fecha.getTime();
@@ -560,5 +579,6 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
+
 
 
