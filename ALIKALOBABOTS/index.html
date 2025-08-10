@@ -295,433 +295,336 @@
     ✅ Guardado exitosamente
   </div>
   
-    <script>
-      let idEditando = null;
-      const firebaseConfig = {
-        apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
-        authDomain: "notasfoliador.firebaseapp.com",
-        projectId: "notasfoliador",
-        storageBucket: "notasfoliador.appspot.com",
-        messagingSenderId: "96242533231",
-        appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
-      };
+<script>
+  let idEditando = null;
+
+  // Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+    authDomain: "notasfoliador.firebaseapp.com",
+    projectId: "notasfoliador",
+    storageBucket: "notasfoliador.appspot.com",
+    messagingSenderId: "96242533231",
+    appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+  };
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore(); // ✅ Primero creamos 'db'
-  
+  const db = firebase.firestore();
+
+  // Parámetros y refs generales
   const params = new URLSearchParams(window.location.search);
   const idDesdeURL = params.get("id");
   const btnCrear = document.querySelector('.crear-btn');
-  // Calendario nativo (solo fecha)
-const btnCal       = document.getElementById('btn-cal');
-const fechaTextoEl = document.getElementById('fechaTexto');
 
-  // ===== Sub-página para seleccionar fecha =====
-if (btnCal) {
-  const modal = document.getElementById('subfecha');
-  const dateModal = document.getElementById('fechaPickerModal');
-  const btnClose = document.getElementById('subfecha-close');
-  const btnCancel = document.getElementById('subfecha-cancel');
-  const btnOk = document.getElementById('subfecha-ok');
+  // No-op: la sobreescribimos al inicializar el modal
+  window.syncDatePickerFromText = function(){};
 
-  const pad2 = n => String(n).padStart(2,'0');
-  const ddmmaaToISO = (v) => {
-    if (!v || v.length !== 6) return '';
-    const dd = v.slice(0,2), mm = v.slice(2,4), aa = v.slice(4,6);
-    const yyyy = 2000 + parseInt(aa,10);
-    return `${yyyy}-${mm}-${dd}`;
-  };
-  const isoToDDMMAA = (iso) => {
-    const [yyyy, mm, dd] = iso.split('-');
-    return `${dd}${mm}${yyyy.slice(-2)}`;
-  };
+  // === CRUD ===
+  function crearRecordatorio() {
+    btnCrear.disabled = true;
+    btnCrear.textContent = '⏳ Guardando...';
 
-  function openSubpage(){
-    // precargar fecha desde ddmmaa o usar hoy
-    let iso = ddmmaaToISO((fechaTextoEl.value || '').trim());
-    if (!iso || isNaN(new Date(iso).getTime())) {
-      const t = new Date();
-      iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
-    }
-    dateModal.value = iso;
-    modal.hidden = false;
-    // foco
-    setTimeout(()=>dateModal.focus(), 0);
-    document.addEventListener('keydown', escHandler);
-  }
-  function closeSubpage(){
-    modal.hidden = true;
-    document.removeEventListener('keydown', escHandler);
-    btnCal.focus();
-  }
-  function escHandler(e){
-    if (e.key === 'Escape') closeSubpage();
-  }
-  function confirmDate(){
-    if (dateModal.value) {
-      fechaTextoEl.value = isoToDDMMAA(dateModal.value);
-    }
-    closeSubpage();
-  }
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const fechaTexto  = document.getElementById('fechaTexto').value.trim(); // ddmmaa
+    const horaTexto   = document.getElementById('horaTexto').value.trim();  // hhmm
+    const canal       = document.getElementById('canal').value;
+    const tags        = document.getElementById('tags').value;
+    const activo      = document.getElementById('activo').checked;
+    const recurrente  = document.getElementById('recurrente').checked;
 
-  // abrir al tocar 📅
-  btnCal.addEventListener('click', openSubpage);
-  // cerrar
-  btnClose.addEventListener('click', closeSubpage);
-  btnCancel.addEventListener('click', closeSubpage);
-  // aceptar
-  btnOk.addEventListener('click', confirmDate);
-  // cerrar si clic fuera del panel
-  modal.addEventListener('click', (e)=>{
-    if (e.target === modal) closeSubpage();
-  });
-  // enter en el input = aceptar
-  dateModal.addEventListener('keydown', (e)=>{
-    if (e.key === 'Enter') confirmDate();
-  });
-
-  // opcional: si editas ddmmaa mientras el modal está abierto, sincroniza
-  function syncDatePickerFromText(){
-    const v = (fechaTextoEl.value || '').trim();
-    if (!modal.hidden && v.length === 6) {
-      const iso = ddmmaaToISO(v);
-      if (iso && !isNaN(new Date(iso).getTime())) dateModal.value = iso;
-    }
-  }
-  // deja accesible la función si ya la llamas en otras partes
-  window.syncDatePickerFromText = syncDatePickerFromText;
-}
-
-  function openPicker() {
-    // Sincroniza yyyy-mm-dd a partir de ddmmaa
-    syncDatePickerFromText();
-    fechaTextoEl.style.opacity = '0';
-
-    // Guarda estilos actuales
-    prev = {
-      style: {
-        position: fechaPicker.style.position,
-        left: fechaPicker.style.left,
-        top: fechaPicker.style.top,
-        width: fechaPicker.style.width,
-        height: fechaPicker.style.height,
-        opacity: fechaPicker.style.opacity,
-        pointerEvents: fechaPicker.style.pointerEvents,
-        zIndex: fechaPicker.style.zIndex
-      },
-      tabIndex: fechaPicker.tabIndex
-    };
-
-    // Coloca el input SOBRE el botón (visible para Chromium, “transparente”)
-    const r = btnCal.getBoundingClientRect();
-    Object.assign(fechaPicker.style, {
-      position: 'fixed',
-      left: `${Math.max(0, r.left + 2)}px`,
-      top: `${Math.max(0, r.top + 2)}px`,
-      width: `${Math.max(1, r.width - 4)}px`,
-      height: `${Math.max(1, r.height - 4)}px`,
-      opacity: '0.01',           // no uses 0 en Windows 10
-      pointerEvents: 'auto',
-      zIndex: '2147483647'
-    });
-    fechaPicker.tabIndex = 0;     // por si tenía -1
-
-    // Enfoca y abre (con fallback para versiones sin showPicker)
-    fechaPicker.focus({ preventScroll: true });
-    let opened = false;
-    if (fechaPicker.showPicker) {
-      try { fechaPicker.showPicker(); opened = true; } catch (_) {}
-    }
-    if (!opened) {
-      fechaPicker.click();
-      setTimeout(() => fechaPicker.click(), 0); // segundo intento
-    }
-
-    // Si nada pasó, restaura a los ~800ms
-    setTimeout(() => {
-      if (document.activeElement !== fechaPicker) restore();
-    }, 800);
-  }
-
-  btnCal.addEventListener('click', openPicker);
-
-      if (fechaPicker.value) {
-      const [yyyy, mm, dd] = fechaPicker.value.split('-');
-      fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
-    }
-    restore();
-  });
-}
-// (Opcional) sincroniza el picker desde el campo ddmmaa existente
-function syncDatePickerFromText() {
-  if (!fechaTextoEl || !fechaPicker) return;
-  const v = (fechaTextoEl.value || '').trim();
-  if (v.length === 6) {
-    const dd = v.slice(0,2);
-    const mm = v.slice(2,4);
-    const aa = v.slice(4,6);
-    fechaPicker.value = `20${aa}-${mm}-${dd}`;
-  }
-}
-// ⇢ Mantén sincronizado el calendario si escribes ddmmaa a mano
-fechaTextoEl.addEventListener('input', syncDatePickerFromText);
-
-  if (idDesdeURL && idDesdeURL !== "nuevo") {
-    editarRecordatorio(idDesdeURL);
-  }
-      function crearRecordatorio() {
-        btnCrear.disabled = true;
-        btnCrear.textContent = '⏳ Guardando...';
-        const descripcion = document.getElementById('descripcion').value.trim();
-        const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
-        const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
-        const canal = document.getElementById('canal').value;
-        const tags = document.getElementById('tags').value;
-        const activo = document.getElementById('activo').checked;
-        const recurrente = document.getElementById('recurrente').checked;
-  
-if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
-  alert("Falta descripción o fecha/hora inválida.");
-  btnCrear.disabled = false;
-  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  return;
-}
-  
-        const dia = parseInt(fechaTexto.substring(0, 2));
-        const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
-        const año = parseInt("20" + fechaTexto.substring(4, 6));
-        const horas = parseInt(horaTexto.substring(0, 2));
-        const minutos = parseInt(horaTexto.substring(2, 4));
-  
-        const fecha = new Date(año, mes, dia, horas, minutos);
-const yyEntrada = parseInt(fechaTexto.slice(4, 6), 10);
-const fechaEstricaOk =
-  fecha.getFullYear() === (2000 + yyEntrada) &&
-  fecha.getMonth() === mes &&
-  fecha.getDate() === dia;
-
-if (!fechaEstricaOk) {
-  alert("La fecha no es válida (día/mes/año). Verifícala.");
-  btnCrear.disabled = false;
-  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  return;
-}
-
-        // Validaciones rápidas de fecha/hora
-if ([dia, mes, año, horas, minutos].some(Number.isNaN)) {
-  alert("Fecha u hora inválidas.");
-  btnCrear.disabled = false;
-  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  return;
-}
-if (horas < 0 || horas > 23 || minutos < 0 || minutos > 59) {
-  alert("Hora inválida (usa formato 24h, ej. 1740).");
-  btnCrear.disabled = false;
-  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  return;
-}
-if (isNaN(fecha.getTime())) {
-  alert("La fecha/hora no existe. Verifica día, mes y año.");
-  btnCrear.disabled = false;
-  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-  return;
-}
-  
-        const nuevo = {
-          descripcion,
-          fecha,
-          canal,
-          tags: [tags],
-          activo,
-          recurrente,
-          enviado: false
-        };
-  
-        const coleccion = db.collection("recordatorios_alika");
-  
-  if (idEditando) {
-coleccion.doc(idEditando).get().then(doc => {
-  if (!doc.exists) {
-    alert("El recordatorio a editar no existe.");
-    btnCrear.disabled = false;
-    btnCrear.textContent = '💾 Guardar cambios';
-    return;
-  }
-  const anterior = doc.data();
-  const fechaAntes = anterior.fecha.toDate().getTime();
-  const fechaNueva = fecha.getTime();
-
-  if (fechaAntes !== fechaNueva) {
-    nuevo.enviado = false;
-  } else {
-    nuevo.enviado = anterior.enviado;
-  }
-
-  coleccion.doc(idEditando).update(nuevo)
-    .then(() => {
-      console.log("✅ Actualizado");
-      mostrarMensajeExito("✅ Cambios guardados");
-      limpiarFormulario();
-
-      // 🔁 Rehabilitar botón en éxito
-      btnCrear.disabled = false;
-      btnCrear.textContent = '🔔 Crear recordatorio';
-
-      setTimeout(() => {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        location.reload();
-      }, 2000);
-    })
-    .catch(e => {
-      console.error("❌ Error actualizando:", e);
-      // 🔁 Rehabilitar botón en error de update
+    if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
+      alert("Falta descripción o fecha/hora inválida.");
       btnCrear.disabled = false;
       btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
-    });
-}).catch(e => {
-  console.error("❌ Error obteniendo documento:", e);
-  // 🔁 Rehabilitar botón en error de get
-  btnCrear.disabled = false;
-  btnCrear.textContent = '💾 Guardar cambios';
-});
-  } else {
-    coleccion.add(nuevo)
-  .then(() => {
-    console.log("✅ Guardado en Firestore");
-  mostrarMensajeExito();
-  limpiarFormulario();
-    btnCrear.disabled = false;
-    btnCrear.textContent = '🔔 Crear recordatorio';
-    setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
-  })
-  .catch(e => {
-    console.error("❌ Error guardando en Firestore:", e);
-    btnCrear.disabled = false;
-    btnCrear.textContent = '🔔 Crear recordatorio';
-  });
-  } // ← AQUÍ CIERRA crearRecordatorio
-  } // ← Esta cierra la función crearRecordatorio
-  function editarRecordatorio(id) {
-        db.collection("recordatorios_alika").doc(id).get().then(doc => {
-          if (doc.exists) {
-            const r = doc.data();
-            document.getElementById('descripcion').value = r.descripcion;
-            document.getElementById('canal').value = r.canal;
-            document.getElementById('tags').value = r.tags?.[0] || '';
-            document.getElementById('activo').checked = r.activo;
-            document.getElementById('recurrente').checked = r.recurrente;
-  
-            const d = r.fecha.toDate();
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const yy = String(d.getFullYear()).slice(-2);
-            const hh = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-  
-            document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
-            document.getElementById('horaTexto').value = `${hh}${min}`;
-  
-            idEditando = id;
-            document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
-      // ⬇️ AÑADE ESTA LÍNEA AQUÍ
-      syncDatePickerFromText();
+      return;
     }
-  });
-}          
+
+    const dia     = parseInt(fechaTexto.substring(0, 2));
+    const mes     = parseInt(fechaTexto.substring(2, 4)) - 1;
+    const año     = parseInt("20" + fechaTexto.substring(4, 6));
+    const horas   = parseInt(horaTexto.substring(0, 2));
+    const minutos = parseInt(horaTexto.substring(2, 4));
+
+    const fecha = new Date(año, mes, dia, horas, minutos);
+    const yyEntrada = parseInt(fechaTexto.slice(4, 6), 10);
+    const fechaEstricaOk =
+      fecha.getFullYear() === (2000 + yyEntrada) &&
+      fecha.getMonth() === mes &&
+      fecha.getDate() === dia;
+
+    if (!fechaEstricaOk) {
+      alert("La fecha no es válida (día/mes/año). Verifícala.");
+      btnCrear.disabled = false;
+      btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+      return;
+    }
+
+    if ([dia, mes, año, horas, minutos].some(Number.isNaN)) {
+      alert("Fecha u hora inválidas.");
+      btnCrear.disabled = false;
+      btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+      return;
+    }
+    if (horas < 0 || horas > 23 || minutos < 0 || minutos > 59) {
+      alert("Hora inválida (usa formato 24h, ej. 1740).");
+      btnCrear.disabled = false;
+      btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+      return;
+    }
+    if (isNaN(fecha.getTime())) {
+      alert("La fecha/hora no existe. Verifica día, mes y año.");
+      btnCrear.disabled = false;
+      btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+      return;
+    }
+
+    const nuevo = {
+      descripcion,
+      fecha,
+      canal,
+      tags: [tags],
+      activo,
+      recurrente,
+      enviado: false
+    };
+
+    const coleccion = db.collection("recordatorios_alika");
+
+    if (idEditando) {
+      coleccion.doc(idEditando).get().then(doc => {
+        if (!doc.exists) {
+          alert("El recordatorio a editar no existe.");
+          btnCrear.disabled = false;
+          btnCrear.textContent = '💾 Guardar cambios';
+          return;
+        }
+        const anterior   = doc.data();
+        const fechaAntes = anterior.fecha.toDate().getTime();
+        const fechaNueva = fecha.getTime();
+
+        nuevo.enviado = (fechaAntes === fechaNueva) ? anterior.enviado : false;
+
+        coleccion.doc(idEditando).update(nuevo)
+          .then(() => {
+            console.log("✅ Actualizado");
+            mostrarMensajeExito("✅ Cambios guardados");
+            limpiarFormulario();
+
+            btnCrear.disabled = false;
+            btnCrear.textContent = '🔔 Crear recordatorio';
+
+            setTimeout(() => {
+              window.history.replaceState({}, document.title, window.location.pathname);
+              location.reload();
+            }, 2000);
+          })
+          .catch(e => {
+            console.error("❌ Error actualizando:", e);
+            btnCrear.disabled = false;
+            btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+          });
+      }).catch(e => {
+        console.error("❌ Error obteniendo documento:", e);
+        btnCrear.disabled = false;
+        btnCrear.textContent = '💾 Guardar cambios';
+      });
+    } else {
+      coleccion.add(nuevo)
+        .then(() => {
+          console.log("✅ Guardado en Firestore");
+          mostrarMensajeExito();
+          limpiarFormulario();
+          btnCrear.disabled = false;
+          btnCrear.textContent = '🔔 Crear recordatorio';
+          setTimeout(() => location.reload(), 2000);
+        })
+        .catch(e => {
+          console.error("❌ Error guardando en Firestore:", e);
+          btnCrear.disabled = false;
+          btnCrear.textContent = '🔔 Crear recordatorio';
+        });
+    }
+  }
+
+  function editarRecordatorio(id) {
+    db.collection("recordatorios_alika").doc(id).get().then(doc => {
+      if (doc.exists) {
+        const r = doc.data();
+        document.getElementById('descripcion').value = r.descripcion;
+        document.getElementById('canal').value       = r.canal;
+        document.getElementById('tags').value        = r.tags?.[0] || '';
+        document.getElementById('activo').checked    = r.activo;
+        document.getElementById('recurrente').checked= r.recurrente;
+
+        const d  = r.fecha.toDate();
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = String(d.getFullYear()).slice(-2);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mi = String(d.getMinutes()).padStart(2, '0');
+
+        document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+        document.getElementById('horaTexto').value  = `${hh}${mi}`;
+
+        idEditando = id;
+        document.querySelector('.crear-btn').textContent = '💾 Guardar cambios';
+        // sincroniza el modal si está abierto
+        if (window.syncDatePickerFromText) window.syncDatePickerFromText();
+      }
+    });
+  }
+
   function mostrarMensajeExito(texto = "✅ Guardado exitosamente") {
     const mensaje = document.getElementById("mensaje-exito");
     mensaje.textContent = texto;
     mensaje.style.display = "block";
-  
-    setTimeout(() => {
-      mensaje.style.display = "none";
-    }, 2000); // Desaparece en 2 segundos
+    setTimeout(() => { mensaje.style.display = "none"; }, 2000);
   }
-  // Al cargar la página: sugerir fecha actual y hora +2
-  window.addEventListener('DOMContentLoaded', () => {
-    const now = new Date();
-    const future = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 horas
-  
-    const dd = String(future.getDate()).padStart(2, '0');
-    const mm = String(future.getMonth() + 1).padStart(2, '0');
-    const yy = String(future.getFullYear()).slice(-2);
-    const hh = String(future.getHours()).padStart(2, '0');
-    const min = String(future.getMinutes()).padStart(2, '0');
-  
-    // Solo si no hay valores previos
-    if (!document.getElementById('fechaTexto').value) {
-      document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+
+  // Inicializaciones de UI y modal fecha
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnCal       = document.getElementById('btn-cal');
+    const fechaTextoEl = document.getElementById('fechaTexto');
+
+    // Sugerir fecha/hora (ahora +2h) si no hay valores previos
+    {
+      const now = new Date();
+      const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      const dd = String(future.getDate()).padStart(2, '0');
+      const mm = String(future.getMonth() + 1).padStart(2, '0');
+      const yy = String(future.getFullYear()).slice(-2);
+      const hh = String(future.getHours()).padStart(2, '0');
+      const mi = String(future.getMinutes()).padStart(2, '0');
+
+      if (!fechaTextoEl.value) document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
+      if (!document.getElementById('horaTexto').value) {
+        document.getElementById('horaTexto').value = `${hh}${mi}`;
+      }
     }
-    if (!document.getElementById('horaTexto').value) {
-      document.getElementById('horaTexto').value = `${hh}${min}`;
+
+    // ===== Modal "sub-página" de fecha =====
+    if (btnCal) {
+      const modal     = document.getElementById('subfecha');
+      const dateModal = document.getElementById('fechaPickerModal');
+      const btnClose  = document.getElementById('subfecha-close');
+      const btnCancel = document.getElementById('subfecha-cancel');
+      const btnOk     = document.getElementById('subfecha-ok');
+
+      const pad2 = n => String(n).padStart(2,'0');
+      const ddmmaaToISO = (v) => {
+        if (!v || v.length !== 6) return '';
+        const dd = v.slice(0,2), mm = v.slice(2,4), aa = v.slice(4,6);
+        const yyyy = 2000 + parseInt(aa,10);
+        return `${yyyy}-${mm}-${dd}`;
+      };
+      const isoToDDMMAA = (iso) => {
+        const [yyyy, mm, dd] = iso.split('-');
+        return `${dd}${mm}${yyyy.slice(-2)}`;
+      };
+
+      function openSubpage(){
+        let iso = ddmmaaToISO((fechaTextoEl.value || '').trim());
+        if (!iso || isNaN(new Date(iso).getTime())) {
+          const t = new Date();
+          iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
+        }
+        dateModal.value = iso;
+        modal.hidden = false;
+        setTimeout(()=>dateModal.focus(), 0);
+        document.addEventListener('keydown', escHandler);
+      }
+      function closeSubpage(){
+        modal.hidden = true;
+        document.removeEventListener('keydown', escHandler);
+        btnCal.focus();
+      }
+      function escHandler(e){
+        if (e.key === 'Escape') closeSubpage();
+      }
+      function confirmDate(){
+        if (dateModal.value) {
+          fechaTextoEl.value = isoToDDMMAA(dateModal.value);
+        }
+        closeSubpage();
+      }
+
+      btnCal.addEventListener('click', openSubpage);
+      btnClose.addEventListener('click', closeSubpage);
+      btnCancel.addEventListener('click', closeSubpage);
+      btnOk.addEventListener('click', confirmDate);
+      modal.addEventListener('click', (e)=>{
+        if (e.target === modal) closeSubpage();
+      });
+      dateModal.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter') confirmDate();
+      });
+
+      // Sincroniza el <input type="date"> si editas ddmmaa mientras el modal está abierto
+      window.syncDatePickerFromText = function(){
+        const v = (fechaTextoEl.value || '').trim();
+        if (!modal.hidden && v.length === 6) {
+          const iso = ddmmaaToISO(v);
+          if (iso && !isNaN(new Date(iso).getTime())) dateModal.value = iso;
+        }
+      };
+
+      // Cada vez que escribas en ddmmaa
+      fechaTextoEl.addEventListener('input', window.syncDatePickerFromText);
     }
-   // ⬇️ AÑADE ESTA LÍNEA AQUÍ
-  syncDatePickerFromText();
-}); // ← cierre de DOMContentLoaded
-   
+
+    // Si venimos con ?id=... cargar para editar
+    if (idDesdeURL && idDesdeURL !== "nuevo") {
+      editarRecordatorio(idDesdeURL);
+    }
+  });
+
+  // 🎤 Micrófono (igual que lo tenías)
   const textarea = document.getElementById('descripcion');
   const btnMicro = document.getElementById('btn-microfono');
   btnMicro.title = 'Toca para grabar';
   btnMicro.setAttribute('aria-pressed', 'false');
-  
-      
+
   let grabando = false;
   let recognition = null;
-  
+
   if ('webkitSpeechRecognition' in window) {
     recognition = new webkitSpeechRecognition();
     recognition.lang = 'es-MX';
-    recognition.continuous = true;       // tú detienes manualmente
-    recognition.interimResults = false;  // solo finales
-  
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
     btnMicro.addEventListener('click', () => {
       if (!grabando) {
-        try {
-          recognition.start();           // 👉 empezar manual
-        } catch (e) {
-          // Evita crash si el usuario toca muy rápido
-          console.warn('start() ignorado:', e);
-        }
+        try { recognition.start(); } catch (e) { console.warn('start() ignorado:', e); }
       } else {
-        try {
-          recognition.stop();            // 👉 detener manual
-        } catch (e) {
-          console.warn('stop() ignorado:', e);
-        }
+        try { recognition.stop(); } catch (e) { console.warn('stop() ignorado:', e); }
       }
     });
-  
+
     recognition.onstart = () => {
       grabando = true;
       btnMicro.classList.add('grabando');
       btnMicro.textContent = '🛑';
       btnMicro.setAttribute('aria-pressed', 'true');
       btnMicro.title = 'Toca para detener';
-  
     };
-  
+
     recognition.onend = () => {
       grabando = false;
       btnMicro.classList.remove('grabando');
       btnMicro.textContent = '🎤';
       btnMicro.setAttribute('aria-pressed', 'false');
       btnMicro.title = 'Toca para grabar';
-  
     };
-  
+
     recognition.onresult = (event) => {
-      // Agregar solo lo nuevo para evitar duplicados
       let agregado = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const res = event.results[i];
-        if (res.isFinal) {
-          agregado += (agregado ? ' ' : '') + res[0].transcript;
-        }
+        if (res.isFinal) agregado += (agregado ? ' ' : '') + res[0].transcript;
       }
-      if (agregado) {
-        textarea.value += (textarea.value ? ' ' : '') + agregado;
-      }
+      if (agregado) textarea.value += (textarea.value ? ' ' : '') + agregado;
     };
-  
+
     recognition.onerror = (e) => {
       console.warn('🎤 Error de reconocimiento:', e);
       grabando = false;
@@ -729,40 +632,36 @@ coleccion.doc(idEditando).get().then(doc => {
       btnMicro.textContent = '🎤';
       btnMicro.setAttribute('aria-pressed', 'false');
       btnMicro.title = 'Toca para grabar';
-  
-      // Tip: si ves "not-allowed" o "permission-denied", revisa que estés en HTTPS o localhost
     };
   } else {
     btnMicro.disabled = true;
     btnMicro.title = 'Tu navegador no soporta dictado por voz';
   }
+
   function limpiarFormulario() {
     document.getElementById('descripcion').value = "";
-    
-    // Sugerir de nuevo fecha +2 horas
+
     const now = new Date();
     const future = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const dd = String(future.getDate()).padStart(2, '0');
     const mm = String(future.getMonth() + 1).padStart(2, '0');
     const yy = String(future.getFullYear()).slice(-2);
     const hh = String(future.getHours()).padStart(2, '0');
-    const min = String(future.getMinutes()).padStart(2, '0');
-  
+    const mi = String(future.getMinutes()).padStart(2, '0');
+
     document.getElementById('fechaTexto').value = `${dd}${mm}${yy}`;
-    document.getElementById('horaTexto').value = `${hh}${min}`;
-    
-    document.getElementById('canal').value = "telegram";
-    document.getElementById('tags').value = "alika";
-    document.getElementById('activo').checked = true;
+    document.getElementById('horaTexto').value  = `${hh}${mi}`;
+    document.getElementById('canal').value      = "telegram";
+    document.getElementById('tags').value       = "alika";
+    document.getElementById('activo').checked   = true;
     document.getElementById('recurrente').checked = false;
-  
+
     idEditando = null;
     document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
-    // ⇢ Actualiza el <input type="date"> según el ddmmaa recién puesto
-  syncDatePickerFromText();
 
+    if (window.syncDatePickerFromText) window.syncDatePickerFromText();
   }
-    </script>
+</script>
 <!-- Sub-página: selector de fecha -->
 <div id="subfecha" class="subpage-overlay" hidden>
   <div class="subpage" role="dialog" aria-modal="true" aria-labelledby="subfecha-title">
@@ -781,3 +680,4 @@ coleccion.doc(idEditando).get().then(doc => {
 </div>
   </body>
   </html>
+
