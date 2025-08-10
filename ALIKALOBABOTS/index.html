@@ -206,7 +206,13 @@
       flex:0 0 56px;
     ">🎤</button>
   </div>
-<input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" />
+<div style="display:flex; gap:10px; align-items:center;">
+  <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" style="flex:1;" />
+  <button id="btn-cal" type="button" class="icon-btn" aria-label="Abrir calendario">📅</button>
+  <!-- Picker nativo oculto -->
+  <input type="date" id="fechaPicker" style="position:absolute; left:-9999px; width:0; height:0; opacity:0;" />
+</div>
+
 <input type="tel" id="horaTexto"  inputmode="numeric" maxlength="4" pattern="[0-9]*"  placeholder="Hora (ej. 1740)" />
 
 <select id="canal">
@@ -268,7 +274,37 @@
   const params = new URLSearchParams(window.location.search);
   const idDesdeURL = params.get("id");
   const btnCrear = document.querySelector('.crear-btn');
-  
+  // Calendario nativo (solo fecha)
+const btnCal       = document.getElementById('btn-cal');
+const fechaPicker  = document.getElementById('fechaPicker');
+const fechaTextoEl = document.getElementById('fechaTexto');
+
+// Abrir el picker nativo (Chrome soporta showPicker; fallback a click)
+if (btnCal && fechaPicker) {
+  btnCal.addEventListener('click', () => {
+    if (fechaPicker.showPicker) fechaPicker.showPicker(); else fechaPicker.click();
+  });
+
+  // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa
+  fechaPicker.addEventListener('change', () => {
+    if (!fechaPicker.value) return;
+    const [yyyy, mm, dd] = fechaPicker.value.split('-');
+    fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
+  });
+}
+
+// (Opcional) sincroniza el picker desde el campo ddmmaa existente
+function syncDatePickerFromText() {
+  if (!fechaTextoEl || !fechaPicker) return;
+  const v = (fechaTextoEl.value || '').trim();
+  if (v.length === 6) {
+    const dd = v.slice(0,2);
+    const mm = v.slice(2,4);
+    const aa = v.slice(4,6);
+    fechaPicker.value = `20${aa}-${mm}-${dd}`;
+  }
+}
+
   if (idDesdeURL && idDesdeURL !== "nuevo") {
     editarRecordatorio(idDesdeURL);
   }
@@ -575,10 +611,16 @@ coleccion.doc(idEditando).get().then(doc => {
   actualizarFechaHoraActual();
   // Actualiza cada 30s (o 60s si prefieres)
   setInterval(actualizarFechaHoraActual, 30000);
-  
+  .icon-btn{
+  background:#555; border:none; border-radius:10px;
+  width:48px; height:48px; font-size:20px; color:#fff; cursor:pointer;
+}
+.icon-btn:active{ transform:scale(0.98); }
+
     </script>
   </body>
   </html>
+
 
 
 
