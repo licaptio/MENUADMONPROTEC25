@@ -267,11 +267,14 @@
   
   const params = new URLSearchParams(window.location.search);
   const idDesdeURL = params.get("id");
+  const btnCrear = document.querySelector('.crear-btn');
   
   if (idDesdeURL && idDesdeURL !== "nuevo") {
     editarRecordatorio(idDesdeURL);
   }
       function crearRecordatorio() {
+        btnCrear.disabled = true;
+        btnCrear.textContent = '⏳ Guardando...';
         const descripcion = document.getElementById('descripcion').value.trim();
         const fechaTexto = document.getElementById('fechaTexto').value.trim(); // ej: 030825
         const horaTexto = document.getElementById('horaTexto').value.trim();   // ej: 1740
@@ -292,7 +295,26 @@
         const minutos = parseInt(horaTexto.substring(2, 4));
   
         const fecha = new Date(año, mes, dia, horas, minutos);
-          
+        // Validaciones rápidas de fecha/hora
+if ([dia, mes, año, horas, minutos].some(Number.isNaN)) {
+  alert("Fecha u hora inválidas.");
+  btnCrear.disabled = false;
+  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  return;
+}
+if (horas < 0 || horas > 23 || minutos < 0 || minutos > 59) {
+  alert("Hora inválida (usa formato 24h, ej. 1740).");
+  btnCrear.disabled = false;
+  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  return;
+}
+if (isNaN(fecha.getTime())) {
+  alert("La fecha/hora no existe. Verifica día, mes y año.");
+  btnCrear.disabled = false;
+  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  return;
+}
+  
         const nuevo = {
           descripcion,
           fecha,
@@ -323,6 +345,10 @@
       console.log("✅ Actualizado");
       mostrarMensajeExito("✅ Cambios guardados");
       limpiarFormulario();
+         // ⬇️⬇️ AQUI
+    btnCrear.disabled = false;
+    btnCrear.textContent = '🔔 Crear recordatorio';
+
       setTimeout(() => {
     window.history.replaceState({}, document.title, window.location.pathname);
     location.reload();
@@ -330,16 +356,25 @@
   
     })
     .catch(e => console.error("❌ Error actualizando:", e));
-    });
+    // ⬇️⬇️ AQUI
+    btnCrear.disabled = false;
+    btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  });
   } else {
     coleccion.add(nuevo)
   .then(() => {
     console.log("✅ Guardado en Firestore");
   mostrarMensajeExito();
   limpiarFormulario();
-  setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
+    btnCrear.disabled = false;
+    btnCrear.textContent = '🔔 Crear recordatorio';
+    setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
   })
   .catch(e => console.error("❌ Error guardando en Firestore:", e));
+      // ⬇️⬇️ AQUI
+    btnCrear.disabled = false;
+    btnCrear.textContent = '🔔 Crear recordatorio';
+  });
   } // ← AQUÍ CIERRA crearRecordatorio
   } // ← Esta cierra la función crearRecordatorio
   function editarRecordatorio(id) {
@@ -395,8 +430,6 @@
       document.getElementById('horaTexto').value = `${hh}${min}`;
     }
   });
- btnCrear.disabled = true;
-btnCrear.textContent = '⏳ Guardando...';
  
   const textarea = document.getElementById('descripcion');
   const btnMicro = document.getElementById('btn-microfono');
@@ -519,5 +552,3 @@ btnCrear.textContent = '⏳ Guardando...';
     </script>
   </body>
   </html>
-
-
