@@ -218,7 +218,12 @@
 #subfecha-cancel{ background:#333; color:#eee; }
 #subfecha-ok{ background:#af3a43; color:#fff; }
 #subfecha-ok:active, #subfecha-cancel:active{ transform:scale(.98); }
-  
+
+/* Fuerza a ocultar cualquier elemento con [hidden] aunque tenga display en su clase */
+[hidden] { 
+  display: none !important;
+}
+
     </style>
   </head>
   <body>
@@ -481,7 +486,9 @@
   }
 
   // Inicializaciones de UI y modal fecha
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('subfecha');
+  if (modal) { modal.hidden = true; modal.setAttribute('aria-hidden','true'); }
     const btnCal       = document.getElementById('btn-cal');
     const fechaTextoEl = document.getElementById('fechaTexto');
 
@@ -528,17 +535,19 @@
           iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
         }
         dateModal.value = iso;
-        modal.hidden = false;
-        setTimeout(()=>dateModal.focus(), 0);
-        document.addEventListener('keydown', escHandler);
- document.body.style.overflow = 'hidden';   
-      }
+modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  setTimeout(()=>dateModal.focus(), 0);
+  document.addEventListener('keydown', escHandler);
+  document.body.style.overflow = 'hidden';
+}
 function closeSubpage(){
   modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
   document.removeEventListener('keydown', escHandler);
   document.body.style.overflow = '';
   btnCal.focus();
-}
+} 
       function escHandler(e){
         if (e.key === 'Escape') closeSubpage();
       }
@@ -694,6 +703,7 @@ btnCal.addEventListener('keydown', (e) => {
 </div>
   </body>
   </html>
+
 
 
 
