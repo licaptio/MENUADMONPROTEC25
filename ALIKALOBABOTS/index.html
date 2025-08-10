@@ -283,21 +283,80 @@ const fechaTextoEl = document.getElementById('fechaTexto');
 
 // Abrir el picker nativo (Chrome soporta showPicker; fallback a click)
 if (btnCal && fechaPicker) {
-  // Oculta el input ddmmaa mientras está abierto el picker
-btnCal.addEventListener('click', () => {
-  // Asegura que el <input type="date"> tenga la fecha actual del ddmmaa
-  syncDatePickerFromText();
+  let prev = null;
 
-  fechaTextoEl.style.opacity = '0'; // se mantiene el espacio
-
-  // Enfocar antes de abrir mejora compatibilidad en escritorio
-  fechaPicker.focus({ preventScroll: true });
-
-  if (fechaPicker.showPicker) {
-    fechaPicker.showPicker();
-  } else {
-    fechaPicker.click();
+  function restore() {
+    fechaTextoEl.style.opacity = '1';
+    if (!prev) return;
+    Object.assign(fechaPicker.style, prev.style);
+    fechaPicker.tabIndex = prev.tabIndex;
+    prev = null;
   }
+
+  function openPicker() {
+    // Sincroniza yyyy-mm-dd a partir de ddmmaa
+    syncDatePickerFromText();
+    fechaTextoEl.style.opacity = '0';
+
+    // Guarda estilos actuales
+    prev = {
+      style: {
+        position: fechaPicker.style.position,
+        left: fechaPicker.style.left,
+        top: fechaPicker.style.top,
+        width: fechaPicker.style.width,
+        height: fechaPicker.style.height,
+        opacity: fechaPicker.style.opacity,
+        pointerEvents: fechaPicker.style.pointerEvents,
+        zIndex: fechaPicker.style.zIndex
+      },
+      tabIndex: fechaPicker.tabIndex
+    };
+
+    // Coloca el input SOBRE el botón (visible para Chromium, pero “transparente”)
+    const r = btnCal.getBoundingClientRect();
+    Object.assign(fechaPicker.style, {
+      position: 'fixed',
+      left: `${Math.max(0, r.left + 2)}px`,
+      top: `${Math.max(0, r.top + 2)}px`,
+      width: `${Math.max(1, r.width - 4)}px`,
+      height: `${Math.max(1, r.height - 4)}px`,
+      opacity: '0.01',           // no uses 0 en Windows 10
+      pointerEvents: 'auto',
+      zIndex: '2147483647'
+    });
+    fechaPicker.tabIndex = 0;     // por si tenía -1
+
+    // Enfoca y abre (con fallback para versiones sin showPicker)
+    fechaPicker.focus({ preventScroll: true });
+    let opened = false;
+    if (fechaPicker.showPicker) {
+      try { fechaPicker.showPicker(); opened = true; } catch (_) {}
+    }
+    if (!opened) {
+      fechaPicker.click();
+      setTimeout(() => fechaPicker.click(), 0); // segundo intento
+    }
+
+    // Si nada pasó, restaura a los ~800ms
+    setTimeout(() => {
+      if (document.activeElement !== fechaPicker) restore();
+    }, 800);
+  }
+
+  btnCal.addEventListener('click', openPicker);
+
+  fechaPicker.addEventListener('change', () => {
+    if (fechaPicker.value) {
+      const [yyyy, mm, dd] = fechaPicker.value.split('-');
+      fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
+    }
+    restore();
+  });
+
+  fechaPicker.addEventListener('blur', restore);
+  fechaPicker.addEventListener('focusout', restore);
+}
 });
 
   // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa y volver a mostrar
@@ -633,6 +692,7 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
+
 
 
 
