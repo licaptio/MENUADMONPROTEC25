@@ -292,7 +292,7 @@
         const minutos = parseInt(horaTexto.substring(2, 4));
   
         const fecha = new Date(año, mes, dia, horas, minutos);
-  
+          
         const nuevo = {
           descripcion,
           fecha,
@@ -395,7 +395,9 @@
       document.getElementById('horaTexto').value = `${hh}${min}`;
     }
   });
-  
+ btnCrear.disabled = true;
+btnCrear.textContent = '⏳ Guardando...';
+ 
   const textarea = document.getElementById('descripcion');
   const btnMicro = document.getElementById('btn-microfono');
   btnMicro.title = 'Toca para grabar';
@@ -517,4 +519,5 @@
     </script>
   </body>
   </html>
+
 
