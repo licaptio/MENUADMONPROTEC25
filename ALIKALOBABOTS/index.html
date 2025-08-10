@@ -402,34 +402,52 @@ let recognition = null;
 if ('webkitSpeechRecognition' in window) {
   recognition = new webkitSpeechRecognition();
   recognition.lang = 'es-MX';
-  recognition.continuous = true;      // escucha hasta que TÚ pares
-  recognition.interimResults = false; // solo resultados finales
+  recognition.continuous = true;       // tú detienes manualmente
+  recognition.interimResults = false;  // solo finales
 
   btnMicro.addEventListener('click', () => {
     if (!grabando) {
-      recognition.start(); // 👉 empezar manual
+      try {
+        recognition.start();           // 👉 empezar manual
+      } catch (e) {
+        // Evita crash si el usuario toca muy rápido
+        console.warn('start() ignorado:', e);
+      }
     } else {
-      recognition.stop();  // 👉 detener manual
+      try {
+        recognition.stop();            // 👉 detener manual
+      } catch (e) {
+        console.warn('stop() ignorado:', e);
+      }
     }
   });
 
   recognition.onstart = () => {
     grabando = true;
     btnMicro.classList.add('grabando');
-    btnMicro.textContent = '🛑'; // indica “grabando”
+    btnMicro.textContent = '🛑';
+    btnMicro.setAttribute('aria-pressed', 'true');
   };
 
   recognition.onend = () => {
     grabando = false;
     btnMicro.classList.remove('grabando');
     btnMicro.textContent = '🎤';
+    btnMicro.setAttribute('aria-pressed', 'false');
   };
 
   recognition.onresult = (event) => {
-    const texto = Array.from(event.results)
-      .map(r => r[0].transcript)
-      .join(' ');
-    textarea.value += (textarea.value ? ' ' : '') + texto;
+    // Agregar solo lo nuevo para evitar duplicados
+    let agregado = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const res = event.results[i];
+      if (res.isFinal) {
+        agregado += (agregado ? ' ' : '') + res[0].transcript;
+      }
+    }
+    if (agregado) {
+      textarea.value += (textarea.value ? ' ' : '') + agregado;
+    }
   };
 
   recognition.onerror = (e) => {
@@ -437,6 +455,8 @@ if ('webkitSpeechRecognition' in window) {
     grabando = false;
     btnMicro.classList.remove('grabando');
     btnMicro.textContent = '🎤';
+    btnMicro.setAttribute('aria-pressed', 'false');
+    // Tip: si ves "not-allowed" o "permission-denied", revisa que estés en HTTPS o localhost
   };
 } else {
   btnMicro.disabled = true;
@@ -483,6 +503,7 @@ actualizarFechaHoraActual();
   </script>
 </body>
 </html>
+
 
 
 
