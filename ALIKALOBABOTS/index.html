@@ -283,10 +283,12 @@
         const activo = document.getElementById('activo').checked;
         const recurrente = document.getElementById('recurrente').checked;
   
-        if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
-          alert("Falta descripción o fecha/hora inválida.");
-          return;
-        }
+if (!descripcion || !fechaTexto || !horaTexto || fechaTexto.length !== 6 || horaTexto.length !== 4) {
+  alert("Falta descripción o fecha/hora inválida.");
+  btnCrear.disabled = false;
+  btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
+  return;
+}
   
         const dia = parseInt(fechaTexto.substring(0, 2));
         const mes = parseInt(fechaTexto.substring(2, 4)) - 1;
@@ -355,11 +357,12 @@ if (isNaN(fecha.getTime())) {
   }, 2000);
   
     })
-    .catch(e => console.error("❌ Error actualizando:", e));
-    // ⬇️⬇️ AQUI
+  .catch(e => {
+    console.error("❌ Error actualizando:", e);
     btnCrear.disabled = false;
     btnCrear.textContent = idEditando ? '💾 Guardar cambios' : '🔔 Crear recordatorio';
   });
+});
   } else {
     coleccion.add(nuevo)
   .then(() => {
@@ -370,8 +373,8 @@ if (isNaN(fecha.getTime())) {
     btnCrear.textContent = '🔔 Crear recordatorio';
     setTimeout(() => location.reload(), 2000); // ⏳ Recarga suave después de 2s
   })
-  .catch(e => console.error("❌ Error guardando en Firestore:", e));
-      // ⬇️⬇️ AQUI
+  .catch(e => {
+    console.error("❌ Error guardando en Firestore:", e);
     btnCrear.disabled = false;
     btnCrear.textContent = '🔔 Crear recordatorio';
   });
@@ -552,3 +555,4 @@ if (isNaN(fecha.getTime())) {
     </script>
   </body>
   </html>
+
