@@ -547,7 +547,19 @@
         closeSubpage();
       }
 
-      btnCal.addEventListener('click', openSubpage);
+      // Abrir SOLO con interacción táctil/ratón (no por teclado)
+let allowOpen = false;
+btnCal.addEventListener('pointerdown', () => { allowOpen = true; });
+btnCal.addEventListener('click', (e) => {
+  if (!allowOpen) return;     // ignora clicks “sintéticos”
+  allowOpen = false;
+  openSubpage();
+});
+// Evita que Enter/Espacio en el botón disparen el modal
+btnCal.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+});
+
       btnClose.addEventListener('click', closeSubpage);
       btnCancel.addEventListener('click', closeSubpage);
       btnOk.addEventListener('click', confirmDate);
@@ -680,4 +692,5 @@
 </div>
   </body>
   </html>
+
 
