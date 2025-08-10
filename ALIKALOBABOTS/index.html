@@ -283,15 +283,23 @@ const fechaTextoEl = document.getElementById('fechaTexto');
 
 // Abrir el picker nativo (Chrome soporta showPicker; fallback a click)
 if (btnCal && fechaPicker) {
+  // Oculta el input ddmmaa mientras está abierto el picker
   btnCal.addEventListener('click', () => {
+    fechaTextoEl.style.opacity = '0'; // se mantiene el espacio
     if (fechaPicker.showPicker) fechaPicker.showPicker(); else fechaPicker.click();
   });
 
-  // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa
+  // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa y volver a mostrar
   fechaPicker.addEventListener('change', () => {
     if (!fechaPicker.value) return;
     const [yyyy, mm, dd] = fechaPicker.value.split('-');
     fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
+    fechaTextoEl.style.opacity = '1';
+  });
+
+  // Por si el usuario cierra el picker sin elegir nada
+  fechaPicker.addEventListener('blur', () => {
+    fechaTextoEl.style.opacity = '1';
   });
 }
 
@@ -601,24 +609,9 @@ coleccion.doc(idEditando).get().then(doc => {
     idEditando = null;
     document.querySelector('.crear-btn').textContent = '🔔 Crear recordatorio';
   }
-  function actualizarFechaHoraActual() {
-    const ahora = new Date();
-    const dd = String(ahora.getDate()).padStart(2, '0');
-    const mm = String(ahora.getMonth() + 1).padStart(2, '0');
-    const yy = String(ahora.getFullYear()).slice(-2);
-    const hh = String(ahora.getHours()).padStart(2, '0');
-    const min = String(ahora.getMinutes()).padStart(2, '0');
-  
-    const texto = `📅 ${dd}/${mm}/${yy} - 🕓 ${hh}:${min}`;
-    document.getElementById("fecha-hora-actual").textContent = texto;
-  }
-  
-  // Mostrarla al cargar la página
-  actualizarFechaHoraActual();
-  // Actualiza cada 30s (o 60s si prefieres)
-  
     </script>
   </body>
   </html>
+
 
 
