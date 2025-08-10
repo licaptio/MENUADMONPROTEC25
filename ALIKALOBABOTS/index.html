@@ -182,6 +182,42 @@
   width:48px; height:48px; font-size:20px; color:#fff; cursor:pointer;
 }
 .icon-btn:active{ transform:scale(0.98); }
+/* ===== Sub-página (overlay) para fecha ===== */
+.subpage-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter: blur(2px);
+}
+.subpage{
+  width:min(420px, 92vw);
+  background:#111; color:#fff;
+  border:1px solid #333; border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+.subpage-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid #222;
+}
+.subpage-x{
+  background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;
+}
+.subpage-x:hover{ color:#fff; }
+.subpage-body{ padding:16px; }
+.subpage-body input[type="date"]{
+  width:100%; font-size:16px; padding:10px 12px;
+  background:#000; color:#fff; border:1px solid #444; border-radius:8px;
+}
+.subpage-actions{
+  display:flex; gap:10px; justify-content:flex-end;
+  padding:12px 16px; border-top:1px solid #222;
+}
+.subpage-actions button{
+  border:none; border-radius:8px; padding:10px 14px; font-size:14px; cursor:pointer;
+}
+#subfecha-cancel{ background:#333; color:#eee; }
+#subfecha-ok{ background:#af3a43; color:#fff; }
+#subfecha-ok:active, #subfecha-cancel:active{ transform:scale(.98); }
   
     </style>
   </head>
@@ -212,7 +248,6 @@
   <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" style="flex:1;" />
   <button id="btn-cal" type="button" class="icon-btn" aria-label="Abrir calendario">📅</button>
   <!-- Picker nativo oculto -->
-  <input type="date" id="fechaPicker" tabindex="-1" style="position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0;" />
 </div>
 
 <input type="tel" id="horaTexto"  inputmode="numeric" maxlength="4" pattern="[0-9]*"  placeholder="Hora (ej. 1740)" />
@@ -278,20 +313,83 @@
   const btnCrear = document.querySelector('.crear-btn');
   // Calendario nativo (solo fecha)
 const btnCal       = document.getElementById('btn-cal');
-const fechaPicker  = document.getElementById('fechaPicker');
 const fechaTextoEl = document.getElementById('fechaTexto');
 
-// Abrir el picker nativo (Chrome soporta showPicker; fallback a click)
-if (btnCal && fechaPicker) {
-  let prev = null;
+  // ===== Sub-página para seleccionar fecha =====
+if (btnCal) {
+  const modal = document.getElementById('subfecha');
+  const dateModal = document.getElementById('fechaPickerModal');
+  const btnClose = document.getElementById('subfecha-close');
+  const btnCancel = document.getElementById('subfecha-cancel');
+  const btnOk = document.getElementById('subfecha-ok');
 
-  function restore() {
-    fechaTextoEl.style.opacity = '1';
-    if (!prev) return;
-    Object.assign(fechaPicker.style, prev.style);
-    fechaPicker.tabIndex = prev.tabIndex;
-    prev = null;
+  const pad2 = n => String(n).padStart(2,'0');
+  const ddmmaaToISO = (v) => {
+    if (!v || v.length !== 6) return '';
+    const dd = v.slice(0,2), mm = v.slice(2,4), aa = v.slice(4,6);
+    const yyyy = 2000 + parseInt(aa,10);
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  const isoToDDMMAA = (iso) => {
+    const [yyyy, mm, dd] = iso.split('-');
+    return `${dd}${mm}${yyyy.slice(-2)}`;
+  };
+
+  function openSubpage(){
+    // precargar fecha desde ddmmaa o usar hoy
+    let iso = ddmmaaToISO((fechaTextoEl.value || '').trim());
+    if (!iso || isNaN(new Date(iso).getTime())) {
+      const t = new Date();
+      iso = `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
+    }
+    dateModal.value = iso;
+    modal.hidden = false;
+    // foco
+    setTimeout(()=>dateModal.focus(), 0);
+    document.addEventListener('keydown', escHandler);
   }
+  function closeSubpage(){
+    modal.hidden = true;
+    document.removeEventListener('keydown', escHandler);
+    btnCal.focus();
+  }
+  function escHandler(e){
+    if (e.key === 'Escape') closeSubpage();
+  }
+  function confirmDate(){
+    if (dateModal.value) {
+      fechaTextoEl.value = isoToDDMMAA(dateModal.value);
+    }
+    closeSubpage();
+  }
+
+  // abrir al tocar 📅
+  btnCal.addEventListener('click', openSubpage);
+  // cerrar
+  btnClose.addEventListener('click', closeSubpage);
+  btnCancel.addEventListener('click', closeSubpage);
+  // aceptar
+  btnOk.addEventListener('click', confirmDate);
+  // cerrar si clic fuera del panel
+  modal.addEventListener('click', (e)=>{
+    if (e.target === modal) closeSubpage();
+  });
+  // enter en el input = aceptar
+  dateModal.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') confirmDate();
+  });
+
+  // opcional: si editas ddmmaa mientras el modal está abierto, sincroniza
+  function syncDatePickerFromText(){
+    const v = (fechaTextoEl.value || '').trim();
+    if (!modal.hidden && v.length === 6) {
+      const iso = ddmmaaToISO(v);
+      if (iso && !isNaN(new Date(iso).getTime())) dateModal.value = iso;
+    }
+  }
+  // deja accesible la función si ya la llamas en otras partes
+  window.syncDatePickerFromText = syncDatePickerFromText;
+}
 
   function openPicker() {
     // Sincroniza yyyy-mm-dd a partir de ddmmaa
@@ -346,16 +444,12 @@ if (btnCal && fechaPicker) {
 
   btnCal.addEventListener('click', openPicker);
 
-  fechaPicker.addEventListener('change', () => {
-    if (fechaPicker.value) {
+      if (fechaPicker.value) {
       const [yyyy, mm, dd] = fechaPicker.value.split('-');
       fechaTextoEl.value = `${dd}${mm}${yyyy.slice(-2)}`;
     }
     restore();
   });
-
-  fechaPicker.addEventListener('blur', restore);
-  fechaPicker.addEventListener('focusout', restore);
 }
 // (Opcional) sincroniza el picker desde el campo ddmmaa existente
 function syncDatePickerFromText() {
@@ -669,13 +763,21 @@ coleccion.doc(idEditando).get().then(doc => {
 
   }
     </script>
+<!-- Sub-página: selector de fecha -->
+<div id="subfecha" class="subpage-overlay" hidden>
+  <div class="subpage" role="dialog" aria-modal="true" aria-labelledby="subfecha-title">
+    <header class="subpage-header">
+      <h2 id="subfecha-title" style="margin:0;">Selecciona la fecha</h2>
+      <button type="button" id="subfecha-close" aria-label="Cerrar" class="subpage-x">✕</button>
+    </header>
+    <div class="subpage-body">
+      <input type="date" id="fechaPickerModal" />
+    </div>
+    <footer class="subpage-actions">
+      <button type="button" id="subfecha-cancel">Cancelar</button>
+      <button type="button" id="subfecha-ok">Aceptar</button>
+    </footer>
+  </div>
+</div>
   </body>
   </html>
-
-
-
-
-
-
-
-
