@@ -313,7 +313,7 @@ if (btnCal && fechaPicker) {
       tabIndex: fechaPicker.tabIndex
     };
 
-    // Coloca el input SOBRE el botón (visible para Chromium, pero “transparente”)
+    // Coloca el input SOBRE el botón (visible para Chromium, “transparente”)
     const r = btnCal.getBoundingClientRect();
     Object.assign(fechaPicker.style, {
       position: 'fixed',
@@ -357,7 +357,6 @@ if (btnCal && fechaPicker) {
   fechaPicker.addEventListener('blur', restore);
   fechaPicker.addEventListener('focusout', restore);
 }
-});
 
   // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa y volver a mostrar
   fechaPicker.addEventListener('change', () => {
