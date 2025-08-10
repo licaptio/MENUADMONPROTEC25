@@ -212,7 +212,7 @@
   <input type="tel" id="fechaTexto" inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="Fecha (ej. 030825)" style="flex:1;" />
   <button id="btn-cal" type="button" class="icon-btn" aria-label="Abrir calendario">📅</button>
   <!-- Picker nativo oculto -->
-  <input type="date" id="fechaPicker" style="position:absolute; left:-9999px; width:0; height:0; opacity:0;" />
+  <input type="date" id="fechaPicker" style="position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; pointer-events:none;" />
 </div>
 
 <input type="tel" id="horaTexto"  inputmode="numeric" maxlength="4" pattern="[0-9]*"  placeholder="Hora (ej. 1740)" />
@@ -284,10 +284,21 @@ const fechaTextoEl = document.getElementById('fechaTexto');
 // Abrir el picker nativo (Chrome soporta showPicker; fallback a click)
 if (btnCal && fechaPicker) {
   // Oculta el input ddmmaa mientras está abierto el picker
-  btnCal.addEventListener('click', () => {
-    fechaTextoEl.style.opacity = '0'; // se mantiene el espacio
-    if (fechaPicker.showPicker) fechaPicker.showPicker(); else fechaPicker.click();
-  });
+btnCal.addEventListener('click', () => {
+  // Asegura que el <input type="date"> tenga la fecha actual del ddmmaa
+  syncDatePickerFromText();
+
+  fechaTextoEl.style.opacity = '0'; // se mantiene el espacio
+
+  // Enfocar antes de abrir mejora compatibilidad en escritorio
+  fechaPicker.focus({ preventScroll: true });
+
+  if (fechaPicker.showPicker) {
+    fechaPicker.showPicker();
+  } else {
+    fechaPicker.click();
+  }
+});
 
   // Cuando el usuario elija fecha (yyyy-mm-dd) -> rellenar ddmmaa y volver a mostrar
   fechaPicker.addEventListener('change', () => {
@@ -301,6 +312,11 @@ if (btnCal && fechaPicker) {
   fechaPicker.addEventListener('blur', () => {
     fechaTextoEl.style.opacity = '1';
   });
+// Fallback extra (algunos navegadores no disparan blur)
+fechaPicker.addEventListener('focusout', () => {
+  fechaTextoEl.style.opacity = '1';
+});
+
 }
 
 // (Opcional) sincroniza el picker desde el campo ddmmaa existente
@@ -617,6 +633,7 @@ coleccion.doc(idEditando).get().then(doc => {
     </script>
   </body>
   </html>
+
 
 
 
