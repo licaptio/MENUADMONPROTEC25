@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Entradas — almacen_zapata (tarjetas)</title>
+<style>
+  :root{--bg:#0b0b0b;--card:#151515;--border:#262626;--text:#eaeaea;--brand:#1f4fff}
+  body{font-family:system-ui;background:var(--bg);color:var(--text);margin:0}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+  header h1{font-size:16px;margin:0}
+  main{padding:16px 18px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  input,select,button{border-radius:10px;border:1px solid var(--border);padding:8px}
+  input,select{background:#1a1a1a;color:#ddd}
+  button{background:var(--brand);color:#fff;cursor:pointer}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+  .muted{opacity:.75}
+  .small{font-size:12px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:#101010;margin-right:6px}
+  code{background:#111;padding:2px 6px;border-radius:6px}
+  details{margin-top:8px}
+  summary{cursor:pointer}
+  .footer{display:flex;justify-content:center;margin-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Entradas — <code>almacen_zapata</code></h1>
+  <div class="small muted">Ruta: <code>almacenes/almacen_zapata/entradas</code></div>
+</header>
+
+<main>
+  <div class="controls">
+    <input id="q" placeholder="Buscar folio o UUID…"/>
+    <select id="tipo">
+      <option value="">Tipo (todos)</option>
+      <option value="transferencia">transferencia</option>
+      <option value="transferencia_factura">transferencia_factura</option>
+      <option value="entrada_manual">entrada_manual</option>
+    </select>
+    <button id="btnBuscar">Aplicar</button>
+    <button id="btnLimpiar" style="background:#333;border-color:#444">Limpiar</button>
+  </div>
+
+  <div class="small">
+    <span class="pill">Docs: <b id="kDocs">0</b></span>
+    <span class="pill">Piezas (mostradas): <b id="kPzas">0</b></span>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div class="footer">
+    <button id="btnMas" style="display:none">Ver más</button>
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getFirestore, collection, query, orderBy, getDocs, startAfter, limit
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+/* Firebase */
+const firebaseConfig = {
+  apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+  authDomain: "inventariopv-643f1.firebaseapp.com",
+  projectId: "inventariopv-643f1",
+  storageBucket: "inventariopv-643f1.firebasestorage.app",
+  messagingSenderId: "96242533231",
+  appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const $ = s=>document.querySelector(s);
+const grid = $("#grid");
+const btnMas = $("#btnMas");
+
+let PAGE = 24;           // cuántas tarjetas por page
+let lastDoc = null;      // para paginar
+let bufferDocs = [];     // docs ya descargados (para filtros en cliente)
+let done = false;        // ya no hay más
+
+$("#btnBuscar").addEventListener("click", applyFilters);
+$("#btnLimpiar").addEventListener("click", ()=>{
+  $("#q").value = ""; $("#tipo").value = "";
+  render(bufferDocs);    // re-render sin filtro
+});
+btnMas.addEventListener("click", nextPage);
+
+window.addEventListener("DOMContentLoaded", async ()=>{
+  await loadFirst();
+  render(bufferDocs);
+});
+
+async function loadFirst(){
+  grid.innerHTML = `<div class="muted">Cargando…</div>`;
+  bufferDocs = [];
+  lastDoc = null;
+  done = false;
+  await nextPage();
+}
+
+async function nextPage(){
+  if (done) return;
+  const col = collection(db,"almacenes","almacen_zapata","entradas");
+  const base = lastDoc
+    ? query(col, orderBy("fecha","desc"), startAfter(lastDoc), limit(PAGE))
+    : query(col, orderBy("fecha","desc"), limit(PAGE));
+
+  const snap = await getDocs(base);
+  if (snap.empty){ done = true; btnMas.style.display = "none"; if(bufferDocs.length===0) grid.innerHTML = `<div class="muted">Sin entradas.</div>`; return; }
+
+  snap.forEach(d=> bufferDocs.push({ id: d.id, ...d.data() }) );
+  lastDoc = snap.docs[snap.docs.length-1];
+  render(bufferDocs);
+
+  // si trajo menos que PAGE, ya no hay más
+  btnMas.style.display = snap.size < PAGE ? "none" : "inline-block";
+}
+
+function applyFilters(){
+  const needle = ($("#q").value||"").trim().toLowerCase();
+  const t = $("#tipo").value;
+  let rows = bufferDocs.filter(x=>{
+    const folio = (x.folio || x.folioXML || "").toString().toLowerCase();
+    const uuid  = (x.relacionadoUUID || x.uuid || "").toString().toLowerCase();
+    const tipo  = (x.tipo || "");
+    if (t && tipo !== t) return false;
+    if (needle && !(folio.includes(needle) || uuid.includes(needle))) return false;
+    return true;
+  });
+  render(rows);
+}
+
+function render(rows){
+  // computa totales y pinta tarjetas
+  $("#kDocs").textContent = rows.length;
+  let totalPzas = 0;
+
+  const cards = rows.map(x=>{
+    const fecha = x.fecha || x.fechaXML || "";
+    const folio = x.folio || x.folioXML || "—";
+    const tipo  = x.tipo || "—";
+    const origen= x.origen || "—";
+    const uuid  = x.relacionadoUUID || x.uuid || "—";
+    const items = Array.isArray(x.items) ? x.items : (Array.isArray(x.itemsMapeados)? x.itemsMapeados : []);
+    const piezas = items.reduce((a,b)=> a + Number(b.cantidad||0), 0);
+    totalPzas += piezas;
+
+    const lines = items.map(it=>`
+      <tr>
+        <td><code>${(it.codigo||"").toString().toUpperCase()}</code></td>
+        <td>${it.descripcion||""}</td>
+        <td style="text-align:right">${Number(it.cantidad||0)}</td>
+      </tr>`).join("");
+
+    return `
+      <div class="card">
+        <div class="small muted">${fecha}</div>
+        <div style="margin:6px 0">
+          <span class="pill">Folio: <b>${folio}</b></span>
+          <span class="pill">Tipo: <b>${tipo}</b></span>
+        </div>
+        <div class="small muted">Origen: <code>${origen}</code> · UUID: <code>${uuid}</code></div>
+        <div class="small muted" style="margin-top:4px">Piezas: <b>${piezas}</b></div>
+
+        <details>
+          <summary class="small">Ver partidas</summary>
+          <table style="width:100%;border-collapse:collapse;margin-top:6px">
+            <thead><tr><th style="text-align:left">Código</th><th style="text-align:left">Descripción</th><th style="text-align:right">Cant</th></tr></thead>
+            <tbody>${lines || `<tr><td colspan="3" class="muted">Sin items</td></tr>`}</tbody>
+          </table>
+        </details>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = cards.join("") || `<div class="muted">Sin resultados con los filtros.</div>`;
+  $("#kPzas").textContent = totalPzas;
+}
+</script>
+</body>
+</html>

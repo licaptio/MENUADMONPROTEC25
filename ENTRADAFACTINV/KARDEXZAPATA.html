@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kardex por Código — almacen_zapata</title>
+<style>
+  :root{--bg:#0b0b0b;--card:#151515;--border:#262626;--text:#eaeaea;--brand:#1f4fff}
+  body{font-family:system-ui;background:var(--bg);color:var(--text);margin:0}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+  header h1{font-size:16px;margin:0}
+  main{padding:16px 18px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select,button{border-radius:10px;border:1px solid var(--border);padding:8px}
+  input,select{background:#1a1a1a;color:#ddd}
+  button{background:var(--brand);color:#fff;cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{border-bottom:1px solid var(--border);padding:8px;text-align:left;font-size:14px}
+  .muted{opacity:.75}
+  .small{font-size:12px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:#101010}
+  code{background:#111;padding:2px 6px;border-radius:6px}
+  .in{color:#8ef59e} .out{color:#ff9c9c}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kardex por código — <code>almacen_zapata</code></h1>
+  <div class="row small muted">Entradas: <code>almacenes/almacen_zapata/entradas</code> · Salidas: <code>almacenes/almacen_zapata/salidas</code></div>
+</header>
+
+<main class="card">
+  <div class="row" style="margin-bottom:10px">
+    <input id="codigo" placeholder="Código interno (ID de productos)" style="min-width:260px"/>
+    <label>Desde:</label><input type="date" id="fDesde"/>
+    <label>Hasta:</label><input type="date" id="fHasta"/>
+    <button id="btnBuscar">Buscar</button>
+    <button id="btnLimpiar" style="background:#333;border-color:#444">Limpiar</button>
+  </div>
+
+  <div class="row small">
+    <span class="pill">Código: <b id="rCod">—</b></span>
+    <span class="pill">Stock actual destino: <b id="rStock">0</b></span>
+    <span class="pill">Entradas: <b id="rIn">0</b></span>
+    <span class="pill">Salidas: <b id="rOut">0</b></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Movimiento</th>
+        <th>Folio</th>
+        <th>UUID/Rel</th>
+        <th>Descripción</th>
+        <th class="in">Entrada</th>
+        <th class="out">Salida</th>
+        <th>Saldo</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="8" class="muted">Ingresa un código y presiona Buscar…</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getFirestore, collection, query, orderBy, getDocs, limit,
+  doc, getDoc
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+/* Firebase config (tu proyecto) */
+const firebaseConfig = {
+  apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+  authDomain: "inventariopv-643f1.firebaseapp.com",
+  projectId: "inventariopv-643f1",
+  storageBucket: "inventariopv-643f1.firebasestorage.app",
+  messagingSenderId: "96242533231",
+  appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const $ = (s)=>document.querySelector(s);
+const tbody = $("#tbody");
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  const today = new Date();
+  const past  = new Date(today); past.setDate(today.getDate()-30);
+  $("#fHasta").value = toYMD(today);
+  $("#fDesde").value = toYMD(past);
+});
+$("#btnBuscar").addEventListener("click", cargar);
+$("#btnLimpiar").addEventListener("click", ()=>{
+  $("#codigo").value = "";
+  tbody.innerHTML = `<tr><td colspan="8" class="muted">Ingresa un código y presiona Buscar…</td></tr>`;
+  $("#rCod").textContent = "—"; $("#rStock").textContent = 0; $("#rIn").textContent = 0; $("#rOut").textContent = 0;
+});
+
+function toYMD(d){ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+
+async function cargar(){
+  const codigo = ($("#codigo").value||"").trim().toUpperCase();
+  if(!codigo){ alert("Escribe el código interno."); return; }
+  $("#rCod").textContent = codigo;
+
+  const d1 = $("#fDesde").value;
+  const d2 = $("#fHasta").value;
+  const from = d1 ? (d1.length===10 ? d1+"T00:00:00" : d1) : null;
+  const to   = d2 ? (d2.length===10 ? d2+"T23:59:59" : d2) : null;
+
+  tbody.innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
+
+  // 1) Stock actual en destino
+  const invSnap = await getDoc(doc(db, "almacenes", "almacen_zapata", "inventarios", codigo));
+  const stockActual = invSnap.exists() ? (invSnap.data().stock || 0) : 0;
+  $("#rStock").textContent = stockActual;
+
+  // 2) Traer últimos N docs y filtrar por items.(codigo) == código (entradas + salidas)
+  const N = 800; // ajusta según volumen
+  let movs = [];
+
+  // === ENTRADAS (tolerante a fecha/items) ===
+  {
+    let q = query(collection(db,"almacenes","almacen_zapata","entradas"),
+                  orderBy("fecha","desc"), limit(N));
+    const s = await getDocs(q);
+    s.forEach(d=>{
+      const x = d.data();
+      const fecha = x.fecha || x.fechaXML || "";
+      const items = Array.isArray(x.items) ? x.items
+                  : (Array.isArray(x.itemsMapeados) ? x.itemsMapeados : []);
+      items.forEach(it=>{
+        if ((it.codigo||"").toUpperCase() === codigo){
+          movs.push({
+            fecha,
+            tipo: x.tipo || "entrada",
+            folio: x.folio || x.folioXML || "",
+            uuid:  x.relacionadoUUID || x.uuid || "",
+            descripcion: it.descripcion || "",
+            entrada: Number(it.cantidad||0),
+            salida: 0
+          });
+        }
+      });
+    });
+  }
+
+  // === SALIDAS (tolerante a fecha/items) ===
+  {
+    let q = query(collection(db,"almacenes","almacen_zapata","salidas"),
+                  orderBy("fecha","desc"), limit(N));
+    const s = await getDocs(q);
+    s.forEach(d=>{
+      const x = d.data();
+      const fecha = x.fecha || x.fechaXML || "";
+      const items = Array.isArray(x.items) ? x.items
+                  : (Array.isArray(x.itemsMapeados) ? x.itemsMapeados : []);
+      items.forEach(it=>{
+        if ((it.codigo||"").toUpperCase() === codigo){
+          movs.push({
+            fecha,
+            tipo: x.tipo || "salida",
+            folio: x.folio || x.folioXML || "",
+            uuid:  x.relacionadoUUID || x.uuid || "",
+            descripcion: it.descripcion || "",
+            entrada: 0,
+            salida: Number(it.cantidad||0)
+          });
+        }
+      });
+    });
+  }
+
+  // 3) Filtro por rango si se indicó
+  if (from && to){
+    movs = movs.filter(m=>{
+      const f = new Date(m.fecha || "");
+      return !isNaN(f) && f.toISOString() >= from && f.toISOString() <= to;
+    });
+  }
+
+  // 4) Ordenar ASC y saldo corrido
+  movs.sort((a,b)=> new Date(a.fecha||"") - new Date(b.fecha||""));
+  let saldo = 0, totIn = 0, totOut = 0;
+  const rows = movs.map(m=>{
+    saldo += m.entrada - m.salida;
+    totIn += m.entrada; totOut += m.salida;
+    return `<tr>
+      <td>${m.fecha || "-"}</td>
+      <td><code>${m.tipo}</code></td>
+      <td>${m.folio ? `<code>${m.folio}</code>`:"-"}</td>
+      <td>${m.uuid ? `<code>${m.uuid}</code>`:"-"}</td>
+      <td>${m.descripcion||""}</td>
+      <td class="in">${m.entrada||""}</td>
+      <td class="out">${m.salida||""}</td>
+      <td>${saldo}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join("") || `<tr><td colspan="8" class="muted">Sin movimientos para ese código.</td></tr>`;
+  $("#rIn").textContent  = totIn;
+  $("#rOut").textContent = totOut;
+}
+</script>
+</body>
+</html>
