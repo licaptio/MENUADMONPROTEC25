@@ -220,4 +220,44 @@
 
       // Abrir en nueva pestaña
       document.getElementById('open-new').onclick = () => {
-        const w = wind
+        const w = window.open('', '_blank');
+        if (w) {
+          w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
+          w.document.title = 'Pedido — Cacahuate Clara';
+        }
+      };
+
+      // Copiar imagen al portapapeles
+      document.getElementById('copy-img').onclick = async () => {
+        try {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+          alert('Imagen copiada al portapapeles ✅');
+        } catch (e) {
+          alert('No se pudo copiar la imagen automáticamente. Abre en nueva pestaña y copia/guarda manual.');
+        }
+      };
+    });
+
+    // Cerrar overlay
+    document.getElementById('close-overlay').addEventListener('click', () => {
+      const overlay = document.getElementById('overlay');
+      const img = document.getElementById('preview-img');
+      overlay.style.display = 'none';
+      img.src = '';
+    });
+
+    // Borrar datos
+    document.getElementById('clear-data').addEventListener('click', () => {
+      const ok = confirm('¿Borrar todos los datos y reiniciar la tabla?');
+      if (!ok) return;
+      localStorage.removeItem(KEY);
+      cargarDatos();
+    });
+
+    // Inicializa
+    cargarDatos();
+  </script>
+</body>
+</html>
