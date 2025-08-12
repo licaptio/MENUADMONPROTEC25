@@ -162,11 +162,14 @@ async function nextFolio(){
   return `AF-${String(next).padStart(6,'0')}`;
 }
 
-/* 4) Asignar TODO en una única transacción */
+/* 4) Asignar TODO en una única transacción (sin inventarios si SOLO_LOGS=true) */
 async function asignarTodo(){
   if(!seleccion){ return; }
   const { uuid, destino, items } = seleccion;
   const folio = await nextFolio();
+
+  // ⬇️ Cambia a false si algún día quieres volver a actualizar inventarios
+  const SOLO_LOGS = true;
 
   try{
     await runTransaction(db, async tx=>{
@@ -175,48 +178,52 @@ async function asignarTodo(){
       if(!s.exists()) throw new Error("Entrada no encontrada");
       if(s.data().estado !== "aplicada") throw new Error("La entrada cambió de estado.");
 
-      // 1) Lecturas: stocks en central y destino
-      const lecturas = [];
-      for (const it of items){
-        const oriRef = doc(db,"almacenes",CENTRAL,"inventarios", it.codigo);
-        const dstRef = doc(db,"almacenes",destino,"inventarios", it.codigo);
-
-        const [oriSnap, dstSnap] = [await tx.get(oriRef), await tx.get(dstRef)];
-        const stockOri = oriSnap.exists() ? (oriSnap.data().stock||0) : 0;
-        const stockDst = dstSnap.exists() ? (dstSnap.data().stock||0) : 0;
-
-        if (stockOri < it.cantidad){
-          throw new Error(`Stock insuficiente: ${it.codigo} requiere ${it.cantidad}, hay ${stockOri}`);
-        }
-        lecturas.push({oriRef,dstRef,stockOri,stockDst,it});
-      }
-
-      // 2) Escrituras inventario
       const now = new Date().toISOString();
 
-      for (const r of lecturas){
-        // Central: resta
-        tx.set(r.oriRef, {
-          codigo: r.it.codigo,
-          descripcion: r.it.descripcion || null,
-          stock: r.stockOri - r.it.cantidad,
-          ultimaActualizacion: now,
-          ultimaSalidaFolio: folio,
-          ultimaSalidaUUID: uuid
-        }, { merge:true });
+      if (!SOLO_LOGS){
+        // === MODO INVENTARIOS (DESACTIVADO CUANDO SOLO_LOGS=true) ===
+        // 1) Lecturas y validación de stock
+        const lecturas = [];
+        for (const it of items){
+          const oriRef = doc(db,"almacenes",CENTRAL,"inventarios", it.codigo);
+          const dstRef = doc(db,"almacenes",destino,"inventarios", it.codigo);
 
-        // Destino: suma
-        tx.set(r.dstRef, {
-          codigo: r.it.codigo,
-          descripcion: r.it.descripcion || null,
-          stock: r.stockDst + r.it.cantidad,
-          ultimaActualizacion: now,
-          ultimaEntradaFolio: folio,
-          ultimaEntradaUUID: uuid
-        }, { merge:true });
+          const [oriSnap, dstSnap] = [await tx.get(oriRef), await tx.get(dstRef)];
+          const stockOri = oriSnap.exists() ? (oriSnap.data().stock||0) : 0;
+          const stockDst = dstSnap.exists() ? (dstSnap.data().stock||0) : 0;
+
+          if (stockOri < it.cantidad){
+            throw new Error(`Stock insuficiente: ${it.codigo} requiere ${it.cantidad}, hay ${stockOri}`);
+          }
+          lecturas.push({oriRef,dstRef,stockOri,stockDst,it});
+        }
+
+        // 2) Escrituras en inventarios (resta/suma)
+        for (const r of lecturas){
+          // Central: resta
+          tx.set(r.oriRef, {
+            codigo: r.it.codigo,
+            descripcion: r.it.descripcion || null,
+            stock: r.stockOri - r.it.cantidad,
+            ultimaActualizacion: now,
+            ultimaSalidaFolio: folio,
+            ultimaSalidaUUID: uuid
+          }, { merge:true });
+
+          // Destino: suma
+          tx.set(r.dstRef, {
+            codigo: r.it.codigo,
+            descripcion: r.it.descripcion || null,
+            stock: r.stockDst + r.it.cantidad,
+            ultimaActualizacion: now,
+            ultimaEntradaFolio: folio,
+            ultimaEntradaUUID: uuid
+          }, { merge:true });
+        }
       }
+      // === FIN MODO INVENTARIOS ===
 
-      // 3) Marcar en la ENTRADA (UUID) el historial de asignaciones
+      // 3) Marcar historial en la ENTRADA (UUID)
       const totalPzas = items.reduce((a, b) => a + Number(b.cantidad || 0), 0);
       const resumen = items.map(it => ({ codigo: it.codigo, cantidad: it.cantidad }));
 
@@ -236,14 +243,14 @@ async function asignarTodo(){
         }
       });
 
-      // 4) 🔴 Aquí está el cambio: normalizamos a "articulos[]" para los LOGS
+      // 4) Logs normalizados con articulos[] (esto SÍ se mantiene)
       const articulos = items.map(it => ({
         codigo: (it.codigo||"").toUpperCase(),
         nombre: it.descripcion || "",
         cantidad: Number(it.cantidad||0)
       }));
 
-      // 5) Logs (SALIDA central y ENTRADA destino) usando articulos[]
+      // salida en CENTRAL
       const salRef = doc(collection(db,"almacenes",CENTRAL,"salidas"));
       tx.set(salRef, {
         tipo: "transferencia_factura",
@@ -252,6 +259,7 @@ async function asignarTodo(){
         articulos
       });
 
+      // entrada en DESTINO
       const entRef = doc(collection(db,"almacenes",destino,"entradas"));
       tx.set(entRef, {
         tipo: "transferencia_factura",
@@ -261,14 +269,14 @@ async function asignarTodo(){
       });
     });
 
-    msg.innerHTML = `<span class="ok">Asignación aplicada ✅ Folio ${folio}</span>`;
+    msg.innerHTML = `<span class="ok">Asignación aplicada ✅ Folio ${folio} (sin tocar inventarios)</span>`;
     btnAsignar.disabled = true;
   }catch(err){
     msg.innerHTML = `<span class="err">${err.message || err}</span>`;
     console.error(err);
   }
 }
-
 </script>
 </body>
 </html>
+
