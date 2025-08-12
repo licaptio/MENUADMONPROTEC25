@@ -1,110 +1,53 @@
-  <!DOCTYPE html>
-  <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Inventario Estilo Excel</title>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cacahuate Clara — Inventario Estilo Excel</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f9f9f9;
-        margin: 0;
-        padding: 1rem;
-      }
+    body { font-family: Arial, sans-serif; background:#f9f9f9; margin:0; padding:1rem; }
+    h1 { text-align:center; font-size:1.8rem; margin-bottom:1rem; }
 
-  h1 {
-    text-align: center;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-  }
+    table { width:100%; max-width:1100px; margin:auto; border-collapse:collapse; background:#fff; box-shadow:0 0 8px rgba(0,0,0,.1); }
+    th, td { border:1px solid #ccc; padding:.5rem; vertical-align:middle; }
+    th { background:#e6e6e6; font-weight:bold; }
 
+    td.corto, th.corto { width:5ch; text-align:center; }
+    td.largo, th.largo { width:24ch; text-align:left; white-space:nowrap; overflow:hidden; vertical-align:middle; }
+    td.largo input { text-align:left; padding-left:4px; }
 
-      table {
-        width: 100%;
-        max-width: 1100px;
-        margin: auto;
-        border-collapse: collapse;
-        background-color: white;
-        box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      }
+    input { width:100%; border:none; font-size:1rem; background:transparent; padding:.2rem; height:1.8rem; box-sizing:border-box; }
+    input:focus { outline:none; background:#ffffcc; }
 
-      th, td {
-        border: 1px solid #ccc;
-        padding: 0.5rem;
-        vertical-align: middle;
-      }
+    .controls { text-align:center; margin-bottom:1rem; display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; }
+    .btn { border:1px solid #bbb; background:#fff; padding:.5rem .8rem; border-radius:.4rem; cursor:pointer; }
+    .btn:hover { background:#f2f2f2; }
 
-      th {
-        background-color: #e6e6e6;
-        font-weight: bold;
-      }
+    @media print { .no-print { display:none !important; } }
 
-      td.corto, th.corto {
-        width: 5ch;
-        text-align: center;
-      }
-
-      td.largo input {
-        text-align: left;
-        padding-left: 4px;
-      }
-  td.largo, th.largo {
-    width: 24ch;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  input {
-    width: 100%;
-    border: none;
-    font-size: 1rem;
-    background-color: transparent;
-    padding: 0.2rem;
-    height: 1.8rem;
-    box-sizing: border-box;
-  }
-
-
-      input:focus {
-        outline: none;
-        background-color: #ffffcc;
-      }
-
-  .controls {
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-  .no-print {
-    display: block;
-    margin: 0 auto 1rem;
-  }
-
-  /* Opcional: si no quieres que el botón salga al imprimir */
-  @media print {
-    .no-print {
-      display: none !important;
+    /* Overlay de vista previa */
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.65);
+      display:none; align-items:center; justify-content:center; padding:1rem; z-index:9999;
     }
-  }
+    .overlay-inner {
+      background:#fff; padding:1rem; border-radius:.6rem; max-width:95vw; max-height:90vh; overflow:auto;
+      box-shadow:0 10px 30px rgba(0,0,0,.3);
+    }
+    .overlay-header { display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin-bottom:.8rem; flex-wrap:wrap; }
+    .overlay-title { font-weight:bold; }
+    .overlay-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .preview-img { max-width:100%; height:auto; display:block; border:1px solid #ddd; }
+  </style>
+</head>
+<body>
 
-      @media (max-width: 600px) {
-        body {
-          padding: 0.5rem;
-        }
-        table, th, td {
-          font-size: 0.9rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
+  <h1>Cacahuate Clara</h1>
 
-    <h1>Cacahuate Clara</h1>
-
-  <div class="controls">
-    <button id="export-img" class="no-print">Exportar pedido como imagen</button>
+  <div class="controls no-print">
+    <button id="export-img" class="btn">Exportar pedido como imagen</button>
+    <button id="clear-data" class="btn">Borrar datos</button>
   </div>
 
   <table id="tabla">
@@ -119,120 +62,201 @@
     <tbody id="contenido"></tbody>
   </table>
 
+  <!-- Overlay de vista previa temporal -->
+  <div id="overlay" class="overlay no-print" aria-hidden="true">
+    <div class="overlay-inner">
+      <div class="overlay-header">
+        <div class="overlay-title">Vista previa del pedido — Cacahuate Clara</div>
+        <div class="overlay-actions">
+          <button id="copy-img" class="btn">Copiar imagen</button>
+          <button id="open-new" class="btn">Abrir en nueva pestaña</button>
+          <button id="close-overlay" class="btn">Cerrar</button>
+        </div>
+      </div>
+      <img id="preview-img" alt="Vista previa del pedido" class="preview-img"/>
+      <p style="margin-top:.6rem;color:#333">
+        Tip: puedes tomar captura, copiar la imagen, o abrirla en nueva pestaña para enviarla manualmente.
+      </p>
+    </div>
+  </div>
 
-    <script>
-      const datosIniciales = [
-  { cacahuate: 'CACAH SALADO 10KG', inventario: '', sto: 20, pedido: '' },
-  { cacahuate: 'BLANCO SALADO 10k', inventario: '', sto: 1, pedido: '' },
-  { cacahuate: 'CANTINERO TOTOPO Y AJO', inventario: '', sto: 15, pedido: '' },
-  { cacahuate: 'ENCHILADO MITADES 10KG', inventario: '', sto: 3, pedido: '' },
-  { cacahuate: 'GARAPIÑADO 10KG', inventario: '', sto: 20, pedido: '' },
-  { cacahuate: 'MIXTO CON FRITURA 10KG', inventario: '', sto: 10, pedido: '' },
-  { cacahuate: 'JAPONES HOT NUT 10KG', inventario: '', sto: 10, pedido: '' },
-  { cacahuate: 'JAPONES 10KG', inventario: '', sto: 10, pedido: '' },
-  { cacahuate: 'CHICHARRON KRANKY KILO', inventario: '', sto: 3, pedido: '' },
-  { cacahuate: 'CERDO KILO', inventario: '', sto: 3, pedido: '' },
-      ];
+  <script>
+    const KEY = 'inventario_cacahuate';
+    const tabla = document.getElementById('contenido');
 
-      const tabla = document.getElementById('contenido');
+    const datosIniciales = [
+      { cacahuate: 'CACAH SALADO 10KG', inventario: '', sto: 20, pedido: '' },
+      { cacahuate: 'BLANCO SALADO 10k', inventario: '', sto: 1,  pedido: '' },
+      { cacahuate: 'CANTINERO TOTOPO Y AJO', inventario: '', sto: 15, pedido: '' },
+      { cacahuate: 'ENCHILADO MITADES 10KG', inventario: '', sto: 3,  pedido: '' },
+      { cacahuate: 'GARAPIÑADO 10KG', inventario: '', sto: 20, pedido: '' },
+      { cacahuate: 'MIXTO CON FRITURA 10KG', inventario: '', sto: 10, pedido: '' },
+      { cacahuate: 'JAPONES HOT NUT 10KG', inventario: '', sto: 10, pedido: '' },
+      { cacahuate: 'JAPONES 10KG', inventario: '', sto: 10, pedido: '' },
+      { cacahuate: 'CHICHARRON KRANKY KILO', inventario: '', sto: 3,  pedido: '' },
+      { cacahuate: 'CERDO KILO', inventario: '', sto: 3,  pedido: '' },
+    ];
 
-      function cargarDatos() {
-const datos = JSON.parse(localStorage.getItem('inventario_cacahuate')) || datosIniciales;
-        tabla.innerHTML = '';
-        datos.forEach((fila, i) => {
-          const tr = document.createElement('tr');
-['cacahuate', 'inventario', 'sto', 'pedido'].forEach(campo => {
-            const td = document.createElement('td');
-            td.className = (campo === 'cacahuate') ? 'largo' : 'corto';
-if (campo === 'cacahuate') {
-  td.textContent = fila[campo];
-} else if (campo === 'sto') {
-  td.textContent = fila[campo]; // solo muestra el número, sin input
-} else {
-  const input = document.createElement('input');
-  input.value = fila[campo] ?? '';
-  input.dataset.fila = i;
-  input.dataset.campo = campo;
-  input.setAttribute('inputmode', 'numeric');
-  input.setAttribute('pattern', '[0-9]*');
-  td.appendChild(input);
-}
- 
-            tr.appendChild(td);
-          });
-          tabla.appendChild(tr);
+    function cargarDatos() {
+      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales;
+      tabla.innerHTML = '';
+      datos.forEach((fila, i) => {
+        const tr = document.createElement('tr');
+        ['cacahuate', 'inventario', 'sto', 'pedido'].forEach(campo => {
+          const td = document.createElement('td');
+          td.className = (campo === 'cacahuate') ? 'largo' : 'corto';
+
+          if (campo === 'cacahuate') {
+            td.textContent = fila[campo];
+          } else if (campo === 'sto') {
+            td.textContent = fila[campo] ?? '';
+          } else {
+            const input = document.createElement('input');
+            input.value = fila[campo] ?? '';
+            input.dataset.fila = i;
+            input.dataset.campo = campo;
+            input.setAttribute('inputmode', 'numeric');
+            input.setAttribute('pattern', '[0-9]*');
+            td.appendChild(input);
+          }
+
+          tr.appendChild(td);
         });
-      }
+        tabla.appendChild(tr);
+      });
+    }
 
-      tabla.addEventListener('input', (e) => {
-        const input = e.target;
-        const fila = parseInt(input.dataset.fila);
-        const campo = input.dataset.campo;
-        const datos = JSON.parse(localStorage.getItem('inventario_cacahuate')) || datosIniciales;
-        datos[fila][campo] = input.value;
-        localStorage.setItem('inventario_cacahuate', JSON.stringify(datos));
+    tabla.addEventListener('input', (e) => {
+      const el = e.target;
+      if (el.tagName !== 'INPUT') return;
+      const fila = parseInt(el.dataset.fila, 10);
+      const campo = el.dataset.campo;
+      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales.slice();
+      datos[fila][campo] = el.value;
+      localStorage.setItem(KEY, JSON.stringify(datos));
+    });
+
+    // ===== Exportar como imagen (compacto, solo PED>0, sin descarga) =====
+    document.getElementById('export-img').addEventListener('click', async () => {
+      const filas = document.querySelectorAll('#tabla tbody tr');
+
+      // Tabla temporal compacta
+      const temp = document.createElement('table');
+      Object.assign(temp.style, {
+        borderCollapse: 'collapse',
+        background: '#ffffff',
+        margin: '0',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        tableLayout: 'fixed',
       });
 
-      cargarDatos();
-    </script>
-  <script>
-  document.getElementById('export-img').addEventListener('click', () => {
-    const tablaOriginal = document.querySelector('#tabla tbody tr');
-    const filas = document.querySelectorAll('#tabla tbody tr');
-
-    const temp = document.createElement('table');
-    temp.style.borderCollapse = 'collapse';
-    temp.style.background = 'white';
-    temp.style.margin = '1rem auto';
-    temp.style.fontFamily = 'Arial, sans-serif';
-
-    // Encabezado
-    const thead = temp.createTHead();
-    const hRow = thead.insertRow();
-    ['CACAHUATE', 'PED'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      th.style.border = '1px solid #ccc';
-      th.style.padding = '.5rem';
-      th.style.backgroundColor = '#e6e6e6';
-      hRow.appendChild(th);
-    });
-
-    // Cuerpo con solo filas que tengan PEDIDO
-    const tBody = temp.createTBody();
-    filas.forEach(r => {
-      const pedido = r.cells[3].querySelector('input').value.trim();
-      if (pedido !== '') {
-        const nuevaFila = tBody.insertRow();
-        [0, 3].forEach(idx => {
-          const cell = document.createElement('td');
-          cell.textContent = (idx === 0)
-            ? r.cells[0].textContent
-            : pedido;
-          cell.style.border = '1px solid #ccc';
-          cell.style.padding = '.5rem';
-          nuevaFila.appendChild(cell);
+      // Encabezado
+      const thead = temp.createTHead();
+      const hRow = thead.insertRow();
+      ['CLARA', 'PED'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        Object.assign(th.style, {
+          border: '1px solid #ccc',
+          padding: '.35rem',
+          backgroundColor: '#e6e6e6',
+          textAlign: text === 'PED' ? 'center' : 'left'
         });
+        hRow.appendChild(th);
+      });
+
+      // Cuerpo con sólo PED > 0
+      const tBody = temp.createTBody();
+      filas.forEach(r => {
+        const val = r.cells[3].querySelector('input')?.value.trim() ?? '';
+        const num = Number(val.replace(',', '.'));
+        if (!Number.isNaN(num) && num > 0) {
+          const row = tBody.insertRow();
+
+          const c1 = document.createElement('td');
+          c1.textContent = r.cells[0].textContent;
+          Object.assign(c1.style, { border: '1px solid #ccc', padding: '.35rem' });
+          row.appendChild(c1);
+
+          const c2 = document.createElement('td');
+          c2.textContent = num;
+          Object.assign(c2.style, { border: '1px solid #ccc', padding: '.35rem', textAlign: 'center' });
+          row.appendChild(c2);
+        }
+      });
+
+      if (tBody.rows.length === 0) {
+        alert('No hay filas con PED > 0 para exportar.');
+        return;
       }
-    });
 
-    // Agrega la tabla temporal al DOM, genera la imagen y luego la elimina
-    document.body.appendChild(temp);
-    html2canvas(temp).then(canvas => {
-      const ctx = canvas.getContext('2d');
-      ctx.globalCompositeOperation = 'destination-over';
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const link = document.createElement('a');
-      link.download = 'pedido.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.9);
-      link.click();
-
+      // Render a tamaño natural
+      document.body.appendChild(temp);
+      const canvas = await html2canvas(temp, { backgroundColor: '#ffffff', scale: 1 });
       temp.remove();
-    });
-  });
-  </script>
 
-  </body>
-  </html>
+      // Reducir a ~800 px para aligerar
+      const maxW = 800;
+      let outCanvas = canvas;
+      if (canvas.width > maxW) {
+        const ratio = maxW / canvas.width;
+        outCanvas = document.createElement('canvas');
+        outCanvas.width = Math.round(canvas.width * ratio);
+        outCanvas.height = Math.round(canvas.height * ratio);
+        const octx = outCanvas.getContext('2d');
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.drawImage(canvas, 0, 0, outCanvas.width, outCanvas.height);
+      }
+      const dataUrl = outCanvas.toDataURL('image/jpeg', 0.92);
+
+      // Mostrar en overlay
+      const overlay = document.getElementById('overlay');
+      const img = document.getElementById('preview-img');
+      img.src = dataUrl;
+      overlay.style.display = 'flex';
+
+      // Abrir en nueva pestaña
+      document.getElementById('open-new').onclick = () => {
+        const w = window.open('', '_blank');
+        if (w) {
+          w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
+          w.document.title = 'Pedido — Cacahuate Clara';
+        }
+      };
+
+      // Copiar imagen al portapapeles
+      document.getElementById('copy-img').onclick = async () => {
+        try {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+          alert('Imagen copiada al portapapeles ✅');
+        } catch (e) {
+          alert('No se pudo copiar la imagen automáticamente. Abre en nueva pestaña y copia/guarda manual.');
+        }
+      };
+    });
+
+    // Cerrar overlay
+    document.getElementById('close-overlay').addEventListener('click', () => {
+      const overlay = document.getElementById('overlay');
+      const img = document.getElementById('preview-img');
+      overlay.style.display = 'none';
+      img.src = '';
+    });
+
+    // Borrar datos
+    document.getElementById('clear-data').addEventListener('click', () => {
+      const ok = confirm('¿Borrar todos los datos y reiniciar la tabla?');
+      if (!ok) return;
+      localStorage.removeItem(KEY);
+      cargarDatos();
+    });
+
+    // Inicializa
+    cargarDatos();
+  </script>
+</body>
+</html>
