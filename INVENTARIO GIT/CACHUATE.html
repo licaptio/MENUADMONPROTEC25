@@ -80,184 +80,214 @@
     </div>
   </div>
 
-  <script>
-    const KEY = 'inventario_cacahuate';
-    const tabla = document.getElementById('contenido');
+<script>
+  const KEY = 'inventario_cacahuate';
+  const tabla = document.getElementById('contenido');
 
-    const datosIniciales = [
-      { cacahuate: 'CACAH SALADO 10KG', inventario: '', sto: 20, pedido: '' },
-      { cacahuate: 'BLANCO SALADO 10k', inventario: '', sto: 1,  pedido: '' },
-      { cacahuate: 'CANTINERO TOTOPO Y AJO', inventario: '', sto: 15, pedido: '' },
-      { cacahuate: 'ENCHILADO MITADES 10KG', inventario: '', sto: 3,  pedido: '' },
-      { cacahuate: 'GARAPIÑADO 10KG', inventario: '', sto: 20, pedido: '' },
-      { cacahuate: 'MIXTO CON FRITURA 10KG', inventario: '', sto: 10, pedido: '' },
-      { cacahuate: 'JAPONES HOT NUT 10KG', inventario: '', sto: 10, pedido: '' },
-      { cacahuate: 'JAPONES 10KG', inventario: '', sto: 10, pedido: '' },
-      { cacahuate: 'CHICHARRON KRANKY KILO', inventario: '', sto: 3,  pedido: '' },
-      { cacahuate: 'CERDO KILO', inventario: '', sto: 3,  pedido: '' },
-    ];
+  // Lista base (nombres y STO siempre vienen de aquí)
+  const datosIniciales = [
+    { cacahuate: 'CACAH SALADO 10KG',     sto: 20 },
+    { cacahuate: 'BLANCO SALADO 10k',     sto: 1  },
+    { cacahuate: 'CANTINERO TOTOPO Y AJO',sto: 15 },
+    { cacahuate: 'ENCHILADO MITADES 10KG',sto: 3  },
+    { cacahuate: 'GARAPIÑADO 10KG',       sto: 20 },
+    { cacahuate: 'MIXTO CON FRITURA 10KG',sto: 10 },
+    { cacahuate: 'JAPONES HOT NUT 10KG',  sto: 10 },
+    { cacahuate: 'JAPONES 10KG',          sto: 10 },
+    { cacahuate: 'CHICHARRON KRANKY KILO',sto: 3  },
+    { cacahuate: 'CERDO KILO',            sto: 3  },
+  ];
 
-    function cargarDatos() {
-      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales;
-      tabla.innerHTML = '';
-      datos.forEach((fila, i) => {
-        const tr = document.createElement('tr');
-        ['cacahuate', 'inventario', 'sto', 'pedido'].forEach(campo => {
-          const td = document.createElement('td');
-          td.className = (campo === 'cacahuate') ? 'largo' : 'corto';
+  // Lee valores guardados (solo inventario/pedido). Si está corrupto, ignora.
+  function leerGuardado() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  }
 
-          if (campo === 'cacahuate') {
-            td.textContent = fila[campo];
-          } else if (campo === 'sto') {
-            td.textContent = fila[campo] ?? '';
-          } else {
-            const input = document.createElement('input');
-            input.value = fila[campo] ?? '';
-            input.dataset.fila = i;
-            input.dataset.campo = campo;
-            input.setAttribute('inputmode', 'numeric');
-            input.setAttribute('pattern', '[0-9]*');
-            td.appendChild(input);
-          }
+  // Construye los datos a pintar mezclando base + guardado
+  function datosParaPintar() {
+    const saved = leerGuardado();
+    return datosIniciales.map((base, i) => ({
+      cacahuate: base.cacahuate,
+      sto: base.sto,
+      inventario: saved[i]?.inventario ?? '',
+      pedido:     saved[i]?.pedido ?? ''
+    }));
+  }
 
-          tr.appendChild(td);
-        });
-        tabla.appendChild(tr);
+  function pintarTabla() {
+    const datos = datosParaPintar();
+    tabla.innerHTML = '';
+    datos.forEach((fila, i) => {
+      const tr = document.createElement('tr');
+
+      // Nombre
+      let td = document.createElement('td');
+      td.className = 'largo';
+      td.textContent = fila.cacahuate;
+      tr.appendChild(td);
+
+      // Inventario (input)
+      td = document.createElement('td');
+      td.className = 'corto';
+      td.innerHTML = `<input value="${fila.inventario}" data-fila="${i}" data-campo="inventario" inputmode="numeric" pattern="[0-9]*">`;
+      tr.appendChild(td);
+
+      // STO (solo muestra)
+      td = document.createElement('td');
+      td.className = 'corto';
+      td.textContent = fila.sto;
+      tr.appendChild(td);
+
+      // PED (input)
+      td = document.createElement('td');
+      td.className = 'corto';
+      td.innerHTML = `<input value="${fila.pedido}" data-fila="${i}" data-campo="pedido" inputmode="numeric" pattern="[0-9]*">`;
+      tr.appendChild(td);
+
+      tabla.appendChild(tr);
+    });
+  }
+
+  // Guarda SOLO inventario/pedido
+  function guardarCambio(i, campo, valor) {
+    const saved = leerGuardado();
+    // Asegura largo
+    for (let k = saved.length; k < datosIniciales.length; k++) saved[k] = { inventario: '', pedido: '' };
+    saved[i][campo] = valor;
+    localStorage.setItem(KEY, JSON.stringify(saved));
+  }
+
+  tabla.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.tagName !== 'INPUT') return;
+    const fila = parseInt(el.dataset.fila, 10);
+    const campo = el.dataset.campo;
+    guardarCambio(fila, campo, el.value);
+  });
+
+  // ===== Exportar imagen (letra grande, poco padding, PED>0) =====
+  document.getElementById('export-img').addEventListener('click', async () => {
+    const filas = document.querySelectorAll('#tabla tbody tr');
+
+    // Tabla temporal
+    const temp = document.createElement('table');
+    Object.assign(temp.style, {
+      borderCollapse: 'collapse',
+      background: '#ffffff',
+      margin: '0',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '18px',
+      tableLayout: 'auto',
+      minWidth: '700px'
+    });
+
+    // Encabezado
+    const thead = temp.createTHead();
+    const hRow = thead.insertRow();
+    ['CLARA', 'PED'].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      Object.assign(th.style, {
+        border: '1px solid #ccc',
+        padding: '.25rem .4rem',
+        backgroundColor: '#e6e6e6',
+        textAlign: text === 'PED' ? 'center' : 'left'
       });
+      hRow.appendChild(th);
+    });
+
+    // Cuerpo (solo PED > 0)
+    const tBody = temp.createTBody();
+    filas.forEach(r => {
+      const val = r.cells[3].querySelector('input')?.value.trim() ?? '';
+      const num = Number(val.replace(',', '.'));
+      if (!Number.isNaN(num) && num > 0) {
+        const row = tBody.insertRow();
+
+        const c1 = document.createElement('td');
+        c1.textContent = r.cells[0].textContent;
+        Object.assign(c1.style, { border: '1px solid #ccc', padding: '.25rem .4rem' });
+        row.appendChild(c1);
+
+        const c2 = document.createElement('td');
+        c2.textContent = num;
+        Object.assign(c2.style, { border: '1px solid #ccc', padding: '.25rem .4rem', textAlign: 'center' });
+        row.appendChild(c2);
+      }
+    });
+
+    if (tBody.rows.length === 0) {
+      alert('No hay filas con PED > 0 para exportar.');
+      return;
     }
 
-    tabla.addEventListener('input', (e) => {
-      const el = e.target;
-      if (el.tagName !== 'INPUT') return;
-      const fila = parseInt(el.dataset.fila, 10);
-      const campo = el.dataset.campo;
-      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales.slice();
-      datos[fila][campo] = el.value;
-      localStorage.setItem(KEY, JSON.stringify(datos));
-    });
+    // Captura y escala a 1000 px de ancho
+    document.body.appendChild(temp);
+    const canvas = await html2canvas(temp, { backgroundColor: '#ffffff', scale: 1 });
+    temp.remove();
 
-    // ===== Exportar como imagen (letra grande, poco padding, solo PED>0) =====
-    document.getElementById('export-img').addEventListener('click', async () => {
-      const filas = document.querySelectorAll('#tabla tbody tr');
+    const targetW = 1000;
+    let out = canvas;
+    if (canvas.width !== targetW) {
+      const ratio = targetW / canvas.width;
+      out = document.createElement('canvas');
+      out.width = Math.round(canvas.width * ratio);
+      out.height = Math.round(canvas.height * ratio);
+      const ctx = out.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, 0, 0, out.width, out.height);
+    }
+    const dataUrl = out.toDataURL('image/jpeg', 0.92);
 
-      // 1) Construir tabla temporal
-      const temp = document.createElement('table');
-      Object.assign(temp.style, {
-        borderCollapse: 'collapse',
-        background: '#ffffff',
-        margin: '0',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '18px',         // letra más grande
-        tableLayout: 'auto',
-        minWidth: '700px'         // asegura buena lectura aunque haya pocas filas
-      });
+    // Overlay
+    const overlay = document.getElementById('overlay');
+    const img = document.getElementById('preview-img');
+    img.src = dataUrl;
+    overlay.style.display = 'flex';
 
-      // Encabezado
-      const thead = temp.createTHead();
-      const hRow = thead.insertRow();
-      ['CLARA', 'PED'].forEach(text => {
-        const th = document.createElement('th');
-        th.textContent = text;
-        Object.assign(th.style, {
-          border: '1px solid #ccc',
-          padding: '.25rem .4rem', // menos aire
-          backgroundColor: '#e6e6e6',
-          textAlign: text === 'PED' ? 'center' : 'left'
-        });
-        hRow.appendChild(th);
-      });
-
-      // Cuerpo (solo PED > 0)
-      const tBody = temp.createTBody();
-      filas.forEach(r => {
-        const val = r.cells[3].querySelector('input')?.value.trim() ?? '';
-        const num = Number(val.replace(',', '.'));
-        if (!Number.isNaN(num) && num > 0) {
-          const row = tBody.insertRow();
-
-          const c1 = document.createElement('td');
-          c1.textContent = r.cells[0].textContent;
-          Object.assign(c1.style, { border: '1px solid #ccc', padding: '.25rem .4rem' });
-          row.appendChild(c1);
-
-          const c2 = document.createElement('td');
-          c2.textContent = num;
-          Object.assign(c2.style, { border: '1px solid #ccc', padding: '.25rem .4rem', textAlign: 'center' });
-          row.appendChild(c2);
-        }
-      });
-
-      if (tBody.rows.length === 0) {
-        alert('No hay filas con PED > 0 para exportar.');
-        return;
+    document.getElementById('open-new').onclick = () => {
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
+        w.document.title = 'Pedido — Cacahuate Clara';
       }
+    };
 
-      // 2) Capturar imagen (más grande y clara)
-      document.body.appendChild(temp);
-      const canvas = await html2canvas(temp, { backgroundColor: '#ffffff', scale: 1 });
-      temp.remove();
-
-      // Si quedó chica, la subimos a ~1000px de ancho; si quedó muy grande, la bajamos
-      const targetW = 1000;
-      let out = canvas;
-      if (canvas.width !== targetW) {
-        const ratio = targetW / canvas.width;
-        out = document.createElement('canvas');
-        out.width = Math.round(canvas.width * ratio);
-        out.height = Math.round(canvas.height * ratio);
-        const ctx = out.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(canvas, 0, 0, out.width, out.height);
+    document.getElementById('copy-img').onclick = async () => {
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        alert('Imagen copiada al portapapeles ✅');
+      } catch {
+        alert('No se pudo copiar la imagen automáticamente. Abre en nueva pestaña y copia/guarda manual.');
       }
-      const dataUrl = out.toDataURL('image/jpeg', 0.92);
+    };
+  });
 
-      // 3) Mostrar en overlay
-      const overlay = document.getElementById('overlay');
-      const img = document.getElementById('preview-img');
-      img.src = dataUrl;
-      overlay.style.display = 'flex';
+  // Cerrar overlay
+  document.getElementById('close-overlay').addEventListener('click', () => {
+    const overlay = document.getElementById('overlay');
+    const img = document.getElementById('preview-img');
+    overlay.style.display = 'none';
+    img.src = '';
+  });
 
-      // Abrir en nueva pestaña
-      document.getElementById('open-new').onclick = () => {
-        const w = window.open('', '_blank');
-        if (w) {
-          w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
-          w.document.title = 'Pedido — Cacahuate Clara';
-        }
-      };
+  // Borrar datos
+  document.getElementById('clear-data').addEventListener('click', () => {
+    const ok = confirm('¿Borrar todos los datos y reiniciar la tabla?');
+    if (!ok) return;
+    localStorage.removeItem(KEY);
+    pintarTabla();
+  });
 
-      // Copiar imagen al portapapeles
-      document.getElementById('copy-img').onclick = async () => {
-        try {
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-          alert('Imagen copiada al portapapeles ✅');
-        } catch (e) {
-          alert('No se pudo copiar la imagen automáticamente. Abre en nueva pestaña y copia/guarda manual.');
-        }
-      };
-    });
-
-    // Cerrar overlay
-    document.getElementById('close-overlay').addEventListener('click', () => {
-      const overlay = document.getElementById('overlay');
-      const img = document.getElementById('preview-img');
-      overlay.style.display = 'none';
-      img.src = '';
-    });
-
-    // Borrar datos
-    document.getElementById('clear-data').addEventListener('click', () => {
-      const ok = confirm('¿Borrar todos los datos y reiniciar la tabla?');
-      if (!ok) return;
-      localStorage.removeItem(KEY);
-      cargarDatos();
-    });
-
-    // Inicializa
-    cargarDatos();
-  </script>
+  // Inicializa
+  pintarTabla();
+</script>
 </body>
 </html>
+
