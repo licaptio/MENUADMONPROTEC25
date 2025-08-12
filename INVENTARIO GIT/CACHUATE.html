@@ -140,52 +140,7 @@
     document.getElementById('export-img').addEventListener('click', async () => {
       const filas = document.querySelectorAll('#tabla tbody tr');
 
-      // Tabla temporal compacta
-      const temp = document.createElement('table');
-      Object.assign(temp.style, {
-        borderCollapse: 'collapse',
-        background: '#ffffff',
-        margin: '0',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        tableLayout: 'fixed',
-      });
-
-      // Encabezado
-      const thead = temp.createTHead();
-      const hRow = thead.insertRow();
-      ['CLARA', 'PED'].forEach(text => {
-        const th = document.createElement('th');
-        th.textContent = text;
-        Object.assign(th.style, {
-          border: '1px solid #ccc',
-          padding: '.35rem',
-          backgroundColor: '#e6e6e6',
-          textAlign: text === 'PED' ? 'center' : 'left'
-        });
-        hRow.appendChild(th);
-      });
-
-      // Cuerpo con sólo PED > 0
-      const tBody = temp.createTBody();
-      filas.forEach(r => {
-        const val = r.cells[3].querySelector('input')?.value.trim() ?? '';
-        const num = Number(val.replace(',', '.'));
-        if (!Number.isNaN(num) && num > 0) {
-          const row = tBody.insertRow();
-
-          const c1 = document.createElement('td');
-          c1.textContent = r.cells[0].textContent;
-          Object.assign(c1.style, { border: '1px solid #ccc', padding: '.35rem' });
-          row.appendChild(c1);
-
-          const c2 = document.createElement('td');
-          c2.textContent = num;
-          Object.assign(c2.style, { border: '1px solid #ccc', padding: '.35rem', textAlign: 'center' });
-          row.appendChild(c2);
-        }
-      });
-
+const temp = document.createElement('table');
       if (tBody.rows.length === 0) {
         alert('No hay filas con PED > 0 para exportar.');
         return;
@@ -260,3 +215,4 @@
   </script>
 </body>
 </html>
+
