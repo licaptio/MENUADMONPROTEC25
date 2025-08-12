@@ -81,6 +81,9 @@
   </div>
 
   <script>
+    const tablaBody = document.getElementById('contenido');
+    const KEY = 'inventario_ALUMINIO';
+
     const datosIniciales = [
       { ALUMINIO: 'ALUMINIO 5 MTS C/24', inventario: '', sto: 30, pedido: '' },
       { ALUMINIO: 'ALUMINIO 7 MTS C/24', inventario: '', sto: 30, pedido: '' },
@@ -98,10 +101,8 @@
       { ALUMINIO: 'REVOLUCION LARGO', inventario: '', sto: 10, pedido: '' },
     ];
 
-    const tablaBody = document.getElementById('contenido');
-
     function cargarDatos() {
-      const datos = JSON.parse(localStorage.getItem('inventario_ALUMINIO')) || datosIniciales;
+      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales;
       tablaBody.innerHTML = '';
       datos.forEach((fila, i) => {
         const tr = document.createElement('tr');
@@ -121,109 +122,104 @@
 
     tablaBody.addEventListener('input', (e) => {
       const input = e.target;
-      const fila = parseInt(input.dataset.fila);
+      const fila = parseInt(input.dataset.fila, 10);
       const campo = input.dataset.campo;
-      const datos = JSON.parse(localStorage.getItem('inventario_ALUMINIO')) || datosIniciales.slice();
+      const datos = JSON.parse(localStorage.getItem(KEY)) || datosIniciales.slice();
       datos[fila][campo] = input.value;
-      localStorage.setItem('inventario_ALUMINIO', JSON.stringify(datos));
+      localStorage.setItem(KEY, JSON.stringify(datos));
     });
 
-<script>
-document.getElementById('export-img').addEventListener('click', async () => {
-  const filas = document.querySelectorAll('#tabla tbody tr');
+    // ===== Exportar como imagen (compacto y sin descarga) =====
+    document.getElementById('export-img').addEventListener('click', async () => {
+      const filas = document.querySelectorAll('#tabla tbody tr');
 
-  // Tabla temporal compacta
-  const temp = document.createElement('table');
-  Object.assign(temp.style, {
-    borderCollapse: 'collapse',
-    background: '#ffffff',
-    margin: '0',                 // sin margen extra
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '14px',            // compacta
-    tableLayout: 'fixed',
-  });
+      // Tabla temporal compacta
+      const temp = document.createElement('table');
+      Object.assign(temp.style, {
+        borderCollapse: 'collapse',
+        background: '#ffffff',
+        margin: '0',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        tableLayout: 'fixed',
+      });
 
-  // Encabezado
-  const thead = temp.createTHead();
-  const hRow = thead.insertRow();
-  ['ALUMINIO', 'PED'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    Object.assign(th.style, {
-      border: '1px solid #ccc',
-      padding: '.35rem',
-      backgroundColor: '#e6e6e6',
-      textAlign: text === 'PED' ? 'center' : 'left'
+      // Encabezado
+      const thead = temp.createTHead();
+      const hRow = thead.insertRow();
+      ['ALUMINIO', 'PED'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        Object.assign(th.style, {
+          border: '1px solid #ccc',
+          padding: '.35rem',
+          backgroundColor: '#e6e6e6',
+          textAlign: text === 'PED' ? 'center' : 'left'
+        });
+        hRow.appendChild(th);
+      });
+
+      // Cuerpo con sólo PED > 0
+      const tBody = temp.createTBody();
+      filas.forEach(r => {
+        const val = r.cells[3].querySelector('input').value.trim();
+        const num = Number(val.replace(',', '.'));
+        if (!Number.isNaN(num) && num > 0) {
+          const nuevaFila = tBody.insertRow();
+
+          const c1 = document.createElement('td');
+          c1.textContent = r.cells[0].textContent;
+          Object.assign(c1.style, { border: '1px solid #ccc', padding: '.35rem' });
+          nuevaFila.appendChild(c1);
+
+          const c2 = document.createElement('td');
+          c2.textContent = num;
+          Object.assign(c2.style, { border: '1px solid #ccc', padding: '.35rem', textAlign: 'center' });
+          nuevaFila.appendChild(c2);
+        }
+      });
+
+      if (tBody.rows.length === 0) {
+        alert('No hay filas con PED > 0 para exportar.');
+        return;
+      }
+
+      // Render a tamaño natural
+      document.body.appendChild(temp);
+      const canvas = await html2canvas(temp, { backgroundColor: '#ffffff', scale: 1 });
+      temp.remove();
+
+      // Reducir a ~800 px de ancho (más ligera)
+      const maxW = 800;
+      let dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      if (canvas.width > maxW) {
+        const ratio = maxW / canvas.width;
+        const out = document.createElement('canvas');
+        out.width = Math.round(canvas.width * ratio);
+        out.height = Math.round(canvas.height * ratio);
+        const octx = out.getContext('2d');
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.drawImage(canvas, 0, 0, out.width, out.height);
+        dataUrl = out.toDataURL('image/jpeg', 0.9);
+      }
+
+      // Mostrar en overlay
+      const overlay = document.getElementById('overlay');
+      const img = document.getElementById('preview-img');
+      img.src = dataUrl;
+      overlay.style.display = 'flex';
+
+      // Abrir en nueva pestaña (opcional)
+      document.getElementById('open-new').onclick = () => {
+        const w = window.open('', '_blank');
+        if (w) {
+          w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
+          w.document.title = 'Pedido';
+        }
+      };
     });
-    hRow.appendChild(th);
-  });
 
-  // Cuerpo con sólo PED > 0
-  const tBody = temp.createTBody();
-  filas.forEach(r => {
-    const val = r.cells[3].querySelector('input').value.trim();
-    const num = Number(val.replace(',', '.'));
-    if (!Number.isNaN(num) && num > 0) {
-      const nuevaFila = tBody.insertRow();
-
-      // ALUMINIO
-      const c1 = document.createElement('td');
-      c1.textContent = r.cells[0].textContent;
-      Object.assign(c1.style, { border: '1px solid #ccc', padding: '.35rem' });
-      nuevaFila.appendChild(c1);
-
-      // PED
-      const c2 = document.createElement('td');
-      c2.textContent = num;
-      Object.assign(c2.style, { border: '1px solid #ccc', padding: '.35rem', textAlign: 'center' });
-      nuevaFila.appendChild(c2);
-    }
-  });
-
-  if (tBody.rows.length === 0) {
-    alert('No hay filas con PED > 0 para exportar.');
-    return;
-  }
-
-  // Render: sin escalar (para que salga "normal") y sin bordes extra
-  document.body.appendChild(temp);
-  const canvas = await html2canvas(temp, {
-    backgroundColor: '#ffffff',
-    scale: 1     // tamaño natural
-  });
-  temp.remove();
-
-  // Downscale a ~800 px de ancho (opcional para compactar)
-  const maxW = 800;
-  let dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-  if (canvas.width > maxW) {
-    const ratio = maxW / canvas.width;
-    const out = document.createElement('canvas');
-    out.width = Math.round(canvas.width * ratio);
-    out.height = Math.round(canvas.height * ratio);
-    const octx = out.getContext('2d');
-    octx.imageSmoothingEnabled = true;
-    octx.imageSmoothingQuality = 'high';
-    octx.drawImage(canvas, 0, 0, out.width, out.height);
-    dataUrl = out.toDataURL('image/jpeg', 0.9);
-  }
-
-  // Mostrar en overlay
-  const overlay = document.getElementById('overlay');
-  const img = document.getElementById('preview-img');
-  img.src = dataUrl;
-  overlay.style.display = 'flex';
-
-  // Abrir en nueva pestaña (opcional)
-  document.getElementById('open-new').onclick = () => {
-    const w = window.open('', '_blank');
-    if (w) {
-      w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto"/>`);
-      w.document.title = 'Pedido';
-    }
-  };
-});
-</script>
     // Cerrar overlay
     document.getElementById('close-overlay').addEventListener('click', () => {
       const overlay = document.getElementById('overlay');
@@ -232,12 +228,12 @@ document.getElementById('export-img').addEventListener('click', async () => {
       img.src = '';
     });
 
-    // ===== Borrar datos =====
+    // Borrar datos
     document.getElementById('clear-data').addEventListener('click', () => {
       const ok = confirm('¿Borrar todos los datos y reiniciar la tabla?');
       if (!ok) return;
-      localStorage.removeItem('inventario_ALUMINIO');
-      cargarDatos(); // repinta con datosIniciales
+      localStorage.removeItem(KEY);
+      cargarDatos();
     });
 
     // Inicializa
@@ -245,4 +241,3 @@ document.getElementById('export-img').addEventListener('click', async () => {
   </script>
 </body>
 </html>
-
