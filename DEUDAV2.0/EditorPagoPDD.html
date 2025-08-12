@@ -115,8 +115,6 @@ async function consultarPorRFC() {
   // Limpiar resultados anteriores
   document.getElementById("resumenConteo").innerText = "";
   document.getElementById("tablaResultados").innerHTML = "";
-      
-      document.getElementById("tablaResultados").innerHTML = "";
 
       // Obtener el conteo real sin traer datos
       const { count, error: errorConteo } = await supabase
@@ -261,5 +259,6 @@ function sincronizarRFC() {
 
 </body>
 </html>
+
 
 
