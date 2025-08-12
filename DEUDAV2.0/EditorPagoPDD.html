@@ -193,6 +193,27 @@ function mostrarTabla(data) {
   document.getElementById("tablaResultados").innerHTML = html;
 }
 
+async function togglePago(id, celda) {
+  const actual = celda.textContent.trim().toUpperCase();
+  const nuevo = actual === "SI" ? "NO" : "SI";
+
+  const { error } = await supabase
+    .from(tabla)
+    .update({ factura_pagada: nuevo })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Error al actualizar en Supabase");
+    console.error(error);
+    return;
+  }
+
+  celda.textContent = nuevo;
+  // opcional: color visual
+  celda.style.color = (nuevo === "SI") ? "green" : "red";
+}
+
+    
 async function toggleFisica(id, celda) {
   const actual = celda.textContent.trim().toUpperCase();
   const nuevo = actual === "SI" ? "NO" : "SI";
@@ -240,4 +261,5 @@ function sincronizarRFC() {
 
 </body>
 </html>
+
 
