@@ -57,9 +57,9 @@ window.onload = () => {
   productos.forEach(prod => {
     let fila = tabla.insertRow();
     fila.insertCell().innerText = prod.nombre;
-    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
+    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" class="editable">`;
     fila.insertCell().innerText = prod.stock;
-    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
+    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" class="editable">`;
   });
 };
 
