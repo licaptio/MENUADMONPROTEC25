@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toma de Inventario</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+  }
+  th {
+    background: #ddd;
+  }
+  .editable {
+    background: yellow;
+  }
+  .btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-enviar {
+    background: green;
+    color: white;
+  }
+  .btn-borrar {
+    background: red;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<h2>Inventario INIX</h2>
+
+<table>
+  <tr>
+    <th>CONCEPTO</th>
+    <th>INVENTARIO</th>
+    <th>STOCK</th>
+  </tr>
+  <tr><td>32PP</td><td><input type="number" class="editable"></td><td>50</td></tr>
+  <tr><td>16PP</td><td><input type="number" class="editable"></td><td>40</td></tr>
+  <tr><td>8PP</td><td><input type="number" class="editable"></td><td>10</td></tr>
+  <tr><td>TPP8</td><td><input type="number" class="editable"></td><td>100</td></tr>
+  <tr><td>FCB100012 B/6</td><td><input type="number" class="editable"></td><td>15 DE 6</td></tr>
+  <tr><td>HQR1230</td><td><input type="number" class="editable"></td><td>30</td></tr>
+  <tr><td>HQR1238</td><td><input type="number" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR1245</td><td><input type="number" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR30 VITAFILM</td><td><input type="number" class="editable"></td><td>15</td></tr>
+  <tr><td>F3029</td><td><input type="number" class="editable"></td><td>4</td></tr>
+</table>
+
+<button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Telegram</button>
+<button class="btn btn-borrar" onclick="borrarDatos()">🗑 Borrar Datos</button>
+
+<script>
+const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+const CHAT_ID = "6617988297";
+
+function enviarTelegram() {
+    let filas = document.querySelectorAll("table tr");
+    let mensaje = "📦 *Inventario Físico INIX:*\n";
+    filas.forEach((fila, i) => {
+        if (i === 0) return; // saltar encabezado
+        let celdas = fila.querySelectorAll("td");
+        let concepto = celdas[0].innerText.trim();
+        let inventario = celdas[1].querySelector("input").value || "0";
+        let stock = celdas[2].innerText.trim();
+        mensaje += `\n${concepto}: ${inventario} (Stock: ${stock})`;
+    });
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: mensaje,
+            parse_mode: "Markdown"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Inventario enviado a Telegram ✅");
+    })
+    .catch(err => {
+        alert("Error al enviar a Telegram ❌");
+        console.error(err);
+    });
+}
+
+function borrarDatos() {
+    if (confirm("¿Seguro que quieres borrar todos los datos?")) {
+        document.querySelectorAll(".editable").forEach(input => {
+            input.value = "";
+        });
+    }
+}
+</script>
+
+</body>
+</html>
