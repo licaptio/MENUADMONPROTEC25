@@ -1,162 +1,217 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inventario Palmex</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    body { font-family: Arial; padding: 1rem; background: #f9f9f9; }
-    h1 { text-align: center; margin-bottom: 1rem; }
-    table { width: 100%; max-width: 900px; margin: auto; border-collapse: collapse; background: #fff; box-shadow: 0 0 6px #ccc; }
-    th, td { border: 1px solid #ccc; padding: 6px; }
-    th { background: #e6e6e6; font-weight: bold; }
-    td.largo { width: 50%; }
-    td.corto, th.corto { width: 10ch; text-align: center; }
-    input { width: 100%; border: none; background: transparent; font-size: 1rem; text-align: center; }
-    input:focus { background: #ffffcc; outline: none; }
-    .controls { text-align: center; margin-bottom: 1rem; }
-    button { margin: 0.5rem; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
-    @media print { .no-print { display: none; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario Palmex</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 10px;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  table {
+    border-collapse: collapse;
+    margin: auto;
+    background: white;
+    font-size: 14px;
+    max-width: 900px;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+  }
+  th {
+    background: #e8e8e8;
+  }
+  .editable {
+    width: 70px;
+    padding: 4px;
+    text-align: center;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    outline: none;
+    background: white;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .editable:focus {
+    border-color: #4CAF50;
+    background: #f0fff0;
+  }
+  .btn {
+    margin-top: 8px;
+    width: 100%;
+    max-width: 900px;
+    padding: 8px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .btn-enviar {
+    background: #28a745;
+    color: white;
+  }
+  .btn-borrar {
+    background: #dc3545;
+    color: white;
+  }
+  .btn-orden {
+    background: #007bff;
+    color: white;
+  }
+  @media (max-width: 600px) {
+    table {
+      font-size: 13px;
+      width: 100%;
+    }
+    .editable {
+      width: 100%;
+      padding: 6px;
+      font-size: 16px;
+    }
+    .btn {
+      font-size: 16px;
+      padding: 12px;
+    }
+  }
+</style>
 </head>
 <body>
 
-<h1>Inventario Palmex</h1>
-<div class="controls">
-  <button id="export-img" class="no-print">Exportar pedido como imagen</button>
-  <button id="limpiar" class="no-print">Limpiar formulario</button>
-</div>
+<h2>Inventario Palmex</h2>
 
 <table id="tabla">
-  <thead>
-    <tr>
-      <th class="largo">PRODUCTO</th>
-      <th class="corto">INV</th>
-      <th class="corto">STOCK</th>
-      <th class="corto">PED</th>
-    </tr>
-  </thead>
-  <tbody id="contenido"></tbody>
+  <tr>
+    <th>PRODUCTO</th>
+    <th>INV</th>
+    <th>STOCK</th>
+    <th>PEDIDO</th>
+  </tr>
 </table>
 
+<button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Inventario a Telegram</button>
+<button class="btn btn-borrar" onclick="borrarDatos()">🗑 Borrar Datos</button>
+<button class="btn btn-orden" onclick="generarOrden()">📄 Generar Orden de Compra</button>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const productos = [
-    { nombre: "10X10 C/15 KGS. PASTA", stock: 80 },
-    { nombre: "ANILLO C/20 KGS.", stock: "-" },
-    { nombre: "DONA C/20 KGS.", stock: "-" },
-    { nombre: "ESPACIAL C/15K", stock: "-" },
-    { nombre: "MINI CUADRO C/20 KGS.", stock: 20 },
-    { nombre: "ROTINI C/20 KGS.", stock: 20 },
-    { nombre: "RUEDA GRANDE C/13 KGS.", stock: 20 },
-    { nombre: "HOJUELA PAPA 8 KGS.", stock: 30 },
-    { nombre: "ARITOS 3 KGS.", stock: "-" },
-    { nombre: "ZUCARIN C/15 KGS.", stock: "-" },
-    { nombre: "CORN FLAKES 10 KGS.", stock: "-" },
-    { nombre: "ARROZ CHOCOLATE", stock: "-" }
-  ];
+const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+const CHAT_ID = "6617988297";
 
-  const tbody = document.getElementById('contenido');
+const productos = [
+  { nombre: "10X10 C/15 KGS. PASTA", stock: 80 },
+  { nombre: "ANILLO C/20 KGS.", stock: "-" },
+  { nombre: "DONA C/20 KGS.", stock: "-" },
+  { nombre: "ESPACIAL C/15K", stock: "-" },
+  { nombre: "MINI CUADRO C/20 KGS.", stock: 20 },
+  { nombre: "ROTINI C/20 KGS.", stock: 20 },
+  { nombre: "RUEDA GRANDE C/13 KGS.", stock: 20 },
+  { nombre: "HOJUELA PAPA 8 KGS.", stock: 30 },
+  { nombre: "ARITOS 3 KGS.", stock: "-" },
+  { nombre: "ZUCARIN C/15 KGS.", stock: "-" },
+  { nombre: "CORN FLAKES 10 KGS.", stock: "-" },
+  { nombre: "ARROZ CHOCOLATE", stock: "-" }
+];
 
-  function cargarTabla() {
-    tbody.innerHTML = '';
-    productos.forEach((prod, i) => {
-      const tr = document.createElement('tr');
-      ['nombre', 'inv', 'stock', 'ped'].forEach((campo, idx) => {
-        const td = document.createElement('td');
-        td.className = (idx === 0) ? 'largo' : 'corto';
-        if (campo === 'nombre') td.textContent = prod.nombre;
-        else if (campo === 'stock') td.textContent = prod.stock;
-        else {
-          const input = document.createElement('input');
-          input.type = 'text';
-          td.appendChild(input);
-        }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
+window.onload = () => {
+  const tabla = document.getElementById("tabla");
+  productos.forEach(prod => {
+    let fila = tabla.insertRow();
+    fila.insertCell().innerText = prod.nombre;
+    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable">`;
+    fila.insertCell().innerText = prod.stock;
+    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable">`;
+  });
+};
 
-    setTimeout(() => {
-      const inputs = document.querySelectorAll('input');
-      inputs.forEach((input, idx) => {
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') e.preventDefault(), inputs[idx + 1]?.focus();
-          if (e.key === 'ArrowDown') e.preventDefault(), inputs[idx + 2]?.focus();
-          if (e.key === 'ArrowUp') e.preventDefault(), inputs[idx - 2]?.focus();
-          if (e.key === 'ArrowRight') e.preventDefault(), inputs[idx + 1]?.focus();
-          if (e.key === 'ArrowLeft') e.preventDefault(), inputs[idx - 1]?.focus();
-        });
-      });
-    }, 100);
-  }
-
-  document.getElementById('limpiar').addEventListener('click', cargarTabla);
-
-  document.getElementById('export-img').addEventListener('click', () => {
-    const filas = document.querySelectorAll('#tabla tbody tr');
-    const tempTable = document.createElement('table');
-    tempTable.style.borderCollapse = 'collapse';
-    tempTable.style.background = '#fff';
-    tempTable.style.margin = '1rem auto';
-    tempTable.style.fontFamily = 'Arial';
-
-    const caption = document.createElement('caption');
-    caption.textContent = 'PALMEX';
-    caption.style.fontSize = '20px';
-    caption.style.fontWeight = 'bold';
-    caption.style.padding = '8px';
-    caption.style.textAlign = 'center';
-    caption.style.color = '#333';
-    tempTable.appendChild(caption);
-
-    const thead = tempTable.createTHead();
-    const hRow = thead.insertRow();
-    ['PRODUCTO', 'PED'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      th.style.border = '1px solid #ccc';
-      th.style.padding = '4px 8px';
-      th.style.background = '#e6e6e6';
-      th.style.fontSize = '14px';
-      hRow.appendChild(th);
-    });
-
-    const tBody = tempTable.createTBody();
-    filas.forEach(r => {
-      const pedido = r.cells[3].querySelector('input').value.trim();
-      if (pedido !== '' && pedido !== '0') {
-        const nuevaFila = tBody.insertRow();
-        const producto = r.cells[0].textContent;
-        [producto, pedido].forEach((text, idx) => {
-          const td = document.createElement('td');
-          td.textContent = text;
-          td.style.border = '1px solid #ccc';
-          td.style.padding = '2px 6px';
-          td.style.fontSize = '14px';
-          if (idx === 0) {
-            td.style.maxWidth = '280px';
-            td.style.whiteSpace = 'nowrap';
-            td.style.overflow = 'hidden';
-          }
-          nuevaFila.appendChild(td);
-        });
-      }
-    });
-
-    document.body.appendChild(tempTable);
-    html2canvas(tempTable).then(canvas => {
-      const link = document.createElement('a');
-      link.download = 'pedido_palmex.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.95);
-      link.click();
-      tempTable.remove();
-    });
+function enviarTelegram() {
+  let filas = document.querySelectorAll("#tabla tr");
+  let mensaje = "📦 *Inventario Palmex:*\n";
+  filas.forEach((fila, i) => {
+    if (i === 0) return;
+    let producto = fila.cells[0].innerText.trim();
+    let inventario = fila.cells[1].querySelector("input").value || "0";
+    let stock = fila.cells[2].innerText.trim();
+    mensaje += `\n${producto} → INV: ${inventario} | STOCK: ${stock}`;
   });
 
-  cargarTabla();
-});
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Inventario enviado a Telegram ✅");
+  })
+  .catch(err => {
+    alert("Error al enviar a Telegram ❌");
+    console.error(err);
+  });
+}
+
+function borrarDatos() {
+  if (confirm("¿Seguro que quieres borrar todos los datos?")) {
+    document.querySelectorAll(".editable").forEach(input => {
+      input.value = "";
+    });
+    document.querySelector(".editable").focus();
+  }
+}
+
+function generarOrden() {
+  let filas = document.querySelectorAll("#tabla tr");
+  let nuevaVentana = window.open("", "_blank");
+  let contenido = `
+    <html>
+    <head>
+      <title>Orden de Compra</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        th { background: #e8e8e8; }
+      </style>
+    </head>
+    <body>
+      <h2>ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES</h2>
+      <table>
+        <tr><th>PRODUCTO</th><th>PEDIDO</th></tr>
+  `;
+
+  filas.forEach((fila, i) => {
+    if (i === 0) return;
+    let producto = fila.cells[0].innerText.trim();
+    let pedido = fila.cells[3].querySelector("input").value;
+    if (pedido && parseInt(pedido) > 0) {
+      contenido += `<tr><td>${producto}</td><td>${pedido}</td></tr>`;
+    }
+  });
+
+  contenido += `
+      </table>
+    </body>
+    </html>
+  `;
+
+  nuevaVentana.document.write(contenido);
+  nuevaVentana.document.close();
+}
 </script>
+
 </body>
 </html>
