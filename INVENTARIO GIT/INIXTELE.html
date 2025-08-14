@@ -12,13 +12,15 @@
   }
   h2 {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   table {
-    width: 100%;
     border-collapse: collapse;
+    margin: auto;
     background: white;
-    font-size: 15px;
+    font-size: 14px;
+    max-width: 800px;
+    width: 100%;
   }
   th, td {
     border: 1px solid #ccc;
@@ -29,10 +31,10 @@
     background: #e8e8e8;
   }
   .editable {
-    width: 100%;
+    width: 70px; /* campo compacto */
     padding: 4px;
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     border: 1px solid #ccc;
     outline: none;
     background: white;
@@ -53,13 +55,17 @@
     -moz-appearance: textfield;
   }
   .btn {
-    margin-top: 10px;
+    margin-top: 8px;
     width: 100%;
+    max-width: 800px;
     padding: 8px;
     font-size: 16px;
     border: none;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 4px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
   .btn-enviar {
     background: #28a745;
@@ -69,14 +75,16 @@
     background: #dc3545;
     color: white;
   }
-  /* Ajuste responsive */
+  /* Ajuste para móviles */
   @media (max-width: 600px) {
     table {
-      font-size: 14px;
+      font-size: 13px;
+      width: 100%;
     }
     .editable {
-      font-size: 14px;
+      width: 100%;
       padding: 6px;
+      font-size: 16px;
     }
     .btn {
       font-size: 16px;
@@ -95,16 +103,16 @@
     <th>INVENTARIO</th>
     <th>STOCK</th>
   </tr>
-  <tr><td>32PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>50</td></tr>
-  <tr><td>16PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>40</td></tr>
-  <tr><td>8PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
-  <tr><td>TPP8</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>100</td></tr>
-  <tr><td>FCB100012 B/6</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>15 DE 6</td></tr>
-  <tr><td>HQR1230</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>30</td></tr>
-  <tr><td>HQR1238</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
-  <tr><td>HQR1245</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
-  <tr><td>HQR30 VITAFILM</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>15</td></tr>
-  <tr><td>F3029</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>4</td></tr>
+  <tr><td>32PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>50</td></tr>
+  <tr><td>16PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>40</td></tr>
+  <tr><td>8PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td></tr>
+  <tr><td>TPP8</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>100</td></tr>
+  <tr><td>FCB100012 B/6</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>15 DE 6</td></tr>
+  <tr><td>HQR1230</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>30</td></tr>
+  <tr><td>HQR1238</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR1245</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR30 VITAFILM</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>15</td></tr>
+  <tr><td>F3029</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>4</td></tr>
 </table>
 
 <button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Telegram</button>
