@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Toma de Inventario y Pedido</title>
+<title>Toma de Inventario</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -12,13 +12,15 @@
   }
   h2 {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   table {
-    width: 100%;
     border-collapse: collapse;
+    margin: auto;
     background: white;
     font-size: 14px;
+    max-width: 800px;
+    width: 100%;
   }
   th, td {
     border: 1px solid #ccc;
@@ -29,13 +31,14 @@
     background: #e8e8e8;
   }
   .editable {
-    width: 80px;
+    width: 70px;
     padding: 4px;
     text-align: center;
     font-size: 14px;
     border: 1px solid #ccc;
     outline: none;
     background: white;
+    transition: background 0.2s, border-color 0.2s;
   }
   .editable:focus {
     border-color: #4CAF50;
@@ -52,18 +55,45 @@
     -moz-appearance: textfield;
   }
   .btn {
-    margin-top: 10px;
+    margin-top: 8px;
     width: 100%;
+    max-width: 800px;
     padding: 8px;
     font-size: 16px;
     border: none;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 4px;
     display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
-  .btn-generar {
+  .btn-enviar {
+    background: #28a745;
+    color: white;
+  }
+  .btn-borrar {
+    background: #dc3545;
+    color: white;
+  }
+  .btn-orden {
     background: #007bff;
     color: white;
+  }
+  /* Ajuste para móviles */
+  @media (max-width: 600px) {
+    table {
+      font-size: 13px;
+      width: 100%;
+    }
+    .editable {
+      width: 100%;
+      padding: 6px;
+      font-size: 16px;
+    }
+    .btn {
+      font-size: 16px;
+      padding: 12px;
+    }
   }
 </style>
 </head>
@@ -78,21 +108,70 @@
     <th>STOCK</th>
     <th>PEDIDO</th>
   </tr>
-  <tr><td>32PP</td><td></td><td>50</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>16PP</td><td></td><td>40</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>8PP</td><td></td><td>10</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>TPP8</td><td></td><td>100</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>FCB100012 B/6</td><td></td><td>15 DE 6</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>HQR1230</td><td></td><td>30</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>HQR1238</td><td></td><td>10</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>HQR1245</td><td></td><td>10</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>HQR30 VITAFILM</td><td></td><td>15</td><td><input type="number" class="editable"></td></tr>
-  <tr><td>F3029</td><td></td><td>4</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>32PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>50</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>16PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>40</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>8PP</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>TPP8</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>100</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>FCB100012 B/6</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>15 DE 6</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>HQR1230</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>30</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>HQR1238</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>HQR1245</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>10</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>HQR30 VITAFILM</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>15</td><td><input type="number" class="editable"></td></tr>
+  <tr><td>F3029</td><td><input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable"></td><td>4</td><td><input type="number" class="editable"></td></tr>
 </table>
 
-<button class="btn btn-generar" onclick="generarOrden()">📄 Generar Orden de Compra</button>
+<button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Telegram</button>
+<button class="btn btn-borrar" onclick="borrarDatos()">🗑 Borrar Datos</button>
+<button class="btn btn-orden" onclick="generarOrden()">📄 Generar Orden de Compra</button>
 
 <script>
+const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+const CHAT_ID = "6617988297";
+
+window.onload = () => {
+    document.querySelector(".editable").focus();
+};
+
+function enviarTelegram() {
+    let filas = document.querySelectorAll("#tabla tr");
+    let mensaje = "📦 *Inventario Físico INIX:*\n";
+    filas.forEach((fila, i) => {
+        if (i === 0) return;
+        let celdas = fila.querySelectorAll("td");
+        let concepto = celdas[0].innerText.trim();
+        let inventario = celdas[1].querySelector("input").value || "0";
+        let stock = celdas[2].innerText.trim();
+        mensaje += `\n${concepto}: ${inventario} (Stock: ${stock})`;
+    });
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: mensaje,
+            parse_mode: "Markdown"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Inventario enviado a Telegram ✅");
+    })
+    .catch(err => {
+        alert("Error al enviar a Telegram ❌");
+        console.error(err);
+    });
+}
+
+function borrarDatos() {
+    if (confirm("¿Seguro que quieres borrar todos los datos?")) {
+        document.querySelectorAll(".editable").forEach(input => {
+            input.value = "";
+        });
+        document.querySelector(".editable").focus();
+    }
+}
+
 function generarOrden() {
     let filas = document.querySelectorAll("#tabla tr");
     let nuevaVentana = window.open("", "_blank");
@@ -115,10 +194,9 @@ function generarOrden() {
     `;
 
     filas.forEach((fila, i) => {
-        if (i === 0) return; // Saltar encabezado
-        let celdas = fila.querySelectorAll("td");
-        let concepto = celdas[0].innerText.trim();
-        let pedido = fila.querySelector("input").value;
+        if (i === 0) return;
+        let concepto = fila.querySelectorAll("td")[0].innerText.trim();
+        let pedido = fila.querySelectorAll("td")[3].querySelector("input").value;
         if (pedido && parseInt(pedido) > 0) {
             contenido += `<tr><td>${concepto}</td><td>${pedido}</td></tr>`;
         }
