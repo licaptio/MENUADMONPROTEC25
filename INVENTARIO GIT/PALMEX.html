@@ -3,92 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventario Palmex</title>
+<title>Inventario Sabritas</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    padding: 10px;
-  }
-  h2 {
-    text-align: center;
-    margin-bottom: 10px;
-  }
-  table {
-    border-collapse: collapse;
-    margin: auto;
-    background: white;
-    font-size: 14px;
-    max-width: 900px;
-    width: 100%;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
-  }
-  th {
-    background: #e8e8e8;
-  }
-  .editable {
-    width: 70px;
-    padding: 4px;
-    text-align: center;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    outline: none;
-    background: white;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .editable:focus {
-    border-color: #4CAF50;
-    background: #f0fff0;
-  }
-  .btn {
-    margin-top: 8px;
-    width: 100%;
-    max-width: 900px;
-    padding: 8px;
-    font-size: 16px;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .btn-enviar {
-    background: #28a745;
-    color: white;
-  }
-  .btn-borrar {
-    background: #dc3545;
-    color: white;
-  }
-  .btn-orden {
-    background: #007bff;
-    color: white;
-  }
+  body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 10px; }
+  h2 { text-align: center; margin-bottom: 10px; }
+  table { border-collapse: collapse; margin: auto; background: white; font-size: 14px; max-width: 900px; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+  th { background: #e8e8e8; }
+  .editable { width: 70px; padding: 4px; text-align: center; font-size: 14px; border: 1px solid #ccc; background: white; }
+  .editable:focus { border-color: #4CAF50; background: #f0fff0; }
+  .btn { margin-top: 8px; width: 100%; max-width: 900px; padding: 8px; font-size: 16px; border: none; cursor: pointer; border-radius: 4px; display: block; margin-left: auto; margin-right: auto; }
+  .btn-enviar { background: #28a745; color: white; }
+  .btn-borrar { background: #dc3545; color: white; }
+  .btn-orden { background: #007bff; color: white; }
   @media (max-width: 600px) {
-    table {
-      font-size: 13px;
-      width: 100%;
-    }
-    .editable {
-      width: 100%;
-      padding: 6px;
-      font-size: 16px;
-    }
-    .btn {
-      font-size: 16px;
-      padding: 12px;
-    }
+    table { font-size: 13px; width: 100%; }
+    .editable { width: 100%; padding: 6px; font-size: 16px; }
+    .btn { font-size: 16px; padding: 12px; }
   }
 </style>
 </head>
 <body>
 
-<h2>Inventario Palmex</h2>
+<h2>Inventario Sabritas</h2>
 
 <table id="tabla">
   <tr>
@@ -108,18 +45,11 @@ const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
 const CHAT_ID = "6617988297";
 
 const productos = [
-  { nombre: "10X10 C/15 KGS. PASTA", stock: 80 },
-  { nombre: "ANILLO C/20 KGS.", stock: "-" },
-  { nombre: "DONA C/20 KGS.", stock: "-" },
-  { nombre: "ESPACIAL C/15K", stock: "-" },
-  { nombre: "MINI CUADRO C/20 KGS.", stock: 20 },
-  { nombre: "ROTINI C/20 KGS.", stock: 20 },
-  { nombre: "RUEDA GRANDE C/13 KGS.", stock: 20 },
-  { nombre: "HOJUELA PAPA 8 KGS.", stock: 30 },
-  { nombre: "ARITOS 3 KGS.", stock: "-" },
-  { nombre: "ZUCARIN C/15 KGS.", stock: "-" },
-  { nombre: "CORN FLAKES 10 KGS.", stock: "-" },
-  { nombre: "ARROZ CHOCOLATE", stock: "-" }
+  { nombre: "SABRISURTIDO 35", stock: 150 },
+  { nombre: "TOSTITO VERDE", stock: 30 },
+  { nombre: "TOSTITO MORADO", stock: 10 },
+  { nombre: "FRITURA ENCANTO", stock: 10 },
+  { nombre: "FARDO ESTÁNDAR", stock: 10 }
 ];
 
 window.onload = () => {
@@ -127,15 +57,15 @@ window.onload = () => {
   productos.forEach(prod => {
     let fila = tabla.insertRow();
     fila.insertCell().innerText = prod.nombre;
-    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable">`;
+    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
     fila.insertCell().innerText = prod.stock;
-    fila.insertCell().innerHTML = `<input inputmode="numeric" pattern="[0-9]*" maxlength="5" class="editable">`;
+    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
   });
 };
 
 function enviarTelegram() {
   let filas = document.querySelectorAll("#tabla tr");
-  let mensaje = "📦 *Inventario Palmex:*\n";
+  let mensaje = "📦 *Inventario Sabritas:*\n";
   filas.forEach((fila, i) => {
     if (i === 0) return;
     let producto = fila.cells[0].innerText.trim();
@@ -153,14 +83,8 @@ function enviarTelegram() {
       parse_mode: "Markdown"
     })
   })
-  .then(res => res.json())
-  .then(data => {
-    alert("Inventario enviado a Telegram ✅");
-  })
-  .catch(err => {
-    alert("Error al enviar a Telegram ❌");
-    console.error(err);
-  });
+  .then(() => alert("Inventario enviado a Telegram ✅"))
+  .catch(() => alert("Error al enviar a Telegram ❌"));
 }
 
 function borrarDatos() {
@@ -168,7 +92,6 @@ function borrarDatos() {
     document.querySelectorAll(".editable").forEach(input => {
       input.value = "";
     });
-    document.querySelector(".editable").focus();
   }
 }
 
