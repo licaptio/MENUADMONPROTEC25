@@ -25,6 +25,19 @@
   }
   .editable {
     background: yellow;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+  }
+  /* Quitar flechas en Chrome, Edge, Safari */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  /* Quitar flechas en Firefox */
+  input[type=number] {
+    -moz-appearance: textfield;
   }
   .btn {
     margin-top: 10px;
@@ -54,16 +67,16 @@
     <th>INVENTARIO</th>
     <th>STOCK</th>
   </tr>
-  <tr><td>32PP</td><td><input type="number" class="editable"></td><td>50</td></tr>
-  <tr><td>16PP</td><td><input type="number" class="editable"></td><td>40</td></tr>
-  <tr><td>8PP</td><td><input type="number" class="editable"></td><td>10</td></tr>
-  <tr><td>TPP8</td><td><input type="number" class="editable"></td><td>100</td></tr>
-  <tr><td>FCB100012 B/6</td><td><input type="number" class="editable"></td><td>15 DE 6</td></tr>
-  <tr><td>HQR1230</td><td><input type="number" class="editable"></td><td>30</td></tr>
-  <tr><td>HQR1238</td><td><input type="number" class="editable"></td><td>10</td></tr>
-  <tr><td>HQR1245</td><td><input type="number" class="editable"></td><td>10</td></tr>
-  <tr><td>HQR30 VITAFILM</td><td><input type="number" class="editable"></td><td>15</td></tr>
-  <tr><td>F3029</td><td><input type="number" class="editable"></td><td>4</td></tr>
+  <tr><td>32PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>50</td></tr>
+  <tr><td>16PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>40</td></tr>
+  <tr><td>8PP</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
+  <tr><td>TPP8</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>100</td></tr>
+  <tr><td>FCB100012 B/6</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>15 DE 6</td></tr>
+  <tr><td>HQR1230</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>30</td></tr>
+  <tr><td>HQR1238</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR1245</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>10</td></tr>
+  <tr><td>HQR30 VITAFILM</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>15</td></tr>
+  <tr><td>F3029</td><td><input inputmode="numeric" pattern="[0-9]*" class="editable"></td><td>4</td></tr>
 </table>
 
 <button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Telegram</button>
