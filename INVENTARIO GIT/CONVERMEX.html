@@ -117,6 +117,7 @@ function borrarDatos() {
 
 function generarOrden() {
   let filas = document.querySelectorAll("#tabla tr");
+  let totalGeneralM3 = 0;
   let nuevaVentana = window.open("", "_blank");
   let contenido = `
     <html>
@@ -128,6 +129,7 @@ function generarOrden() {
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #000; padding: 6px; text-align: center; }
         th { background: #e8e8e8; }
+        tfoot td { font-weight: bold; background: #f0f0f0; }
       </style>
     </head>
     <body>
@@ -140,13 +142,17 @@ function generarOrden() {
     if (i === 0) return;
     let concepto = fila.cells[0].innerText.trim();
     let pedido = fila.cells[4].querySelector("input").value;
-    let totalm3 = fila.cells[5].innerText.trim();
+    let totalm3 = parseFloat(fila.cells[5].innerText.trim()) || 0;
     if (pedido && parseInt(pedido) > 0) {
-      contenido += `<tr><td>${concepto}</td><td>${pedido}</td><td>${totalm3}</td></tr>`;
+      contenido += `<tr><td>${concepto}</td><td>${pedido}</td><td>${totalm3.toFixed(2)}</td></tr>`;
+      totalGeneralM3 += totalm3;
     }
   });
 
   contenido += `
+        <tfoot>
+          <tr><td colspan="2">TOTAL GENERAL M3</td><td>${totalGeneralM3.toFixed(2)}</td></tr>
+        </tfoot>
       </table>
     </body>
     </html>
@@ -155,7 +161,9 @@ function generarOrden() {
   nuevaVentana.document.write(contenido);
   nuevaVentana.document.close();
 }
+
 </script>
 
 </body>
 </html>
+
