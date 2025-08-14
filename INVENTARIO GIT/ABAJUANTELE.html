@@ -1,137 +1,139 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inventario Sabritas</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    body { font-family: Arial; padding: 1rem; background: #f9f9f9; }
-    h1 { text-align: center; margin-bottom: 1rem; }
-    table { width: 100%; max-width: 900px; margin: auto; border-collapse: collapse; background: #fff; box-shadow: 0 0 6px #ccc; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #e6e6e6; font-weight: bold; }
-    input { width: 100%; border: none; background: transparent; font-size: 1rem; text-align: center; }
-    input:focus { background: #ffffcc; outline: none; }
-    .controls { text-align: center; margin-bottom: 1rem; }
-    button { margin: 0.5rem; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border: none; border-radius: 4px; }
-    .btn-telegram { background: #28a745; color: white; }
-    .btn-img { background: #007bff; color: white; }
-    .btn-clear { background: #dc3545; color: white; }
-    @media (max-width: 600px) { table { font-size: 14px; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario Sabritas</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 10px; }
+  h2 { text-align: center; margin-bottom: 10px; }
+  table { border-collapse: collapse; margin: auto; background: white; font-size: 14px; max-width: 900px; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+  th { background: #e8e8e8; }
+  .editable { width: 70px; padding: 4px; text-align: center; font-size: 14px; border: 1px solid #ccc; background: white; }
+  .editable:focus { border-color: #4CAF50; background: #f0fff0; }
+  .btn { margin-top: 8px; width: 100%; max-width: 900px; padding: 8px; font-size: 16px; border: none; cursor: pointer; border-radius: 4px; display: block; margin-left: auto; margin-right: auto; }
+  .btn-enviar { background: #28a745; color: white; }
+  .btn-borrar { background: #dc3545; color: white; }
+  .btn-orden { background: #007bff; color: white; }
+  @media (max-width: 600px) {
+    table { font-size: 13px; width: 100%; }
+    .editable { width: 100%; padding: 6px; font-size: 16px; }
+    .btn { font-size: 16px; padding: 12px; }
+  }
+</style>
 </head>
 <body>
 
-<h1>Inventario Sabritas</h1>
-
-<div class="controls">
-  <button id="sendTelegram" class="btn-telegram">📤 Enviar Inventario a Telegram</button>
-  <button id="exportImg" class="btn-img">🖼 Generar Imagen Pedido</button>
-  <button id="clearData" class="btn-clear">🗑 Borrar Datos</button>
-</div>
+<h2>Inventario Sabritas</h2>
 
 <table id="tabla">
-  <thead>
-    <tr>
-      <th>PRODUCTO</th>
-      <th>INV</th>
-      <th>STOCK</th>
-      <th>PEDIDO</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>SABRISURTIDO 35</td><td><input type="number"></td><td>150</td><td><input type="number"></td></tr>
-    <tr><td>TOSTITO VERDE</td><td><input type="number"></td><td>30</td><td><input type="number"></td></tr>
-    <tr><td>TOSTITO MORADO</td><td><input type="number"></td><td>10</td><td><input type="number"></td></tr>
-    <tr><td>FRITURA ENCANTO</td><td><input type="number"></td><td>10</td><td><input type="number"></td></tr>
-    <tr><td>FARDO ESTÁNDAR</td><td><input type="number"></td><td>10</td><td><input type="number"></td></tr>
-  </tbody>
+  <tr>
+    <th>PRODUCTO</th>
+    <th>INV</th>
+    <th>STOCK</th>
+    <th>PEDIDO</th>
+  </tr>
 </table>
+
+<button class="btn btn-enviar" onclick="enviarTelegram()">📤 Enviar Inventario a Telegram</button>
+<button class="btn btn-borrar" onclick="borrarDatos()">🗑 Borrar Datos</button>
+<button class="btn btn-orden" onclick="generarOrden()">📄 Generar Orden de Compra</button>
 
 <script>
 const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
 const CHAT_ID = "6617988297";
 
-// Enviar inventario a Telegram
-document.getElementById('sendTelegram').addEventListener('click', () => {
+const productos = [
+  { nombre: "SABRISURTIDO 35", stock: 150 },
+  { nombre: "TOSTITO VERDE", stock: 30 },
+  { nombre: "TOSTITO MORADO", stock: 10 },
+  { nombre: "FRITURA ENCANTO", stock: 10 },
+  { nombre: "FARDO ESTÁNDAR", stock: 10 }
+];
+
+window.onload = () => {
+  const tabla = document.getElementById("tabla");
+  productos.forEach(prod => {
+    let fila = tabla.insertRow();
+    fila.insertCell().innerText = prod.nombre;
+    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
+    fila.insertCell().innerText = prod.stock;
+    fila.insertCell().innerHTML = `<input type="number" class="editable">`;
+  });
+};
+
+function enviarTelegram() {
+  let filas = document.querySelectorAll("#tabla tr");
   let mensaje = "📦 *Inventario Sabritas:*\n";
-  document.querySelectorAll("#tabla tbody tr").forEach(row => {
-    const producto = row.cells[0].textContent.trim();
-    const inv = row.cells[1].querySelector('input').value || "0";
-    const stock = row.cells[2].textContent.trim();
-    mensaje += `\n${producto}: ${inv} (Stock: ${stock})`;
+  filas.forEach((fila, i) => {
+    if (i === 0) return;
+    let producto = fila.cells[0].innerText.trim();
+    let inventario = fila.cells[1].querySelector("input").value || "0";
+    let stock = fila.cells[2].innerText.trim();
+    mensaje += `\n${producto} → INV: ${inventario} | STOCK: ${stock}`;
   });
 
   fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: CHAT_ID, text: mensaje, parse_mode: "Markdown" })
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
   })
   .then(() => alert("Inventario enviado a Telegram ✅"))
   .catch(() => alert("Error al enviar a Telegram ❌"));
-});
+}
 
-// Generar imagen del pedido
-document.getElementById('exportImg').addEventListener('click', () => {
-  const tempTable = document.createElement('table');
-  tempTable.style.borderCollapse = 'collapse';
-  tempTable.style.background = '#fff';
-  tempTable.style.margin = '1rem auto';
-  tempTable.style.fontFamily = 'Arial';
+function borrarDatos() {
+  if (confirm("¿Seguro que quieres borrar todos los datos?")) {
+    document.querySelectorAll(".editable").forEach(input => {
+      input.value = "";
+    });
+  }
+}
 
-  const caption = document.createElement('caption');
-  caption.textContent = 'ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES';
-  caption.style.fontSize = '18px';
-  caption.style.fontWeight = 'bold';
-  caption.style.padding = '8px';
-  caption.style.textAlign = 'center';
-  caption.style.color = '#333';
-  tempTable.appendChild(caption);
+function generarOrden() {
+  let filas = document.querySelectorAll("#tabla tr");
+  let nuevaVentana = window.open("", "_blank");
+  let contenido = `
+    <html>
+    <head>
+      <title>Orden de Compra</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        th { background: #e8e8e8; }
+      </style>
+    </head>
+    <body>
+      <h2>ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES</h2>
+      <table>
+        <tr><th>PRODUCTO</th><th>PEDIDO</th></tr>
+  `;
 
-  const thead = tempTable.createTHead();
-  const hRow = thead.insertRow();
-  ['PRODUCTO', 'PEDIDO'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    th.style.border = '1px solid #ccc';
-    th.style.padding = '4px 8px';
-    th.style.background = '#e6e6e6';
-    th.style.fontSize = '14px';
-    hRow.appendChild(th);
-  });
-
-  const tBody = tempTable.createTBody();
-  document.querySelectorAll("#tabla tbody tr").forEach(row => {
-    const producto = row.cells[0].textContent.trim();
-    const pedido = row.cells[3].querySelector('input').value.trim();
-    if (pedido !== '' && pedido !== '0') {
-      const tr = tBody.insertRow();
-      [producto, pedido].forEach(text => {
-        const td = document.createElement('td');
-        td.textContent = text;
-        td.style.border = '1px solid #ccc';
-        td.style.padding = '2px 6px';
-        td.style.fontSize = '14px';
-        tr.appendChild(td);
-      });
+  filas.forEach((fila, i) => {
+    if (i === 0) return;
+    let producto = fila.cells[0].innerText.trim();
+    let pedido = fila.cells[3].querySelector("input").value;
+    if (pedido && parseInt(pedido) > 0) {
+      contenido += `<tr><td>${producto}</td><td>${pedido}</td></tr>`;
     }
   });
 
-  document.body.appendChild(tempTable);
-  html2canvas(tempTable).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'pedido_sabritas.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.95);
-    link.click();
-    tempTable.remove();
-  });
-});
+  contenido += `
+      </table>
+    </body>
+    </html>
+  `;
 
-// Borrar datos
-document.getElementById('clearData').addEventListener('click', () => {
-  document.querySelectorAll("#tabla input").forEach(input => input.value = "");
-});
+  nuevaVentana.document.write(contenido);
+  nuevaVentana.document.close();
+}
 </script>
 
 </body>
