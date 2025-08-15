@@ -101,13 +101,6 @@
 <body>
 
 <h2>BODEGA41 - Orden de Compra</h2>
-
-<div class="btn-container">
-  <button class="btn btn-green" onclick="enviarTelegram()">📤 Enviar a Telegram</button>
-  <button class="btn btn-blue" onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
-  <button class="btn btn-red" onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
-</div>
-
 <table id="tabla">
   <thead>
     <tr>
@@ -119,6 +112,15 @@
   </thead>
   <tbody id="tabla-cuerpo"></tbody>
 </table>
+<table id="tabla">
+  ...
+</table>
+
+<div class="btn-container">
+  <button class="btn btn-green" onclick="enviarTelegram()">📤 Enviar a Telegram</button>
+  <button class="btn btn-blue" onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
+  <button class="btn btn-red" onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
+</div>
 
 <script>
 const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
