@@ -143,27 +143,19 @@ function extraeUUID(raw) {
 }
 
   
-  function procesarQR() {
-  const raw = document.getElementById('qrInput').value.trim();
+function procesarQR() {
+  const raw = document.getElementById('qrInput').value;
+  const uuid = extraeUUID(raw);
 
-  // Primero intenta formato estándar con guiones
-  let match = raw.match(/id=([a-f0-9\-]{36})/i);
-
-  // Si no encontró, intenta con formato con slash y paréntesis
-  if (!match) {
-    match = raw.match(/id\)([a-f0-9]{8}\/[a-f0-9]{4}\/[a-f0-9]{4}\/[a-f0-9]{4}\/[a-f0-9]{12})/i);
+  if (uuid) {
+    document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
+    document.getElementById('uuidDetectado').style.color = '#003366';
+    document.getElementById('qrInput').value = '';
+    buscarPorUUID(uuid);
+  } else {
+    document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
+    document.getElementById('uuidDetectado').style.color = 'darkred';
   }
-
-  if (match && match[1]) {
-    const uuid = match[1].replace(/\//g, '-').toUpperCase();
-  document.getElementById('uuidDetectado').innerText = `UUID detectado: ${uuid}`;
-  document.getElementById('uuidDetectado').style.color = '#003366';
-  document.getElementById('qrInput').value = '';
-  buscarPorUUID(uuid);
-} else {
-  document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
-  document.getElementById('uuidDetectado').style.color = 'darkred';
-}
 }
 function mostrarFotos(fotos) {
   const galeria = document.getElementById('galeriaFotos');
@@ -344,4 +336,5 @@ document.getElementById('fotoExterna').addEventListener('change', async function
 </footer>
 </body>
 </html>
+
 
