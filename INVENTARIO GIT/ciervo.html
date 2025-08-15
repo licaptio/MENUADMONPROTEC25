@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inventario Estilo Excel</title>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
@@ -13,12 +13,11 @@
       padding: 1rem;
     }
 
-h1 {
-  text-align: center;
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-}
-
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
 
     table {
       width: 100%;
@@ -45,66 +44,64 @@ h1 {
       text-align: center;
     }
 
-    td.largo input {
+    td.largo, th.largo {
+      width: 24ch;
       text-align: left;
-      padding-left: 4px;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
     }
-td.largo, th.largo {
-  width: 24ch;
-  text-align: left;
-  vertical-align: middle;
-  white-space: nowrap;
-  overflow: hidden;
-}
 
-input {
-  width: 100%;
-  border: none;
-  font-size: 1rem;
-  background-color: transparent;
-  padding: 0.2rem;
-  height: 1.8rem;
-  box-sizing: border-box;
-}
-
+    input {
+      width: 100%;
+      border: none;
+      font-size: 1rem;
+      background-color: transparent;
+      padding: 0.2rem;
+      height: 1.8rem;
+      box-sizing: border-box;
+    }
 
     input:focus {
       outline: none;
       background-color: #ffffcc;
     }
 
-.controls {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-.no-print {
-  display: block;
-  margin: 0 auto 1rem;
-}
+    .controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
 
-/* Opcional: si no quieres que el botón salga al imprimir */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-}
+    .controls button {
+      margin: 5px;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+    }
 
-    @media (max-width: 600px) {
-      body {
-        padding: 0.5rem;
-      }
-      table, th, td {
-        font-size: 0.9rem;
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+
+    @media print {
+      .controls {
+        display: none !important;
       }
     }
   </style>
 </head>
 <body>
 
-  <h1>Inventario Estilo Excel</h1>
+<h1>Inventario Estilo Excel</h1>
 
 <div class="controls">
-  <button id="export-img" class="no-print">Exportar pedido como imagen</button>
+  <button id="btn-inventario">Enviar inventario por Telegram</button>
+  <button id="btn-pedido">Generar pedido y enviar por Telegram</button>
+  <button id="btn-borrar">Borrar datos</button>
 </div>
 
 <table id="tabla">
@@ -119,8 +116,12 @@ input {
   <tbody id="contenido"></tbody>
 </table>
 
+<script>
+  // ================== CONFIGURA TU TELEGRAM BOT ==================
+  const TELEGRAM_BOT_TOKEN = "TU_TOKEN_AQUI"; // Token de tu bot
+  const TELEGRAM_CHAT_ID = "TU_CHAT_ID_AQUI"; // Chat o grupo
+  // ===============================================================
 
-  <script>
     const datosIniciales = [
       { ciervo: 'MIEL DE ABEJA  24/175GR', inventario: '', sto: 2, pedido: '' },
       { ciervo: 'CHAR  RECT  12 PRIMO', inventario: '', sto: 2, pedido: '' },
@@ -163,97 +164,147 @@ input {
       { ciervo: 'VASO 0 CUEVAS C/2000', inventario: '', sto: 20, pedido: '' },
     ];
 
-    const tabla = document.getElementById('contenido');
+  const tabla = document.getElementById('contenido');
 
-    function cargarDatos() {
-      const datos = JSON.parse(localStorage.getItem('inventario_ciervo')) || datosIniciales;
-      tabla.innerHTML = '';
-      datos.forEach((fila, i) => {
-        const tr = document.createElement('tr');
-        ['ciervo', 'inventario', 'sto', 'pedido'].forEach(campo => {
-          const td = document.createElement('td');
-          td.className = (campo === 'ciervo') ? 'largo' : 'corto';
-if (campo === 'ciervo') {
-  td.textContent = fila[campo];
-} else {
-  td.innerHTML = `<input value="${fila[campo] ?? ''}" data-fila="${i}" data-campo="${campo}">`;
-}
-
-          tr.appendChild(td);
-        });
-        tabla.appendChild(tr);
+  function cargarDatos() {
+    const datos = JSON.parse(localStorage.getItem('inventario_ciervo')) || datosIniciales;
+    tabla.innerHTML = '';
+    datos.forEach((fila, i) => {
+      const tr = document.createElement('tr');
+      ['ciervo', 'inventario', 'sto', 'pedido'].forEach(campo => {
+        const td = document.createElement('td');
+        td.className = (campo === 'ciervo') ? 'largo' : 'corto';
+        if (campo === 'ciervo') {
+          td.textContent = fila[campo];
+        } else {
+          td.innerHTML = `<input value="${fila[campo] ?? ''}" data-fila="${i}" data-campo="${campo}">`;
+        }
+        tr.appendChild(td);
       });
-    }
+      tabla.appendChild(tr);
+    });
+  }
 
-    tabla.addEventListener('input', (e) => {
-      const input = e.target;
-      const fila = parseInt(input.dataset.fila);
-      const campo = input.dataset.campo;
-      const datos = JSON.parse(localStorage.getItem('inventario_ciervo')) || datosIniciales;
-      datos[fila][campo] = input.value;
-      localStorage.setItem('inventario_ciervo', JSON.stringify(datos));
+  tabla.addEventListener('input', (e) => {
+    const input = e.target;
+    const fila = parseInt(input.dataset.fila);
+    const campo = input.dataset.campo;
+    const datos = JSON.parse(localStorage.getItem('inventario_ciervo')) || datosIniciales;
+    datos[fila][campo] = input.value;
+    localStorage.setItem('inventario_ciervo', JSON.stringify(datos));
+  });
+
+  cargarDatos();
+
+  function generarTabla(filtrarPedido) {
+    const filas = document.querySelectorAll('#tabla tbody tr');
+    const temp = document.createElement('table');
+    temp.style.borderCollapse = 'collapse';
+    temp.style.background = 'white';
+    temp.style.margin = '1rem auto';
+    temp.style.fontFamily = 'Arial, sans-serif';
+
+    // Título
+    const titleRow = temp.insertRow();
+    const titleCell = document.createElement('th');
+    titleCell.colSpan = 2;
+    titleCell.textContent = "ORDEN DE COMPRA – PROVEEDORA DE DULCES Y DESECHABLES";
+    titleCell.style.fontSize = '1.1rem';
+    titleCell.style.padding = '.7rem';
+    titleCell.style.border = '1px solid #ccc';
+    titleCell.style.backgroundColor = '#d1ecf1';
+    titleCell.style.textAlign = 'center';
+    titleRow.appendChild(titleCell);
+
+    // Encabezados
+    const hRow = temp.insertRow();
+    ['CIERVO', 'PED'].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      th.style.border = '1px solid #ccc';
+      th.style.padding = '.5rem';
+      th.style.backgroundColor = '#e6e6e6';
+      hRow.appendChild(th);
     });
 
-    cargarDatos();
-  </script>
-<script>
-document.getElementById('export-img').addEventListener('click', () => {
-  const tablaOriginal = document.querySelector('#tabla tbody tr');
-  const filas = document.querySelectorAll('#tabla tbody tr');
+    // Filas
+    filas.forEach(r => {
+      const pedido = r.cells[3].querySelector('input').value.trim();
+      if (!filtrarPedido || (pedido !== '' && pedido !== '0')) {
+        const nuevaFila = temp.insertRow();
+        [0, 3].forEach(idx => {
+          const cell = document.createElement('td');
+          cell.textContent = (idx === 0)
+            ? r.cells[0].textContent
+            : pedido;
+          cell.style.border = '1px solid #ccc';
+          cell.style.padding = '.5rem';
+          nuevaFila.appendChild(cell);
+        });
+      }
+    });
+    return temp;
+  }
 
-  const temp = document.createElement('table');
-  temp.style.borderCollapse = 'collapse';
-  temp.style.background = 'white';
-  temp.style.margin = '1rem auto';
-  temp.style.fontFamily = 'Arial, sans-serif';
+  function enviarTablaTelegram(temp) {
+    document.body.appendChild(temp);
+    html2canvas(temp).then(canvas => {
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Encabezado
-  const thead = temp.createTHead();
-  const hRow = thead.insertRow();
-  ['CIERVO', 'PED'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    th.style.border = '1px solid #ccc';
-    th.style.padding = '.5rem';
-    th.style.backgroundColor = '#e6e6e6';
-    hRow.appendChild(th);
+      const imageData = canvas.toDataURL('image/jpeg', 0.9);
+      const blob = base64ToBlob(imageData);
+      const formData = new FormData();
+      formData.append("chat_id", TELEGRAM_CHAT_ID);
+      formData.append("photo", blob, "pedido.jpg");
+
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) console.error("Error enviando a Telegram:", res);
+        else console.log("Enviado por Telegram");
+      })
+      .catch(err => console.error("Fallo conexión Telegram:", err));
+
+      temp.remove();
+    });
+  }
+
+  function base64ToBlob(base64) {
+    const parts = base64.split(';base64,');
+    const mime = parts[0].split(':')[1];
+    const binary = atob(parts[1]);
+    let array = [];
+    for (let i = 0; i < binary.length; i++) {
+      array.push(binary.charCodeAt(i));
+    }
+    return new Blob([new Uint8Array(array)], {type: mime});
+  }
+
+  // Botones
+  document.getElementById('btn-inventario').addEventListener('click', () => {
+    const temp = generarTabla(false);
+    enviarTablaTelegram(temp);
   });
 
-  // Cuerpo con solo filas que tengan PEDIDO
-  const tBody = temp.createTBody();
-  filas.forEach(r => {
-    const pedido = r.cells[3].querySelector('input').value.trim();
-    if (pedido !== '') {
-      const nuevaFila = tBody.insertRow();
-      [0, 3].forEach(idx => {
-        const cell = document.createElement('td');
-        cell.textContent = (idx === 0)
-          ? r.cells[0].textContent
-          : pedido;
-        cell.style.border = '1px solid #ccc';
-        cell.style.padding = '.5rem';
-        nuevaFila.appendChild(cell);
-      });
+  document.getElementById('btn-pedido').addEventListener('click', () => {
+    const temp = generarTabla(true);
+    enviarTablaTelegram(temp);
+  });
+
+  document.getElementById('btn-borrar').addEventListener('click', () => {
+    if (confirm("¿Seguro que quieres borrar todos los datos?")) {
+      localStorage.removeItem('inventario_ciervo');
+      location.reload();
     }
   });
-
-  // Agrega la tabla temporal al DOM, genera la imagen y luego la elimina
-  document.body.appendChild(temp);
-  html2canvas(temp).then(canvas => {
-    const ctx = canvas.getContext('2d');
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const link = document.createElement('a');
-    link.download = 'pedido.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.9);
-    link.click();
-
-    temp.remove();
-  });
-});
 </script>
 
 </body>
 </html>
+  
