@@ -37,14 +37,6 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* Botones con la palabra TELEGRAM en verde */
-    .grid-container a[href*="TELEGRAM"] {
-      background: #28a745;
-    }
-    .grid-container a[href*="TELEGRAM"]:hover {
-      background: #1e7e34;
-    }
-
     /* Botón de GASOLINA OXXO EOX en rojo */
     .grid-container a[href*="eox"] {
       background: #dc3545;
@@ -57,6 +49,13 @@
     .grid-container a:hover {
       background: #005fa3;
     }
+.grid-container a.telegram {
+  background: #28a745;
+}
+.grid-container a.telegram:hover {
+  background: #1e7e34;
+}
+
   </style>
 </head>
 <body>
@@ -76,12 +75,15 @@
     <a href="LIQUIDO.html">ZAPATA LIQUIDO</a>
     <a href="SAMS10MAS1.html">SAMS CLUB</a>
     <a href="https://eox.mx" target="_blank">GASOLINA OXXO EOX</a>
-    <a href="INIXTELE.html">INIX TELEGRAM</a>
     <a href="BOTANERA.html">MEGA ALIMENTOS</a>
-    <a href="ABAJUANTELE.html">ABARROTES JUAN TELE</a>
-    <a href="PALMEX.html">PALMEX TELEGRAM</a>
     <a href="BOLSAGENERICA.html">BOLSA GENERICA</a>
-    <a href="BODE41.html">BODEGA 41 TELEGRAM</a>
+    <a href="INIXTELE.html" class="telegram">INIX TELEGRAM</a>
+  <a href="ABAJUANTELE.html" class="telegram">ABARROTES JUAN TELEGRAM</a>
+  <a href="PALMEX.html" class="telegram">PALMEX TELEGRAM</a>
+  <a href="BODE41.html" class="telegram">BODEGA 41 TELEGRAM</a>
+
+  
   </div>
 </body>
 </html>
+
