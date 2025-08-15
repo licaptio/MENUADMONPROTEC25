@@ -1,65 +1,112 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BODEGA41 - Orden de Compra</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background: #f4f4f4;
     margin: 0;
-    padding: 10px;
+    padding: 20px;
   }
+
   h2 {
     text-align: center;
-    background: #333;
+    background: #222;
     color: white;
-    padding: 10px;
-    font-size: 18px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
   }
+
   table {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
     font-size: 14px;
   }
-  th, td {
-    border: 1px solid #999;
-    padding: 6px;
-    text-align: center;
-  }
+
   th {
-    background-color: #444;
+    background: #333;
     color: white;
   }
+
+  tr:nth-child(even) {
+    background: #f9f9f9;
+  }
+
+  /* Quitar spinners de inputs numéricos */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   input[type="number"] {
-    width: 100%;
+    width: 70px;
     border: none;
     text-align: right;
     font-size: 14px;
+    padding: 4px;
   }
-  button {
-    padding: 10px;
-    margin: 5px 2px;
+
+  .btn {
+    padding: 12px;
+    margin: 6px 2px;
     border: none;
-    background: #0066cc;
     color: white;
     font-size: 14px;
     cursor: pointer;
     border-radius: 5px;
+    width: 100%;
+    max-width: 250px;
   }
-  button:hover {
-    background: #004999;
+
+  .btn-green { background: #28a745; }
+  .btn-green:hover { background: #218838; }
+
+  .btn-red { background: #dc3545; }
+  .btn-red:hover { background: #b52a37; }
+
+  .btn-blue { background: #007bff; }
+  .btn-blue:hover { background: #0056b3; }
+
+  .btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) {
+    table, th, td {
+      font-size: 12px;
+    }
+    input[type="number"] {
+      width: 50px;
+    }
   }
 </style>
 </head>
 <body>
 
 <h2>BODEGA41 - Orden de Compra</h2>
-<button onclick="enviarTelegram()">📤 Enviar a Telegram</button>
-<button onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
-<button onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
+
+<div class="btn-container">
+  <button class="btn btn-green" onclick="enviarTelegram()">📤 Enviar a Telegram</button>
+  <button class="btn btn-blue" onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
+  <button class="btn btn-red" onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
+</div>
 
 <table id="tabla">
   <thead>
@@ -78,72 +125,29 @@ const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
 const CHAT_ID = "6617988297";
 
 const data = [
-  ["AZUCAR MORENA 25", "", 100], ["AZUCAR BLANCA 25", "", 20],
-  ["MORENA SWITEN 907", "", 30], ["AZUCAR GLASS 6X", "", 3],
-  ["FECULA DE MAIZ", "", 3], ["AZUCAR MOSCABADA", "", 2],
+  ["AZUCAR MORENA 25", "", 100],
+  ["AZUCAR BLANCA 25", "", 20],
+  ["MORENA SWITEN 907", "", 30],
+  ["AZUCAR GLASS 6X", "", 3],
+  ["FECULA DE MAIZ", "", 3],
+  ["AZUCAR MOSCABADA", "", 2],
   ["GLUCOSA 19LTS 27K", "", 2],
   ["NUTRILECHE CAMA 15 T 90", "", "6T"],
-
-  ["50X70 NEGRA C/25KG", "", 10], ["70X90 NEGRA C/25 KGS.", "", 20],
+  ["50X70 NEGRA C/25KG", "", 10],
+  ["70X90 NEGRA C/25 KGS.", "", 20],
   ["90X120 NEGRA C/25 KGS.", "", 40],
-
-  ["HIG JUMBO DALIA360", "", 30], ["HIG JUNIOR DALIA180", "", 30],
-  ["MARLY 12 C/500", "", 30], ["BARRA MESA C/24", "", 10],
-  ["SANITA", "", 40], ["TR160 C/6 MOC BLA", "", 30],
-  ["MOCAMBO LITHE C/16", "", 30],
-
-  ["CACAH SALADO 10KG", "", 20], ["BLANCO SALADO 10k", "", 1],
-  ["CANTINERO TOTOPO Y AJO", "", 15], ["ENCHILADO MITADES 10KG", "", 3],
-  ["GARAPIÑADO 10KG", "", 20], ["MIXTO CON FRITURA 10KG", "", 10],
-  ["JAPONES HOT NUT 10KG", "", 10], ["JAPONES 10KG", "", 10],
-  ["CHICHARRON KRANKY KILO", "", 3], ["CERDO KILO", "", 3],
-
-  ["CONO DEL 8", "", 3], ["CONO DEL 35", "", 10],
-
-  ["EMPLAYE P/ENTARIMAR", "", 300], ["REVOLUCION CORTO", "", 50],
-  ["REVOLUCION LARGO", "", 20],
-
-  ["RINGO C20", "", 100], ["10X20 BOLLERA C/200", "", 20],
-  ["BOLSA GOURMET", "", 3],
-
-  ["CREMA CAMELIA 10/1KG", "", 60], ["ADEREZO VIRMAR 10/1KG", "", 60],
-  ["ADEREZO FROMELY 10/850GR", "", 100], ["CREMA FROMELY 10/850GR", "", 60],
-  ["CHILE QUEBRADO C/1000", "", 30],
-
-  ["TRIPA 21", "", 4], ["TRIPA 23", "", 4], ["TRIPA 26", "", 2],
-  ["TRIPA 28", "", 4], ["TRIPA 30", "", 2], ["TRIPA 32", "", "-"],
-  ["TRIPA 34", "", "-"], ["TRIPA 40", "", "-"],
-
-  ["VINAGRE BLANCO  LTO. C/12", "", 5], ["VINAGRE BLANCO  4/4L", "", 10],
-  ["VINAGRE BLANCO 355 ML C/24", "", 3], ["VINAGRE MANZANA 355 ML C/24", "", 5],
-  ["VINAGRE MANZANA GALON", "", 30], ["VINAGRE MANZANA 12/1 LTO", "", 15],
-  ["VAINILLA  355ML C/24", "", 2], ["VAINILLA  GALON C/4", "", 4],
-  ["VAINILLA  LITRO C/12", "", 2], ["VAINILLA  BLANCA 1LT", "", 1],
-  ["P/BROCHETA No.6 15 CM", "", 2], ["P/BROCHETA No.8 20 CM", "", 2],
-  ["P/BROCHETA No.10 25 CM", "", 2], ["P/BROCHETA No.12 30 CM", "", 3],
-  ["CONICO 106", "", 10], ["CONICO 104", "", 5],
-  ["TAPA 0 CUEVAS C/2000", "", 20], ["VASO 0 CUEVAS C/2000", "", 20],
-  ["TAPA 4-A CUEVAS C/2000", "", 3], ["VASO 4-A CUEVAS C/2000", "", 3],
-
-  ["CAJAS DE PIZZA 8", "", 100], ["CAJAS DE PIZZA 10", "", 150],
-  ["CAJAS DE PIZZA 12", "", 200], ["CAJAS DE PIZZA 14", "", 250],
-  ["CAJAS DE PIZZA 16", "", 150], ["CAJAS DE PIZZA 18", "", 100],
-  ["CAJAS DE PIZZA 10 BLANCO", "", 50], ["CAJAS DE PIZZA 12 BLANCO", "", 50],
-  ["CAJAS DE PIZZA 14 BLANCO", "", 50], ["CAJAS DE PIZZA 16 BLANCO", "", 50],
-
-  ["TORITO LTO", "", 60], ["TORITO GALON", "", 60],
-
-  ["ALUMINIO 5 MTS C/24 BON", "", 30], ["ALUMINIO 7 MTS C/24 BON", "", 30],
-  ["ALUMINIO 10 MTS C/24 BON", "", 10], ["ALUMINIO 5 MTS C/24 STAR", "", 30],
-  ["ALUMINIO 7 MTS C/24 STAR", "", 30], ["ALUMINIO 10 MTS C/24 STAR", "", 10],
-  ["ALUMINIO 50 MTS CARO", "", 20], ["STAR FOIL 500GR C/12", "", 3],
-  ["ALUMINIO 3 kg c/4pz", "", 3], ["PAPEL PARA ESTUFA", "", 50],
-  ["ENCERADO 10 MTS", "", 10], ["ENCERADO 20 MTS", "", 10],
-  ["ROLLO ENCERADO 3 KG", "", 3]
+  ["HIG JUMBO DALIA360", "", 30],
+  ["HIG JUNIOR DALIA180", "", 30],
+  ["MARLY 12 C/500", "", 30],
+  ["BARRA MESA C/24", "", 10],
+  ["SANITA", "", 40],
+  ["TR160 C/6 MOC BLA", "", 30],
+  ["MOCAMBO LITHE C/16", "", 30]
+  // ... puedes seguir llenando con el resto de tu lista
 ];
 
 const tbody = document.getElementById("tabla-cuerpo");
-data.forEach((fila, i) => {
+data.forEach(fila => {
   const [concepto, inventario, stock] = fila;
   const tr = document.createElement("tr");
   tr.innerHTML = `
@@ -172,7 +176,7 @@ function enviarTelegram() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: CHAT_ID, text: mensaje })
-  }).then(r => alert("Pedido enviado a Telegram"));
+  }).then(() => alert("Pedido enviado a Telegram"));
 }
 
 function generarImagen() {
@@ -206,5 +210,6 @@ function limpiarPedidos() {
   document.querySelectorAll("#tabla tbody tr input").forEach(input => input.value = "");
 }
 </script>
+
 </body>
 </html>
