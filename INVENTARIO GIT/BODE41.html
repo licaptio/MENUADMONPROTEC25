@@ -26,13 +26,15 @@
     border-collapse: collapse;
     background: white;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    table-layout: fixed; /* Fijar anchos */
   }
 
   th, td {
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 6px;
     text-align: center;
     font-size: 14px;
+    word-wrap: break-word;
   }
 
   th {
@@ -44,20 +46,36 @@
     background: #f9f9f9;
   }
 
-  /* Quitar spinners y forzar teclado numérico en móvil */
+  /* Anchos fijos */
+  th:nth-child(1), td:nth-child(1) { width: 35ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  th:nth-child(2), td:nth-child(2) { width: 10ch; }
+  th:nth-child(3), td:nth-child(3) { width: 5ch; }
+  th:nth-child(4), td:nth-child(4) { width: 6ch; }
+
+  /* Quitar spinners y estilo inputs */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
   input[type="number"] {
-    -moz-appearance: textfield; /* Firefox */
-    appearance: none;           /* Estándar */
-    width: 70px;
+    -moz-appearance: textfield;
+    appearance: none;
+    width: 100%;
     border: none;
     text-align: right;
     font-size: 14px;
-    padding: 4px;
+    padding: 2px;
+    box-sizing: border-box;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    border: none;
+    text-align: right;
+    font-size: 14px;
+    padding: 2px;
+    box-sizing: border-box;
   }
 
   .btn {
@@ -74,10 +92,8 @@
 
   .btn-green { background: #28a745; }
   .btn-green:hover { background: #218838; }
-
   .btn-red { background: #dc3545; }
   .btn-red:hover { background: #b52a37; }
-
   .btn-blue { background: #007bff; }
   .btn-blue:hover { background: #0056b3; }
 
@@ -92,9 +108,6 @@
   @media (max-width: 600px) {
     table, th, td {
       font-size: 12px;
-    }
-    input[type="number"] {
-      width: 50px;
     }
   }
 </style>
@@ -194,7 +207,7 @@ data.forEach(([concepto, inventario, stock]) => {
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td>${concepto}</td>
-    <td>${inventario}</td>
+    <td><input type="text" value="${inventario}"></td>
     <td>${stock}</td>
     <td><input type="number" min="0" inputmode="numeric" pattern="[0-9]*"></td>
   `;
@@ -205,9 +218,10 @@ function enviarTelegram() {
   let mensaje = "ORDEN DE COMPRA BODEGA41:\n";
   document.querySelectorAll("#tabla tbody tr").forEach(tr => {
     const concepto = tr.cells[0].textContent;
+    const inventario = tr.cells[1].querySelector("input").value;
     const pedido = tr.cells[3].querySelector("input").value;
     if (pedido && pedido > 0) {
-      mensaje += `${concepto}: ${pedido}\n`;
+      mensaje += `${concepto} | Inv:${inventario} | Ped:${pedido}\n`;
     }
   });
   if (mensaje === "ORDEN DE COMPRA BODEGA41:\n") {
@@ -225,9 +239,10 @@ function generarImagen() {
   const pedido = [];
   document.querySelectorAll("#tabla tbody tr").forEach(tr => {
     const concepto = tr.cells[0].textContent;
+    const inventario = tr.cells[1].querySelector("input").value;
     const pedidoVal = tr.cells[3].querySelector("input").value;
     if (pedidoVal && pedidoVal > 0) {
-      pedido.push([concepto, pedidoVal]);
+      pedido.push([concepto, inventario, pedidoVal]);
     }
   });
   if (pedido.length === 0) {
@@ -240,8 +255,8 @@ function generarImagen() {
     <body style="font-family: Arial; padding: 20px;">
       <h2 style="text-align:center;">ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES</h2>
       <table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;">
-        <tr><th>CONCEPTO</th><th>PEDIDO</th></tr>
-        ${pedido.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`).join("")}
+        <tr><th>CONCEPTO</th><th>INVENTARIO</th><th>PEDIDO</th></tr>
+        ${pedido.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`).join("")}
       </table>
     </body></html>
   `);
