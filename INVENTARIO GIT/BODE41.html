@@ -37,6 +37,7 @@
     color: white;
   }
   tr:nth-child(even) { background: #f9f9f9; }
+
   /* Recorte en PC */
   th:nth-child(1), td:nth-child(1) {
     width: 300px;
@@ -45,6 +46,16 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  th:nth-child(2), td:nth-child(2),
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) {
+    width: 90px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* Quitar spinners */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -60,15 +71,22 @@
     padding: 2px;
     box-sizing: border-box;
   }
+
   /* Botones */
   .btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
   .btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
   .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
   .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
   .btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+
   @media (max-width: 600px) {
     table, th, td { font-size: 12px; white-space: normal; }
-    th:nth-child(1), td:nth-child(1) { white-space: normal; }
+    th:nth-child(1), td:nth-child(1),
+    th:nth-child(2), td:nth-child(2),
+    th:nth-child(3), td:nth-child(3),
+    th:nth-child(4), td:nth-child(4) {
+      white-space: normal;
+    }
   }
 </style>
 </head>
