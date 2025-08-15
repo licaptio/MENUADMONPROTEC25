@@ -107,7 +107,42 @@ uuidActual = uuid;
 mostrarFotos(data.fotos);
 
   }
+function normalizaCfdiQR(raw) {
+  let s = (raw || "").trim();
+  s = s.replace(/httpsÑ--/gi, "https://");
+  s = s.replace(/Ñ/g, ":");
+  s = s.replace(/¡/g, "=");
+  s = s.replace(/[’'´`]/g, "-");
+  s = s.replace(/\s+/g, " ");
+  return s;
+}
 
+function extraeUUID(raw) {
+  const s = normalizaCfdiQR(raw);
+  let m = s.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
+  if (!m) {
+    m = s.match(/id\s*=\s*([a-f0-9]{16,})/i);
+  }
+  if (m && m[1]) {
+    let v = m[1].toUpperCase().replace(/[^A-F0-9\-]/g, "");
+    const soloHex = v.replace(/-/g, "");
+    if (soloHex.length === 32) {
+      v = [
+        soloHex.slice(0, 8),
+        soloHex.slice(8, 12),
+        soloHex.slice(12, 16),
+        soloHex.slice(16, 20),
+        soloHex.slice(20)
+      ].join("-");
+    }
+    if (/^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/.test(v)) {
+      return v;
+    }
+  }
+  return null;
+}
+
+  
   function procesarQR() {
   const raw = document.getElementById('qrInput').value.trim();
 
@@ -309,3 +344,4 @@ document.getElementById('fotoExterna').addEventListener('change', async function
 </footer>
 </body>
 </html>
+
