@@ -44,14 +44,15 @@
     background: #f9f9f9;
   }
 
-  /* Quitar spinners de inputs numéricos */
+  /* Quitar spinners y forzar teclado numérico en móvil */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-
   input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: none;           /* Estándar */
     width: 70px;
     border: none;
     text-align: right;
@@ -96,27 +97,7 @@
       width: 50px;
     }
   }
-
-
 </style>
-<style>
-  /* Quitar spinners en Chrome, Safari, Edge, Firefox */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type="number"] {
-    -moz-appearance: textfield; /* Firefox */
-    appearance: none;           /* Estándar */
-    width: 70px;
-    border: none;
-    text-align: right;
-    font-size: 14px;
-    padding: 4px;
-  }
-</style>
-
 </head>
 <body>
 
@@ -131,9 +112,6 @@
     </tr>
   </thead>
   <tbody id="tabla-cuerpo"></tbody>
-</table>
-<table id="tabla">
-  ...
 </table>
 
 <div class="btn-container">
@@ -210,16 +188,16 @@ const data = [
   ["ENCERADO 10 MTS", "", 10], ["ENCERADO 20 MTS", "", 10],
   ["ROLLO ENCERADO 3 KG", "", 3]
 ];
+
 const tbody = document.getElementById("tabla-cuerpo");
-data.forEach(fila => {
-  const [concepto, inventario, stock] = fila;
+data.forEach(([concepto, inventario, stock]) => {
   const tr = document.createElement("tr");
-tr.innerHTML = `
-  <td>${concepto}</td>
-  <td>${inventario}</td>
-  <td>${stock}</td>
-  <td><input type="number" min="0" inputmode="numeric" pattern="[0-9]*"></td>
-`;
+  tr.innerHTML = `
+    <td>${concepto}</td>
+    <td>${inventario}</td>
+    <td>${stock}</td>
+    <td><input type="number" min="0" inputmode="numeric" pattern="[0-9]*"></td>
+  `;
   tbody.appendChild(tr);
 });
 
