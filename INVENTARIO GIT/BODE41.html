@@ -96,7 +96,27 @@
       width: 50px;
     }
   }
+
+
 </style>
+<style>
+  /* Quitar spinners en Chrome, Safari, Edge, Firefox */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: none;           /* Estándar */
+    width: 70px;
+    border: none;
+    text-align: right;
+    font-size: 14px;
+    padding: 4px;
+  }
+</style>
+
 </head>
 <body>
 
@@ -194,12 +214,12 @@ const tbody = document.getElementById("tabla-cuerpo");
 data.forEach(fila => {
   const [concepto, inventario, stock] = fila;
   const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td>${concepto}</td>
-    <td>${inventario}</td>
-    <td>${stock}</td>
-    <td><input type="number" min="0"></td>
-  `;
+tr.innerHTML = `
+  <td>${concepto}</td>
+  <td>${inventario}</td>
+  <td>${stock}</td>
+  <td><input type="number" min="0" inputmode="numeric" pattern="[0-9]*"></td>
+`;
   tbody.appendChild(tr);
 });
 
