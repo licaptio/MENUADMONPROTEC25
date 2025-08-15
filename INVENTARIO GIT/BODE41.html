@@ -61,13 +61,18 @@ table {
     white-space: nowrap;
   }
 
-  /* Quitar spinners */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type="number"] { -moz-appearance: textfield; appearance: none; }
+/* Quitar spinners en Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Quitar spinners en Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
   input[type="text"], input[type="number"] {
     width: 100%;
     border: none;
