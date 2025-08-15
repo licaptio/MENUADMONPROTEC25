@@ -11,7 +11,6 @@
     margin: 0;
     padding: 20px;
   }
-
   h2 {
     text-align: center;
     background: #222;
@@ -20,47 +19,40 @@
     border-radius: 8px;
     margin-bottom: 20px;
   }
-
   table {
     width: 100%;
     border-collapse: collapse;
     background: white;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    table-layout: fixed; /* Fijar anchos */
+    table-layout: fixed;
   }
-
   th, td {
     border: 1px solid #ddd;
     padding: 6px;
     text-align: center;
     font-size: 14px;
-    word-wrap: break-word;
   }
-
   th {
     background: #333;
     color: white;
   }
-
-  tr:nth-child(even) {
-    background: #f9f9f9;
+  tr:nth-child(even) { background: #f9f9f9; }
+  /* Recorte en PC */
+  th:nth-child(1), td:nth-child(1) {
+    width: 300px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-
-  /* Anchos fijos */
-  th:nth-child(1), td:nth-child(1) { width: 35ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  th:nth-child(2), td:nth-child(2) { width: 10ch; }
-  th:nth-child(3), td:nth-child(3) { width: 5ch; }
-  th:nth-child(4), td:nth-child(4) { width: 6ch; }
-
-  /* Quitar spinners y estilo inputs */
+  /* Quitar spinners */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: none;
+  input[type="number"] { -moz-appearance: textfield; appearance: none; }
+  input[type="text"], input[type="number"] {
     width: 100%;
     border: none;
     text-align: right;
@@ -68,57 +60,16 @@
     padding: 2px;
     box-sizing: border-box;
   }
-
-  input[type="text"] {
-    width: 100%;
-    border: none;
-    text-align: right;
-    font-size: 14px;
-    padding: 2px;
-    box-sizing: border-box;
-  }
-
-  .btn {
-    padding: 12px;
-    margin: 6px 2px;
-    border: none;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 5px;
-    width: 100%;
-    max-width: 250px;
-  }
-
-  .btn-green { background: #28a745; }
-  .btn-green:hover { background: #218838; }
-  .btn-red { background: #dc3545; }
-  .btn-red:hover { background: #b52a37; }
-  .btn-blue { background: #007bff; }
-  .btn-blue:hover { background: #0056b3; }
-
-  .btn-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 20px;
-  }
-
+  /* Botones */
+  .btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
+  .btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
+  .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
+  .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
+  .btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
   @media (max-width: 600px) {
-    table, th, td {
-      font-size: 12px;
-    }
+    table, th, td { font-size: 12px; white-space: normal; }
+    th:nth-child(1), td:nth-child(1) { white-space: normal; }
   }
-th:nth-child(1),
-td:nth-child(1) {
-  width: 300px; /* fijo */
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 </style>
 </head>
 <body>
@@ -210,7 +161,6 @@ const data = [
   ["ENCERADO 10 MTS", "", 10], ["ENCERADO 20 MTS", "", 10],
   ["ROLLO ENCERADO 3 KG", "", 3]
 ];
-
 const tbody = document.getElementById("tabla-cuerpo");
 data.forEach(([concepto, inventario, stock]) => {
   const tr = document.createElement("tr");
