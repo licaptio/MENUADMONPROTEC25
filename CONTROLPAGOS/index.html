@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Control de Pagos</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #222;
+      margin-bottom: 20px;
+    }
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 600px;
+      width: 100%;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #0d47a1;
+    }
+    .card p {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>📑 Control de Pagos</h1>
+  <div class="menu">
+    <a href="enviopago.html" class="card">
+      <h2>📤 Registrar / Buscar Pagos</h2>
+      <p>Sube comprobantes, registra pagos y consulta historial.</p>
+    </a>
+    <a href="proveedores.html" class="card">
+      <h2>🏢 Proveedores</h2>
+      <p>Gestiona la lista de proveedores disponibles.</p>
+    </a>
+  </div>
+</body>
+</html>
