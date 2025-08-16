@@ -223,6 +223,12 @@ document.getElementById("linea").addEventListener("paste", (event) => {
         const lineas = text.split(/\r?\n/).filter(l => l.trim() !== "");
         datosPago = lineas.map(l => parseLineaPago(l));
         renderPreviewPagos(datosPago);
+        // 👇 Parche: seleccionar proveedor por RFC
+        if (datosPago.length > 0 && datosPago[0].rfc) {
+          const sel = document.getElementById("proveedor");
+          const opcion = [...sel.options].find(o => o.textContent.includes(datosPago[0].rfc));
+          if (opcion) sel.value = opcion.value;
+        }
       });
       return;
     }
@@ -234,4 +240,5 @@ cargarProveedores();
 
 </body>
 </html>
+
 
