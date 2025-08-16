@@ -29,6 +29,8 @@
     max-width: 300px;
     border-radius: 6px;
   }
+  .monto-negativo { color: red; font-weight: bold; }
+  .monto-positivo { color: black; }
 </style>
 </head>
 <body>
@@ -70,10 +72,13 @@ function parseLineaPago(linea) {
 
   partes.forEach(valor => {
     if (!resultado.fecha && /^\d{4}-\d{2}-\d{2}/.test(valor)) { resultado.fecha = valor; return; }
-    if (!resultado.uuid && /^[0-9A-Za-z\-]{8,}$/.test(valor)) { resultado.uuid = valor; return; }
+    if (!resultado.uuid && /^[0-9A-Fa-f\-]{32,}$/.test(valor)) { resultado.uuid = valor; return; }
     if (!resultado.rfc && /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/.test(valor)) { resultado.rfc = valor; return; }
-    if (!resultado.monto && /^(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/.test(valor.replace(/\s/g, ''))) { resultado.monto = valor.replace(/,/g, ''); return; }
-    if (!resultado.referencia && /^[A-Za-z0-9]{5,15}$/.test(valor)) { resultado.referencia = valor; return; }
+    if (!resultado.monto && /^-?(\d{1,3}(,\d{3})*|\d+)(\.\d{2})?$/.test(valor.replace(/\s/g, ''))) {
+      resultado.monto = valor.replace(/,/g, '');
+      return;
+    }
+    if (!resultado.referencia && /^[A-Za-z0-9\-]{5,20}$/.test(valor)) { resultado.referencia = valor; return; }
     if (!resultado.proveedor && valor.length > 5) { resultado.proveedor = valor; return; }
   });
 
@@ -85,6 +90,8 @@ function renderPreviewPagos(lista) {
   if (!Array.isArray(lista)) return;
   let html = "";
   lista.forEach(p => {
+    const montoNum = parseFloat(p.monto || "0");
+    const montoClass = montoNum < 0 ? "monto-negativo" : "monto-positivo";
     html += `
       <div class="pago-card">
         <h4>${p.proveedor || "Proveedor"}</h4>
@@ -93,7 +100,7 @@ function renderPreviewPagos(lista) {
           <div><b>UUID:</b></div><div>${p.uuid || "-"}</div>
           <div><b>RFC:</b></div><div>${p.rfc || "-"}</div>
           <div><b>Referencia:</b></div><div>${p.referencia || "-"}</div>
-          <div><b>Monto:</b></div><div>$ ${p.monto || "0.00"}</div>
+          <div><b>Monto:</b></div><div class="${montoClass}">$ ${p.monto || "0.00"}</div>
         </div>
       </div>`;
   });
@@ -172,6 +179,8 @@ async function buscarPago() {
   let html = "";
   data.forEach(row => {
     const p = row.detalle_pago || {};
+    const montoNum = parseFloat(p.monto || "0");
+    const montoClass = montoNum < 0 ? "monto-negativo" : "monto-positivo";
     html += `
       <div class="pago-card">
         <h4>${p.proveedor || "Proveedor no registrado"}</h4>
@@ -180,7 +189,7 @@ async function buscarPago() {
           <div><b>UUID:</b></div><div>${p.uuid || "-"}</div>
           <div><b>RFC:</b></div><div>${p.rfc || "-"}</div>
           <div><b>Referencia:</b></div><div>${p.referencia || "-"}</div>
-          <div><b>Monto:</b></div><div>$ ${p.monto || "0.00"}</div>
+          <div><b>Monto:</b></div><div class="${montoClass}">$ ${p.monto || "0.00"}</div>
         </div>
         ${row.imagen_url ? `<img src="${row.imagen_url}">` : '<em>Sin imagen</em>'}
       </div>
