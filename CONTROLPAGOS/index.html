@@ -9,9 +9,6 @@
   label { display: block; margin-top: 10px; font-weight: bold; }
   input, textarea, select { width: 100%; padding: 8px; margin-top: 5px; }
   button { margin-top: 15px; padding: 10px 15px; }
-  pre { background: #f5f5f5; padding: 10px; }
-
-  /* Tarjetas de pagos */
   .pago-card {
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -21,17 +18,11 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     font-family: "Segoe UI", sans-serif;
   }
-  .pago-card h4 {
-    margin: 0 0 8px 0;
-    color: #333;
-  }
+  .pago-card h4 { margin: 0 0 8px 0; color: #333; }
   .pago-detalle {
     display: grid;
     grid-template-columns: 140px 1fr;
     row-gap: 4px;
-  }
-  .pago-detalle div {
-    padding: 2px 0;
   }
   .pago-card img {
     margin-top: 10px;
@@ -48,7 +39,7 @@
 <textarea id="linea" rows="3" placeholder="Ctrl+C en Excel o Win+Mayus+S para imagen y luego Ctrl+V aquí"></textarea>
 
 <h3>Datos detectados</h3>
-<pre id="jsonPreview">{}</pre>
+<div id="jsonPreview"></div>
 
 <label>Imagen del comprobante:</label>
 <div id="previewImagen"></div>
@@ -58,17 +49,23 @@
 
 <button onclick="guardarPago()">Guardar en BD</button>
 
+<hr>
+<h2>Buscar pago</h2>
+<input type="text" id="buscar" placeholder="Buscar por UUID, RFC o proveedor">
+<button onclick="buscarPago()">Buscar</button>
+<div id="resultado"></div>
+
 <script>
 const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let datosPago = {};
+let datosPago = [];
 let imagenFile = null;
 
-// Parser inteligente
+// Parser de línea
 function parseLineaPago(linea) {
-  const partes = linea.trim().split(/\s{2,}|\t/).map(p => p.trim());
+  const partes = linea.trim().split(/\s{2,}|\t|\s+/).map(p => p.trim());
   const resultado = { fecha:null, uuid:null, rfc:null, proveedor:null, referencia:null, monto:null };
 
   partes.forEach(valor => {
@@ -81,6 +78,26 @@ function parseLineaPago(linea) {
   });
 
   return resultado;
+}
+
+// Render bonito
+function renderPreviewPagos(lista) {
+  if (!Array.isArray(lista)) return;
+  let html = "";
+  lista.forEach(p => {
+    html += `
+      <div class="pago-card">
+        <h4>${p.proveedor || "Proveedor"}</h4>
+        <div class="pago-detalle">
+          <div><b>Fecha:</b></div><div>${p.fecha || "-"}</div>
+          <div><b>UUID:</b></div><div>${p.uuid || "-"}</div>
+          <div><b>RFC:</b></div><div>${p.rfc || "-"}</div>
+          <div><b>Referencia:</b></div><div>${p.referencia || "-"}</div>
+          <div><b>Monto:</b></div><div>$ ${p.monto || "0.00"}</div>
+        </div>
+      </div>`;
+  });
+  document.getElementById("jsonPreview").innerHTML = html;
 }
 
 // Cargar proveedores
@@ -99,65 +116,37 @@ async function subirImagen(file) {
   return `${SUPABASE_URL}/storage/v1/object/public/comprobantes/${fileName}`;
 }
 
-// Guardar pago
+// Guardar en BD (todos los pagos pegados)
 async function guardarPago() {
-  if (!datosPago.uuid) return alert("No se detectaron datos válidos del pago.");
+  if (!datosPago || !Array.isArray(datosPago) || datosPago.length === 0) 
+    return alert("No se detectaron datos válidos del pago.");
   if (!imagenFile) return alert("No hay imagen de comprobante.");
 
   const imgUrl = await subirImagen(imagenFile);
   const proveedorId = document.getElementById("proveedor").value || null;
 
-  const { error } = await client.from("envios_pagos").insert({
+  const registros = datosPago.map(p => ({
     proveedor_id: proveedorId,
-    detalle_pago: datosPago,
+    detalle_pago: p,
     imagen_url: imgUrl,
     canal: "pendiente"
-  });
+  }));
+
+  const { error } = await client.from("envios_pagos").insert(registros);
 
   if (error) {
     alert("Error al guardar: " + error.message);
   } else {
-    alert("Pago guardado con éxito");
+    alert("Pagos guardados con éxito");
     document.getElementById("linea").value = "";
-    document.getElementById("jsonPreview").textContent = "{}";
+    document.getElementById("jsonPreview").innerHTML = "";
     document.getElementById("previewImagen").innerHTML = "";
     imagenFile = null;
+    datosPago = [];
   }
 }
 
-// Evento de pegado (texto o imagen)
-document.getElementById("linea").addEventListener("paste", (event) => {
-  const items = event.clipboardData.items;
-  for (const item of items) {
-    if (item.type.indexOf("image") !== -1) {
-      const blob = item.getAsFile();
-      imagenFile = new File([blob], `captura_${Date.now()}.png`, { type: blob.type });
-      const imgURL = URL.createObjectURL(imagenFile);
-      document.getElementById("previewImagen").innerHTML = `<img src="${imgURL}" width="200">`;
-      event.preventDefault();
-      return;
-    }
-    if (item.type === "text/plain") {
-      item.getAsString(text => {
-        datosPago = parseLineaPago(text);
-        document.getElementById("jsonPreview").textContent = JSON.stringify(datosPago, null, 2);
-      });
-      return;
-    }
-  }
-});
-
-cargarProveedores();
-</script>
-<hr>
-
-<h2>Buscar pago</h2>
-<input type="text" id="buscar" placeholder="Buscar por UUID, RFC o proveedor">
-<button onclick="buscarPago()">Buscar</button>
-
-<div id="resultado"></div>
-
-<script>
+// Buscar pagos
 async function buscarPago() {
   const term = document.getElementById("buscar").value.trim();
   if (!term) return alert("Escribe algo para buscar");
@@ -200,6 +189,31 @@ async function buscarPago() {
 
   document.getElementById("resultado").innerHTML = html;
 }
+
+// Evento de pegado
+document.getElementById("linea").addEventListener("paste", (event) => {
+  const items = event.clipboardData.items;
+  for (const item of items) {
+    if (item.type.indexOf("image") !== -1) {
+      const blob = item.getAsFile();
+      imagenFile = new File([blob], `captura_${Date.now()}.png`, { type: blob.type });
+      const imgURL = URL.createObjectURL(imagenFile);
+      document.getElementById("previewImagen").innerHTML = `<img src="${imgURL}" width="200">`;
+      event.preventDefault();
+      return;
+    }
+    if (item.type === "text/plain") {
+      item.getAsString(text => {
+        const lineas = text.split(/\r?\n/).filter(l => l.trim() !== "");
+        datosPago = lineas.map(l => parseLineaPago(l));
+        renderPreviewPagos(datosPago);
+      });
+      return;
+    }
+  }
+});
+
+cargarProveedores();
 </script>
 
 </body>
