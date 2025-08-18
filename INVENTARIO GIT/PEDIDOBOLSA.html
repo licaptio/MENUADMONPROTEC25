@@ -131,6 +131,22 @@ function calcPeso(input){
   input.parentElement.parentElement.querySelector(".pesoTotal").textContent = peso;
 }
 
+// Permitir moverse con flechas ↑ ↓
+document.addEventListener("keydown", function(e) {
+  if (e.target.tagName === "INPUT" && e.target.type === "number") {
+    const inputs = Array.from(document.querySelectorAll("#tabla tbody input"));
+    const index = inputs.indexOf(e.target);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (index < inputs.length - 1) inputs[index + 1].focus();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (index > 0) inputs[index - 1].focus();
+    }
+  }
+});
+
 // Imagen
 function generarImagen(){
   const pedido = [];
