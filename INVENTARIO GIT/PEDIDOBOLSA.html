@@ -160,12 +160,13 @@ function generarImagen(){
   win.document.write(`
     <html><head><title>Pedido</title></head>
     <body style="font-family:Arial;padding:20px;">
-    <h2 style="text-align:center;">ORDEN DE COMPRA - BOLSAS PLÁSTICAS</h2>
+    <h2 style="text-align:center;">ORDEN DE COMPRA <br> PROVEEDORA DE DULCES Y DESECHABLES</h2>
     <table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;">
       <tr><th>CONCEPTO</th><th>PEDIDO</th><th>PESO TOTAL</th></tr>
       ${contenido}
     </table>
     <p style="text-align:center;margin-top:20px;">📌 Copiar y enviar por WhatsApp</p>
+    <p style="text-align:center;font-size:12px;color:gray;margin-top:30px;">powered by PROVSOFT</p>
     </body></html>`);
   win.document.close();
 }
