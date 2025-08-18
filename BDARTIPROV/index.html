@@ -28,21 +28,31 @@
       border-bottom: 2px solid #ddd;
     }
     nav a {
-      padding: 14px 20px;
+      padding: 14px 22px;
       text-decoration: none;
       color: #007bff;
       font-weight: bold;
+      font-size: 18px; /* 👈 más grande */
     }
     nav a:hover {
       background: #007bff;
       color: white;
     }
     .contenido {
-      padding: 20px;
+      padding: 40px 20px;
       text-align: center;
     }
+    .contenido h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #222;
+    }
+    .contenido p {
+      font-size: 16px;
+      color: #555;
+    }
     footer {
-      margin-top: 40px;
+      margin-top: 50px;
       background: #222;
       color: #ccc;
       text-align: center;
@@ -57,16 +67,17 @@
 </head>
 <body>
   <header>
-    <h1>📦 Sistema PROVSOFT</h1>
+    <h1>📦 PROVSOFT</h1> <!-- 👈 más limpio -->
   </header>
 
   <nav>
-    <a href="BuscaCata.html">🔎 Buscador</a>
+    <a href="BuscaCata.html" style="font-size:20px">🔎 Buscador</a> <!-- 👈 ícono más grande -->
   </nav>
 
   <div class="contenido">
-    <h2>Bienvenido a tu sistema PROVSOFT</h2>
-    <p>Selecciona una opción del menú para comenzar.</p>
+    <h2>Bienvenido a tu sistema de consulta de artículos</h2>
+    <p><b>Proveedora de Dulces y Desechables</b></p>
+    <p>Selecciona <b>🔎 Buscador</b> para empezar.</p>
   </div>
 
   <footer>
