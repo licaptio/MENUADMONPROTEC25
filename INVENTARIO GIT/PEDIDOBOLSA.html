@@ -137,7 +137,9 @@ function generarImagen(){
   data.forEach(section => {
     let filas = "";
     section.items.forEach(item => {
-      const tr = Array.from(document.querySelectorAll("#tabla tbody tr")).find(r => r.cells[0]?.textContent === item);
+      const tr = Array.from(document.querySelectorAll("#tabla tbody tr"))
+  .find(r => r.cells[0] && r.cells[0].tagName === "TD" && r.cells[0].textContent.trim() === item);
+
       if(tr){
         const ped = tr.cells[1].querySelector("input").value;
         const peso = tr.cells[3].textContent;
@@ -194,3 +196,4 @@ document.addEventListener("keydown", function(e){
 </script>
 </body>
 </html>
+
