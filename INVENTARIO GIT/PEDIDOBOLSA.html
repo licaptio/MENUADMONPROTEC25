@@ -123,16 +123,14 @@ const data = [
   ]}
 ];
 
-// Render tabla
+// Render tabla principal
 const tbody = document.getElementById("tabla-cuerpo");
 
 data.forEach(section => {
-  // separador
   const sep = document.createElement("tr");
   sep.innerHTML = `<th colspan="4" class="separador">${section.group}</th>`;
   tbody.appendChild(sep);
 
-  // productos
   section.items.forEach(concepto => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -153,41 +151,31 @@ function calcPeso(input){
   input.parentElement.parentElement.querySelector(".pesoTotal").textContent = peso;
 }
 
-// Moverse con flechas ↑ ↓
-document.addEventListener("keydown", function(e) {
-  if (e.target.tagName === "INPUT" && e.target.type === "number") {
-    const inputs = Array.from(document.querySelectorAll("#tabla tbody input"));
-    const index = inputs.indexOf(e.target);
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (index < inputs.length - 1) {
-        inputs[index + 1].focus();
-        inputs[index + 1].select();
-      }
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (index > 0) {
-        inputs[index - 1].focus();
-        inputs[index - 1].select();
-      }
-    }
-  }
-});
-
-// Imagen
+// Imagen con separadores incluidos
 function generarImagen(){
-  const pedido = [];
-  document.querySelectorAll("#tabla tbody tr").forEach(tr=>{
-    const concepto=tr.cells[0]?.textContent;
-    const inp=tr.cells[1]?.querySelector("input");
-    if(inp){
-      const ped=inp.value;
-      const peso=tr.cells[3].textContent;
-      if(ped>0) pedido.push([concepto,ped,peso]);
+  let contenido = "";
+  data.forEach(section => {
+    let filas = "";
+    section.items.forEach(item => {
+      const tr = Array.from(document.querySelectorAll("#tabla tbody tr")).find(r => r.cells[0]?.textContent === item);
+      if(tr){
+        const ped = tr.cells[1].querySelector("input").value;
+        const peso = tr.cells[3].textContent;
+        if(ped > 0){
+          filas += `<tr><td>${item}</td><td>${ped}</td><td>${peso}</td></tr>`;
+        }
+      }
+    });
+    if(filas){
+      contenido += `
+        <tr><th colspan="3" style="background:#6a1b9a;color:white;text-align:left;">${section.group}</th></tr>
+        ${filas}
+      `;
     }
   });
-  if(pedido.length===0){ alert("No hay pedidos"); return; }
+
+  if(contenido === ""){ alert("No hay pedidos"); return; }
+
   const win=window.open("","","width=600,height=800");
   win.document.write(`
     <html><head><title>Pedido</title></head>
@@ -195,7 +183,7 @@ function generarImagen(){
     <h2 style="text-align:center;">ORDEN DE COMPRA - BOLSAS PLÁSTICAS</h2>
     <table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;">
       <tr><th>CONCEPTO</th><th>PEDIDO</th><th>PESO TOTAL</th></tr>
-      ${pedido.map(p=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`).join("")}
+      ${contenido}
     </table>
     <p style="text-align:center;margin-top:20px;">📌 Copiar y enviar por WhatsApp</p>
     </body></html>`);
