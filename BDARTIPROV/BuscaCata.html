@@ -210,10 +210,11 @@
 div.addEventListener("click", () => {
   window.location.href = "producto.html?id=" + p.codigoBarra;
 });
-        resultadosDiv.appendChild(div);
-      });
 
-      contador.textContent = \`Resultados: \${resultados.length} | Página \${pagina + 1} de \${Math.ceil(resultados.length / porPagina)}\`;
+contador.textContent = 
+  "Resultados: " + resultados.length + 
+  " | Página " + (pagina + 1) + 
+  " de " + Math.ceil(resultados.length / porPagina);
 
       btnPrev.disabled = pagina === 0;
       btnNext.disabled = fin >= resultados.length;
@@ -236,4 +237,5 @@ div.addEventListener("click", () => {
   </script>
 </body>
 </html>
+
 
