@@ -3,38 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buscador de Productos</title>
+  <title>Buscador de Artículos</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
-    h2 { margin-bottom: 10px; }
-    .resultados { margin-top: 15px; }
-    .producto { border: 1px solid #ddd; padding: 8px; margin: 5px 0; border-radius: 6px; background: white; cursor: pointer; }
-    .producto:hover { background: #f1f1f1; }
-    .progreso { margin-top: 15px; }
-    progress { width: 100%; height: 20px; }
-    .contador { font-weight: bold; margin-top: 10px; }
-    .paginacion { margin-top: 15px; }
-    .btn-pag { padding: 6px 12px; margin: 0 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .btn-pag:disabled { background: #ccc; cursor: not-allowed; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+      text-align: center;
+      color: #222;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: normal;
+      margin-top: 0;
+      color: #555;
+    }
+    input {
+      width: 90%;
+      max-width: 400px;
+      padding: 10px;
+      margin: 15px auto;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      display: block;
+    }
+    .progreso {
+      margin: 10px auto;
+      width: 90%;
+      max-width: 400px;
+      text-align: left;
+    }
+    progress {
+      width: 100%;
+      height: 16px;
+      border-radius: 8px;
+    }
+    .contador {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .resultados {
+      margin-top: 20px;
+      text-align: left;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .producto {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .producto:hover {
+      background: #f1f1f1;
+    }
+    .producto b {
+      font-size: 15px;
+    }
+    .precio {
+      font-weight: bold;
+      color: #1a7c1a;
+      font-size: 16px;
+    }
+    .paginacion {
+      margin-top: 15px;
+    }
+    .btn-pag {
+      padding: 8px 16px;
+      margin: 0 8px;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-pag:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #555;
+    }
+    footer b {
+      color: #222;
+    }
   </style>
 </head>
 <body>
-  <h2>🔎 Buscador de Productos</h2>
-  <input type="text" id="buscador" placeholder="Escribe código o nombre..." style="width: 300px; padding: 6px;">
+  <h1>🔎 BUSCADOR DE ARTÍCULOS</h1>
+  <h2>PROVEEDORA DE DULCES Y DESECHABLES</h2>
+
+  <input type="text" id="buscador" placeholder="Escribe código o nombre...">
   <div class="progreso">
     <progress id="barraProgreso" value="0" max="100"></progress>
     <span id="estado"></span>
   </div>
   <div id="contador" class="contador"></div>
   <div id="resultados" class="resultados"></div>
+
   <div class="paginacion">
     <button id="prev" class="btn-pag" disabled>⬅ Anterior</button>
     <button id="next" class="btn-pag" disabled>Siguiente ➡</button>
   </div>
 
+  <footer>
+    Powered by <b>PROVSOFT</b>
+  </footer>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, query, where, limit, getDocs, orderBy, startAfter } 
+    import { getFirestore, collection, query, where, getDocs, orderBy } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // 🔹 Configuración Firebase
@@ -58,7 +148,6 @@
     const btnPrev = document.getElementById("prev");
     const btnNext = document.getElementById("next");
 
-    // 🔹 Variables de control
     let resultados = [];
     let pagina = 0;
     const porPagina = 20;
@@ -70,7 +159,6 @@
       estado.textContent = "";
       resultados = [];
 
-      // 🔹 Detectar si es solo número → buscar por código de barras
       if (/^\d+$/.test(termino)) {
         const q = query(
           collection(db, "productos"),
@@ -83,7 +171,6 @@
         return;
       }
 
-      // 🔹 Si es texto → buscar en concepto
       const q = query(
         collection(db, "productos"),
         where("activo", "==", true),
@@ -105,7 +192,6 @@
       }
     }
 
-    // 🔹 Mostrar resultados paginados
     function mostrarPagina(n) {
       pagina = n;
       resultadosDiv.innerHTML = "";
@@ -119,15 +205,15 @@
         div.innerHTML = `
           <b>${p.concepto}</b><br>
           Código: ${p.codigoBarra}<br>
-          Precio: $${p.precioPublico}
+          <span class="precio">Precio: $${parseFloat(p.precioPublico).toFixed(2)}</span>
         `;
         div.addEventListener("click", () => {
-          window.location.href = `producto.html?id=${p.codigoBarra}`;
+          window.location.href = \`producto.html?id=\${p.codigoBarra}\`;
         });
         resultadosDiv.appendChild(div);
       });
 
-      contador.textContent = `Resultados: ${resultados.length} | Página ${pagina + 1} de ${Math.ceil(resultados.length / porPagina)}`;
+      contador.textContent = \`Resultados: \${resultados.length} | Página \${pagina + 1} de \${Math.ceil(resultados.length / porPagina)}\`;
 
       btnPrev.disabled = pagina === 0;
       btnNext.disabled = fin >= resultados.length;
@@ -136,7 +222,6 @@
     btnPrev.addEventListener("click", () => mostrarPagina(pagina - 1));
     btnNext.addEventListener("click", () => mostrarPagina(pagina + 1));
 
-    // 🔹 Búsqueda automática (800 ms después de escribir)
     let debounceTimer;
     input.addEventListener("input", () => {
       clearTimeout(debounceTimer);
