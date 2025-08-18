@@ -51,14 +51,12 @@ table {
     box-sizing: border-box;
   }
 
-  /* Quitar spinners en Chrome, Safari, Edge, Opera */
+  /* Quitar spinners */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-
-  /* Quitar spinners en Firefox */
   input[type=number] {
     -moz-appearance: textfield;
     appearance: textfield;
@@ -68,6 +66,14 @@ table {
   .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
   .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
   .btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+
+  /* Estilo para los separadores */
+  .separador {
+    background: #6a1b9a !important;
+    color: white;
+    font-weight: bold;
+    text-align: left;
+  }
 </style>
 </head>
 <body>
@@ -91,36 +97,52 @@ table {
 </div>
 
 <script>
-// Datos base (KGS siempre 25)
+// Datos agrupados
 const data = [
-  // BOLSA NATURAL CORTADA
-  "6X12 NAT","8X12 NAT","10X20","10X25","12X20","14X20","15X25","18X26","20X30","25X35",
-  "25X40","30X50","30X60 CAL 300","40X60","50X70","60X90","70X90","90X1.2",
-  // CAMISETA POLIPAPEL BIO
-  "POLIPAPEL BIO MINI","POLIPAPEL BIO CH","POLIPAPEL BIO MED","POLIPAPEL BIO GRAD","POLIPAPEL BIO JUMBO",
-  // CAMISETA POLISEDA
-  "POLISEDA MINI","POLISEDA CH","POLISEDA MED","POLISEDA GRAD",
-  // CAMISETA BAJA NEGRA
-  "CAMISETA BD NEGRA CH","CAMISETA BD NEGRA MED","CAMISETA BD NEGRA GRAD",
-  // ROLLO DE ALTA
-  "15X26","18X26","20X30","20X30 C120","25X35","25X40","30X40","30X50","40X60","50X70",
-  // ROLLO ALTA TIPO AMERICANO
-  "20X30 USA","25X40 USA",
-  // BOLSA BASURA
-  "50X70","70X90","90X120"
+  { group: "BOLSA NATURAL CORTADA", items: [
+    "6X12 NAT","8X12 NAT","10X20","10X25","12X20","14X20","15X25","18X26","20X30","25X35",
+    "25X40","30X50","30X60 CAL 300","40X60","50X70","60X90","70X90","90X1.2"
+  ]},
+  { group: "BOLSA CAMISETA POLIPAPEL BIO", items: [
+    "POLIPAPEL BIO MINI","POLIPAPEL BIO CH","POLIPAPEL BIO MED","POLIPAPEL BIO GRAD","POLIPAPEL BIO JUMBO"
+  ]},
+  { group: "BOLSA CAMISETA POLISEDA", items: [
+    "POLISEDA MINI","POLISEDA CH","POLISEDA MED","POLISEDA GRAD"
+  ]},
+  { group: "BOLSA CAMISETA BAJA NEGRA", items: [
+    "CAMISETA BD NEGRA CH","CAMISETA BD NEGRA MED","CAMISETA BD NEGRA GRAD"
+  ]},
+  { group: "ROLLO DE ALTA", items: [
+    "15X26","18X26","20X30","20X30 C120","25X35","25X40","30X40","30X50","40X60","50X70"
+  ]},
+  { group: "ROLLO ALTA TIPO AMERICANO", items: [
+    "20X30 USA","25X40 USA"
+  ]},
+  { group: "BOLSA BASURA", items: [
+    "50X70","70X90","90X120"
+  ]}
 ];
 
 // Render tabla
 const tbody = document.getElementById("tabla-cuerpo");
-data.forEach(concepto => {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td>${concepto}</td>
-    <td><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="" oninput="calcPeso(this)"></td>
-    <td>25</td>
-    <td class="pesoTotal">0</td>
-  `;
-  tbody.appendChild(tr);
+
+data.forEach(section => {
+  // separador
+  const sep = document.createElement("tr");
+  sep.innerHTML = `<th colspan="4" class="separador">${section.group}</th>`;
+  tbody.appendChild(sep);
+
+  // productos
+  section.items.forEach(concepto => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${concepto}</td>
+      <td><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="" oninput="calcPeso(this)"></td>
+      <td>25</td>
+      <td class="pesoTotal">0</td>
+    `;
+    tbody.appendChild(tr);
+  });
 });
 
 // Calcular peso por fila
@@ -131,14 +153,39 @@ function calcPeso(input){
   input.parentElement.parentElement.querySelector(".pesoTotal").textContent = peso;
 }
 
+// Moverse con flechas ↑ ↓
+document.addEventListener("keydown", function(e) {
+  if (e.target.tagName === "INPUT" && e.target.type === "number") {
+    const inputs = Array.from(document.querySelectorAll("#tabla tbody input"));
+    const index = inputs.indexOf(e.target);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (index < inputs.length - 1) {
+        inputs[index + 1].focus();
+        inputs[index + 1].select();
+      }
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (index > 0) {
+        inputs[index - 1].focus();
+        inputs[index - 1].select();
+      }
+    }
+  }
+});
+
 // Imagen
 function generarImagen(){
   const pedido = [];
   document.querySelectorAll("#tabla tbody tr").forEach(tr=>{
-    const concepto=tr.cells[0].textContent;
-    const ped=tr.cells[1].querySelector("input").value;
-    const peso=tr.cells[3].textContent;
-    if(ped>0) pedido.push([concepto,ped,peso]);
+    const concepto=tr.cells[0]?.textContent;
+    const inp=tr.cells[1]?.querySelector("input");
+    if(inp){
+      const ped=inp.value;
+      const peso=tr.cells[3].textContent;
+      if(ped>0) pedido.push([concepto,ped,peso]);
+    }
   });
   if(pedido.length===0){ alert("No hay pedidos"); return; }
   const win=window.open("","","width=600,height=800");
