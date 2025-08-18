@@ -3,59 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menú Principal - PROVSOFT</title>
+  <title>Menú Principal — Proveedora</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f9f9f9;
       margin: 0;
-      background: #f4f6f9;
+      padding: 0;
       color: #333;
+      text-align: center;
     }
     header {
-      background: #007bff;
+      background: #003366;
       color: white;
-      padding: 15px 20px;
-      text-align: center;
+      padding: 20px 10px;
     }
     header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
     }
-    nav {
+    .contenedor {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      background: #fff;
-      border-bottom: 2px solid #ddd;
+      gap: 20px;
+      margin: 40px auto;
+      max-width: 800px;
     }
-    nav a {
-      padding: 14px 22px;
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 250px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
       text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
-      font-size: 18px; /* 👈 más grande */
+      color: inherit;
     }
-    nav a:hover {
-      background: #007bff;
-      color: white;
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     }
-    .contenido {
-      padding: 40px 20px;
-      text-align: center;
+    .icono {
+      font-size: 50px;
+      margin-bottom: 15px;
     }
-    .contenido h2 {
+    .titulo {
       font-size: 20px;
-      margin-bottom: 10px;
-      color: #222;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
-    .contenido p {
-      font-size: 16px;
+    .descripcion {
+      font-size: 14px;
       color: #555;
     }
     footer {
       margin-top: 50px;
       background: #222;
       color: #ccc;
-      text-align: center;
       padding: 12px;
       font-size: 14px;
     }
@@ -67,18 +73,21 @@
 </head>
 <body>
   <header>
-    <h1>PROVEEDORA DE DULCES Y DESECHABLES</h1> <!-- 👈 más limpio -->
+    <h1>PROVEEDORA DE DULCES Y DESECHABLES</h1>
   </header>
 
-<nav>
-  <a href="./BDARTIPROV/BuscaCata.html" style="font-size:20px">🔎 Buscador</a>
-  <a href="./BDARTIPROV/buscacatacam.html" style="font-size:20px">📷 Buscador Cámara</a>
-</nav>
+  <div class="contenedor">
+    <a href="./BDARTIPROV/BuscaCata.html" class="card">
+      <div class="icono">🔎</div>
+      <div class="titulo">Buscador</div>
+      <div class="descripcion">Consulta artículos por nombre o código.</div>
+    </a>
 
-  <div class="contenido">
-    <h2>Bienvenido a tu sistema de consulta de artículos</h2>
-    <p><b>Proveedora de Dulces y Desechables</b></p>
-    <p>Selecciona <b>🔎 Buscador</b> para empezar.</p>
+    <a href="./BDARTIPROV/buscacatacam.html" class="card">
+      <div class="icono">📷</div>
+      <div class="titulo">Buscador Cámara</div>
+      <div class="descripcion">Escanea códigos con la cámara del celular.</div>
+    </a>
   </div>
 
   <footer>
