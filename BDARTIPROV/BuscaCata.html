@@ -207,9 +207,9 @@
           Código: ${p.codigoBarra}<br>
           <span class="precio">Precio: $${parseFloat(p.precioPublico).toFixed(2)}</span>
         `;
-        div.addEventListener("click", () => {
-          window.location.href = \`producto.html?id=\${p.codigoBarra}\`;
-        });
+div.addEventListener("click", () => {
+  window.location.href = "producto.html?id=" + p.codigoBarra;
+});
         resultadosDiv.appendChild(div);
       });
 
@@ -236,3 +236,4 @@
   </script>
 </body>
 </html>
+
