@@ -41,7 +41,7 @@
 <body>
   <h2>📦 Detalle del Producto</h2>
   <div id="detalle" class="card">Cargando...</div>
-  <a href="BuscaCata.html" class="btn">⬅ Volver a búsqueda</a>
+  <a id="btnVolver" class="btn">⬅ Volver a búsqueda</a>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -120,5 +120,15 @@
 
     cargarProducto();
   </script>
+<script>
+  const btn = document.getElementById("btnVolver");
+  if (document.referrer.includes("buscacatacam.html")) {
+    btn.href = "buscacatacam.html";
+  } else {
+    btn.href = "BuscaCata.html";
+  }
+</script>
+
 </body>
 </html>
+
