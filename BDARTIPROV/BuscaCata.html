@@ -199,25 +199,28 @@
       const fin = inicio + porPagina;
       const lista = resultados.slice(inicio, fin);
 
-      lista.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "producto";
-        div.innerHTML = `
-          <b>${p.concepto}</b><br>
-          Código: ${p.codigoBarra}<br>
-          <span class="precio">Precio: $${parseFloat(p.precioPublico).toFixed(2)}</span>
-        `;
-div.addEventListener("click", () => {
-  window.location.href = "producto.html?id=" + p.codigoBarra;
-});
+lista.forEach(p => {
+  const div = document.createElement("div");
+  div.className = "producto";
+  div.innerHTML = `
+    <b>${p.concepto}</b><br>
+    Código: ${p.codigoBarra}<br>
+    <span class="precio">Precio: $${parseFloat(p.precioPublico).toFixed(2)}</span>
+  `;
+  div.addEventListener("click", () => {
+    window.location.href = "producto.html?id=" + p.codigoBarra;
+  });
+  resultadosDiv.appendChild(div);
+}); // 👈 aquí cerramos el forEach correctamente
 
 contador.textContent = 
   "Resultados: " + resultados.length + 
   " | Página " + (pagina + 1) + 
   " de " + Math.ceil(resultados.length / porPagina);
 
-      btnPrev.disabled = pagina === 0;
-      btnNext.disabled = fin >= resultados.length;
+btnPrev.disabled = pagina === 0;
+btnNext.disabled = fin >= resultados.length;
+
     }
 
     btnPrev.addEventListener("click", () => mostrarPagina(pagina - 1));
@@ -237,5 +240,6 @@ contador.textContent =
   </script>
 </body>
 </html>
+
 
 
