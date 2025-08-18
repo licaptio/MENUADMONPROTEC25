@@ -228,9 +228,21 @@ div.innerHTML = `
   <b>${p.concepto}</b><br>
   Código: ${p.codigoBarra}<br>
   <div class="precios">
-    <span class="precio-publico">Público: $${parseFloat(p.precioPublico).toFixed(2)}</span>
-    <span class="precio-medio">Medio Mayoreo: $${parseFloat(p.medioMayoreo).toFixed(2)}</span>
-    <span class="precio-mayoreo">Mayoreo: $${parseFloat(p.mayoreo).toFixed(2)}</span>
+    <span class="precio-publico">
+      Público: $${p.precioPublico 
+        ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
+    <span class="precio-medio">
+      Medio Mayoreo: $${p.medioMayoreo 
+        ? Number(p.medioMayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
+    <span class="precio-mayoreo">
+      Mayoreo: $${p.mayoreo 
+        ? Number(p.mayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
   </div>
 `;
 
@@ -267,6 +279,7 @@ btnNext.disabled = fin >= resultados.length;
   </script>
 </body>
 </html>
+
 
 
 
