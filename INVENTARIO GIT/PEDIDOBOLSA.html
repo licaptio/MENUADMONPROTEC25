@@ -51,6 +51,19 @@ table {
     box-sizing: border-box;
   }
 
+  /* Quitar spinners en Chrome, Safari, Edge, Opera */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Quitar spinners en Firefox */
+  input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
   .btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
   .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
   .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
@@ -103,7 +116,7 @@ data.forEach(concepto => {
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td>${concepto}</td>
-    <td><input type="number" min="0" value="0" oninput="calcPeso(this)"></td>
+    <td><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" oninput="calcPeso(this)"></td>
     <td>25</td>
     <td class="pesoTotal">0</td>
   `;
