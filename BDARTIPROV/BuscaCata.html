@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Productos</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+    h2 { margin-bottom: 10px; }
+    .resultados { margin-top: 15px; }
+    .producto { border: 1px solid #ddd; padding: 8px; margin: 5px 0; border-radius: 6px; background: white; cursor: pointer; }
+    .producto:hover { background: #f1f1f1; }
+    .progreso { margin-top: 15px; }
+    progress { width: 100%; height: 20px; }
+    .contador { font-weight: bold; margin-top: 10px; }
+    .paginacion { margin-top: 15px; }
+    .btn-pag { padding: 6px 12px; margin: 0 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-pag:disabled { background: #ccc; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h2>🔎 Buscador de Productos</h2>
+  <input type="text" id="buscador" placeholder="Escribe código o nombre..." style="width: 300px; padding: 6px;">
+  <div class="progreso">
+    <progress id="barraProgreso" value="0" max="100"></progress>
+    <span id="estado"></span>
+  </div>
+  <div id="contador" class="contador"></div>
+  <div id="resultados" class="resultados"></div>
+  <div class="paginacion">
+    <button id="prev" class="btn-pag" disabled>⬅ Anterior</button>
+    <button id="next" class="btn-pag" disabled>Siguiente ➡</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, query, where, limit, getDocs, orderBy, startAfter } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 🔹 Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const input = document.getElementById("buscador");
+    const resultadosDiv = document.getElementById("resultados");
+    const barraProgreso = document.getElementById("barraProgreso");
+    const estado = document.getElementById("estado");
+    const contador = document.getElementById("contador");
+    const btnPrev = document.getElementById("prev");
+    const btnNext = document.getElementById("next");
+
+    // 🔹 Variables de control
+    let resultados = [];
+    let pagina = 0;
+    const porPagina = 20;
+
+    // 🔹 Buscar productos
+    async function buscarProductos(termino) {
+      resultadosDiv.innerHTML = "⏳ Buscando...";
+      barraProgreso.value = 0;
+      estado.textContent = "";
+      resultados = [];
+
+      // 🔹 Detectar si es solo número → buscar por código de barras
+      if (/^\d+$/.test(termino)) {
+        const q = query(
+          collection(db, "productos"),
+          where("activo", "==", true),
+          where("codigoBarra", "==", termino)
+        );
+        const snap = await getDocs(q);
+        resultados = snap.docs.map(doc => doc.data());
+        mostrarPagina(0);
+        return;
+      }
+
+      // 🔹 Si es texto → buscar en concepto
+      const q = query(
+        collection(db, "productos"),
+        where("activo", "==", true),
+        orderBy("concepto")
+      );
+      const snap = await getDocs(q);
+      snap.forEach(doc => {
+        const p = doc.data();
+        if (p.concepto && p.concepto.toLowerCase().includes(termino.toLowerCase())) {
+          resultados.push(p);
+        }
+      });
+
+      if (resultados.length === 0) {
+        resultadosDiv.innerHTML = "❌ No se encontraron resultados";
+        contador.textContent = "";
+      } else {
+        mostrarPagina(0);
+      }
+    }
+
+    // 🔹 Mostrar resultados paginados
+    function mostrarPagina(n) {
+      pagina = n;
+      resultadosDiv.innerHTML = "";
+      const inicio = pagina * porPagina;
+      const fin = inicio + porPagina;
+      const lista = resultados.slice(inicio, fin);
+
+      lista.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "producto";
+        div.innerHTML = `
+          <b>${p.concepto}</b><br>
+          Código: ${p.codigoBarra}<br>
+          Precio: $${p.precioPublico}
+        `;
+        div.addEventListener("click", () => {
+          window.location.href = `producto.html?id=${p.codigoBarra}`;
+        });
+        resultadosDiv.appendChild(div);
+      });
+
+      contador.textContent = `Resultados: ${resultados.length} | Página ${pagina + 1} de ${Math.ceil(resultados.length / porPagina)}`;
+
+      btnPrev.disabled = pagina === 0;
+      btnNext.disabled = fin >= resultados.length;
+    }
+
+    btnPrev.addEventListener("click", () => mostrarPagina(pagina - 1));
+    btnNext.addEventListener("click", () => mostrarPagina(pagina + 1));
+
+    // 🔹 Búsqueda automática (800 ms después de escribir)
+    let debounceTimer;
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const termino = input.value.trim();
+      if (!termino) {
+        resultadosDiv.innerHTML = "";
+        contador.textContent = "";
+        return;
+      }
+      debounceTimer = setTimeout(() => buscarProductos(termino), 800);
+    });
+  </script>
+</body>
+</html>

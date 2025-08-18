@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Exportar productos a Excel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:20px; background:#fafafa; }
+    button { padding:10px 15px; border:none; border-radius:5px; background:#1f4fff; color:white; cursor:pointer; }
+    #status { margin-top:10px; font-weight:bold; }
+    #progress { margin-top:5px; }
+  </style>
+</head>
+<body>
+  <h1>Descargar productos desde Firestore a Excel</h1>
+  <button id="downloadBtn">Descargar Excel</button>
+  <p id="status"></p>
+  <p id="progress"></p>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter } 
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs";
+
+    // ✅ Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const btn = document.getElementById("downloadBtn");
+    const status = document.getElementById("status");
+    const progress = document.getElementById("progress");
+
+    btn.addEventListener("click", async () => {
+      status.textContent = "⏳ Descargando productos...";
+      progress.textContent = "";
+      let productos = [];
+      let allKeys = new Set();
+      let batchSize = 1000;
+      let lastDoc = null;
+      let total = 0;
+
+      try {
+        while (true) {
+          let q = query(
+            collection(db, "productos"),
+            orderBy("__name__"),
+            limit(batchSize),
+            ...(lastDoc ? [startAfter(lastDoc)] : [])
+          );
+
+          const snapshot = await getDocs(q);
+          if (snapshot.empty) break;
+
+          snapshot.forEach(doc => {
+            let data = { id: doc.id, ...doc.data() };
+            productos.push(data);
+            Object.keys(data).forEach(k => allKeys.add(k));
+          });
+
+          total += snapshot.size;
+          progress.textContent = `✅ Descargados ${total} productos...`;
+
+          lastDoc = snapshot.docs[snapshot.docs.length - 1];
+          if (snapshot.size < batchSize) break;
+        }
+
+        // 🔹 Normalizar columnas
+        const keys = Array.from(allKeys);
+        const normalizados = productos.map(p => {
+          let row = {};
+          keys.forEach(k => row[k] = (p[k] !== undefined ? p[k] : ""));
+          return row;
+        });
+
+        // 🔹 Generar Excel
+        const ws = XLSX.utils.json_to_sheet(normalizados, { header: keys });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Productos");
+
+        // ✅ Descargar con nombre fijo
+        XLSX.writeFile(wb, "catalogopdd.xlsx");
+
+        status.textContent = `🎉 Exportados ${total} productos con ${keys.length} columnas a Excel.`;
+      } catch (err) {
+        status.textContent = "❌ Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle del Producto</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-width: 650px; }
+    .fila { margin: 4px 0; }
+    .clave { font-weight: bold; color: #333; }
+    .valor { margin-left: 6px; }
+    .grupo { margin: 15px 0; padding-top: 10px; border-top: 2px solid #ddd; }
+
+    /* 🔹 Estilo del botón */
+    .btn { 
+      display: inline-block; 
+      margin-top: 20px; 
+      padding: 10px 16px; 
+      background: #007bff; 
+      color: white; 
+      text-decoration: none; 
+      border-radius: 6px; 
+      font-weight: bold; 
+    }
+    .btn:hover { background: #0056b3; }
+
+    /* 🔹 Estilo especial para precio público */
+    .precio-publico {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: green;
+      animation: parpadeo 1s infinite alternate;
+    }
+    @keyframes parpadeo {
+      from { color: #00cc00; }
+      to { color: #009900; }
+    }
+  </style>
+</head>
+<body>
+  <h2>📦 Detalle del Producto</h2>
+  <div id="detalle" class="card">Cargando...</div>
+  <a href="BuscaCata.html" class="btn">⬅ Volver a búsqueda</a>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 🔹 Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔹 Leer parámetro de la URL
+    const params = new URLSearchParams(window.location.search);
+    const codigo = params.get("id");
+    const detalleDiv = document.getElementById("detalle");
+
+    function formatoMoneda(valor) {
+      if (isNaN(valor)) return valor;
+      return valor.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+    }
+
+    async function cargarProducto() {
+      if (!codigo) {
+        detalleDiv.innerHTML = "❌ No se especificó un producto.";
+        return;
+      }
+
+      const q = query(collection(db, "productos"), where("codigoBarra", "==", codigo));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        detalleDiv.innerHTML = "❌ Producto no encontrado.";
+        return;
+      }
+
+      const p = snap.docs[0].data();
+
+      let html = `
+        <div class="fila"><span class="clave">codigoBarra:</span> <span class="valor">${p.codigoBarra}</span></div>
+        
+        <div class="fila"><span class="clave">concepto:</span> <span class="valor">${p.concepto}</span></div>
+        <div class="fila"><span class="clave">costoSinImpuesto:</span> <span class="valor">${formatoMoneda(p.costoSinImpuesto)}</span></div>
+
+        <div class="grupo"></div>
+        <div class="fila"><span class="clave">precioPublico:</span> <span class="valor precio-publico">${formatoMoneda(p.precioPublico)}</span></div>
+        <div class="fila"><span class="clave">medioMayoreo:</span> <span class="valor">${formatoMoneda(p.medioMayoreo)}</span></div>
+        <div class="fila"><span class="clave">mayoreo:</span> <span class="valor">${formatoMoneda(p.mayoreo)}</span></div>
+
+        <div class="grupo"></div>
+        <div class="fila"><span class="clave">ivaTasa:</span> <span class="valor">${p.ivaTasa ?? "N/A"}</span></div>
+        <div class="fila"><span class="clave">iepsTasa:</span> <span class="valor">${p.iepsTasa ?? "N/A"}</span></div>
+
+        <div class="grupo"></div>
+        <div class="fila"><span class="clave">marca:</span> <span class="valor">${p.marca}</span></div>
+        <div class="fila"><span class="clave">departamento:</span> <span class="valor">${p.departamento}</span></div>
+
+        <div class="grupo"></div>
+        <div class="fila"><span class="clave">activo:</span> <span class="valor">${p.activo ? "✅ Sí" : "❌ No"}</span></div>
+        <div class="fila"><span class="clave">cantidadPorCaja:</span> <span class="valor">${p.cantidadPorCaja}</span></div>
+
+        <div class="grupo"></div>
+        <div class="fila"><span class="clave">claveSat:</span> <span class="valor">${p.claveSat}</span></div>
+        <div class="fila"><span class="clave">unidadMedidaSat:</span> <span class="valor">${p.unidadMedidaSat}</span></div>
+      `;
+
+      detalleDiv.innerHTML = html;
+    }
+
+    cargarProducto();
+  </script>
+</body>
+</html>

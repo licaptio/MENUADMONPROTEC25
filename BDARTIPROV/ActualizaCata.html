@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Actualizar Productos (Sobrescribir con JSON)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
+    .progress { width: 100%; background: #eee; border-radius: 5px; margin: 10px 0; }
+    .bar { height: 20px; width: 0%; background: green; border-radius: 5px; text-align: center; color: white; font-size: 12px; }
+    #log { margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Actualizar productos en Firestore (Sobrescribe todo)</h1>
+  <input type="file" id="fileInput" />
+  <button id="uploadBtn">Actualizar Firestore</button>
+
+  <div class="progress">
+    <div id="progressBar" class="bar">0%</div>
+  </div>
+  <div id="log"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const progressBar = document.getElementById("progressBar");
+    const log = document.getElementById("log");
+
+    let productos = [];
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        productos = JSON.parse(e.target.result);
+        log.innerHTML = `📂 Archivo cargado: ${productos.length} productos.`;
+      };
+      reader.readAsText(file);
+    });
+
+    function sleep(ms) {
+      return new Promise(res => setTimeout(res, ms));
+    }
+
+    async function subirEnLotes() {
+      if (!productos.length) {
+        log.innerHTML = "⚠️ Selecciona un archivo JSON primero.";
+        return;
+      }
+
+      const total = productos.length;
+      let subidos = 0;
+      let creados = 0;
+      let actualizados = 0;
+      const batchSize = 300;
+      const delay = 2000;
+
+      // 🔹 Estructura base estándar (para asegurar consistencia)
+      const estructuraBase = {
+        ["Codigo Barra"]: "",
+        Concepto: "",
+        ["Costo sin Impuesto"]: 0,
+        ["Precio Publico"]: 0,
+        MedioMayoreo: 0,
+        Mayoreo: 0,
+        ["Clave Sat"]: "",
+        ["Unidad de Medida Sat"]: "",
+        activo: true,
+        IVA_Tasa: 0,
+        IEPS_Tasa: 0,
+        Marca: "",
+        Departamento: "",
+        CantidadPorCaja: 0
+      };
+
+      for (let i = 0; i < total; i += batchSize) {
+        const batch = writeBatch(db);
+        const lote = productos.slice(i, i + batchSize);
+
+        for (const producto of lote) {
+          const ref = doc(db, "productos", String(producto["Codigo Barra"]));
+
+          // 🔹 Sobrescribir completo el doc con lo nuevo
+          batch.set(ref, { ...estructuraBase, ...producto }, { merge: false });
+          actualizados++; // aquí todo cuenta como "reescrito"
+        }
+
+        await batch.commit();
+        subidos += lote.length;
+
+        const pct = ((subidos / total) * 100).toFixed(1);
+        progressBar.style.width = pct + "%";
+        progressBar.textContent = pct + "%";
+        log.innerHTML += `\n✅ Procesados ${subidos} de ${total}`;
+
+        if (i + batchSize < total) await sleep(delay);
+      }
+
+      log.innerHTML += `\n🎉 Terminado. Documentos reescritos: ${actualizados}`;
+    }
+
+    uploadBtn.addEventListener("click", subirEnLotes);
+  </script>
+</body>
+</html>
