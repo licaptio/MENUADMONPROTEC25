@@ -9,18 +9,20 @@
     font-family: 'Segoe UI', sans-serif;
     background: #f4f4f4;
     margin: 0;
-    padding: 20px;
+    padding: 10px;
   }
 h2 {
   text-align: center;
   background: #222;
   color: white;
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
-  margin: 0 auto 20px auto;
-  max-width: 700px;
+  margin: 0 auto 15px auto;
+  max-width: 100%;
+  font-size: 18px;
 }
 
+/* Tabla base */
 table {
   width: 100%;
   max-width: 700px;
@@ -28,7 +30,6 @@ table {
   border-collapse: collapse;
   background: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  table-layout: fixed;
 }
 
 th, td {
@@ -36,6 +37,7 @@ th, td {
   padding: 6px;
   text-align: center;
   font-size: 14px;
+  word-wrap: break-word;
 }
 th {
   background: #333;
@@ -43,21 +45,14 @@ th {
 }
 tr:nth-child(even) { background: #f9f9f9; }
 
-th:nth-child(1), td:nth-child(1) {
-  width: 300px;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-th:nth-child(2), td:nth-child(2),
-th:nth-child(3), td:nth-child(3),
-th:nth-child(4), td:nth-child(4) {
-  width: 90px;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Inputs */
+input[type="text"], input[type="number"] {
+  width: 100%;
+  border: none;
+  text-align: right;
+  font-size: 14px;
+  padding: 2px;
+  box-sizing: border-box;
 }
 
 /* Quitar spinners */
@@ -70,30 +65,46 @@ input[type=number] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
-input[type="text"], input[type="number"] {
-  width: 100%;
-  border: none;
-  text-align: right;
-  font-size: 14px;
-  padding: 2px;
-  box-sizing: border-box;
-}
 
 /* Botones */
-.btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
+.btn { 
+  padding: 10px; margin: 6px 2px; border: none; color: white; 
+  font-size: 14px; cursor: pointer; border-radius: 5px; 
+  flex: 1;
+}
 .btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
 .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
 .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
-.btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
 
+.btn-container { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 6px; 
+  justify-content: center; 
+  margin: 15px 0; 
+  max-width: 700px; 
+  margin-left:auto; margin-right:auto;
+}
+
+/* 🔹 Responsivo móvil */
 @media (max-width: 600px) {
-  table, th, td { font-size: 12px; white-space: normal; }
-  th:nth-child(1), td:nth-child(1),
-  th:nth-child(2), td:nth-child(2),
-  th:nth-child(3), td:nth-child(3),
-  th:nth-child(4), td:nth-child(4) {
-    white-space: normal;
+  table, thead { display: none; } /* ocultamos cabecera */
+  tbody, tr, td { display: block; width: 100%; }
+  tr { margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; background: white; padding: 6px; }
+  td { 
+    text-align: left; 
+    padding: 6px 8px; 
+    border: none;
   }
+  td:before { 
+    content: attr(data-label); 
+    font-weight: bold; 
+    display: block; 
+    margin-bottom: 3px;
+    color: #333;
+  }
+  h2 { font-size: 16px; padding: 8px; }
+  .btn { font-size: 13px; padding: 8px; }
 }
 </style>
 </head>
@@ -119,9 +130,6 @@ input[type="text"], input[type="number"] {
 </div>
 
 <script>
-const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
-const CHAT_ID = "6617988297";
-
 const data = [
   // 📦 Celofán
   ["PAPEL CELOFÁN ROJO 25KG", "", 20],
@@ -300,93 +308,25 @@ const data = [
   ["ARROZ CHOCOLATE", "", 0],
   ["---"],
 ];
-
 const tbody = document.getElementById("tabla-cuerpo");
 data.forEach(row => {
   const [concepto, inventario, stock] = row;
   const tr = document.createElement("tr");
-
-  if (concepto === "---") {
-    tr.innerHTML = `<td colspan="4" style="height:15px;background:#fff;"></td>`;
-  } else {
-    tr.innerHTML = `
-      <td>${concepto}</td>
-      <td><input type="text" value="${inventario || ""}"></td>
-      <td>${stock || ""}</td>
-      <td><input type="number" min="0"></td>
-    `;
-  }
+  tr.innerHTML = `
+    <td data-label="CONCEPTO">${concepto}</td>
+    <td data-label="INVENTARIO"><input type="text" value="${inventario || ""}"></td>
+    <td data-label="STOCK">${stock || ""}</td>
+    <td data-label="PEDIDO"><input type="number" min="0"></td>
+  `;
   tbody.appendChild(tr);
 });
 
-function enviarTelegram() {
-  let mensaje = "ORDEN DE COMPRA BODEGA41:\n";
-  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
-    const concepto = tr.cells[0].textContent;
-    const inventario = tr.cells[1].querySelector("input")?.value || "";
-    const pedido = tr.cells[3].querySelector("input")?.value || "";
-    if (pedido && pedido > 0) {
-      mensaje += `${concepto} | Inv:${inventario} | Ped:${pedido}\n`;
-    }
-  });
-
-  if (mensaje === "ORDEN DE COMPRA BODEGA41:\n") {
-    alert("No hay pedidos para enviar.");
-    return;
-  }
-
-  // 🔥 Partir el mensaje si excede 4000 caracteres
-  const partes = [];
-  while (mensaje.length > 0) {
-    partes.push(mensaje.substring(0, 4000));
-    mensaje = mensaje.substring(4000);
-  }
-
-  // Enviar cada parte
-  partes.forEach(parte => {
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: parte })
-    });
-  });
-
-  alert("Pedido enviado a Telegram en " + partes.length + " mensaje(s).");
-}
-
-function generarImagen() {
-  const pedido = [];
-  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
-    const concepto = tr.cells[0].textContent;
-    const inventario = tr.cells[1].querySelector("input")?.value || "";
-    const pedidoVal = tr.cells[3].querySelector("input")?.value || "";
-    if (pedidoVal && pedidoVal > 0) {
-      pedido.push([concepto, inventario, pedidoVal]);
-    }
-  });
-  if (pedido.length === 0) {
-    alert("No hay pedidos para generar imagen.");
-    return;
-  }
-  const ventana = window.open("", "", "width=600,height=800");
-  ventana.document.write(`
-    <html><head><title>Pedido</title></head>
-    <body style="font-family: Arial; padding: 20px;">
-      <h2 style="text-align:center;">ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES</h2>
-      <table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;">
-        <tr><th>CONCEPTO</th><th>INVENTARIO</th><th>PEDIDO</th></tr>
-        ${pedido.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`).join("")}
-      </table>
-    </body></html>
-  `);
-  ventana.document.close();
-}
-
 function limpiarPedidos() {
-  document.querySelectorAll("#tabla-cuerpo tr input").forEach(input => input.value = "");
+  document.querySelectorAll("#tabla-cuerpo input").forEach(input => input.value = "");
 }
 </script>
-<footer style="position:fixed; bottom:0; left:0; width:100%; text-align:center; background:#222; color:#fff; padding:8px; font-size:13px;">
+
+<footer style="position:fixed; bottom:0; left:0; width:100%; text-align:center; background:#222; color:#fff; padding:6px; font-size:12px;">
   ⚡ Powered by <b style="color:#1f4fff;">PROVSOFT</b>
 </footer>
 
