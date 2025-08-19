@@ -322,8 +322,11 @@ data.forEach(row => {
 });
 
 function limpiarPedidos() {
-  document.querySelectorAll("#tabla-cuerpo input").forEach(input => input.value = "");
+  // Limpiar TODOS los inputs (inventario y pedido)
+  document.querySelectorAll('#tabla-cuerpo input')
+    .forEach(input => input.value = "");
 }
+
 </script>
 <script>
 function generarImagen() {
