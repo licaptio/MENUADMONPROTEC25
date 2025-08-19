@@ -157,7 +157,7 @@ async function buscarProductos(termino) {
   estado.textContent = "";
   resultados = [];
 
-  // Si es un código de barras numérico
+  // Si es un código de barras numérico → primero intenta en codigoBarra
   if (/^\d+$/.test(termino)) {
     const q = query(
       collection(db, "productos"),
@@ -166,11 +166,16 @@ async function buscarProductos(termino) {
     );
     const snap = await getDocs(q);
     resultados = snap.docs.map(doc => doc.data());
-    mostrarPagina(0);
-    return;
+
+    // 👉 Si encontró algo, ya terminamos
+    if (resultados.length > 0) {
+      mostrarPagina(0);
+      return;
+    }
+    // Si no encontró nada, seguimos buscando en concepto
   }
 
-  // 🔹 Si es texto → buscar por concepto
+  // 🔹 Buscar por concepto
   const q = query(
     collection(db, "productos"),
     where("activo", "==", true),
@@ -178,7 +183,7 @@ async function buscarProductos(termino) {
   );
   const snap = await getDocs(q);
 
-  const palabras = termino.toLowerCase().split(" "); // dividir en palabras clave
+  const palabras = termino.toLowerCase().split(" ");
   snap.forEach(doc => {
     const p = doc.data();
     if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
@@ -193,6 +198,7 @@ async function buscarProductos(termino) {
     mostrarPagina(0);
   }
 }
+
 
     function mostrarPagina(n) {
       pagina = n;
