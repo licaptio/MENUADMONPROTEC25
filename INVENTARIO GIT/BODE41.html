@@ -18,86 +18,83 @@ h2 {
   padding: 12px;
   border-radius: 8px;
   margin: 0 auto 20px auto;
-  max-width: 700px; /* igual que la tabla */
+  max-width: 700px;
 }
 
 table {
   width: 100%;
-  max-width: 700px; /* ancho máximo en PC */
-  margin: auto; /* centrar */
+  max-width: 700px;
+  margin: auto;
   border-collapse: collapse;
   background: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   table-layout: fixed;
 }
 
-  th, td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    text-align: center;
-    font-size: 14px;
-  }
-  th {
-    background: #333;
-    color: white;
-  }
-  tr:nth-child(even) { background: #f9f9f9; }
+th, td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: center;
+  font-size: 14px;
+}
+th {
+  background: #333;
+  color: white;
+}
+tr:nth-child(even) { background: #f9f9f9; }
 
-  /* Recorte en PC */
-  th:nth-child(1), td:nth-child(1) {
-    width: 300px;
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  th:nth-child(2), td:nth-child(2),
-  th:nth-child(3), td:nth-child(3),
-  th:nth-child(4), td:nth-child(4) {
-    width: 90px;
-    max-width: 90px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+th:nth-child(1), td:nth-child(1) {
+  width: 300px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+th:nth-child(2), td:nth-child(2),
+th:nth-child(3), td:nth-child(3),
+th:nth-child(4), td:nth-child(4) {
+  width: 90px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-/* Quitar spinners en Chrome, Safari, Edge, Opera */
+/* Quitar spinners */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
-/* Quitar spinners en Firefox */
 input[type=number] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
-  input[type="text"], input[type="number"] {
-    width: 100%;
-    border: none;
-    text-align: right;
-    font-size: 14px;
-    padding: 2px;
-    box-sizing: border-box;
-  }
+input[type="text"], input[type="number"] {
+  width: 100%;
+  border: none;
+  text-align: right;
+  font-size: 14px;
+  padding: 2px;
+  box-sizing: border-box;
+}
 
-  /* Botones */
-  .btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
-  .btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
-  .btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
-  .btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
-  .btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+/* Botones */
+.btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
+.btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
+.btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
+.btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
+.btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
 
-  @media (max-width: 600px) {
-    table, th, td { font-size: 12px; white-space: normal; }
-    th:nth-child(1), td:nth-child(1),
-    th:nth-child(2), td:nth-child(2),
-    th:nth-child(3), td:nth-child(3),
-    th:nth-child(4), td:nth-child(4) {
-      white-space: normal;
-    }
+@media (max-width: 600px) {
+  table, th, td { font-size: 12px; white-space: normal; }
+  th:nth-child(1), td:nth-child(1),
+  th:nth-child(2), td:nth-child(2),
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) {
+    white-space: normal;
   }
+}
 </style>
 </head>
 <body>
@@ -304,14 +301,12 @@ const data = [
   ["---"],
 ];
 
-
 const tbody = document.getElementById("tabla-cuerpo");
 data.forEach(row => {
   const [concepto, inventario, stock] = row;
   const tr = document.createElement("tr");
 
   if (concepto === "---") {
-    // fila vacía como separador
     tr.innerHTML = `<td colspan="4" style="height:15px;background:#fff;"></td>`;
   } else {
     tr.innerHTML = `
@@ -321,17 +316,15 @@ data.forEach(row => {
       <td><input type="number" min="0"></td>
     `;
   }
-
   tbody.appendChild(tr);
 });
 
-
 function enviarTelegram() {
   let mensaje = "ORDEN DE COMPRA BODEGA41:\n";
-  document.querySelectorAll("#tabla tbody tr").forEach(tr => {
+  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
     const concepto = tr.cells[0].textContent;
-    const inventario = tr.cells[1].querySelector("input").value;
-    const pedido = tr.cells[3].querySelector("input").value;
+    const inventario = tr.cells[1].querySelector("input")?.value || "";
+    const pedido = tr.cells[3].querySelector("input")?.value || "";
     if (pedido && pedido > 0) {
       mensaje += `${concepto} | Inv:${inventario} | Ped:${pedido}\n`;
     }
@@ -349,10 +342,10 @@ function enviarTelegram() {
 
 function generarImagen() {
   const pedido = [];
-  document.querySelectorAll("#tabla tbody tr").forEach(tr => {
+  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
     const concepto = tr.cells[0].textContent;
-    const inventario = tr.cells[1].querySelector("input").value;
-    const pedidoVal = tr.cells[3].querySelector("input").value;
+    const inventario = tr.cells[1].querySelector("input")?.value || "";
+    const pedidoVal = tr.cells[3].querySelector("input")?.value || "";
     if (pedidoVal && pedidoVal > 0) {
       pedido.push([concepto, inventario, pedidoVal]);
     }
@@ -376,7 +369,7 @@ function generarImagen() {
 }
 
 function limpiarPedidos() {
-  document.querySelectorAll("#tabla tbody tr input").forEach(input => input.value = "");
+  document.querySelectorAll("#tabla-cuerpo tr input").forEach(input => input.value = "");
 }
 </script>
 
