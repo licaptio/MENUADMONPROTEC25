@@ -333,6 +333,17 @@ function enviarTelegram() {
     alert("No hay pedidos para enviar.");
     return;
   }
+  if (mensaje.length > 4000) {
+  const partes = mensaje.match(/[\s\S]{1,4000}/g);
+  partes.forEach(part => {
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: part })
+    });
+  });
+}
+
   fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
