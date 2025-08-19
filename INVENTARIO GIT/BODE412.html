@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PEDIDOS - Orden de Compra</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
+h2 {
+  text-align: center;
+  background: #222;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 0 auto 20px auto;
+  max-width: 700px;
+}
+
+table {
+  width: 100%;
+  max-width: 700px;
+  margin: auto;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  table-layout: fixed;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: center;
+  font-size: 14px;
+}
+th {
+  background: #333;
+  color: white;
+}
+tr:nth-child(even) { background: #f9f9f9; }
+
+th:nth-child(1), td:nth-child(1) {
+  width: 300px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+th:nth-child(2), td:nth-child(2),
+th:nth-child(3), td:nth-child(3),
+th:nth-child(4), td:nth-child(4) {
+  width: 90px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quitar spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="text"], input[type="number"] {
+  width: 100%;
+  border: none;
+  text-align: right;
+  font-size: 14px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+/* Botones */
+.btn { padding: 12px; margin: 6px 2px; border: none; color: white; font-size: 14px; cursor: pointer; border-radius: 5px; width: 100%; max-width: 250px; }
+.btn-green { background: #28a745; } .btn-green:hover { background: #218838; }
+.btn-red { background: #dc3545; } .btn-red:hover { background: #b52a37; }
+.btn-blue { background: #007bff; } .btn-blue:hover { background: #0056b3; }
+.btn-container { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+
+@media (max-width: 600px) {
+  table, th, td { font-size: 12px; white-space: normal; }
+  th:nth-child(1), td:nth-child(1),
+  th:nth-child(2), td:nth-child(2),
+  th:nth-child(3), td:nth-child(3),
+  th:nth-child(4), td:nth-child(4) {
+    white-space: normal;
+  }
+}
+</style>
+</head>
+<body>
+
+<h2>PEDIDOS - Orden de Compra</h2>
+<table id="tabla">
+  <thead>
+    <tr>
+      <th>CONCEPTO</th>
+      <th>INVENTARIO</th>
+      <th>STOCK</th>
+      <th>PEDIDO</th>
+    </tr>
+  </thead>
+  <tbody id="tabla-cuerpo"></tbody>
+</table>
+
+<div class="btn-container">
+  <button class="btn btn-green" onclick="enviarTelegram()">📤 Enviar a Telegram</button>
+  <button class="btn btn-blue" onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
+  <button class="btn btn-red" onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
+</div>
+
+<script>
+const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+const CHAT_ID = "6617988297";
+
+const data = [
+  // 📦 Celofán
+  ["PAPEL CELOFÁN ROJO 25KG", "", 20],
+  ["PAPEL CELOFÁN AMARILLO 25KG", "", 10],
+  ["PAPEL CELOFÁN BLANCO 25KG", "", 7],
+  ["BOLSA CELOFÁN 14X20 C35 CAJA", "", 4],
+  ["---"],
+
+  // 📦 Azúcares y derivados
+  ["AZÚCAR MORENA 25", "", 100],
+  ["AZÚCAR BLANCA 25", "", 20],
+  ["MORENA SWITEN 907", "", 30],
+  ["AZÚCAR GLASS 6X", "", 3],
+  ["FÉCULA DE MAÍZ", "", 3],
+  ["AZÚCAR MOSCABADA", "", 2],
+  ["GLUCOSA 19 LTS 27K", "", 2],
+  ["NUTRILECHE CAMA 15T 90", "", "6T"],
+  ["---"],
+
+  // 📦 Líquidos
+  ["MORENA SWITEN 907", "", 50],
+  ["NUTRILECHE C90 PAQ", "", 8],
+  ["KARTAMUS 12 CAMA", "", 100],
+  ["HARIMASA C10", "", 100],
+  ["CHILE FARO ROD", "", 100],
+  ["KLEENEX 80", "", 100],
+  ["---"],
+  
+  // 📦 Plásticos
+  ["50X70 NEGRA C/25KG", "", 10],
+  ["70X90 NEGRA C/25KG", "", 20],
+  ["90X120 NEGRA C/25KG", "", 40],
+  ["EMPLAYE P/ENTARIMAR", "", 300],
+  ["REVOLUCIÓN CORTO", "", 50],
+  ["REVOLUCIÓN LARGO", "", 20],
+  ["BOLSA 55X65", "", 4],
+  ["BOLSA 65X65", "", 4],
+  ["VIVERO CHICA", "", 10],
+  ["VIVERO MEDIANA", "", 10],
+  ["VIVERO GRANDE", "", 10],
+  ["ROLLOS NEGROS", "", 4],
+  ["ROLLOS TRANSPARENTE", "", 4],
+  ["10X20 BOLLERA C/200", "", 20],
+  ["BOLSA GOURMET", "", 3],
+  ["---"],
+  
+  // 📦 Comida para mascotas  
+  ["RINGO C20", "", 100],
+  ["PEDIGREE ADULTO", "", 10],
+  ["PEDIGREE CACHORRO", "", 10],
+  ["WHISKAS", "", 10],
+  ["---"],
+
+  // 📦 Papel higiénico y servilletas
+  ["HIG JUMBO DALIA 360", "", 30],
+  ["HIG JUNIOR DALIA 180", "", 30],
+  ["MARLY 12 C/500", "", 30],
+  ["BARRA MESA C/24", "", 10],
+  ["SANITA", "", 40],
+  ["TR160 C/6 MOC BLA", "", 30],
+  ["MOCAMBO LITHE C/16", "", 30],
+  ["---"],
+
+// 📦 Cacahuates, botanas, hoja tamal y chile japonés
+["CACAHUATE BLANCO SALADO 10KG", "", 1],
+["CACAHUATE ENCHILADO MITADES 10KG", "", 3],
+["CACAHUATE GARAPIÑADO 10KG", "", 20],
+["CACAHUATE SALADO 10KG", "", 20],
+["CANTINERO TOTOPO Y AJO", "", 15],
+["MIXTO CON FRITURA 10KG", "", 10],
+["JAPONÉS HOT NUT 10KG", "", 10],
+["JAPONÉS 10KG", "", 10],
+["CHICHARRÓN CERDO KILO", "", 3],
+["CHICHARRÓN KRANKY KILO", "", 3],
+["HOJA TAMAL BULTOS", "", 10],
+["CHILE JAPONÉS BULTO", "", 1],
+["---"],
+
+
+  // 📦 Conos
+  ["CONO DEL 8", "", 3],
+  ["CONO DEL 35", "", 10],
+  ["---"],
+
+  // 📦 Cremas, aderezos y especias
+  ["CREMA CAMELIA 10/1KG", "", 60],
+  ["ADEREZO VIRMAR 10/1KG", "", 60],
+  ["ADEREZO FROMELY 10/850GR", "", 100],
+  ["CREMA FROMELY 10/850GR", "", 60],
+  ["CHILE QUEBRADO C/1000", "", 30],
+  ["---"],
+
+  // 📦 Tripas
+  ["TRIPA 21", "", 4],
+  ["TRIPA 23", "", 4],
+  ["TRIPA 26", "", 2],
+  ["TRIPA 28", "", 4],
+  ["TRIPA 30", "", 2],
+  ["TRIPA 32", "", "-"],
+  ["TRIPA 34", "", "-"],
+  ["TRIPA 40", "", "-"],
+  ["---"],
+
+  // 📦 Vinagres y vainilla
+  ["VINAGRE BLANCO 1LT C/12", "", 5],
+  ["VINAGRE BLANCO 4/4L", "", 10],
+  ["VINAGRE BLANCO 355ML C/24", "", 3],
+  ["VINAGRE DE MANZANA 355ML C/24", "", 5],
+  ["VINAGRE DE MANZANA GALÓN", "", 30],
+  ["VINAGRE DE MANZANA 12/1LT", "", 15],
+  ["VAINILLA 355ML C/24", "", 2],
+  ["VAINILLA GALÓN C/4", "", 4],
+  ["VAINILLA LITRO C/12", "", 2],
+  ["VAINILLA BLANCA 1LT", "", 1],
+  ["---"],
+
+  // 📦 Brochetas, cónicos y vasos
+  ["P/BROCHETA No.6 15CM", "", 2],
+  ["P/BROCHETA No.8 20CM", "", 2],
+  ["P/BROCHETA No.10 25CM", "", 2],
+  ["P/BROCHETA No.12 30CM", "", 3],
+  ["CÓNICO 106", "", 10],
+  ["CÓNICO 104", "", 5],
+  ["TAPA 0 CUEVAS C/2000", "", 20],
+  ["VASO 0 CUEVAS C/2000", "", 20],
+  ["TAPA 4-A CUEVAS C/2000", "", 3],
+  ["VASO 4-A CUEVAS C/2000", "", 3],
+  ["---"],
+
+  // 📦 Cajas de pizza
+  ["CAJAS DE PIZZA 8", "", 100],
+  ["CAJAS DE PIZZA 10", "", 150],
+  ["CAJAS DE PIZZA 12", "", 200],
+  ["CAJAS DE PIZZA 14", "", 250],
+  ["CAJAS DE PIZZA 16", "", 150],
+  ["CAJAS DE PIZZA 18", "", 100],
+  ["CAJAS DE PIZZA 10 BLANCO", "", 50],
+  ["CAJAS DE PIZZA 12 BLANCO", "", 50],
+  ["CAJAS DE PIZZA 14 BLANCO", "", 50],
+  ["CAJAS DE PIZZA 16 BLANCO", "", 50],
+  ["---"],
+
+  // 📦 Torito
+  ["TORITO LITRO", "", 60],
+  ["TORITO GALÓN", "", 60],
+  ["---"],
+
+  // 📦 Aluminios y encerados
+  ["ALUMINIO 5M C/24 BON", "", 30],
+  ["ALUMINIO 7M C/24 BON", "", 30],
+  ["ALUMINIO 10M C/24 BON", "", 10],
+  ["ALUMINIO 5M C/24 STAR", "", 30],
+  ["ALUMINIO 7M C/24 STAR", "", 30],
+  ["ALUMINIO 10M C/24 STAR", "", 10],
+  ["ALUMINIO 50M CARO", "", 20],
+  ["STAR FOIL 500GR C/12", "", 3],
+  ["ALUMINIO 3KG C/4PZ", "", 3],
+  ["PAPEL PARA ESTUFA", "", 50],
+  ["ENCERADO 10M", "", 10],
+  ["ENCERADO 20M", "", 10],
+  ["ROLLO ENCERADO 3KG", "", 3],
+  ["---"],
+
+  // 📦 Palmex
+  ["10X10 C/15KG", "", 60],
+  ["ANILLO C/20KG", "", 0],
+  ["DONA C/20KG", "", 0],
+  ["ESPACIAL C/15KG", "", 0],
+  ["MINI CUADRO C/20KG", "", 10],
+  ["ROTINI C/20KG", "", 20],
+  ["RUEDA GRANDE C/13KG", "", 15],
+  ["HOJUELA PAPA 8KG", "", 30],
+  ["ARITOS 3KG", "", 0],
+  ["ZUCARIN C/15KG", "", 0],
+  ["CORN FLAKES 10KG", "", 0],
+  ["ARROZ CHOCOLATE", "", 0],
+  ["---"],
+];
+
+const tbody = document.getElementById("tabla-cuerpo");
+data.forEach(row => {
+  const [concepto, inventario, stock] = row;
+  const tr = document.createElement("tr");
+
+  if (concepto === "---") {
+    tr.innerHTML = `<td colspan="4" style="height:15px;background:#fff;"></td>`;
+  } else {
+    tr.innerHTML = `
+      <td>${concepto}</td>
+      <td><input type="text" value="${inventario || ""}"></td>
+      <td>${stock || ""}</td>
+      <td><input type="number" min="0"></td>
+    `;
+  }
+  tbody.appendChild(tr);
+});
+
+function enviarTelegram() {
+  let mensaje = "ORDEN DE COMPRA BODEGA41:\n";
+  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
+    const concepto = tr.cells[0].textContent;
+    const inventario = tr.cells[1].querySelector("input")?.value || "";
+    const pedido = tr.cells[3].querySelector("input")?.value || "";
+    if (pedido && pedido > 0) {
+      mensaje += `${concepto} | Inv:${inventario} | Ped:${pedido}\n`;
+    }
+  });
+
+  if (mensaje === "ORDEN DE COMPRA BODEGA41:\n") {
+    alert("No hay pedidos para enviar.");
+    return;
+  }
+
+  // 🔥 Partir el mensaje si excede 4000 caracteres
+  const partes = [];
+  while (mensaje.length > 0) {
+    partes.push(mensaje.substring(0, 4000));
+    mensaje = mensaje.substring(4000);
+  }
+
+  // Enviar cada parte
+  partes.forEach(parte => {
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: parte })
+    });
+  });
+
+  alert("Pedido enviado a Telegram en " + partes.length + " mensaje(s).");
+}
+
+function generarImagen() {
+  const pedido = [];
+  document.querySelectorAll("#tabla-cuerpo tr").forEach(tr => {
+    const concepto = tr.cells[0].textContent;
+    const inventario = tr.cells[1].querySelector("input")?.value || "";
+    const pedidoVal = tr.cells[3].querySelector("input")?.value || "";
+    if (pedidoVal && pedidoVal > 0) {
+      pedido.push([concepto, inventario, pedidoVal]);
+    }
+  });
+  if (pedido.length === 0) {
+    alert("No hay pedidos para generar imagen.");
+    return;
+  }
+  const ventana = window.open("", "", "width=600,height=800");
+  ventana.document.write(`
+    <html><head><title>Pedido</title></head>
+    <body style="font-family: Arial; padding: 20px;">
+      <h2 style="text-align:center;">ORDEN DE COMPRA PROVEEDORA DE DULCES Y DESECHABLES</h2>
+      <table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;">
+        <tr><th>CONCEPTO</th><th>INVENTARIO</th><th>PEDIDO</th></tr>
+        ${pedido.map(p => `<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`).join("")}
+      </table>
+    </body></html>
+  `);
+  ventana.document.close();
+}
+
+function limpiarPedidos() {
+  document.querySelectorAll("#tabla-cuerpo tr input").forEach(input => input.value = "");
+}
+</script>
+<footer style="position:fixed; bottom:0; left:0; width:100%; text-align:center; background:#222; color:#fff; padding:8px; font-size:13px;">
+  ⚡ Powered by <b style="color:#1f4fff;">PROVSOFT</b>
+</footer>
+
+</body>
+</html>
