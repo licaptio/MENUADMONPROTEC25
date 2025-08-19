@@ -55,12 +55,13 @@
 <select id="nombreFiltro" onchange="sincronizarRFC()">
   <option value="">-- Selecciona uno --</option>
 </select>
-<label style="margin-left:1rem;">
+
+  <button onclick="consultarPorRFC()">🔎 Consultar</button>
+
+  <label style="margin-left:1rem;">
   <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()" checked>
   Mostrar pagadas
 </label>
-
-<button onclick="consultarPorRFC()">🔎 Consultar</button>
 
   <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
   <div id="tablaResultados"></div>
@@ -273,3 +274,4 @@ function filtrarPagadas() {
 
 </body>
 </html>
+
