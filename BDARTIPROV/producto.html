@@ -36,17 +36,16 @@
       from { color: #00cc00; }
       to { color: #009900; }
     }
-  /* 🔹 Estilo para Costo Neto (rojo parpadeando) */
-  .costo-neto {
-    font-size: 1.4em;          /* igual tamaño que precio público */
-    font-weight: bold;
-    color: red;
-    animation: parpadeoRojo 1s infinite alternate;
-  }
-  @keyframes parpadeoRojo {
-    from { color: #ff0000; }
-    to { color: #cc0000; }
-  }
+.costo-neto {
+  font-size: 1.4em;          /* igual tamaño que precio público */
+  font-weight: bold;
+  color: red;
+  animation: parpadeoRojo 1s infinite alternate;
+}
+@keyframes parpadeoRojo {
+  from { color: #ff0000; }
+  to { color: #cc0000; }
+}
   </style>
 </head>
 <body>
@@ -110,8 +109,8 @@ let costoNeto = subtotal + iva;  // costo + IEPS + IVA
         
         <div class="fila"><span class="clave">concepto:</span> <span class="valor">${p.concepto}</span></div>
         <div class="fila"><span class="clave">costoSinImpuesto:</span> <span class="valor">${formatoMoneda(p.costoSinImpuesto)}</span></div>
-        <div class="fila">
-  <span class="clave">costoNeto:</span> 
+  <div class="fila">
+  <span class="clave">costoNeto (impuestos incluidos):</span> 
   <span class="valor costo-neto">${formatoMoneda(costoNeto)}</span>
 </div>
 
@@ -153,6 +152,7 @@ let costoNeto = subtotal + iva;  // costo + IEPS + IVA
 
 </body>
 </html>
+
 
 
 
