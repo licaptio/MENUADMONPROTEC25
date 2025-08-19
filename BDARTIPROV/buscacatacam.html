@@ -150,45 +150,49 @@
     let pagina = 0;
     const porPagina = 20;
 
-    // 🔹 Buscar productos
-    async function buscarProductos(termino) {
-      resultadosDiv.innerHTML = "⏳ Buscando...";
-      barraProgreso.value = 0;
-      estado.textContent = "";
-      resultados = [];
+// 🔹 Buscar productos
+async function buscarProductos(termino) {
+  resultadosDiv.innerHTML = "⏳ Buscando...";
+  barraProgreso.value = 0;
+  estado.textContent = "";
+  resultados = [];
 
-      if (/^\d+$/.test(termino)) {
-        const q = query(
-          collection(db, "productos"),
-          where("activo", "==", true),
-          where("codigoBarra", "==", termino)
-        );
-        const snap = await getDocs(q);
-        resultados = snap.docs.map(doc => doc.data());
-        mostrarPagina(0);
-        return;
-      }
+  // Si es un código de barras numérico
+  if (/^\d+$/.test(termino)) {
+    const q = query(
+      collection(db, "productos"),
+      where("activo", "==", true),
+      where("codigoBarra", "==", termino)
+    );
+    const snap = await getDocs(q);
+    resultados = snap.docs.map(doc => doc.data());
+    mostrarPagina(0);
+    return;
+  }
 
-      const q = query(
-        collection(db, "productos"),
-        where("activo", "==", true),
-        orderBy("concepto")
-      );
-      const snap = await getDocs(q);
-      snap.forEach(doc => {
-        const p = doc.data();
-        if (p.concepto && p.concepto.toLowerCase().includes(termino.toLowerCase())) {
-          resultados.push(p);
-        }
-      });
+  // 🔹 Si es texto → buscar por concepto
+  const q = query(
+    collection(db, "productos"),
+    where("activo", "==", true),
+    orderBy("concepto")
+  );
+  const snap = await getDocs(q);
 
-      if (resultados.length === 0) {
-        resultadosDiv.innerHTML = "❌ No se encontraron resultados";
-        contador.textContent = "";
-      } else {
-        mostrarPagina(0);
-      }
+  const palabras = termino.toLowerCase().split(" "); // dividir en palabras clave
+  snap.forEach(doc => {
+    const p = doc.data();
+    if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
+      resultados.push(p);
     }
+  });
+
+  if (resultados.length === 0) {
+    resultadosDiv.innerHTML = "❌ No se encontraron resultados";
+    contador.textContent = "";
+  } else {
+    mostrarPagina(0);
+  }
+}
 
     function mostrarPagina(n) {
       pagina = n;
