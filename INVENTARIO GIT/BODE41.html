@@ -329,26 +329,29 @@ function enviarTelegram() {
       mensaje += `${concepto} | Inv:${inventario} | Ped:${pedido}\n`;
     }
   });
+
   if (mensaje === "ORDEN DE COMPRA BODEGA41:\n") {
     alert("No hay pedidos para enviar.");
     return;
   }
-  if (mensaje.length > 4000) {
-  const partes = mensaje.match(/[\s\S]{1,4000}/g);
-  partes.forEach(part => {
+
+  // 🔥 Partir el mensaje si excede 4000 caracteres
+  const partes = [];
+  while (mensaje.length > 0) {
+    partes.push(mensaje.substring(0, 4000));
+    mensaje = mensaje.substring(4000);
+  }
+
+  // Enviar cada parte
+  partes.forEach(parte => {
     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: part })
+      body: JSON.stringify({ chat_id: CHAT_ID, text: parte })
     });
   });
-}
 
-  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: CHAT_ID, text: mensaje })
-  }).then(() => alert("Pedido enviado a Telegram"));
+  alert("Pedido enviado a Telegram en " + partes.length + " mensaje(s).");
 }
 
 function generarImagen() {
