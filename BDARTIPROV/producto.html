@@ -98,9 +98,12 @@
 
       const p = snap.docs[0].data();
       // Calcular costo neto con impuestos
-let costoNeto = Number(p.costoSinImpuesto) || 0;
-if (p.ivaTasa) costoNeto += (Number(p.costoSinImpuesto) * Number(p.ivaTasa));
-if (p.iepsTasa) costoNeto += (Number(p.costoSinImpuesto) * Number(p.iepsTasa));
+let costoBase = Number(p.costoSinImpuesto) || 0;
+let ieps = costoBase * (Number(p.iepsTasa) || 0);
+let subtotal = costoBase + ieps;
+let iva = subtotal * (Number(p.ivaTasa) || 0);
+
+let costoNeto = subtotal + iva;  // costo + IEPS + IVA
 
       let html = `
         <div class="fila"><span class="clave">codigoBarra:</span> <span class="valor">${p.codigoBarra}</span></div>
@@ -150,5 +153,6 @@ if (p.iepsTasa) costoNeto += (Number(p.costoSinImpuesto) * Number(p.iepsTasa));
 
 </body>
 </html>
+
 
 
