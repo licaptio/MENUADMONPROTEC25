@@ -128,6 +128,7 @@ input[type=number] {
   <button class="btn btn-blue" onclick="generarImagen()">🖼️ Generar Imagen Pedido</button>
   <button class="btn btn-red" onclick="limpiarPedidos()">🧹 Limpiar Pedidos</button>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 const data = [
@@ -322,6 +323,40 @@ data.forEach(row => {
 
 function limpiarPedidos() {
   document.querySelectorAll("#tabla-cuerpo input").forEach(input => input.value = "");
+}
+</script>
+<script>
+function generarImagen() {
+  // Clonamos la tabla para no modificar la original
+  const tablaOriginal = document.getElementById("tabla");
+  const tablaClone = tablaOriginal.cloneNode(true);
+
+  // Filtrar: quitar filas donde el PEDIDO está vacío o 0
+  const rows = tablaClone.querySelectorAll("tbody tr");
+  rows.forEach(row => {
+    const pedidoInput = row.querySelector('td[data-label="PEDIDO"] input');
+    if (!pedidoInput || pedidoInput.value === "" || pedidoInput.value === "0") {
+      row.remove();
+    } else {
+      // Reemplazar input por el valor plano
+      const td = pedidoInput.parentElement;
+      td.textContent = pedidoInput.value;
+    }
+  });
+
+  // Si no hay pedidos, alertar
+  if (tablaClone.querySelectorAll("tbody tr").length === 0) {
+    alert("No hay pedidos para generar imagen.");
+    return;
+  }
+
+  // Convertir la tabla clonada a imagen
+  html2canvas(tablaClone, { backgroundColor: "#fff" }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "pedido.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
 }
 </script>
 
