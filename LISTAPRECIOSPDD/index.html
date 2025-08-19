@@ -5,12 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de Precios PROVEEDORA DE DULCES</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f4f4f4; 
+      margin: 0; 
+      padding: 0; 
+      display: flex; 
+      flex-direction: column; 
+      min-height: 100vh;
+    }
+    .container { 
+      flex: 1; 
+      max-width: 800px; 
+      margin: auto; 
+      background: white; 
+      padding: 20px; 
+      border-radius: 10px; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+    }
     h1 { text-align: center; color: #333; }
     .item { margin: 10px 0; padding: 10px; border-bottom: 1px solid #ddd; }
     a { color: #1f4fff; text-decoration: none; font-weight: bold; }
     a:hover { text-decoration: underline; }
+    footer { 
+      text-align: center; 
+      padding: 12px; 
+      font-size: 14px; 
+      color: #555; 
+      background: #f9f9f9;
+      border-top: 1px solid #ddd;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -33,7 +61,10 @@
         CLIENTE REYMA LISTA B41 AGOSTO 2025
       </a>
     </div>
-
   </div>
+
+  <footer>
+    🚀 Powered by <strong>PROVSOFT</strong>
+  </footer>
 </body>
 </html>
