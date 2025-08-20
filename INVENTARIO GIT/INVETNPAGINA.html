@@ -461,5 +461,52 @@ function handleSwipe() {
 // primera carga
 render();
 </script>
+<script>
+function render() {
+  const data = inventarios[pagina];
+  document.getElementById("titulo").textContent = data.nombre;
+  document.getElementById("pagination-info").textContent = `${pagina + 1} de ${inventarios.length}`;
+
+  // Actualizar botones
+  document.getElementById("btn-anterior").disabled = pagina === 0;
+  document.getElementById("btn-siguiente").disabled = pagina === inventarios.length - 1;
+
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+
+  data.items.forEach((row, rowIndex) => {
+    const tr = document.createElement("tr");
+
+    // Producto (fijo)
+    const tdProducto = document.createElement("td");
+    tdProducto.textContent = row[0];
+    tr.appendChild(tdProducto);
+
+    // Detalle (editable numérico sin spinners)
+    const tdDetalle = document.createElement("td");
+    const inputDetalle = document.createElement("input");
+    inputDetalle.type = "text";            // no usamos number → sin spinners
+    inputDetalle.inputMode = "numeric";    // teclado numérico en móviles
+    inputDetalle.pattern = "[0-9]*";       // solo dígitos
+    inputDetalle.value = row[1];
+    inputDetalle.style.width = "100%";
+    inputDetalle.addEventListener("input", e => {
+      // solo números
+      data.items[rowIndex][1] = e.target.value.replace(/\D/g, "");
+      e.target.value = data.items[rowIndex][1];
+    });
+    tdDetalle.appendChild(inputDetalle);
+    tr.appendChild(tdDetalle);
+
+    // Cantidad (fijo)
+    const tdCantidad = document.createElement("td");
+    tdCantidad.textContent = row[2];
+    tr.appendChild(tdCantidad);
+
+    tbody.appendChild(tr);
+  });
+}
+</script>
+
 </body>
 </html>
