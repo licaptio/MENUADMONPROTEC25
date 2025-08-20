@@ -88,28 +88,31 @@
     let uuidActual = null;
     let html5QrCode = null;
 
-    async function buscarPorUUID(uuid) {
-      const { data, error } = await supabaseClient
-        .from("deuda_limpia_pdd")
-        .select("*")
-        .eq("uuid_cfdi", uuid)
-        .maybeSingle();
+async function buscarPorUUID(uuid) {
+  const { data, error } = await supabaseClient
+    .from("deuda_limpia_pdd")
+    .select("*")
+    .eq("uuid_cfdi", uuid)
+    .maybeSingle();
 
-      if (error || !data) {
-        alert("Factura no encontrada");
-        return;
-      }
+  if (error || !data) {
+    alert("Factura no encontrada");
+    return;
+  }
 
-      document.getElementById("result").style.display = "block";
-      document.getElementById("uuidTexto").innerText = uuid;
-      document.getElementById("fechaTexto").innerText = new Date(data.fecha).toLocaleString();
-      document.getElementById("rfcTexto").innerText = data.rfc_emisor;
-      document.getElementById("razonTexto").innerText = data.razon_social_emisor;
-      document.getElementById("facturaTexto").innerText = data.factura;
-      document.getElementById("totalTexto").innerText = parseFloat(data.total).toFixed(2);
-      document.getElementById("pagadaTexto").innerText = data.factura_pagada || "NO";
-      uuidActual = uuid;
-    }
+  document.getElementById("result").style.display = "block";
+  document.getElementById("uuidTexto").innerText = uuid;
+  document.getElementById("fechaTexto").innerText = new Date(data.fecha).toLocaleString();
+  document.getElementById("rfcTexto").innerText = data.rfc_emisor;
+  document.getElementById("razonTexto").innerText = data.razon_social_emisor;
+  document.getElementById("facturaTexto").innerText = data.factura;
+  document.getElementById("totalTexto").innerText = parseFloat(data.total).toFixed(2);
+  document.getElementById("pagadaTexto").innerText = data.factura_pagada || "NO";
+  uuidActual = uuid;
+
+  // 👉 aquí fuerzas "SI" en físico
+  document.getElementById("fisicaTexto").value = "SI";
+}
 
     function extraeUUID(raw) {
       let m = raw.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
@@ -176,3 +179,4 @@
   </footer>
 </body>
 </html>
+
