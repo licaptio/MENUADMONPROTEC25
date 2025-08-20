@@ -17,6 +17,7 @@
     input, select, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
     #result { background: #eef; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
     #uuidDetectado { font-weight: bold; color: #003366; margin-top: 10px; }
+    #lectorQR { margin-top: 15px; }
     footer {
       position: fixed;
       bottom: 0;
@@ -32,6 +33,11 @@
 </head>
 <body>
   <h2>Escanear CFDI con QR (SAT)</h2>
+
+  <!-- Botón para iniciar escáner -->
+  <button onclick="iniciarScanner()" style="background-color: #0044cc; color: white;">
+    📷 Iniciar Escáner
+  </button>
 
   <!-- Cámara -->
   <div id="lectorQR" style="width:100%; max-width:400px; margin:auto;"></div>
@@ -70,14 +76,6 @@
                 placeholder="Factura física recibida completa, pero sin comentarios"
                 style="width: 100%; font-size: 1rem; padding: 8px; border-radius: 6px;"></textarea>
     </div>
-
-    <!-- Galería fotos -->
-    <div id="galeriaFotos" style="margin-top: 20px;">
-      <h4>Fotos adjuntas:</h4>
-      <div id="contenedorFotos" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-      <input type="file" id="fotoExterna" accept="image/*" capture="environment" style="display: none;" />
-      <button onclick="document.getElementById('fotoExterna').click()" style="flex: 1;">📸 Tomar Foto</button>
-    </div>
   </div>
 
   <!-- Scripts -->
@@ -110,28 +108,12 @@
       document.getElementById("facturaTexto").innerText = data.factura;
       document.getElementById("totalTexto").innerText = parseFloat(data.total).toFixed(2);
       document.getElementById("pagadaTexto").innerText = data.factura_pagada || "NO";
-      document.getElementById("fisicaTexto").value = "SI";
-      document.getElementById("comentarioTexto").value = data.comentario_factura_fisica || "";
-      document.getElementById("contenedorFotos").innerHTML = "";
       uuidActual = uuid;
-
-      mostrarFotos(data.fotos);
-    }
-
-    function normalizaCfdiQR(raw) {
-      let s = (raw || "").trim();
-      s = s.replace(/httpsÑ--/gi, "https://");
-      s = s.replace(/Ñ/g, ":");
-      s = s.replace(/¡/g, "=");
-      s = s.replace(/[’'´`]/g, "-");
-      s = s.replace(/\s+/g, " ");
-      return s;
     }
 
     function extraeUUID(raw) {
-      const s = normalizaCfdiQR(raw);
-      let m = s.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
-      if (!m) m = s.match(/id\s*=\s*([a-f0-9]{16,})/i);
+      let m = raw.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
+      if (!m) m = raw.match(/id\s*=\s*([a-f0-9]{16,})/i);
       if (m && m[1]) {
         let v = m[1].toUpperCase().replace(/[^A-F0-9\-]/g, "");
         const soloHex = v.replace(/-/g, "");
@@ -143,74 +125,10 @@
       return null;
     }
 
-    function mostrarFotos(fotos) {
-      const contenedor = document.getElementById("contenedorFotos");
-      contenedor.innerHTML = "";
-      if (Array.isArray(fotos) && fotos.length > 0) {
-        fotos.forEach(url => {
-          const wrapper = document.createElement("div");
-          wrapper.style.position = "relative";
-          const img = document.createElement("img");
-          img.src = url;
-          img.style.width = "100px";
-          img.style.border = "1px solid #ccc";
-          img.style.borderRadius = "4px";
-          const btn = document.createElement("button");
-          btn.innerText = "✖";
-          btn.style.position = "absolute";
-          btn.style.top = "-8px";
-          btn.style.right = "-8px";
-          btn.style.background = "crimson";
-          btn.style.color = "white";
-          btn.onclick = () => eliminarFoto(url);
-          wrapper.appendChild(img);
-          wrapper.appendChild(btn);
-          contenedor.appendChild(wrapper);
-        });
-      }
-    }
-
-    async function eliminarFoto(urlEliminar) {
-      if (!confirm("¿Eliminar esta imagen?")) return;
-      const { data: filaActual } = await supabaseClient
-        .from("deuda_limpia_pdd")
-        .select("fotos")
-        .eq("uuid_cfdi", uuidActual)
-        .maybeSingle();
-
-      const nuevasFotos = filaActual.fotos.filter(foto => foto !== urlEliminar);
-      await supabaseClient
-        .from("deuda_limpia_pdd")
-        .update({ fotos: nuevasFotos })
-        .eq("uuid_cfdi", uuidActual);
-      buscarPorUUID(uuidActual);
-    }
-
     async function guardarCambios() {
       if (!uuidActual) return;
       const fisica = document.getElementById("fisicaTexto").value;
       const comentario = document.getElementById("comentarioTexto").value;
-
-      // 👉 Crear mensaje flotante
-      let guardandoMsg = document.getElementById("mensajeGuardando");
-      if (!guardandoMsg) {
-        guardandoMsg = document.createElement("div");
-        guardandoMsg.id = "mensajeGuardando";
-        document.body.appendChild(guardandoMsg);
-      }
-      guardandoMsg.textContent = "Guardando...";
-      guardandoMsg.style.position = "fixed";
-      guardandoMsg.style.top = "10px";
-      guardandoMsg.style.right = "10px";
-      guardandoMsg.style.background = "#007700";
-      guardandoMsg.style.color = "white";
-      guardandoMsg.style.padding = "10px 20px";
-      guardandoMsg.style.borderRadius = "6px";
-      guardandoMsg.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-      guardandoMsg.style.zIndex = "9999";
-
-      // 👉 Pausa artificial (1 segundo)
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const { error } = await supabaseClient
         .from("deuda_limpia_pdd")
@@ -218,34 +136,22 @@
         .eq("uuid_cfdi", uuidActual);
 
       if (error) {
-        guardandoMsg.textContent = "❌ Error al guardar";
-        guardandoMsg.style.background = "#990000";
+        alert("❌ Error al guardar");
       } else {
-        guardandoMsg.textContent = "✅ Guardado correctamente";
-        guardandoMsg.style.background = "#007700";
-        limpiarFormulario(); // 👈 reinicia el escáner después de guardar
+        alert("✅ Guardado correctamente");
+        regresarInicio();
       }
-
-      // 👉 Quitar mensaje después de 2 segundos
-      setTimeout(() => {
-        if (guardandoMsg) guardandoMsg.remove();
-      }, 2000);
     }
 
-    function limpiarFormulario() {
+    function regresarInicio() {
       uuidActual = null;
       document.getElementById("result").style.display = "none";
       document.getElementById("uuidDetectado").innerText = "";
-      iniciarScanner(); // 👈 reinicia la cámara
+      document.getElementById("lectorQR").innerHTML = ""; // limpia cámara
     }
 
     function iniciarScanner() {
-      // Si ya había un escáner, destruirlo primero
-      if (html5QrCode) {
-        html5QrCode.stop().catch(() => {});
-        html5QrCode.clear(); // 👈 limpia el div
-      }
-
+      regresarInicio();
       html5QrCode = new Html5Qrcode("lectorQR");
 
       Html5Qrcode.getCameras().then(cameras => {
@@ -257,18 +163,16 @@
               document.getElementById("uuidDetectado").innerText = `UUID detectado: ${qrCodeMessage}`;
               const uuid = extraeUUID(qrCodeMessage);
               if (uuid) buscarPorUUID(uuid);
-              html5QrCode.stop().catch(() => {}); // se pausa hasta guardar
+              html5QrCode.stop().catch(() => {});
             }
           );
         }
       });
     }
-
-    window.addEventListener("load", iniciarScanner);
   </script>
 
   <footer>
-    powered by PROVSOFT
+    powered by PROVSOFT 20
   </footer>
 </body>
 </html>
