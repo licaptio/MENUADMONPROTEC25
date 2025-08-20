@@ -190,9 +190,13 @@ async function guardarCambios() {
   const fisica = document.getElementById("fisicaTexto").value;
   const comentario = document.getElementById("comentarioTexto").value;
 
-  // 👉 Crear mensaje temporal
-  const guardandoMsg = document.createElement("div");
-  guardandoMsg.id = "mensajeGuardando";
+  // 👉 Crear mensaje flotante
+  let guardandoMsg = document.getElementById("mensajeGuardando");
+  if (!guardandoMsg) {
+    guardandoMsg = document.createElement("div");
+    guardandoMsg.id = "mensajeGuardando";
+    document.body.appendChild(guardandoMsg);
+  }
   guardandoMsg.textContent = "Guardando...";
   guardandoMsg.style.position = "fixed";
   guardandoMsg.style.top = "10px";
@@ -202,9 +206,9 @@ async function guardarCambios() {
   guardandoMsg.style.padding = "10px 20px";
   guardandoMsg.style.borderRadius = "6px";
   guardandoMsg.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-  document.body.appendChild(guardandoMsg);
+  guardandoMsg.style.zIndex = "9999";
 
-  // 👉 Pausa artificial (1 segundo para que se note el "guardando")
+  // 👉 Pausa artificial (1 segundo)
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   const { error } = await supabaseClient
@@ -218,18 +222,24 @@ async function guardarCambios() {
   } else {
     guardandoMsg.textContent = "✅ Guardado correctamente";
     guardandoMsg.style.background = "#007700";
-    limpiarFormulario();
+    limpiarFormulario(true); // 👈 aquí reiniciamos el escáner
   }
 
-  // 👉 Quitar mensaje a los 2 segundos
-  setTimeout(() => guardandoMsg.remove(), 2000);
+  // 👉 Quitar mensaje después de 2 segundos
+  setTimeout(() => {
+    if (guardandoMsg) guardandoMsg.remove();
+  }, 2000);
 }
 
-    function limpiarFormulario() {
-      uuidActual = null;
-      document.getElementById("result").style.display = "none";
-      document.getElementById("uuidDetectado").innerText = "";
-    }
+// Ajuste: siempre limpiar y reiniciar escáner si se pide
+function limpiarFormulario(resetScanner = false) {
+  uuidActual = null;
+  document.getElementById("result").style.display = "none";
+  document.getElementById("uuidDetectado").innerText = "";
+  if (resetScanner) {
+    iniciarScanner(); // 👈 vuelve a abrir la cámara y escanear
+  }
+}
 
     // 📷 Iniciar escáner
     function iniciarScanner() {
