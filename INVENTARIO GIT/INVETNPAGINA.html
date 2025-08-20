@@ -391,6 +391,7 @@ const inventarios = [
   }
 ];
 
+
 let pagina = 0;
 
 function render() {
@@ -398,76 +399,6 @@ function render() {
   document.getElementById("titulo").textContent = data.nombre;
   document.getElementById("pagination-info").textContent = `${pagina + 1} de ${inventarios.length}`;
 
-  // Actualizar estado de botones
-  document.getElementById("btn-anterior").disabled = pagina === 0;
-  document.getElementById("btn-siguiente").disabled = pagina === inventarios.length - 1;
-
-  const tbody = document.querySelector("#tabla tbody");
-  tbody.innerHTML = "";
-  data.items.forEach(row => {
-    const tr = document.createElement("tr");
-    row.forEach(cell => {
-      const td = document.createElement("td");
-      td.textContent = cell;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-}
-
-function siguiente() {
-  if (pagina < inventarios.length - 1) {
-    pagina++;
-    render();
-    // Scroll suave hacia arriba para mejor experiencia móvil
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-}
-
-function anterior() {
-  if (pagina > 0) {
-    pagina--;
-    render();
-    // Scroll suave hacia arriba para mejor experiencia móvil
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-}
-
-// Agregar navegación con gestos táctiles
-let touchStartX = 0;
-let touchEndX = 0;
-
-document.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-}, false);
-
-document.addEventListener('touchend', e => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
-}, false);
-
-function handleSwipe() {
-  const minSwipeDistance = 50; // Distancia mínima para considerar un swipe
-  
-  if (touchEndX < touchStartX && touchStartX - touchEndX > minSwipeDistance) {
-    siguiente(); // Swipe izquierda
-  }
-  
-  if (touchEndX > touchStartX && touchEndX - touchStartX > minSwipeDistance) {
-    anterior(); // Swipe derecha
-  }
-}
-
-// primera carga
-render();
-</script>
-<script>
-function render() {
-  const data = inventarios[pagina];
-  document.getElementById("titulo").textContent = data.nombre;
-  document.getElementById("pagination-info").textContent = `${pagina + 1} de ${inventarios.length}`;
-
-  // Actualizar botones
   document.getElementById("btn-anterior").disabled = pagina === 0;
   document.getElementById("btn-siguiente").disabled = pagina === inventarios.length - 1;
 
@@ -485,13 +416,12 @@ function render() {
     // Detalle (editable numérico sin spinners)
     const tdDetalle = document.createElement("td");
     const inputDetalle = document.createElement("input");
-    inputDetalle.type = "text";            // no usamos number → sin spinners
-    inputDetalle.inputMode = "numeric";    // teclado numérico en móviles
-    inputDetalle.pattern = "[0-9]*";       // solo dígitos
+    inputDetalle.type = "text";         // evita spinners
+    inputDetalle.inputMode = "numeric"; // teclado numérico móvil
+    inputDetalle.pattern = "[0-9]*";    // solo dígitos
     inputDetalle.value = row[1];
     inputDetalle.style.width = "100%";
     inputDetalle.addEventListener("input", e => {
-      // solo números
       data.items[rowIndex][1] = e.target.value.replace(/\D/g, "");
       e.target.value = data.items[rowIndex][1];
     });
@@ -506,6 +436,44 @@ function render() {
     tbody.appendChild(tr);
   });
 }
+
+function siguiente() {
+  if (pagina < inventarios.length - 1) {
+    pagina++;
+    render();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+}
+
+function anterior() {
+  if (pagina > 0) {
+    pagina--;
+    render();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+}
+
+// Swipe táctil
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+}, false);
+
+function handleSwipe() {
+  const minSwipeDistance = 50;
+  if (touchEndX < touchStartX && touchStartX - touchEndX > minSwipeDistance) siguiente();
+  if (touchEndX > touchStartX && touchEndX - touchStartX > minSwipeDistance) anterior();
+}
+
+// primera carga
+render();
 </script>
 
 </body>
