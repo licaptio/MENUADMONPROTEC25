@@ -240,24 +240,31 @@ function limpiarFormulario() {
   iniciarScanner();
 }
 
-    // 📷 Iniciar escáner
-    function iniciarScanner() {
-      const html5QrCode = new Html5Qrcode("lectorQR");
-      Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            qrCodeMessage => {
-              document.getElementById("uuidDetectado").innerText = `UUID detectado: ${qrCodeMessage}`;
-              const uuid = extraeUUID(qrCodeMessage);
-              if (uuid) buscarPorUUID(uuid);
-              html5QrCode.stop();
-            }
-          );
+let html5QrCode = null;
+
+function iniciarScanner() {
+  // Si ya había un escáner, detenerlo primero
+  if (html5QrCode) {
+    html5QrCode.stop().catch(() => {});
+  }
+
+  html5QrCode = new Html5Qrcode("lectorQR");
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (cameras && cameras.length) {
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          document.getElementById("uuidDetectado").innerText = `UUID detectado: ${qrCodeMessage}`;
+          const uuid = extraeUUID(qrCodeMessage);
+          if (uuid) buscarPorUUID(uuid);
+          html5QrCode.stop(); // se pausa hasta guardar
         }
-      });
+      );
     }
+  });
+}
 
     window.addEventListener("load", iniciarScanner);
   </script>
