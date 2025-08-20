@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paginación Inventarios</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    .controls { margin-top: 1rem; text-align: center; }
+    button { margin: 0 5px; padding: 10px 15px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h2 id="titulo"></h2>
+  <table id="tabla">
+    <thead>
+      <tr><th>Producto</th><th>Detalle</th><th>Cantidad</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="controls">
+    <button onclick="anterior()">⬅ Anterior</button>
+    <button onclick="siguiente()">Siguiente ➡</button>
+  </div>
+
+<script>
+const inventarios = [
+  {
+    nombre: "📦 Celofán",
+    items: [
+      ["PAPEL CELOFÁN ROJO 25KG", "", 20],
+      ["PAPEL CELOFÁN AMARILLO 25KG", "", 10],
+      ["PAPEL CELOFÁN BLANCO 25KG", "", 7],
+      ["BOLSA CELOFÁN 14X20 C35 CAJA", "", 4]
+    ]
+  },
+  {
+    nombre: "📦 Azúcares y derivados",
+    items: [
+      ["AZÚCAR MORENA 25", "", 100],
+      ["AZÚCAR BLANCA 25", "", 20],
+      ["MORENA SWITEN 907", "", 30],
+      ["AZÚCAR GLASS 6X", "", 3],
+      ["FÉCULA DE MAÍZ", "", 3]
+    ]
+  },
+  {
+    nombre: "📦 Líquidos",
+    items: [
+      ["MORENA SWITEN 907", "", 50],
+      ["NUTRILECHE C90 PAQ", "", 8],
+      ["KARTAMUS 12 CAMA", "", 100],
+      ["HARIMASA C10", "", 100]
+    ]
+  }
+  // 👉 Aquí vas agregando los demás bloques igual
+];
+
+let pagina = 0;
+
+function render() {
+  const data = inventarios[pagina];
+  document.getElementById("titulo").textContent = data.nombre;
+
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+  data.items.forEach(row => {
+    const tr = document.createElement("tr");
+    row.forEach(cell => {
+      const td = document.createElement("td");
+      td.textContent = cell;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function siguiente() {
+  if (pagina < inventarios.length - 1) {
+    pagina++;
+    render();
+  }
+}
+
+function anterior() {
+  if (pagina > 0) {
+    pagina--;
+    render();
+  }
+}
+
+// primera carga
+render();
+</script>
+</body>
+</html>
