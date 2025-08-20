@@ -231,14 +231,13 @@ async function guardarCambios() {
   }, 2000);
 }
 
-// Ajuste: siempre limpiar y reiniciar escáner si se pide
-function limpiarFormulario(resetScanner = false) {
+function limpiarFormulario() {
   uuidActual = null;
   document.getElementById("result").style.display = "none";
   document.getElementById("uuidDetectado").innerText = "";
-  if (resetScanner) {
-    iniciarScanner(); // 👈 vuelve a abrir la cámara y escanear
-  }
+
+  // 👉 Reiniciar escáner automáticamente
+  iniciarScanner();
 }
 
     // 📷 Iniciar escáner
