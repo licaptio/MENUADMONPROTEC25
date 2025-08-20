@@ -6,7 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Escáner QR CFDI SAT</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- 📌 Aquí agregas la librería para usar la cámara -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
+    ...
+  </style>
+</head>
     body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
     input, select, button { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
     #result { background: #eef; padding: 10px; border-radius: 6px; margin-top: 20px; display: none; }
@@ -328,6 +334,43 @@ document.getElementById('fotoExterna').addEventListener('change', async function
   // ✅ limpia el input para permitir nueva foto desde cámara
   document.getElementById('fotoExterna').value = '';
 });
+function iniciarScanner() {
+  const html5QrCode = new Html5Qrcode("lectorQR");
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (cameras && cameras.length) {
+      // Usa la primera cámara (trasera normalmente en móviles)
+      html5QrCode.start(
+        { facingMode: "environment" }, // environment = trasera
+        {
+          fps: 10,    // cuadros por segundo
+          qrbox: 250  // tamaño del recuadro de escaneo
+        },
+        qrCodeMessage => {
+          // ✅ Se detectó QR
+          document.getElementById('uuidDetectado').innerText = `UUID detectado: ${qrCodeMessage}`;
+          const uuid = extraeUUID(qrCodeMessage);
+          if (uuid) {
+            buscarPorUUID(uuid);
+          } else {
+            document.getElementById('uuidDetectado').innerText = 'No se detectó UUID válido';
+          }
+          // Detener escaneo después de leer uno (opcional)
+          html5QrCode.stop();
+        },
+        errorMessage => {
+          // console.log("No QR:", errorMessage);
+        }
+      ).catch(err => {
+        console.error("No se pudo iniciar cámara:", err);
+      });
+    }
+  }).catch(err => console.error("Error al listar cámaras:", err));
+}
+
+// Llama al scanner cuando cargue la página
+window.addEventListener('load', iniciarScanner);
+
   
 </script>
 
