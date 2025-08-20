@@ -88,6 +88,7 @@
     );
 
     let uuidActual = null;
+    let html5QrCode = null;
 
     async function buscarPorUUID(uuid) {
       const { data, error } = await supabaseClient
@@ -185,86 +186,83 @@
       buscarPorUUID(uuidActual);
     }
 
-async function guardarCambios() {
-  if (!uuidActual) return;
-  const fisica = document.getElementById("fisicaTexto").value;
-  const comentario = document.getElementById("comentarioTexto").value;
+    async function guardarCambios() {
+      if (!uuidActual) return;
+      const fisica = document.getElementById("fisicaTexto").value;
+      const comentario = document.getElementById("comentarioTexto").value;
 
-  // 👉 Crear mensaje flotante
-  let guardandoMsg = document.getElementById("mensajeGuardando");
-  if (!guardandoMsg) {
-    guardandoMsg = document.createElement("div");
-    guardandoMsg.id = "mensajeGuardando";
-    document.body.appendChild(guardandoMsg);
-  }
-  guardandoMsg.textContent = "Guardando...";
-  guardandoMsg.style.position = "fixed";
-  guardandoMsg.style.top = "10px";
-  guardandoMsg.style.right = "10px";
-  guardandoMsg.style.background = "#007700";
-  guardandoMsg.style.color = "white";
-  guardandoMsg.style.padding = "10px 20px";
-  guardandoMsg.style.borderRadius = "6px";
-  guardandoMsg.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-  guardandoMsg.style.zIndex = "9999";
+      // 👉 Crear mensaje flotante
+      let guardandoMsg = document.getElementById("mensajeGuardando");
+      if (!guardandoMsg) {
+        guardandoMsg = document.createElement("div");
+        guardandoMsg.id = "mensajeGuardando";
+        document.body.appendChild(guardandoMsg);
+      }
+      guardandoMsg.textContent = "Guardando...";
+      guardandoMsg.style.position = "fixed";
+      guardandoMsg.style.top = "10px";
+      guardandoMsg.style.right = "10px";
+      guardandoMsg.style.background = "#007700";
+      guardandoMsg.style.color = "white";
+      guardandoMsg.style.padding = "10px 20px";
+      guardandoMsg.style.borderRadius = "6px";
+      guardandoMsg.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+      guardandoMsg.style.zIndex = "9999";
 
-  // 👉 Pausa artificial (1 segundo)
-  await new Promise(resolve => setTimeout(resolve, 1000));
+      // 👉 Pausa artificial (1 segundo)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const { error } = await supabaseClient
-    .from("deuda_limpia_pdd")
-    .update({ factura_fisicamente: fisica, comentario_factura_fisica: comentario })
-    .eq("uuid_cfdi", uuidActual);
+      const { error } = await supabaseClient
+        .from("deuda_limpia_pdd")
+        .update({ factura_fisicamente: fisica, comentario_factura_fisica: comentario })
+        .eq("uuid_cfdi", uuidActual);
 
-  if (error) {
-    guardandoMsg.textContent = "❌ Error al guardar";
-    guardandoMsg.style.background = "#990000";
-  } else {
-    guardandoMsg.textContent = "✅ Guardado correctamente";
-    guardandoMsg.style.background = "#007700";
-    limpiarFormulario(true); // 👈 aquí reiniciamos el escáner
-  }
+      if (error) {
+        guardandoMsg.textContent = "❌ Error al guardar";
+        guardandoMsg.style.background = "#990000";
+      } else {
+        guardandoMsg.textContent = "✅ Guardado correctamente";
+        guardandoMsg.style.background = "#007700";
+        limpiarFormulario(); // 👈 reinicia el escáner después de guardar
+      }
 
-  // 👉 Quitar mensaje después de 2 segundos
-  setTimeout(() => {
-    if (guardandoMsg) guardandoMsg.remove();
-  }, 2000);
-}
-
-function limpiarFormulario() {
-  uuidActual = null;
-  document.getElementById("result").style.display = "none";
-  document.getElementById("uuidDetectado").innerText = "";
-
-  // 👉 Reiniciar escáner automáticamente
-  iniciarScanner();
-}
-
-let html5QrCode = null;
-
-function iniciarScanner() {
-  // Si ya había un escáner, detenerlo primero
-  if (html5QrCode) {
-    html5QrCode.stop().catch(() => {});
-  }
-
-  html5QrCode = new Html5Qrcode("lectorQR");
-
-  Html5Qrcode.getCameras().then(cameras => {
-    if (cameras && cameras.length) {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-          document.getElementById("uuidDetectado").innerText = `UUID detectado: ${qrCodeMessage}`;
-          const uuid = extraeUUID(qrCodeMessage);
-          if (uuid) buscarPorUUID(uuid);
-          html5QrCode.stop(); // se pausa hasta guardar
-        }
-      );
+      // 👉 Quitar mensaje después de 2 segundos
+      setTimeout(() => {
+        if (guardandoMsg) guardandoMsg.remove();
+      }, 2000);
     }
-  });
-}
+
+    function limpiarFormulario() {
+      uuidActual = null;
+      document.getElementById("result").style.display = "none";
+      document.getElementById("uuidDetectado").innerText = "";
+      iniciarScanner(); // 👈 reinicia la cámara
+    }
+
+    function iniciarScanner() {
+      // Si ya había un escáner, destruirlo primero
+      if (html5QrCode) {
+        html5QrCode.stop().catch(() => {});
+        html5QrCode.clear(); // 👈 limpia el div
+      }
+
+      html5QrCode = new Html5Qrcode("lectorQR");
+
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+              document.getElementById("uuidDetectado").innerText = `UUID detectado: ${qrCodeMessage}`;
+              const uuid = extraeUUID(qrCodeMessage);
+              if (uuid) buscarPorUUID(uuid);
+              html5QrCode.stop().catch(() => {}); // se pausa hasta guardar
+            }
+          );
+        }
+      });
+    }
 
     window.addEventListener("load", iniciarScanner);
   </script>
