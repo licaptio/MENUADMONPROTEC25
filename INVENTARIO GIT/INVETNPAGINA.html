@@ -85,9 +85,9 @@
     position:fixed;left:0;right:0;bottom:0;background:#ffffffee;
     backdrop-filter:blur(6px);border-top:1px solid #e9eef5;padding:8px;z-index:60
   }
-  .actions .grid{
-    max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px
-  }
+.actions .grid{
+  max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px
+}
   button{
     padding:.6rem .5rem;font-size:.95rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
     box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .05s
@@ -150,12 +150,15 @@
 
   <!-- Barra de acciones -->
   <div class="actions">
-    <div class="grid">
-      <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
-      <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
-      <button id="btn-orden" onclick="generarOrden()">🧾 Orden</button>
-      <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
-    </div>
+  <div class="grid">
+    <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
+    <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
+    <button id="btn-limpiar" onclick="limpiarTodo()" style="background:#ef4444">🧹 Limpiar</button>
+    <button id="btn-orden" onclick="generarOrden()">🧾 Orden</button>
+    <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
+  </div>
+</div>
+
   </div>
 
   <!-- Modal ORDEN DE COMPRA -->
@@ -765,5 +768,52 @@ function cerrarOrden(){ document.getElementById("modalOrden").style.display = "n
 loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
 render();
 </script>
+<script>
+// --- Persistencia ---
+function saveData(){
+  try{
+    localStorage.setItem("inventariosData", JSON.stringify(inventarios));
+  }catch(e){ console.error("No se pudo guardar en LocalStorage", e); }
+}
+function limpiarTodo(){
+  if(!confirm("¿Borrar TODA la captura (inventario y pedido) y limpiar el almacenamiento local?")){
+    return;
+  }
+  // Vacía inventario (col 1) y pedido (col 3) de todas las páginas
+  for(let p=0; p<inventarios.length; p++){
+    for(let i=0; i<inventarios[p].items.length; i++){
+      inventarios[p].items[i][1] = ""; // inventario
+      inventarios[p].items[i][3] = ""; // pedido
+    }
+  }
+  // Limpia LocalStorage
+  localStorage.removeItem("inventariosData");
+  render();
+  alert("Se limpió toda la información local.");
+}
+
+function loadData(){
+  const raw = localStorage.getItem("inventariosData");
+  if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)){
+      // si la estructura cambió, solo copia lo que exista
+      for(let p=0; p<inventarios.length; p++){
+        if(parsed[p] && Array.isArray(parsed[p].items)){
+          for(let i=0; i<inventarios[p].items.length; i++){
+            if(parsed[p].items[i]){
+              // Copiamos inventario (col 1) y pedido (col 3) si existen
+              inventarios[p].items[i][1] = parsed[p].items[i][1] ?? "";
+              inventarios[p].items[i][3] = parsed[p].items[i][3] ?? "";
+            }
+          }
+        }
+      }
+    }
+  }catch(e){ console.error("No se pudo leer LocalStorage", e); }
+}
+</script>
+
 </body>
 </html>
