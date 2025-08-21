@@ -358,18 +358,13 @@ function render(){
 
     const stockBadge = document.createElement("span");
     stockBadge.className = "stock-badge";
-    stockBadge.textContent = (row[2] ?? "").toString();
+    stockBadge.textContent = "Stock " + (row[2] ?? "").toString();
 
     wrap.appendChild(tagInv);
     wrap.appendChild(inputInv);
     wrap.appendChild(stockBadge);
     tdInv.appendChild(wrap);
     tr.appendChild(tdInv);
-
-    // Para desktop se sigue viendo como columna "Stock"
-    const tdStock = document.createElement("td");
-    tdStock.textContent = row[2];
-    tr.appendChild(tdStock);
 
     // Pedido (opcional)
     const tdPedido = document.createElement("td");
