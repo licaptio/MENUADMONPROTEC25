@@ -1,433 +1,383 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Paginación Inventarios</title>
   <style>
-    :root {
-      --primary-color: #2c3e50;
-      --secondary-color: #3498db;
-      --background-color: #f8f9fa;
-      --border-color: #ddd;
-      --text-color: #333;
+    :root{
+      --primary:#2c3e50;
+      --secondary:#3498db;
+      --bg:#f8f9fa;
+      --border:#e6e6e6;
+      --text:#333;
+      --ok:#2ecc71;
+      --warn:#f39c12;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 1rem; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; }
-    .container { max-width: 100%; margin: 0 auto; }
-    header { margin-bottom: 1rem; position: sticky; top: 0; background-color: var(--background-color); padding: 0.5rem 0; z-index: 100; }
-    h2 { font-size: 1.4rem; color: var(--primary-color); padding: 0.5rem; text-align: center; background-color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 0.5rem; }
-    .table-container { overflow-x: auto; margin-bottom: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: white; }
-    table { width: 100%; border-collapse: collapse; min-width: 300px; }
-    th, td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; font-size: 0.9rem; }
-    th { background-color: var(--primary-color); color: white; font-weight: 600; position: sticky; top: 0; }
-    tr:nth-child(even) { background-color: #f2f2f2; }
-    .controls { display: flex; justify-content: space-between; margin-top: 1.5rem; gap: 0.5rem; }
-    button { flex: 1; padding: 0.8rem; font-size: 1rem; background-color: var(--secondary-color); color: white; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    button:disabled { background-color: #95a5a6; cursor: not-allowed; opacity: 0.7; }
-    button:active { transform: scale(0.98); }
-    .pagination-info { text-align: center; margin: 0.5rem 0; font-size: 0.9rem; color: #7f8c8d; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text); line-height:1.5;
+      padding:12px 12px 88px; /* deja espacio para la barra fija */
+    }
+
+    .container{max-width:900px;margin:0 auto}
+    header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
+    h2{
+      font-size:1.25rem;text-align:center;color:var(--primary);
+      background:#fff;border-radius:12px;padding:10px 12px;
+      box-shadow:0 2px 6px rgba(0,0,0,.08); margin-bottom:6px
+    }
+
+    /* Barra de progreso */
+    .pagination-wrap{display:flex;align-items:center;gap:.6rem;justify-content:center;margin:.25rem 0 .6rem}
+    .progress{flex:1;max-width:460px;height:8px;background:#e9eef5;border-radius:999px;overflow:hidden}
+    .progress > span{display:block;height:100%;background:var(--secondary);width:0%;transition:width .25s}
+    .page-info{min-width:90px;text-align:center;color:#6b7a86;font-size:.9rem}
+
+    /* Tabla contenedor */
+    .table-container{
+      background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden
+    }
+    table{width:100%;border-collapse:collapse}
+    thead th{position:sticky;top:0;background:var(--primary);color:#fff;font-weight:600}
+    th,td{padding:.75rem;border-bottom:1px solid var(--border);text-align:left;font-size:.95rem}
+
+    input[type="number"], input[type="text"]{
+      width:100%;padding:.65rem .7rem;border:1px solid #cfd7df;border-radius:10px;
+      font-size:1rem;outline:none
+    }
+    input:focus{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(52,152,219,.15)}
+
+    /* ---- Estilo tarjeta para MÓVIL ---- */
+    @media (max-width: 720px){
+      thead{display:none}
+      table, tbody, tr, td{display:block;width:100%}
+      tr{
+        background:#fff;margin:10px 10px;border:1px solid var(--border);
+        border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06);overflow:hidden
+      }
+      td{
+        border:0;border-bottom:1px dashed #eee;padding:10px 12px
+      }
+      td:last-child{border-bottom:0}
+      /* Etiquetas para cada campo */
+      td::before{
+        content:attr(data-label);
+        display:block;font-size:.82rem;color:#6b7a86;margin-bottom:4px
+      }
+      /* Producto como título */
+      td.producto{
+        background:#f7fafc;font-weight:700;color:#22313f;font-size:1rem
+      }
+      /* Alineación de stock/pedido en dos columnas dentro del card (opcional) */
+      .row-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    }
+
+    /* Barra de ACCIONES fija inferior */
+    .actions{
+      position:fixed;left:0;right:0;bottom:0;background:#ffffffcc;
+      backdrop-filter:blur(6px);border-top:1px solid #e9eef5;
+      padding:10px;z-index:60
+    }
+    .actions .grid{
+      max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px
+    }
+    button{
+      padding:.9rem .6rem;font-size:1rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,.08);transition:transform .05s
+    }
+    button:active{transform:scale(.98)}
+    #btn-anterior{background:#95a5a6}
+    #btn-enviar{background:var(--warn)}
+    #btn-orden{background:#6c5ce7}
+    #btn-siguiente{background:var(--ok)}
+    button:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Modal Orden */
+    #modalOrden{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+      justify-content:center;align-items:center;z-index:1000;padding:16px
+    }
+    .modal-card{
+      background:#fff;border-radius:16px;padding:18px;max-width:520px;width:100%;
+      box-shadow:0 8px 20px rgba(0,0,0,.25)
+    }
+    .modal-card h3{margin-bottom:.5rem;text-align:center}
+    .modal-card .content{max-height:55vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px}
+    .modal-card .close{margin-top:10px;width:100%;background:var(--secondary)}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h2 id="titulo"></h2>
-      <div class="pagination-info" id="pagination-info"></div>
+
+      <div class="pagination-wrap">
+        <div class="progress"><span id="progress-bar"></span></div>
+        <div class="page-info" id="pagination-info"></div>
+      </div>
     </header>
-    
+
     <div class="table-container">
       <table id="tabla">
-<thead>
-  <tr>
-    <th>Producto</th>
-    <th>Inventario</th>
-    <th>Stock</th>
-    <th>Pedido</th>
-  </tr>
-</thead>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Inventario</th>
+            <th>Stock</th>
+            <th>Pedido</th>
+          </tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
-
-<div class="controls">
-  <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
-  <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
-  <button id="btn-orden" onclick="generarOrden()">🧾 Orden de Compra</button>
-  <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
-</div>
-<!-- Modal ORDEN DE COMPRA -->
-<div id="modalOrden" style="
-  display:none;
-  position:fixed;
-  top:0; left:0; right:0; bottom:0;
-  background:rgba(0,0,0,0.7);
-  justify-content:center;
-  align-items:center;
-  z-index:1000;">
-  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; text-align:center;">
-    <h3>ORDEN DE COMPRA PDD031204KL5</h3>
-    <div id="contenidoOrden"></div>
-    <br>
-    <button onclick="cerrarOrden()">Cerrar</button>
   </div>
-</div>
-  
+
+  <!-- Barra fija de acciones -->
+  <div class="actions">
+    <div class="grid">
+      <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
+      <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
+      <button id="btn-orden" onclick="generarOrden()">🧾 Orden</button>
+      <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
+    </div>
+  </div>
+
+  <!-- Modal ORDEN DE COMPRA -->
+  <div id="modalOrden">
+    <div class="modal-card">
+      <h3>ORDEN DE COMPRA PDD031204KL5</h3>
+      <div id="contenidoOrden" class="content"></div>
+      <button class="close" onclick="cerrarOrden()">Cerrar</button>
+    </div>
+  </div>
+
 <script>
+/* ====== TUS DATOS (igual) ====== */
 const inventarios = [
-  {
-    nombre: "📦 Celofán",
-    items: [
-      ["PAPEL CELOFÁN ROJO 25KG", "", 20, ""],
-      ["PAPEL CELOFÁN AMARILLO 25KG", "", 10, ""],
-      ["PAPEL CELOFÁN BLANCO 25KG", "", 7, ""],
-      ["BOLSA CELOFÁN 14X20 C35 CAJA", "", 4, ""],
-    ]
-  },
-  {
-    nombre: "📦 Azúcares y derivados",
-    items: [
-      ["AZÚCAR MORENA 25", "", 100, ""],
-      ["AZÚCAR BLANCA 25", "", 20, ""],
-      ["MORENA SWITEN 907", "", 30, ""],
-      ["AZÚCAR GLASS 6X", "", 3, ""],
-      ["FÉCULA DE MAÍZ", "", 3, ""],
-      ["AZÚCAR MOSCABADA", "", 2, ""],
-      ["GLUCOSA 19 LTS 27K", "", 2, ""],
-    ]
-  },
-  {
-    nombre: "📦 Líquidos",
-    items: [
-      ["MORENA SWITEN 907", "", 50, ""],
-      ["NUTRILECHE C90 PAQ", "", 8, ""],
-      ["KARTAMUS 12 CAMA", "", 100, ""],
-      ["HARIMASA C10", "", 100, ""],
-      ["CHILE FARO ROD", "", 100, ""],
-      ["KLEENEX 80", "", 100, ""]
-    ]
-  },
-  {
-    nombre: "📦 INIX",
-    items: [
-      ["HQR1230", "", 30, ""],
-      ["HQR1238", "", 10, ""],
-      ["HQR1245", "", 10, ""],
-      ["HQR30 VITAFILM", "", 15, ""],
-      ["AL2923 REC CHICA", "", 5, ""],
-      ["AL4032O OVALADA", "", 5, ""],
-      ["AL4130R REC GRANDE", "", 10, ""],
-      ["F3029", "", 2, ""],
-      ["FCB100012 CAJAB/6", "", 10, ""],
-      ["32PP", "", 50, ""],
-      ["16PP", "", 40, ""],
-      ["8PP", "", 10, ""],
-      ["TPP8", "", 100, ""],
-    ]
-  },
-  {
-    nombre: "📦 Plásticos",
-    items: [
-      ["50X70 NEGRA C/25KG", "", 10, ""],
-      ["70X90 NEGRA C/25KG", "", 20, ""],
-      ["90X120 NEGRA C/25KG", "", 40, ""],
-      ["EMPLAYE P/ENTARIMAR", "", 300, ""],
-      ["REVOLUCIÓN CORTO", "", 50, ""],
-      ["REVOLUCIÓN LARGO", "", 20, ""],
-      ["BOLSA 55X65", "", 4, ""],
-      ["BOLSA 65X65", "", 4, ""],
-      ["VIVERO CHICA", "", 10, ""],
-      ["VIVERO MEDIANA", "", 10, ""],
-      ["VIVERO GRANDE", "", 10, ""],
-      ["ROLLOS NEGROS", "", 4, ""],
-      ["ROLLOS TRANSPARENTE", "", 4, ""],
-      ["10X20 BOLLERA C/200", "", 20, ""],
-      ["BOLSA GOURMET", "", 3, ""],
-    ]
-  },
-  {
-    nombre: "📦 Comida para mascotas",
-    items: [
-      ["RINGO C20", "", 100, ""],
-      ["PEDIGREE ADULTO", "", 10, ""],
-      ["PEDIGREE CACHORRO", "", 10, ""],
-      ["WHISKAS", "", 10, ""],
-    ]
-  },
-  {
-    nombre: "📦 Papel higiénico y servilletas",
-    items: [
-      ["HIG JUMBO DALIA 360", "", 30, ""],
-      ["HIG JUNIOR DALIA 180", "", 30, ""],
-      ["MARLY 12 C/500", "", 30, ""],
-      ["BARRA MESA C/24", "", 10, ""],
-      ["SANITA", "", 40, ""],
-      ["TR160 C/6 MOC BLA", "", 30, ""],
-      ["MOCAMBO LITHE C/16", "", 30, ""],
-    ]
-  },
-  {
-    nombre: "📦 Cacahuates, botanas, hoja tamal y chile japonés",
-    items: [
-      ["CACAHUATE BLANCO SALADO 10KG", "", 1, ""],
-      ["CACAHUATE ENCHILADO MITADES 10KG", "", 3, ""],
-      ["CACAHUATE GARAPIÑADO 10KG", "", 20, ""],
-      ["CACAHUATE SALADO 10KG", "", 20, ""],
-      ["CANTINERO TOTOPO Y AJO", "", 15, ""],
-      ["MIXTO CON FRITURA 10KG", "", 10, ""],
-      ["JAPONÉS HOT NUT 10KG", "", 10, ""],
-      ["JAPONÉS 10KG", "", 10, ""],
-      ["CHICHARRÓN CERDO KILO", "", 3, ""],
-      ["CHICHARRÓN KRANKY KILO", "", 3, ""],
-      ["HOJA TAMAL BULTOS", "", 10, ""],
-      ["CHILE JAPONÉS BULTOS", "", 1, ""],
-    ]
-  },
-  {
-    nombre: "📦 Conos",
-    items: [
-      ["CONO DEL 8", "", 3, ""],
-      ["CONO DEL 35", "", 10, ""],
-    ]
-  },
-  {
-    nombre: "📦 Cremas, aderezos y especias",
-    items: [
-      ["CREMA CAMELIA 10/1KG", "", 60, ""],
-      ["ADEREZO VIRMAR 10/1KG", "", 60, ""],
-      ["ADEREZO FROMELY 10/850GR", "", 100, ""],
-      ["CREMA FROMELY 10/850GR", "", 60, ""],
-      ["CHILE QUEBRADO C/1000", "", 30, ""],
-    ]
-  },
-  {
-    nombre: "📦 Tripas",
-    items: [
-      ["TRIPA 21", "", 4, ""],
-      ["TRIPA 23", "", 4, ""],
-      ["TRIPA 26", "", 2, ""],
-      ["TRIPA 28", "", 4, ""],
-      ["TRIPA 30", "", 2, ""],
-      ["TRIPA 32", "", "-", ""],
-      ["TRIPA 34", "", "-", ""],
-      ["TRIPA 40", "", "-", ""],
-    ]
-  },
-  {
-    nombre: "📦 Vinagres y vainilla",
-    items: [
-      ["VINAGRE BLANCO 1LT C/12", "", 5, ""],
-      ["VINAGRE BLANCO 4/4L", "", 10, ""],
-      ["VINAGRE BLANCO 355ML C/24", "", 3, ""],
-      ["VINAGRE DE MANZANA 355ML C/24", "", 5, ""],
-      ["VINAGRE DE MANZANA GALÓN", "", 30, ""],
-      ["VINAGRE DE MANZANA 12/1LT", "", 15, ""],
-      ["VAINILLA 355ML C/24", "", 2, ""],
-      ["VAINILLA GALÓN C/4", "", 4, ""],
-      ["VAINILLA LITRO C/12", "", 2, ""],
-      ["VAINILLA BLANCA 1LT", "", 1, ""],
-    ]
-  },
-  {
-    nombre: "📦 Brochetas, cónicos y vasos",
-    items: [
-      ["P/BROCHETA No.6 15CM", "", 2, ""],
-      ["P/BROCHETA No.8 20CM", "", 2, ""],
-      ["P/BROCHETA No.10 25CM", "", 2, ""],
-      ["P/BROCHETA No.12 30CM", "", 3, ""],
-      ["CÓNICO 106", "", 10, ""],
-      ["CÓNICO 104", "", 5, ""],
-      ["TAPA 0 CUEVAS C/2000", "", 20, ""],
-      ["VASO 0 CUEVAS C/2000", "", 20, ""],
-      ["TAPA 4-A CUEVAS C/2000", "", 3, ""],
-      ["VASO 4-A CUEVAS C/2000", "", 3, ""],
-    ]
-  },
-  {
-    nombre: "📦 Cajas de pizza",
-    items: [
-      ["CAJAS DE PIZZA 8", "", 100, ""],
-      ["CAJAS DE PIZZA 10", "", 150, ""],
-      ["CAJAS DE PIZZA 12", "", 200, ""],
-      ["CAJAS DE PIZZA 14", "", 250, ""],
-      ["CAJAS DE PIZZA 16", "", 150, ""],
-      ["CAJAS DE PIZZA 18", "", 100, ""],
-      ["CAJAS DE PIZZA 10 BLANCO", "", 50, ""],
-      ["CAJAS DE PIZZA 12 BLANCO", "", 50, ""],
-      ["CAJAS DE PIZZA 14 BLANCO", "", 50, ""],
-      ["CAJAS DE PIZZA 16 BLANCO", "", 50, ""],
-    ]
-  },
-  {
-    nombre: "📦 Torito",
-    items: [
-      ["TORITO LITRO", "", 60, ""],
-      ["TORITO GALÓN", "", 60, ""],
-    ]
-  },
-  {
-    nombre: "📦 Aluminios y encerados",
-    items: [
-      ["ALUMINIO 5M C/24 BON", "", 30, ""],
-      ["ALUMINIO 7M C/24 BON", "", 30, ""],
-      ["ALUMINIO 10M C/24 BON", "", 10, ""],
-      ["ALUMINIO 5M C/24 STAR", "", 30, ""],
-      ["ALUMINIO 7M C/24 STAR", "", 30, ""],
-    ]
-  }
+  { nombre:"📦 Celofán", items:[
+    ["PAPEL CELOFÁN ROJO 25KG","",20,""],
+    ["PAPEL CELOFÁN AMARILLO 25KG","",10,""],
+    ["PAPEL CELOFÁN BLANCO 25KG","",7,""],
+    ["BOLSA CELOFÁN 14X20 C35 CAJA","",4,""],
+  ]},
+  { nombre:"📦 Azúcares y derivados", items:[
+    ["AZÚCAR MORENA 25","",100,""],
+    ["AZÚCAR BLANCA 25","",20,""],
+    ["MORENA SWITEN 907","",30,""],
+    ["AZÚCAR GLASS 6X","",3,""],
+    ["FÉCULA DE MAÍZ","",3,""],
+    ["AZÚCAR MOSCABADA","",2,""],
+    ["GLUCOSA 19 LTS 27K","",2,""],
+  ]},
+  { nombre:"📦 Líquidos", items:[
+    ["MORENA SWITEN 907","",50,""],
+    ["NUTRILECHE C90 PAQ","",8,""],
+    ["KARTAMUS 12 CAMA","",100,""],
+    ["HARIMASA C10","",100,""],
+    ["CHILE FARO ROD","",100,""],
+    ["KLEENEX 80","",100,""],
+  ]},
+  { nombre:"📦 INIX", items:[
+    ["HQR1230","",30,""],["HQR1238","",10,""],["HQR1245","",10,""],
+    ["HQR30 VITAFILM","",15,""],["AL2923 REC CHICA","",5,""],
+    ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
+    ["F3029","",2,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
+    ["16PP","",40,""],["8PP","",10,""],["TPP8","",100,""],
+  ]},
+  { nombre:"📦 Plásticos", items:[
+    ["50X70 NEGRA C/25KG","",10,""],["70X90 NEGRA C/25KG","",20,""],
+    ["90X120 NEGRA C/25KG","",40,""],["EMPLAYE P/ENTARIMAR","",300,""],
+    ["REVOLUCIÓN CORTO","",50,""],["REVOLUCIÓN LARGO","",20,""],
+    ["BOLSA 55X65","",4,""],["BOLSA 65X65","",4,""],["VIVERO CHICA","",10,""],
+    ["VIVERO MEDIANA","",10,""],["VIVERO GRANDE","",10,""],["ROLLOS NEGROS","",4,""],
+    ["ROLLOS TRANSPARENTE","",4,""],["10X20 BOLLERA C/200","",20,""],["BOLSA GOURMET","",3,""],
+  ]},
+  { nombre:"📦 Comida para mascotas", items:[
+    ["RINGO C20","",100,""],["PEDIGREE ADULTO","",10,""],
+    ["PEDIGREE CACHORRO","",10,""],["WHISKAS","",10,""],
+  ]},
+  { nombre:"📦 Papel higiénico y servilletas", items:[
+    ["HIG JUMBO DALIA 360","",30,""],["HIG JUNIOR DALIA 180","",30,""],
+    ["MARLY 12 C/500","",30,""],["BARRA MESA C/24","",10,""],
+    ["SANITA","",40,""],["TR160 C/6 MOC BLA","",30,""],["MOCAMBO LITHE C/16","",30,""],
+  ]},
+  { nombre:"📦 Cacahuates, botanas, hoja tamal y chile japonés", items:[
+    ["CACAHUATE BLANCO SALADO 10KG","",1,""],["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
+    ["CACAHUATE GARAPIÑADO 10KG","",20,""],["CACAHUATE SALADO 10KG","",20,""],
+    ["CANTINERO TOTOPO Y AJO","",15,""],["MIXTO CON FRITURA 10KG","",10,""],
+    ["JAPONÉS HOT NUT 10KG","",10,""],["JAPONÉS 10KG","",10,""],
+    ["CHICHARRÓN CERDO KILO","",3,""],["CHICHARRÓN KRANKY KILO","",3,""],
+    ["HOJA TAMAL BULTOS","",10,""],["CHILE JAPONÉS BULTOS","",1,""],
+  ]},
+  { nombre:"📦 Conos", items:[["CONO DEL 8","",3,""],["CONO DEL 35","",10,""]]},
+  { nombre:"📦 Cremas, aderezos y especias", items:[
+    ["CREMA CAMELIA 10/1KG","",60,""],["ADEREZO VIRMAR 10/1KG","",60,""],
+    ["ADEREZO FROMELY 10/850GR","",100,""],["CREMA FROMELY 10/850GR","",60,""],
+    ["CHILE QUEBRADO C/1000","",30,""],
+  ]},
+  { nombre:"📦 Tripas", items:[
+    ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
+    ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
+    ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
+  ]},
+  { nombre:"📦 Vinagres y vainilla", items:[
+    ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
+    ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
+    ["VINAGRE DE MANZANA GALÓN","",30,""],["VINAGRE DE MANZANA 12/1LT","",15,""],
+    ["VAINILLA 355ML C/24","",2,""],["VAINILLA GALÓN C/4","",4,""],
+    ["VAINILLA LITRO C/12","",2,""],["VAINILLA BLANCA 1LT","",1,""],
+  ]},
+  { nombre:"📦 Brochetas, cónicos y vasos", items:[
+    ["P/BROCHETA No.6 15CM","",2,""],["P/BROCHETA No.8 20CM","",2,""],
+    ["P/BROCHETA No.10 25CM","",2,""],["P/BROCHETA No.12 30CM","",3,""],
+    ["CÓNICO 106","",10,""],["CÓNICO 104","",5,""],["TAPA 0 CUEVAS C/2000","",20,""],
+    ["VASO 0 CUEVAS C/2000","",20,""],["TAPA 4-A CUEVAS C/2000","",3,""],
+    ["VASO 4-A CUEVAS C/2000","",3,""],
+  ]},
+  { nombre:"📦 Cajas de pizza", items:[
+    ["CAJAS DE PIZZA 8","",100,""],["CAJAS DE PIZZA 10","",150,""],
+    ["CAJAS DE PIZZA 12","",200,""],["CAJAS DE PIZZA 14","",250,""],
+    ["CAJAS DE PIZZA 16","",150,""],["CAJAS DE PIZZA 18","",100,""],
+    ["CAJAS DE PIZZA 10 BLANCO","",50,""],["CAJAS DE PIZZA 12 BLANCO","",50,""],
+    ["CAJAS DE PIZZA 14 BLANCO","",50,""],["CAJAS DE PIZZA 16 BLANCO","",50,""],
+  ]},
+  { nombre:"📦 Torito", items:[["TORITO LITRO","",60,""],["TORITO GALÓN","",60,""]]},
+  { nombre:"📦 Aluminios y encerados", items:[
+    ["ALUMINIO 5M C/24 BON","",30,""],["ALUMINIO 7M C/24 BON","",30,""],
+    ["ALUMINIO 10M C/24 BON","",10,""],["ALUMINIO 5M C/24 STAR","",30,""],
+    ["ALUMINIO 7M C/24 STAR","",30,""],
+  ]},
 ];
 
 let pagina = 0;
 
-function render() {
+/* ====== Render ====== */
+function render(){
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
-  document.getElementById("pagination-info").textContent = `${pagina + 1} de ${inventarios.length}`;
+  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
 
-  document.getElementById("btn-anterior").disabled = pagina === 0;
-  document.getElementById("btn-siguiente").disabled = pagina === inventarios.length - 1;
+  // progreso
+  const pct = ((pagina+1)/inventarios.length)*100;
+  document.getElementById("progress-bar").style.width = pct + "%";
+
+  document.getElementById("btn-anterior").disabled = pagina===0;
+  document.getElementById("btn-siguiente").disabled = pagina===inventarios.length-1;
 
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
 
-  data.items.forEach((row, rowIndex) => {
+  data.items.forEach((row, i) => {
     const tr = document.createElement("tr");
 
-    // Producto fijo
+    // Producto
     const tdProducto = document.createElement("td");
     tdProducto.textContent = row[0];
+    tdProducto.className = "producto";
+    tdProducto.dataset.label = "Producto";
     tr.appendChild(tdProducto);
 
-    // Detalle editable numérico
-    const tdDetalle = document.createElement("td");
-    const inputDetalle = document.createElement("input");
-    inputDetalle.type = "text";
-    inputDetalle.inputMode = "numeric";
-    inputDetalle.pattern = "[0-9]*";
-    inputDetalle.value = row[1];
-    inputDetalle.style.width = "100%";
-    inputDetalle.addEventListener("input", e => {
-      data.items[rowIndex][1] = e.target.value.replace(/\D/g, "");
-      e.target.value = data.items[rowIndex][1];
+    // Inventario (captura)
+    const tdInv = document.createElement("td");
+    tdInv.dataset.label = "Inventario";
+    const inputInv = document.createElement("input");
+    inputInv.type = "number";
+    inputInv.inputMode = "numeric";
+    inputInv.min = "0";
+    inputInv.value = row[1];
+    inputInv.addEventListener("input", e => {
+      const v = e.target.value.replace(/\D/g,"");
+      inventarios[pagina].items[i][1] = v;
+      e.target.value = v;
     });
-    tdDetalle.appendChild(inputDetalle);
-    tr.appendChild(tdDetalle);
+    tdInv.appendChild(inputInv);
+    tr.appendChild(tdInv);
 
-    // Cantidad fija
-    const tdCantidad = document.createElement("td");
-    tdCantidad.textContent = row[2];
-    tr.appendChild(tdCantidad);
+    // Stock (solo lectura)
+    const tdStock = document.createElement("td");
+    tdStock.dataset.label = "Stock";
+    tdStock.textContent = row[2];
+    tr.appendChild(tdStock);
 
-    // Pedido editable numérico
+    // Pedido (captura)
     const tdPedido = document.createElement("td");
-    const inputPedido = document.createElement("input");
-    inputPedido.type = "text";
-    inputPedido.inputMode = "numeric";
-    inputPedido.pattern = "[0-9]*";
-    inputPedido.value = row[3] || "";
-    inputPedido.style.width = "100%";
-    inputPedido.addEventListener("input", e => {
-      data.items[rowIndex][3] = e.target.value.replace(/\D/g, "");
-      e.target.value = data.items[rowIndex][3];
+    tdPedido.dataset.label = "Pedido";
+    const inputPed = document.createElement("input");
+    inputPed.type = "number";
+    inputPed.inputMode = "numeric";
+    inputPed.min = "0";
+    inputPed.value = row[3] || "";
+    inputPed.addEventListener("input", e => {
+      const v = e.target.value.replace(/\D/g,"");
+      inventarios[pagina].items[i][3] = v;
+      e.target.value = v;
     });
-    tdPedido.appendChild(inputPedido);
+    tdPedido.appendChild(inputPed);
     tr.appendChild(tdPedido);
 
     tbody.appendChild(tr);
   });
 }
 
-function siguiente() {
-  if (pagina < inventarios.length - 1) {
-    pagina++;
-    render();
-    window.scrollTo({top: 0, behavior: 'smooth'});
+function siguiente(){
+  if(pagina < inventarios.length-1){
+    pagina++; render(); window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function anterior(){
+  if(pagina > 0){
+    pagina--; render(); window.scrollTo({top:0,behavior:'smooth'});
   }
 }
 
-function anterior() {
-  if (pagina > 0) {
-    pagina--;
-    render();
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-}
-
-// Swipe táctil
-let touchStartX = 0, touchEndX = 0;
+/* Swipe táctil */
+let touchStartX=0, touchEndX=0;
 document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, false);
 document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
-
-function handleSwipe() {
-  const minSwipeDistance = 50;
-  if (touchEndX < touchStartX && touchStartX - touchEndX > minSwipeDistance) siguiente();
-  if (touchEndX > touchStartX && touchEndX - touchStartX > minSwipeDistance) anterior();
+function handleSwipe(){
+  const min=50;
+  if(touchEndX < touchStartX && (touchStartX-touchEndX)>min) siguiente();
+  if(touchEndX > touchStartX && (touchEndX-touchStartX)>min) anterior();
 }
-async function enviarTelegram() {
+
+/* Telegram (nota: ideal mover token a backend) */
+async function enviarTelegram(){
   const data = inventarios[pagina];
   let mensaje = `📦 ${data.nombre}\n`;
+  data.items.forEach(r => { if(r[1] && r[1].trim()!=="") mensaje += `${r[0]} → ${r[1]}\n`; });
 
-  // recorremos filas
-  data.items.forEach(row => {
-    if (row[1] && row[1].trim() !== "") {
-      mensaje += `${row[0]} → ${row[1]}\n`;
-    }
-  });
+  if(mensaje.trim()===`📦 ${data.nombre}`){ alert("⚠ No hay inventario capturado en esta página."); return; }
 
-  if (mensaje.trim() === `📦 ${data.nombre}`) {
-    alert("⚠ No hay inventario capturado en esta página.");
-    return;
-  }
+  const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+  const CHAT_ID = "6617988297";
 
-const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
-const CHAT_ID = "6617988297";
-
-try {
-  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: mensaje,
-      parse_mode: "Markdown"
-    })
-  });
-
-    if (resp.ok) {
-      alert("✅ Inventario enviado a Telegram");
-    } else {
-      alert("❌ Error al enviar");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("❌ Error de conexión");
-  }
+  try{
+    const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ chat_id:CHAT_ID, text:mensaje })
+    });
+    if(resp.ok) alert("✅ Inventario enviado a Telegram");
+    else alert("❌ Error al enviar");
+  }catch(err){ console.error(err); alert("❌ Error de conexión"); }
 }
-function generarOrden() {
+
+function generarOrden(){
   const data = inventarios[pagina];
   let contenido = "";
-
-  data.items.forEach(row => {
-    if (row[3] && row[3].trim() !== "" && row[3] !== "0") {
-      contenido += `<p>📦 ${row[0]} → ${row[3]}</p>`;
+  data.items.forEach(r => {
+    if(r[3] && r[3].trim()!=="" && r[3]!=="0"){
+      contenido += `<p>📦 ${r[0]} → <strong>${r[3]}</strong></p>`;
     }
   });
-
-  if (contenido === "") {
-    alert("⚠ No hay pedidos capturados en esta página.");
-    return;
-  }
-
+  if(!contenido){ alert("⚠ No hay pedidos capturados en esta página."); return; }
   document.getElementById("contenidoOrden").innerHTML = contenido;
   document.getElementById("modalOrden").style.display = "flex";
 }
+function cerrarOrden(){ document.getElementById("modalOrden").style.display = "none"; }
 
-function cerrarOrden() {
-  document.getElementById("modalOrden").style.display = "none";
-}
-
-  
-// primera carga
+/* Primera carga */
 render();
 </script>
 </body>
