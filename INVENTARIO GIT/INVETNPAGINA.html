@@ -52,8 +52,25 @@
 
 <div class="controls">
   <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
-  <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar</button>
+  <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
+  <button id="btn-orden" onclick="generarOrden()">🧾 Orden de Compra</button>
   <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
+</div>
+<!-- Modal ORDEN DE COMPRA -->
+<div id="modalOrden" style="
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:1000;">
+  <div style="background:white; padding:20px; border-radius:10px; max-width:400px; text-align:center;">
+    <h3>ORDEN DE COMPRA PDD031204KL5</h3>
+    <div id="contenidoOrden"></div>
+    <br>
+    <button onclick="cerrarModal()">Cerrar</button>
+  </div>
 </div>
   
 <script>
@@ -385,6 +402,28 @@ const CHAT_ID = "6617988297";
     console.error(err);
     alert("❌ Error de conexión");
   }
+}
+function generarOrden() {
+  const data = inventarios[pagina];
+  let contenido = "";
+
+  data.items.forEach(row => {
+    if (row[3] && row[3].trim() !== "" && row[3] !== "0") {
+      contenido += `<p>📦 ${row[0]} → ${row[3]}</p>`;
+    }
+  });
+
+  if (contenido === "") {
+    alert("⚠ No hay pedidos capturados en esta página.");
+    return;
+  }
+
+  document.getElementById("contenidoOrden").innerHTML = contenido;
+  document.getElementById("modalOrden").style.display = "flex";
+}
+
+function cerrarOrden() {
+  document.getElementById("modalOrden").style.display = "none";
 }
 
   
