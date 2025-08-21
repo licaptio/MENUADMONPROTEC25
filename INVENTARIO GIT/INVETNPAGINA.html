@@ -168,10 +168,102 @@
   </div>
 
 <script>
-/* ===== Datos (tus arrays) ===== */
-const inventarios = [/* … pega aquí tus datos exactos (los que ya tienes) … */];
-// — Para ahorrar espacio en el mensaje, usa los mismos datos que ya tenías —
-
+/* ===== Datos ===== */
+const inventarios = [
+  { nombre:"📦 Celofán", items:[
+    ["PAPEL CELOFÁN ROJO 25KG","",20,""],
+    ["PAPEL CELOFÁN AMARILLO 25KG","",10,""],
+    ["PAPEL CELOFÁN BLANCO 25KG","",7,""],
+    ["BOLSA CELOFÁN 14X20 C35 CAJA","",4,""],
+  ]},
+  { nombre:"📦 Azúcares y derivados", items:[
+    ["AZÚCAR MORENA 25","",100,""],
+    ["AZÚCAR BLANCA 25","",20,""],
+    ["MORENA SWITEN 907","",30,""],
+    ["AZÚCAR GLASS 6X","",3,""],
+    ["FÉCULA DE MAÍZ","",3,""],
+    ["AZÚCAR MOSCABADA","",2,""],
+    ["GLUCOSA 19 LTS 27K","",2,""],
+  ]},
+  { nombre:"📦 Líquidos", items:[
+    ["MORENA SWITEN 907","",50,""],
+    ["NUTRILECHE C90 PAQ","",8,""],
+    ["KARTAMUS 12 CAMA","",100,""],
+    ["HARIMASA C10","",100,""],
+    ["CHILE FARO ROD","",100,""],
+    ["KLEENEX 80","",100,""],
+  ]},
+  { nombre:"📦 INIX", items:[
+    ["HQR1230","",30,""],["HQR1238","",10,""],["HQR1245","",10,""],
+    ["HQR30 VITAFILM","",15,""],["AL2923 REC CHICA","",5,""],
+    ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
+    ["F3029","",2,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
+    ["16PP","",40,""],["8PP","",10,""],["TPP8","",100,""],
+  ]},
+  { nombre:"📦 Plásticos", items:[
+    ["50X70 NEGRA C/25KG","",10,""],["70X90 NEGRA C/25KG","",20,""],
+    ["90X120 NEGRA C/25KG","",40,""],["EMPLAYE P/ENTARIMAR","",300,""],
+    ["REVOLUCIÓN CORTO","",50,""],["REVOLUCIÓN LARGO","",20,""],
+    ["BOLSA 55X65","",4,""],["BOLSA 65X65","",4,""],["VIVERO CHICA","",10,""],
+    ["VIVERO MEDIANA","",10,""],["VIVERO GRANDE","",10,""],["ROLLOS NEGROS","",4,""],
+    ["ROLLOS TRANSPARENTE","",4,""],["10X20 BOLLERA C/200","",20,""],["BOLSA GOURMET","",3,""],
+  ]},
+  { nombre:"📦 Comida para mascotas", items:[
+    ["RINGO C20","",100,""],["PEDIGREE ADULTO","",10,""],
+    ["PEDIGREE CACHORRO","",10,""],["WHISKAS","",10,""],
+  ]},
+  { nombre:"📦 Papel higiénico y servilletas", items:[
+    ["HIG JUMBO DALIA 360","",30,""],["HIG JUNIOR DALIA 180","",30,""],
+    ["MARLY 12 C/500","",30,""],["BARRA MESA C/24","",10,""],
+    ["SANITA","",40,""],["TR160 C/6 MOC BLA","",30,""],["MOCAMBO LITHE C/16","",30,""],
+  ]},
+  { nombre:"📦 Cacahuates, botanas, hoja tamal y chile japonés", items:[
+    ["CACAHUATE BLANCO SALADO 10KG","",1,""],["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
+    ["CACAHUATE GARAPIÑADO 10KG","",20,""],["CACAHUATE SALADO 10KG","",20,""],
+    ["CANTINERO TOTOPO Y AJO","",15,""],["MIXTO CON FRITURA 10KG","",10,""],
+    ["JAPONÉS HOT NUT 10KG","",10,""],["JAPONÉS 10KG","",10,""],
+    ["CHICHARRÓN CERDO KILO","",3,""],["CHICHARRÓN KRANKY KILO","",3,""],
+    ["HOJA TAMAL BULTOS","",10,""],["CHILE JAPONÉS BULTOS","",1,""],
+  ]},
+  { nombre:"📦 Conos", items:[["CONO DEL 8","",3,""],["CONO DEL 35","",10,""]]},
+  { nombre:"📦 Cremas, aderezos y especias", items:[
+    ["CREMA CAMELIA 10/1KG","",60,""],["ADEREZO VIRMAR 10/1KG","",60,""],
+    ["ADEREZO FROMELY 10/850GR","",100,""],["CREMA FROMELY 10/850GR","",60,""],
+    ["CHILE QUEBRADO C/1000","",30,""],
+  ]},
+  { nombre:"📦 Tripas", items:[
+    ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
+    ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
+    ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
+  ]},
+  { nombre:"📦 Vinagres y vainilla", items:[
+    ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
+    ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
+    ["VINAGRE DE MANZANA GALÓN","",30,""],["VINAGRE DE MANZANA 12/1LT","",15,""],
+    ["VAINILLA 355ML C/24","",2,""],["VAINILLA GALÓN C/4","",4,""],
+    ["VAINILLA LITRO C/12","",2,""],["VAINILLA BLANCA 1LT","",1,""],
+  ]},
+  { nombre:"📦 Brochetas, cónicos y vasos", items:[
+    ["P/BROCHETA No.6 15CM","",2,""],["P/BROCHETA No.8 20CM","",2,""],
+    ["P/BROCHETA No.10 25CM","",2,""],["P/BROCHETA No.12 30CM","",3,""],
+    ["CÓNICO 106","",10,""],["CÓNICO 104","",5,""],["TAPA 0 CUEVAS C/2000","",20,""],
+    ["VASO 0 CUEVAS C/2000","",20,""],["TAPA 4-A CUEVAS C/2000","",3,""],
+    ["VASO 4-A CUEVAS C/2000","",3,""],
+  ]},
+  { nombre:"📦 Cajas de pizza", items:[
+    ["CAJAS DE PIZZA 8","",100,""],["CAJAS DE PIZZA 10","",150,""],
+    ["CAJAS DE PIZZA 12","",200,""],["CAJAS DE PIZZA 14","",250,""],
+    ["CAJAS DE PIZZA 16","",150,""],["CAJAS DE PIZZA 18","",100,""],
+    ["CAJAS DE PIZZA 10 BLANCO","",50,""],["CAJAS DE PIZZA 12 BLANCO","",50,""],
+    ["CAJAS DE PIZZA 14 BLANCO","",50,""],["CAJAS DE PIZZA 16 BLANCO","",50,""],
+  ]},
+  { nombre:"📦 Torito", items:[["TORITO LITRO","",60,""],["TORITO GALÓN","",60,""]]},
+  { nombre:"📦 Aluminios y encerados", items:[
+    ["ALUMINIO 5M C/24 BON","",30,""],["ALUMINIO 7M C/24 BON","",30,""],
+    ["ALUMINIO 10M C/24 BON","",10,""],["ALUMINIO 5M C/24 STAR","",30,""],
+    ["ALUMINIO 7M C/24 STAR","",30,""],
+  ]},
+];
 /* Estado UI */
 let pagina = 0;
 let mostrarPedido = false;
