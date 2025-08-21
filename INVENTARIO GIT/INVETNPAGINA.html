@@ -1,118 +1,117 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Paginación Inventarios</title>
-  <style>
-    :root{
-      --primary:#2c3e50; --secondary:#3498db; --bg:#f8f9fa; --border:#e2e8f0;
-      --text:#1f2937; --ok:#2ecc71; --warn:#f39c12; --card:#ffffff; --muted:#6b7280;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-      background:var(--bg); color:var(--text); line-height:1.5;
-      padding:12px 12px 96px; /* espacio para barra fija */
-    }
-    .container{max-width:900px;margin:0 auto}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Paginación Inventarios</title>
+<style>
+  :root{
+    --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
+    --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.45;
+    padding:10px 10px 84px;
+  }
+  .container{max-width:900px;margin:0 auto}
 
-    header{position:sticky;top:0;z-index:50;background:var(--bg);padding:8px 0 10px}
-    h2{
-      font-size:1.25rem;text-align:center;color:var(--primary);
-      background:var(--card);border-radius:14px;padding:12px 14px;
-      box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:8px
-    }
+  header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
+  h2{
+    font-size:1.12rem;text-align:center;color:var(--primary);
+    background:var(--card);border-radius:12px;padding:8px 10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:6px; display:flex;justify-content:center;gap:8px;align-items:center
+  }
 
-    .topbar{display:flex;gap:.6rem;align-items:center;justify-content:center;flex-wrap:wrap}
-    .pagination-wrap{display:flex;align-items:center;gap:.6rem;justify-content:center}
-    .progress{flex:1;min-width:220px;max-width:470px;height:8px;background:#e9eef5;border-radius:999px;overflow:hidden}
-    .progress > span{display:block;height:100%;background:var(--secondary);width:0%;transition:width .25s}
-    .page-info{min-width:92px;text-align:center;color:#6b7a86;font-size:.9rem}
+  /* Barra y toggles */
+  .topbar{display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap}
+  .pagination-wrap{display:flex;align-items:center;gap:.5rem}
+  .progress{flex:1;min-width:200px;max-width:420px;height:6px;background:#e9eef5;border-radius:999px;overflow:hidden}
+  .progress > span{display:block;height:100%;background:var(--secondary);width:0%;transition:width .2s}
+  .page-info{min-width:82px;text-align:center;color:#6b7a86;font-size:.85rem}
 
-    /* Toggle mostrar pedido */
-    .toggle{
-      display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
-      padding:6px 10px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.06);user-select:none
-    }
-    .switch{
-      position:relative;width:42px;height:24px;background:#e5e7eb;border-radius:999px;transition:.2s;
-    }
-    .switch::after{
-      content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;
-      box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s;
-    }
-    .switch.on{background:#34d399}
-    .switch.on::after{left:21px}
+  .toggle{
+    display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);
+    padding:4px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.04);user-select:none
+  }
+  .switch{position:relative;width:38px;height:20px;background:#e5e7eb;border-radius:999px;transition:.2s}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.2s}
+  .switch.on{background:#34d399}
+  .switch.on::after{left:20px}
+  .label{font-size:.86rem;color:#111827}
 
-    /* Tabla / tarjetas */
-    .table-container{background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
-    table{width:100%;border-collapse:collapse}
-    thead th{position:sticky;top:0;background:var(--primary);color:#fff;font-weight:600}
-    th,td{padding:.8rem;border-bottom:1px solid var(--border);text-align:left;font-size:.95rem}
+  /* Tabla/Tarjetas */
+  .table-container{background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead th{position:sticky;top:0;background:var(--primary);color:#fff;font-weight:600}
+  th,td{padding:.65rem;border-bottom:1px solid var(--border);text-align:left;font-size:.93rem}
 
-    input[type="number"], input[type="text"]{
-      width:100%;padding:.68rem .72rem;border:1px solid #cfd7df;border-radius:10px;font-size:1rem;outline:none;background:#fff
+  input[type="number"], input[type="text"]{
+    width:100%;padding:.5rem .55rem;border:1px solid #cfd7df;border-radius:10px;font-size:1rem;outline:none;background:#fff
+  }
+  input:focus{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(52,152,219,.12)}
+
+  /* MOBILE CARDS */
+  @media (max-width: 720px){
+    thead{display:none}
+    table, tbody, tr, td{display:block;width:100%}
+    tr{
+      background:var(--card); margin:10px 8px; border:1.1px solid var(--border);
+      border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,.05); overflow:hidden
     }
-    input:focus{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(52,152,219,.15)}
+    td{border:0;border-bottom:1px dashed #e5e7eb;padding:10px 12px}
+    td:last-child{border-bottom:0}
 
-    /* Tarjeta móvil bien enmarcada */
-    @media (max-width: 720px){
-      thead{display:none}
-      table, tbody, tr, td{display:block;width:100%}
-      tr{
-        background:var(--card); margin:12px 10px; border:1.2px solid var(--border);
-        border-radius:14px; box-shadow:0 3px 8px rgba(0,0,0,.06); overflow:hidden
-      }
-      td{
-        border:0;border-bottom:1px dashed #e5e7eb; padding:12px 14px
-      }
-      td:last-child{border-bottom:0}
-      td::before{
-        content:attr(data-label); display:block; font-size:.82rem; color:var(--muted); margin-bottom:4px
-      }
-      td.producto{
-        background:#f7fafc; font-weight:800; color:#111827; font-size:1rem;
-        border-bottom:1px solid #e5e7eb; position:relative; padding-left:14px
-      }
-      td.producto::after{
-        content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:linear-gradient(180deg,#60a5fa,#34d399);
-      }
+    /* Producto: una línea con ellipsis */
+    td.producto{
+      background:#f7fafc; font-weight:800; color:#111827; font-size:1rem;
+      border-bottom:1px solid #e5e7eb; position:relative; padding:10px 12px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    td.producto::after{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:linear-gradient(180deg,#60a5fa,#34d399);
     }
 
-    /* Barra de acciones fija */
-    .actions{
-      position:fixed;left:0;right:0;bottom:0;background:#ffffffee;
-      backdrop-filter:blur(6px);border-top:1px solid #e9eef5;padding:10px;z-index:60
-    }
-    .actions .grid{
-      max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px
-    }
-    button{
-      padding:.9rem .6rem;font-size:1rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,.08);transition:transform .05s
-    }
-    button:active{transform:scale(.98)}
-    #btn-anterior{background:#95a5a6}
-    #btn-enviar{background:var(--warn)}
-    #btn-orden{background:#6c5ce7}
-    #btn-siguiente{background:var(--ok)}
-    button:disabled{opacity:.6;cursor:not-allowed}
+    /* Línea compacta Inventario + Stock */
+    .compact-row{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:10px}
+    .tag{font-size:.82rem;color:#6b7280}
+    .stock-badge{font-weight:700; font-size:.95rem; padding:.2rem .5rem; border:1px solid #e5e7eb; border-radius:8px; background:#f9fafb}
+    .inv-input{max-width:7ch} /* ~5–6 caracteres visibles */
+  }
 
-    /* Modal */
-    #modalOrden{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:1000;padding:16px}
-    .modal-card{background:#fff;border-radius:16px;padding:18px;max-width:520px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,.25)}
-    .modal-card h3{margin-bottom:.5rem;text-align:center}
-    .modal-card .content{max-height:55vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px}
-    .modal-card .close{margin-top:10px;width:100%;background:var(--secondary)}
-    /* helper */
-    .hidden{display:none !important}
-  </style>
+  /* Barra acciones compacta */
+  .actions{
+    position:fixed;left:0;right:0;bottom:0;background:#ffffffee;
+    backdrop-filter:blur(6px);border-top:1px solid #e9eef5;padding:8px;z-index:60
+  }
+  .actions .grid{
+    max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px
+  }
+  button{
+    padding:.6rem .5rem;font-size:.95rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .05s
+  }
+  button:active{transform:scale(.98)}
+  #btn-anterior{background:#9ca3af}
+  #btn-enviar{background:var(--warn)}
+  #btn-orden{background:#6d28d9}
+  #btn-siguiente{background:var(--ok)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+
+  /* Modal */
+  #modalOrden{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:1000;padding:16px}
+  .modal-card{background:#fff;border-radius:14px;padding:16px;max-width:520px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+  .modal-card h3{margin-bottom:.4rem;text-align:center}
+  .modal-card .content{max-height:55vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px}
+  .modal-card .close{margin-top:10px;width:100%;background:var(--secondary)}
+  .hidden{display:none !important}
+</style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h2 id="titulo"></h2>
+      <h2><span>📦</span><span id="titulo"></span></h2>
 
       <div class="topbar">
         <div class="pagination-wrap">
@@ -120,10 +119,16 @@
           <div class="page-info" id="pagination-info"></div>
         </div>
 
-        <!-- Toggle Mostrar Pedido -->
+        <!-- Toggle Mostrar pedido -->
         <div class="toggle" id="togglePedido" role="button" aria-pressed="false" tabindex="0" onclick="togglePedido()">
           <div class="switch" id="switchPedido"></div>
-          <span style="font-size:.92rem;color:#111827">Mostrar pedido</span>
+          <span class="label">Mostrar pedido</span>
+        </div>
+
+        <!-- 🔒 Toggle Bloquear navegación -->
+        <div class="toggle" id="toggleLock" role="button" aria-pressed="false" tabindex="0" onclick="toggleLock()">
+          <div class="switch" id="switchLock"></div>
+          <span class="label">Bloquear navegación</span>
         </div>
       </div>
     </header>
@@ -143,7 +148,7 @@
     </div>
   </div>
 
-  <!-- Barra fija acciones -->
+  <!-- Barra de acciones -->
   <div class="actions">
     <div class="grid">
       <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
@@ -163,114 +168,42 @@
   </div>
 
 <script>
-/* ===== Datos ===== */
-const inventarios = [
-  { nombre:"📦 Celofán", items:[
-    ["PAPEL CELOFÁN ROJO 25KG","",20,""],
-    ["PAPEL CELOFÁN AMARILLO 25KG","",10,""],
-    ["PAPEL CELOFÁN BLANCO 25KG","",7,""],
-    ["BOLSA CELOFÁN 14X20 C35 CAJA","",4,""],
-  ]},
-  { nombre:"📦 Azúcares y derivados", items:[
-    ["AZÚCAR MORENA 25","",100,""],
-    ["AZÚCAR BLANCA 25","",20,""],
-    ["MORENA SWITEN 907","",30,""],
-    ["AZÚCAR GLASS 6X","",3,""],
-    ["FÉCULA DE MAÍZ","",3,""],
-    ["AZÚCAR MOSCABADA","",2,""],
-    ["GLUCOSA 19 LTS 27K","",2,""],
-  ]},
-  { nombre:"📦 Líquidos", items:[
-    ["MORENA SWITEN 907","",50,""],
-    ["NUTRILECHE C90 PAQ","",8,""],
-    ["KARTAMUS 12 CAMA","",100,""],
-    ["HARIMASA C10","",100,""],
-    ["CHILE FARO ROD","",100,""],
-    ["KLEENEX 80","",100,""],
-  ]},
-  { nombre:"📦 INIX", items:[
-    ["HQR1230","",30,""],["HQR1238","",10,""],["HQR1245","",10,""],
-    ["HQR30 VITAFILM","",15,""],["AL2923 REC CHICA","",5,""],
-    ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
-    ["F3029","",2,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
-    ["16PP","",40,""],["8PP","",10,""],["TPP8","",100,""],
-  ]},
-  { nombre:"📦 Plásticos", items:[
-    ["50X70 NEGRA C/25KG","",10,""],["70X90 NEGRA C/25KG","",20,""],
-    ["90X120 NEGRA C/25KG","",40,""],["EMPLAYE P/ENTARIMAR","",300,""],
-    ["REVOLUCIÓN CORTO","",50,""],["REVOLUCIÓN LARGO","",20,""],
-    ["BOLSA 55X65","",4,""],["BOLSA 65X65","",4,""],["VIVERO CHICA","",10,""],
-    ["VIVERO MEDIANA","",10,""],["VIVERO GRANDE","",10,""],["ROLLOS NEGROS","",4,""],
-    ["ROLLOS TRANSPARENTE","",4,""],["10X20 BOLLERA C/200","",20,""],["BOLSA GOURMET","",3,""],
-  ]},
-  { nombre:"📦 Comida para mascotas", items:[
-    ["RINGO C20","",100,""],["PEDIGREE ADULTO","",10,""],
-    ["PEDIGREE CACHORRO","",10,""],["WHISKAS","",10,""],
-  ]},
-  { nombre:"📦 Papel higiénico y servilletas", items:[
-    ["HIG JUMBO DALIA 360","",30,""],["HIG JUNIOR DALIA 180","",30,""],
-    ["MARLY 12 C/500","",30,""],["BARRA MESA C/24","",10,""],
-    ["SANITA","",40,""],["TR160 C/6 MOC BLA","",30,""],["MOCAMBO LITHE C/16","",30,""],
-  ]},
-  { nombre:"📦 Cacahuates, botanas, hoja tamal y chile japonés", items:[
-    ["CACAHUATE BLANCO SALADO 10KG","",1,""],["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
-    ["CACAHUATE GARAPIÑADO 10KG","",20,""],["CACAHUATE SALADO 10KG","",20,""],
-    ["CANTINERO TOTOPO Y AJO","",15,""],["MIXTO CON FRITURA 10KG","",10,""],
-    ["JAPONÉS HOT NUT 10KG","",10,""],["JAPONÉS 10KG","",10,""],
-    ["CHICHARRÓN CERDO KILO","",3,""],["CHICHARRÓN KRANKY KILO","",3,""],
-    ["HOJA TAMAL BULTOS","",10,""],["CHILE JAPONÉS BULTOS","",1,""],
-  ]},
-  { nombre:"📦 Conos", items:[["CONO DEL 8","",3,""],["CONO DEL 35","",10,""]]},
-  { nombre:"📦 Cremas, aderezos y especias", items:[
-    ["CREMA CAMELIA 10/1KG","",60,""],["ADEREZO VIRMAR 10/1KG","",60,""],
-    ["ADEREZO FROMELY 10/850GR","",100,""],["CREMA FROMELY 10/850GR","",60,""],
-    ["CHILE QUEBRADO C/1000","",30,""],
-  ]},
-  { nombre:"📦 Tripas", items:[
-    ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
-    ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
-    ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
-  ]},
-  { nombre:"📦 Vinagres y vainilla", items:[
-    ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
-    ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
-    ["VINAGRE DE MANZANA GALÓN","",30,""],["VINAGRE DE MANZANA 12/1LT","",15,""],
-    ["VAINILLA 355ML C/24","",2,""],["VAINILLA GALÓN C/4","",4,""],
-    ["VAINILLA LITRO C/12","",2,""],["VAINILLA BLANCA 1LT","",1,""],
-  ]},
-  { nombre:"📦 Brochetas, cónicos y vasos", items:[
-    ["P/BROCHETA No.6 15CM","",2,""],["P/BROCHETA No.8 20CM","",2,""],
-    ["P/BROCHETA No.10 25CM","",2,""],["P/BROCHETA No.12 30CM","",3,""],
-    ["CÓNICO 106","",10,""],["CÓNICO 104","",5,""],["TAPA 0 CUEVAS C/2000","",20,""],
-    ["VASO 0 CUEVAS C/2000","",20,""],["TAPA 4-A CUEVAS C/2000","",3,""],
-    ["VASO 4-A CUEVAS C/2000","",3,""],
-  ]},
-  { nombre:"📦 Cajas de pizza", items:[
-    ["CAJAS DE PIZZA 8","",100,""],["CAJAS DE PIZZA 10","",150,""],
-    ["CAJAS DE PIZZA 12","",200,""],["CAJAS DE PIZZA 14","",250,""],
-    ["CAJAS DE PIZZA 16","",150,""],["CAJAS DE PIZZA 18","",100,""],
-    ["CAJAS DE PIZZA 10 BLANCO","",50,""],["CAJAS DE PIZZA 12 BLANCO","",50,""],
-    ["CAJAS DE PIZZA 14 BLANCO","",50,""],["CAJAS DE PIZZA 16 BLANCO","",50,""],
-  ]},
-  { nombre:"📦 Torito", items:[["TORITO LITRO","",60,""],["TORITO GALÓN","",60,""]]},
-  { nombre:"📦 Aluminios y encerados", items:[
-    ["ALUMINIO 5M C/24 BON","",30,""],["ALUMINIO 7M C/24 BON","",30,""],
-    ["ALUMINIO 10M C/24 BON","",10,""],["ALUMINIO 5M C/24 STAR","",30,""],
-    ["ALUMINIO 7M C/24 STAR","",30,""],
-  ]},
-];
+/* ===== Datos (tus arrays) ===== */
+const inventarios = [/* … pega aquí tus datos exactos (los que ya tienes) … */];
+// — Para ahorrar espacio en el mensaje, usa los mismos datos que ya tenías —
 
-/* Estado: mostrar pedido o no */
+/* Estado UI */
 let pagina = 0;
 let mostrarPedido = false;
+let lockNav = false;   // 🔒
 
+/* LocalStorage (opcional: descomenta si quieres persistir) */
+function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
+function loadData(){
+  const d = localStorage.getItem("inventariosData");
+  if(!d) return;
+  try{
+    const parsed = JSON.parse(d);
+    if(Array.isArray(parsed)){
+      for(let i=0;i<parsed.length;i++){ if(inventarios[i]) inventarios[i].items = parsed[i].items; }
+    }
+  }catch(e){ console.error(e); }
+}
+
+/* Toggles */
 function togglePedido(){
   mostrarPedido = !mostrarPedido;
   document.getElementById('switchPedido').classList.toggle('on', mostrarPedido);
   document.getElementById('togglePedido').setAttribute('aria-pressed', String(mostrarPedido));
-  // th de pedido (en desktop)
   document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
   render();
+}
+function toggleLock(){
+  lockNav = !lockNav;
+  document.getElementById('switchLock').classList.toggle('on', lockNav);
+  document.getElementById('toggleLock').setAttribute('aria-pressed', String(lockNav));
+  document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
+  document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
 }
 
 /* Render */
@@ -278,12 +211,10 @@ function render(){
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
   document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
-  const pct = ((pagina+1)/inventarios.length)*100;
-  document.getElementById("progress-bar").style.width = pct + "%";
+  document.getElementById("progress-bar").style.width = (((pagina+1)/inventarios.length)*100) + "%";
 
-  document.getElementById("btn-anterior").disabled = pagina===0;
-  document.getElementById("btn-siguiente").disabled = pagina===inventarios.length-1;
-  // header pedido según estado
+  document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
+  document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
   document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
 
   const tbody = document.querySelector("#tabla tbody");
@@ -292,35 +223,45 @@ function render(){
   data.items.forEach((row, i) => {
     const tr = document.createElement("tr");
 
-    // Producto
+    // Producto (1 línea, ellipsis)
     const tdProducto = document.createElement("td");
     tdProducto.textContent = row[0];
     tdProducto.className = "producto";
-    tdProducto.dataset.label = "Producto";
     tr.appendChild(tdProducto);
 
-    // Inventario
+    // Fila compacta: Inventario + Stock (en móvil quedan en una línea)
     const tdInv = document.createElement("td");
-    tdInv.dataset.label = "Inventario";
+    const wrap = document.createElement("div");
+    wrap.className = "compact-row";
+
+    const tagInv = document.createElement("span");
+    tagInv.className = "tag"; tagInv.textContent = "Inventario";
     const inputInv = document.createElement("input");
     inputInv.type = "number"; inputInv.inputMode = "numeric"; inputInv.min = "0";
-    inputInv.value = row[1];
+    inputInv.value = row[1]; inputInv.className = "inv-input";
     inputInv.addEventListener("input", e => {
       const v = e.target.value.replace(/\D/g,"");
       inventarios[pagina].items[i][1] = v; e.target.value = v;
+      // saveData();
     });
-    tdInv.appendChild(inputInv);
+
+    const stockBadge = document.createElement("span");
+    stockBadge.className = "stock-badge";
+    stockBadge.textContent = (row[2] ?? "").toString();
+
+    wrap.appendChild(tagInv);
+    wrap.appendChild(inputInv);
+    wrap.appendChild(stockBadge);
+    tdInv.appendChild(wrap);
     tr.appendChild(tdInv);
 
-    // Stock
+    // Para desktop se sigue viendo como columna "Stock"
     const tdStock = document.createElement("td");
-    tdStock.dataset.label = "Stock";
     tdStock.textContent = row[2];
     tr.appendChild(tdStock);
 
     // Pedido (opcional)
     const tdPedido = document.createElement("td");
-    tdPedido.dataset.label = "Pedido";
     if(!mostrarPedido){ tdPedido.classList.add('hidden'); }
     const inputPed = document.createElement("input");
     inputPed.type = "number"; inputPed.inputMode = "numeric"; inputPed.min = "0";
@@ -328,6 +269,7 @@ function render(){
     inputPed.addEventListener("input", e => {
       const v = e.target.value.replace(/\D/g,"");
       inventarios[pagina].items[i][3] = v; e.target.value = v;
+      // saveData();
     });
     tdPedido.appendChild(inputPed);
     tr.appendChild(tdPedido);
@@ -336,19 +278,19 @@ function render(){
   });
 }
 
-function siguiente(){ if(pagina < inventarios.length-1){ pagina++; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
-function anterior(){ if(pagina > 0){ pagina--; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
+function siguiente(){ if(lockNav) return; if(pagina < inventarios.length-1){ pagina++; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
+function anterior(){ if(lockNav) return; if(pagina > 0){ pagina--; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
 
-/* Swipe táctil */
+/* Swipe táctil (respeta bloqueo) */
 let touchStartX=0, touchEndX=0;
 document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, false);
 document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
-function handleSwipe(){ const min=50;
+function handleSwipe(){ if(lockNav) return; const min=50;
   if(touchEndX < touchStartX && (touchStartX-touchEndX)>min) siguiente();
   if(touchEndX > touchStartX && (touchEndX-touchStartX)>min) anterior();
 }
 
-/* Telegram (ideal mover token a backend) */
+/* Telegram */
 async function enviarTelegram(){
   const data = inventarios[pagina];
   let mensaje = `📦 ${data.nombre}\n`;
@@ -362,18 +304,16 @@ async function enviarTelegram(){
       method:"POST", headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({ chat_id:CHAT_ID, text:mensaje })
     });
-    if(resp.ok) alert("✅ Inventario enviado a Telegram");
-    else alert("❌ Error al enviar");
+    alert(resp.ok ? "✅ Inventario enviado a Telegram" : "❌ Error al enviar");
   }catch(err){ console.error(err); alert("❌ Error de conexión"); }
 }
 
+/* Orden */
 function generarOrden(){
   const data = inventarios[pagina];
   let contenido = "";
   data.items.forEach(r => {
-    if(r[3] && r[3].trim()!=="" && r[3]!=="0"){
-      contenido += `<p>📦 ${r[0]} → <strong>${r[3]}</strong></p>`;
-    }
+    if(r[3] && r[3].trim()!=="" && r[3]!=="0"){ contenido += `<p>📦 ${r[0]} → <strong>${r[3]}</strong></p>`; }
   });
   if(!contenido){ alert("⚠ No hay pedidos capturados en esta página."); return; }
   document.getElementById("contenidoOrden").innerHTML = contenido;
@@ -381,7 +321,8 @@ function generarOrden(){
 }
 function cerrarOrden(){ document.getElementById("modalOrden").style.display = "none"; }
 
-/* Primera carga */
+/* Init */
+loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
 render();
 </script>
 </body>
