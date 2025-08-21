@@ -363,9 +363,8 @@ async function enviarTelegram() {
   }
 
   // 🔑 Configura tu token y chat_id
-  const token = "TU_TELEGRAM_BOT_TOKEN";  
-  const chatId = "TU_CHAT_ID";  
-
+const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+const CHAT_ID = "6617988297";
   try {
     const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
