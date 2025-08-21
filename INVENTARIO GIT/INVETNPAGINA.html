@@ -379,19 +379,19 @@ async function enviarTelegram() {
     return;
   }
 
-  // 🔑 Configura tu token y chat_id
 const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
 const CHAT_ID = "6617988297";
-  try {
-    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: mensaje,
-        parse_mode: "Markdown"
-      })
-    });
+
+try {
+  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  });
 
     if (resp.ok) {
       alert("✅ Inventario enviado a Telegram");
