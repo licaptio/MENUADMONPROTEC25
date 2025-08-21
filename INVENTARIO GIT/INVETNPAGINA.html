@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -50,12 +50,12 @@
       </table>
     </div>
 
-    <div class="controls">
-      <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
-      <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
-    </div>
-  </div>
-
+<div class="controls">
+  <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
+  <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar</button>
+  <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
+</div>
+  
 <script>
 const inventarios = [
   {
@@ -346,7 +346,49 @@ function handleSwipe() {
   if (touchEndX < touchStartX && touchStartX - touchEndX > minSwipeDistance) siguiente();
   if (touchEndX > touchStartX && touchEndX - touchStartX > minSwipeDistance) anterior();
 }
+async function enviarTelegram() {
+  const data = inventarios[pagina];
+  let mensaje = `📦 ${data.nombre}\n`;
 
+  // recorremos filas
+  data.items.forEach(row => {
+    if (row[1] && row[1].trim() !== "") {
+      mensaje += `${row[0]} → ${row[1]}\n`;
+    }
+  });
+
+  if (mensaje.trim() === `📦 ${data.nombre}`) {
+    alert("⚠ No hay inventario capturado en esta página.");
+    return;
+  }
+
+  // 🔑 Configura tu token y chat_id
+  const token = "TU_TELEGRAM_BOT_TOKEN";  
+  const chatId = "TU_CHAT_ID";  
+
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: mensaje,
+        parse_mode: "Markdown"
+      })
+    });
+
+    if (resp.ok) {
+      alert("✅ Inventario enviado a Telegram");
+    } else {
+      alert("❌ Error al enviar");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error de conexión");
+  }
+}
+
+  
 // primera carga
 render();
 </script>
