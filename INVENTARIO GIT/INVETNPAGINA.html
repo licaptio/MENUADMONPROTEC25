@@ -1,818 +1,822 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Paginación Inventarios</title>
-<style>
-  :root{
-    --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
-    --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    background:var(--bg); color:var(--text); line-height:1.45;
-    padding:10px 10px 84px;
-  }
-  .container{max-width:900px;margin:0 auto}
-
-  header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
-  h2{
-    font-size:1.12rem;text-align:center;color:var(--primary);
-    background:var(--card);border-radius:12px;padding:8px 10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:6px; display:flex;justify-content:center;gap:8px;align-items:center
-  }
-
-  /* Barra y toggles */
-  .topbar{display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap}
-  .pagination-wrap{display:flex;align-items:center;gap:.5rem}
-  .progress{flex:1;min-width:200px;max-width:420px;height:6px;background:#e9eef5;border-radius:999px;overflow:hidden}
-  .progress > span{display:block;height:100%;background:var(--secondary);width:0%;transition:width .2s}
-  .page-info{min-width:82px;text-align:center;color:#6b7a86;font-size:.85rem}
-
-  .toggle{
-    display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);
-    padding:4px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.04);user-select:none
-  }
-  .switch{position:relative;width:38px;height:20px;background:#e5e7eb;border-radius:999px;transition:.2s}
-  .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.2s}
-  .switch.on{background:#34d399}
-  .switch.on::after{left:20px}
-  .label{font-size:.86rem;color:#111827}
-
-  /* Tabla/Tarjetas */
-  .table-container{background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
-  table{width:100%;border-collapse:collapse}
-  thead th{position:sticky;top:0;background:var(--primary);color:#fff;font-weight:600}
-  th,td{padding:.65rem;border-bottom:1px solid var(--border);text-align:left;font-size:.93rem}
-
-  input[type="number"], input[type="text"]{
-    width:100%;padding:.5rem .55rem;border:1px solid #cfd7df;border-radius:10px;font-size:1rem;outline:none;background:#fff
-  }
-  input:focus{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(52,152,219,.12)}
-
-  /* MOBILE CARDS */
-  @media (max-width: 720px){
-    thead{display:none}
-    table, tbody, tr, td{display:block;width:100%}
-    tr{
-      background:var(--card); margin:10px 8px; border:1.1px solid var(--border);
-      border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,.05); overflow:hidden
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Paginación Inventarios</title>
+  <style>
+    :root{
+      --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
+      --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
     }
-    td{border:0;border-bottom:1px dashed #e5e7eb;padding:10px 12px}
-    td:last-child{border-bottom:0}
-
-    /* Producto: una línea con ellipsis */
-    td.producto{
-      background:#f7fafc; font-weight:800; color:#111827; font-size:1rem;
-      border-bottom:1px solid #e5e7eb; position:relative; padding:10px 12px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text); line-height:1.45;
+      padding:10px 10px 84px;
     }
-    td.producto::after{
-      content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:linear-gradient(180deg,#60a5fa,#34d399);
+    .container{max-width:900px;margin:0 auto}
+  
+    header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
+    h2{
+      font-size:1.12rem;text-align:center;color:var(--primary);
+      background:var(--card);border-radius:12px;padding:8px 10px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:6px; display:flex;justify-content:center;gap:8px;align-items:center
     }
-
-    /* Línea compacta Inventario + Stock */
-    .compact-row{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:10px}
-    .tag{font-size:.82rem;color:#6b7280}
-    .stock-badge{font-weight:700; font-size:.95rem; padding:.2rem .5rem; border:1px solid #e5e7eb; border-radius:8px; background:#f9fafb}
-    .inv-input{max-width:7ch} /* ~5–6 caracteres visibles */
+  
+    /* Barra y toggles */
+    .topbar{display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap}
+    .pagination-wrap{display:flex;align-items:center;gap:.5rem}
+    .progress{flex:1;min-width:200px;max-width:420px;height:6px;background:#e9eef5;border-radius:999px;overflow:hidden}
+    .progress > span{display:block;height:100%;background:var(--secondary);width:0%;transition:width .2s}
+    .page-info{min-width:82px;text-align:center;color:#6b7a86;font-size:.85rem}
+  
+    .toggle{
+      display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);
+      padding:4px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.04);user-select:none
+    }
+    .switch{position:relative;width:38px;height:20px;background:#e5e7eb;border-radius:999px;transition:.2s}
+    .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.2s}
+    .switch.on{background:#34d399}
+    .switch.on::after{left:20px}
+    .label{font-size:.86rem;color:#111827}
+  
+    /* Tabla/Tarjetas */
+    .table-container{background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead th{position:sticky;top:0;background:var(--primary);color:#fff;font-weight:600}
+    th,td{padding:.65rem;border-bottom:1px solid var(--border);text-align:left;font-size:.93rem}
+  
+    input[type="number"], input[type="text"]{
+      width:100%;padding:.5rem .55rem;border:1px solid #cfd7df;border-radius:10px;font-size:1rem;outline:none;background:#fff
+    }
+    input:focus{border-color:var(--secondary);box-shadow:0 0 0 3px rgba(52,152,219,.12)}
+  
+    /* MOBILE CARDS */
+    @media (max-width: 720px){
+      thead{display:none}
+      table, tbody, tr, td{display:block;width:100%}
+      tr{
+        background:var(--card); margin:10px 8px; border:1.1px solid var(--border);
+        border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,.05); overflow:hidden
+      }
+      td{border:0;border-bottom:1px dashed #e5e7eb;padding:10px 12px}
+      td:last-child{border-bottom:0}
+  
+      /* Producto: una línea con ellipsis */
+      td.producto{
+        background:#f7fafc; font-weight:800; color:#111827; font-size:1rem;
+        border-bottom:1px solid #e5e7eb; position:relative; padding:10px 12px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+      td.producto::after{
+        content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:linear-gradient(180deg,#60a5fa,#34d399);
+      }
+  
+      /* Línea compacta Inventario + Stock */
+      .compact-row{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:10px}
+      .tag{font-size:.82rem;color:#6b7280}
+      .stock-badge{font-weight:700; font-size:.95rem; padding:.2rem .5rem; border:1px solid #e5e7eb; border-radius:8px; background:#f9fafb}
+      .inv-input{max-width:7ch} /* ~5–6 caracteres visibles */
+    }
+  
+    /* Barra acciones compacta */
+    .actions{
+      position:fixed;left:0;right:0;bottom:0;background:#ffffffee;
+      backdrop-filter:blur(6px);border-top:1px solid #e9eef5;padding:8px;z-index:60
+    }
+  .actions .grid{
+    max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px
   }
-
-  /* Barra acciones compacta */
-  .actions{
-    position:fixed;left:0;right:0;bottom:0;background:#ffffffee;
-    backdrop-filter:blur(6px);border-top:1px solid #e9eef5;padding:8px;z-index:60
+    button{
+      padding:.6rem .5rem;font-size:.95rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .05s
+    }
+    button:active{transform:scale(.98)}
+    #btn-anterior{background:#9ca3af}
+    #btn-enviar{background:var(--warn)}
+    #btn-orden{background:#6d28d9}
+    #btn-siguiente{background:var(--ok)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+  
+    /* Modal */
+    #modalOrden{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:1000;padding:16px}
+    .modal-card{background:#fff;border-radius:14px;padding:16px;max-width:520px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+    .modal-card h3{margin-bottom:.4rem;text-align:center}
+    .modal-card .content{max-height:55vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px}
+    .modal-card .close{margin-top:10px;width:100%;background:var(--secondary)}
+    .hidden{display:none !important}
+  html, body {
+    overscroll-behavior-y: contain;
   }
-.actions .grid{
-  max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px
-}
-  button{
-    padding:.6rem .5rem;font-size:.95rem;font-weight:700;border:none;border-radius:12px;color:#fff;cursor:pointer;
-    box-shadow:0 1px 4px rgba(0,0,0,.06);transition:transform .05s
-  }
-  button:active{transform:scale(.98)}
-  #btn-anterior{background:#9ca3af}
-  #btn-enviar{background:var(--warn)}
-  #btn-orden{background:#6d28d9}
-  #btn-siguiente{background:var(--ok)}
-  button:disabled{opacity:.55;cursor:not-allowed}
-
-  /* Modal */
-  #modalOrden{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:1000;padding:16px}
-  .modal-card{background:#fff;border-radius:14px;padding:16px;max-width:520px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,.22)}
-  .modal-card h3{margin-bottom:.4rem;text-align:center}
-  .modal-card .content{max-height:55vh;overflow:auto;border:1px solid #eee;border-radius:10px;padding:10px}
-  .modal-card .close{margin-top:10px;width:100%;background:var(--secondary)}
-  .hidden{display:none !important}
-</style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h2><span>📦</span><span id="titulo"></span></h2>
-
-      <div class="topbar">
-        <div class="pagination-wrap">
-          <div class="progress"><span id="progress-bar"></span></div>
-          <div class="page-info" id="pagination-info"></div>
+  
+  </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h2><span>📦</span><span id="titulo"></span></h2>
+  
+        <div class="topbar">
+          <div class="pagination-wrap">
+            <div class="progress"><span id="progress-bar"></span></div>
+            <div class="page-info" id="pagination-info"></div>
+          </div>
+  
+          <!-- Toggle Mostrar pedido -->
+          <div class="toggle" id="togglePedido" role="button" aria-pressed="false" tabindex="0" onclick="togglePedido()">
+            <div class="switch" id="switchPedido"></div>
+            <span class="label">Mostrar pedido</span>
+          </div>
+  
+          <!-- 🔒 Toggle Bloquear navegación -->
+          <div class="toggle" id="toggleLock" role="button" aria-pressed="false" tabindex="0" onclick="toggleLock()">
+            <div class="switch" id="switchLock"></div>
+            <span class="label">Bloquear navegación</span>
+          </div>
         </div>
-
-        <!-- Toggle Mostrar pedido -->
-        <div class="toggle" id="togglePedido" role="button" aria-pressed="false" tabindex="0" onclick="togglePedido()">
-          <div class="switch" id="switchPedido"></div>
-          <span class="label">Mostrar pedido</span>
-        </div>
-
-        <!-- 🔒 Toggle Bloquear navegación -->
-        <div class="toggle" id="toggleLock" role="button" aria-pressed="false" tabindex="0" onclick="toggleLock()">
-          <div class="switch" id="switchLock"></div>
-          <span class="label">Bloquear navegación</span>
-        </div>
+      </header>
+  
+      <div class="table-container">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Inventario</th>
+              <th>Stock</th>
+              <th id="th-pedido">Pedido</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </header>
-
-    <div class="table-container">
-      <table id="tabla">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Inventario</th>
-            <th>Stock</th>
-            <th id="th-pedido">Pedido</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    </div>
+  
+    <!-- Barra de acciones -->
+    <div class="actions">
+    <div class="grid">
+      <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
+      <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
+      <button id="btn-limpiar" onclick="limpiarTodo()" style="background:#ef4444">🧹 Limpiar</button>
+      <button id="btn-orden" onclick="generarOrden()">🧾 Orden</button>
+      <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
     </div>
   </div>
-
-  <!-- Barra de acciones -->
-  <div class="actions">
-  <div class="grid">
-    <button id="btn-anterior" onclick="anterior()">⬅ Anterior</button>
-    <button id="btn-enviar" onclick="enviarTelegram()">📤 Enviar InvTEL</button>
-    <button id="btn-limpiar" onclick="limpiarTodo()" style="background:#ef4444">🧹 Limpiar</button>
-    <button id="btn-orden" onclick="generarOrden()">🧾 Orden</button>
-    <button id="btn-siguiente" onclick="siguiente()">Siguiente ➡</button>
-  </div>
-</div>
-
-  </div>
-
-  <!-- Modal ORDEN DE COMPRA -->
-  <div id="modalOrden">
-    <div class="modal-card">
-      <h3>ORDEN DE COMPRA PDD031204KL5</h3>
-      <div id="contenidoOrden" class="content"></div>
-      <button class="close" onclick="cerrarOrden()">Cerrar</button>
+  
     </div>
-  </div>
-
-<script>
-/* ===== Datos ===== */
-const inventarios = [
-  { nombre:"📦 Celofán", items:[
-    ["PAPEL CELOFÁN ROJO 25KG","",20,""],
-    ["PAPEL CELOFÁN AMARILLO 25KG","",10,""],
-    ["PAPEL CELOFÁN BLANCO 25KG","",7,""],
-    ["BOLSA CELOFÁN 14X20 C35 CAJA","",4,""],
+  
+    <!-- Modal ORDEN DE COMPRA -->
+    <div id="modalOrden">
+      <div class="modal-card">
+        <h3>ORDEN DE COMPRA PDD031204KL5</h3>
+        <div id="contenidoOrden" class="content"></div>
+        <button class="close" onclick="cerrarOrden()">Cerrar</button>
+      </div>
+    </div>
+  
+  <script>
+  /* ===== Datos ===== */
+  const inventarios = [
+    { nombre:"📦 Celofán", items:[
+      ["PAPEL CELOFÁN ROJO 25KG","",20,""],
+      ["PAPEL CELOFÁN AMARILLO 25KG","",10,""],
+      ["PAPEL CELOFÁN BLANCO 25KG","",7,""],
+      ["BOLSA CELOFÁN 14X20 C35 CAJA","",4,""],
+    ]},
+    { nombre:"📦 Azúcares y derivados", items:[
+      ["AZÚCAR MORENA 25","",100,""],
+      ["AZÚCAR BLANCA 25","",20,""],
+      ["MORENA SWITEN 907","",30,""],
+      ["AZÚCAR GLASS 6X","",3,""],
+      ["FÉCULA DE MAÍZ","",3,""],
+      ["AZÚCAR MOSCABADA","",2,""],
+      ["GLUCOSA 19 LTS 27K","",2,""],
+    ]},
+    { nombre:"📦 Porcionados", items:[
+      ["SAL DELAGG C/3000PZ","",5,""],
+      ["AZUCAR PORCION C/1000","",10,""],
+      ["CHILE QUEBRADO C/1000","",30,""],
   ]},
-  { nombre:"📦 Azúcares y derivados", items:[
-    ["AZÚCAR MORENA 25","",100,""],
-    ["AZÚCAR BLANCA 25","",20,""],
-    ["MORENA SWITEN 907","",30,""],
-    ["AZÚCAR GLASS 6X","",3,""],
-    ["FÉCULA DE MAÍZ","",3,""],
-    ["AZÚCAR MOSCABADA","",2,""],
-    ["GLUCOSA 19 LTS 27K","",2,""],
+  
+    { nombre:"📦 Líquidos", items:[
+      ["MORENA SWITEN 907","",50,""],
+      ["NUTRILECHE C90 PAQ","",8,""],
+      ["KARTAMUS 12 CAMA","",100,""],
+      ["HARIMASA C10","",100,""],
+      ["CHILE FARO ROD","",100,""],
+      ["KLEENEX 80","",100,""],
+    ]},
+    { nombre:"📦 INIX", items:[
+      ["HQR1230","",30,""],["HQR1238","",10,""],["HQR1245","",10,""],
+      ["HQR30 VITAFILM","",15,""],["AL2923 REC CHICA","",5,""],
+      ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
+      ["F3029","",2,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
+      ["16PP","",40,""],["8PP","",10,""],["TPP8","",100,""],
+    ]},
+    { nombre:"📦 Plásticos", items:[
+      ["50X70 NEGRA C/25KG","",10,""],["70X90 NEGRA C/25KG","",20,""],
+      ["90X120 NEGRA C/25KG","",40,""],["EMPLAYE P/ENTARIMAR","",300,""],
+      ["REVOLUCIÓN CORTO","",50,""],["REVOLUCIÓN LARGO","",20,""],
+      ["BOLSA 55X65","",4,""],["BOLSA 65X65","",4,""],["VIVERO CHICA","",10,""],
+      ["VIVERO MEDIANA","",10,""],["VIVERO GRANDE","",10,""],["ROLLOS NEGROS","",4,""],
+      ["ROLLOS TRANSPARENTE","",4,""],["10X20 BOLLERA C/200","",20,""],["BOLSA GOURMET","",3,""],
+    ]},
+  { nombre:"📦 Cerillos", items:[
+    ["TALISMAN DE LUJO 20/5","",0,""],
+    ["CLASICOS DE LUJO 20/5","",10,""],
+    ["MANOLA","",2,""],
+    ["FLAMA 50/5 DE 115PZ","",2,""],
+    ["FLAMA 50/5 DE 200PZ","",2,""],
+    ["MAYA 10/50","",40,""],
   ]},
-  { nombre:"📦 Porcionados", items:[
-    ["SAL DELAGG C/3000PZ","",5,""],
-    ["AZUCAR PORCION C/1000","",10,""],
-    ["CHILE QUEBRADO C/1000","",30,""],
-]},
-
-  { nombre:"📦 Líquidos", items:[
-    ["MORENA SWITEN 907","",50,""],
-    ["NUTRILECHE C90 PAQ","",8,""],
-    ["KARTAMUS 12 CAMA","",100,""],
-    ["HARIMASA C10","",100,""],
-    ["CHILE FARO ROD","",100,""],
-    ["KLEENEX 80","",100,""],
+  
+    { nombre:"📦 Líquido Zapata", items:[
+    ["BIG COLA 3.3","",12,""],
+    ["BIG COLA 1.5","",3,""],
+    ["BIG COLA 500 ML","",3,""],
+    ["CIFRUT 3.3","",0,""],
+    ["CIFRUT 625","",2,""],
+    ["CIFRUT 300","",2,""],
+    ["BIG COLA 300","",0,""],
+    ["CHECHI FRESCO 140 ML","",800,""],
+    ["AGUA 500 ML T72","",12,""],
+    ["AGUA 1 L T80","",12,""],
+    ["AGUA 1.5 T42","",4,""],
   ]},
-  { nombre:"📦 INIX", items:[
-    ["HQR1230","",30,""],["HQR1238","",10,""],["HQR1245","",10,""],
-    ["HQR30 VITAFILM","",15,""],["AL2923 REC CHICA","",5,""],
-    ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
-    ["F3029","",2,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
-    ["16PP","",40,""],["8PP","",10,""],["TPP8","",100,""],
+  { nombre:"📦 Converemex", items:[
+    ["VASO 104","",10,""],
+    ["VASO 106","",100,""],
+    ["VASO 108","",60,""],
+    ["VASO 110","",150,""],
+    ["VASO 112","",150,""],
+    ["VASO 114","",100,""],
+    ["VASO 116","",100,""],
+    ["VASO 132","",100,""],
+    ["VASO 120","",0,""],
+    ["ENVASE 704","",20,""],
+    ["ENVASE 706","",60,""],
+    ["ENVASE 708","",60,""],
+    ["ENVASE 712","",10,""],
+    ["ENVASE 716","",100,""],
+    ["ENVASE 732","",200,""],
+    ["TAPA 404 LISO","",0,""],
+    ["TAPA 406 LISO","",0,""],
+    ["TAPA 406 PIQUETE","",30,""],
+    ["TAPA PS 408 POPOTE","",10,""],
+    ["TAPA PS 410 POPOTE","",10,""],
+    ["TAPA PS 412 POPOTE(112,706)","",40,""],
+    ["TAPA PS 414 POPOTE(114,116)","",30,""],
+    ["TAPA PS 416 POPOTE(132,716,732)","",50,""],
+    ["TAPA EPS 516 PIQUETE","",20,""],
   ]},
-  { nombre:"📦 Plásticos", items:[
-    ["50X70 NEGRA C/25KG","",10,""],["70X90 NEGRA C/25KG","",20,""],
-    ["90X120 NEGRA C/25KG","",40,""],["EMPLAYE P/ENTARIMAR","",300,""],
-    ["REVOLUCIÓN CORTO","",50,""],["REVOLUCIÓN LARGO","",20,""],
-    ["BOLSA 55X65","",4,""],["BOLSA 65X65","",4,""],["VIVERO CHICA","",10,""],
-    ["VIVERO MEDIANA","",10,""],["VIVERO GRANDE","",10,""],["ROLLOS NEGROS","",4,""],
-    ["ROLLOS TRANSPARENTE","",4,""],["10X20 BOLLERA C/200","",20,""],["BOLSA GOURMET","",3,""],
+  
+    { nombre:"📦 Palmex", items:[
+    ["10X10 C/15 KGS. PASTA","",80,""],
+    ["ANILLO C/20 KGS.","","-",""],
+    ["DONA C/20 KGS.","","-",""],
+    ["ESPACIAL C/15K","","-",""],
+    ["MINI CUADRO C/20 KGS.","",20,""],
+    ["ROTINI C/20 KGS.","",20,""],
+    ["RUEDA GRANDE C/13 KGS.","",20,""],
+    ["HOJUELA PAPA 8 KGS.","",30,""],
+    ["ARITOS 3 KGS.","","-",""],
+    ["ZUCARIN C/15 KGS.","","-",""],
+    ["CORN FLAKES 10 KGS.","","-",""],
+    ["ARROZ CHOCOLATE","","-",""],
   ]},
-{ nombre:"📦 Cerillos", items:[
-  ["TALISMAN DE LUJO 20/5","",0,""],
-  ["CLASICOS DE LUJO 20/5","",10,""],
-  ["MANOLA","",2,""],
-  ["FLAMA 50/5 DE 115PZ","",2,""],
-  ["FLAMA 50/5 DE 200PZ","",2,""],
-  ["MAYA 10/50","",40,""],
-]},
-
-  { nombre:"📦 Líquido Zapata", items:[
-  ["BIG COLA 3.3","",12,""],
-  ["BIG COLA 1.5","",3,""],
-  ["BIG COLA 500 ML","",3,""],
-  ["CIFRUT 3.3","",0,""],
-  ["CIFRUT 625","",2,""],
-  ["CIFRUT 300","",2,""],
-  ["BIG COLA 300","",0,""],
-  ["CHECHI FRESCO 140 ML","",800,""],
-  ["AGUA 500 ML T72","",12,""],
-  ["AGUA 1 L T80","",12,""],
-  ["AGUA 1.5 T42","",4,""],
-]},
-{ nombre:"📦 Converemex", items:[
-  ["VASO 104","",10,""],
-  ["VASO 106","",100,""],
-  ["VASO 108","",60,""],
-  ["VASO 110","",150,""],
-  ["VASO 112","",150,""],
-  ["VASO 114","",100,""],
-  ["VASO 116","",100,""],
-  ["VASO 132","",100,""],
-  ["VASO 120","",0,""],
-  ["ENVASE 704","",20,""],
-  ["ENVASE 706","",60,""],
-  ["ENVASE 708","",60,""],
-  ["ENVASE 712","",10,""],
-  ["ENVASE 716","",100,""],
-  ["ENVASE 732","",200,""],
-  ["TAPA 404 LISO","",0,""],
-  ["TAPA 406 LISO","",0,""],
-  ["TAPA 406 PIQUETE","",30,""],
-  ["TAPA PS 408 POPOTE","",10,""],
-  ["TAPA PS 410 POPOTE","",10,""],
-  ["TAPA PS 412 POPOTE(112,706)","",40,""],
-  ["TAPA PS 414 POPOTE(114,116)","",30,""],
-  ["TAPA PS 416 POPOTE(132,716,732)","",50,""],
-  ["TAPA EPS 516 PIQUETE","",20,""],
-]},
-
-  { nombre:"📦 Palmex", items:[
-  ["10X10 C/15 KGS. PASTA","",80,""],
-  ["ANILLO C/20 KGS.","","-",""],
-  ["DONA C/20 KGS.","","-",""],
-  ["ESPACIAL C/15K","","-",""],
-  ["MINI CUADRO C/20 KGS.","",20,""],
-  ["ROTINI C/20 KGS.","",20,""],
-  ["RUEDA GRANDE C/13 KGS.","",20,""],
-  ["HOJUELA PAPA 8 KGS.","",30,""],
-  ["ARITOS 3 KGS.","","-",""],
-  ["ZUCARIN C/15 KGS.","","-",""],
-  ["CORN FLAKES 10 KGS.","","-",""],
-  ["ARROZ CHOCOLATE","","-",""],
-]},
-{ nombre:"📦 Mega Alimento", items:[
-  ["SALSA BOT 1 LTO. C/12","",150,""],
-  ["SALSA BOT 1.5 C/12","",40,""],
-  ["SALSA BOT 10 GRS C/840","",40,""],
-  ["SALSA BOT 5 GRS. C/1500","",15,""],
-  ["SALSA BOT 500 ML. C/24","",150,""],
-  ["SALSA BOT DE GALON C/6","",80,""],
-  ["SALSA BOT LIMON 1 LTO C/12","",30,""],
-  ["MAYO STAR VALUE AZUL 3.45","",20,""],
-  ["MAYO STAR PORC. 6/200","",5,""],
-  ["MOSTAZA STAR VALUE 6/3.53","",5,""],
-  ["MOSTAZA STAR PORC. 6/200","",5,""],
-  ["CATSUP STAR 3.8 KGS. C/6","",20,""],
-  ["CATSUP STAR VALUE 6/200","",30,""],
-  ["ADEREZO STAR VALUE 3.52","",20,""],
-  ["MAYO MEGA 3.57 KGS. C/6","",15,""],
-  ["ADEREZO MEGA C/6 DE 3.65","",15,""],
-  ["CATSUP MEGA RICA 6/4.5","",15,""],
-  ["MOSTAZA MEGA 6/3.7","",15,""],
-]},
-{ nombre:"📦 BOTANAS", items:[
-  ["SABRISURTIDO 35","",150,""],
-  ["TOSTITO VERDE","",30,""],
-  ["TOSTITO MORADO","",10,""],
-  ["FRITURA ENCANTO","",10,""],
-]},
-  { nombre:"📦 Comida para mascotas", items:[
-    ["RINGO C20","",100,""],["PEDIGREE ADULTO","",10,""],
-    ["PEDIGREE CACHORRO","",10,""],["WHISKAS","",10,""],
+  { nombre:"📦 Mega Alimento", items:[
+    ["SALSA BOT 1 LTO. C/12","",150,""],
+    ["SALSA BOT 1.5 C/12","",40,""],
+    ["SALSA BOT 10 GRS C/840","",40,""],
+    ["SALSA BOT 5 GRS. C/1500","",15,""],
+    ["SALSA BOT 500 ML. C/24","",150,""],
+    ["SALSA BOT DE GALON C/6","",80,""],
+    ["SALSA BOT LIMON 1 LTO C/12","",30,""],
+    ["MAYO STAR VALUE AZUL 3.45","",20,""],
+    ["MAYO STAR PORC. 6/200","",5,""],
+    ["MOSTAZA STAR VALUE 6/3.53","",5,""],
+    ["MOSTAZA STAR PORC. 6/200","",5,""],
+    ["CATSUP STAR 3.8 KGS. C/6","",20,""],
+    ["CATSUP STAR VALUE 6/200","",30,""],
+    ["ADEREZO STAR VALUE 3.52","",20,""],
+    ["MAYO MEGA 3.57 KGS. C/6","",15,""],
+    ["ADEREZO MEGA C/6 DE 3.65","",15,""],
+    ["CATSUP MEGA RICA 6/4.5","",15,""],
+    ["MOSTAZA MEGA 6/3.7","",15,""],
   ]},
-  { nombre:"📦 Papel higiénico y servilletas", items:[
-    ["HIG JUMBO DALIA 360","",30,""],["HIG JUNIOR DALIA 180","",30,""],
-    ["MARLY 12 C/500","",30,""],["BARRA MESA C/24","",10,""],
-    ["SANITA","",40,""],["TR160 C/6 MOC BLA","",30,""],["MOCAMBO LITHE C/16","",30,""],
+  { nombre:"📦 BOTANAS", items:[
+    ["SABRISURTIDO 35","",150,""],
+    ["TOSTITO VERDE","",30,""],
+    ["TOSTITO MORADO","",10,""],
+    ["FRITURA ENCANTO","",10,""],
   ]},
-  { nombre:"📦 Cacahuates, botanas, hoja tamal y chile japonés", items:[
-    ["CACAHUATE BLANCO SALADO 10KG","",1,""],["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
-    ["CACAHUATE GARAPIÑADO 10KG","",20,""],["CACAHUATE SALADO 10KG","",20,""],
-    ["CANTINERO TOTOPO Y AJO","",15,""],["MIXTO CON FRITURA 10KG","",10,""],
-    ["JAPONÉS HOT NUT 10KG","",10,""],["JAPONÉS 10KG","",10,""],
-    ["CHICHARRÓN CERDO KILO","",3,""],["CHICHARRÓN KRANKY KILO","",3,""],
-    ["HOJA TAMAL BULTOS","",10,""],["CHILE JAPONÉS BULTOS","",1,""],
+    { nombre:"📦 Comida para mascotas", items:[
+      ["RINGO C20","",100,""],["PEDIGREE ADULTO","",10,""],
+      ["PEDIGREE CACHORRO","",10,""],["WHISKAS","",10,""],
+    ]},
+    { nombre:"📦 Papel higiénico y servilletas", items:[
+      ["HIG JUMBO DALIA 360","",30,""],["HIG JUNIOR DALIA 180","",30,""],
+      ["MARLY 12 C/500","",30,""],["BARRA MESA C/24","",10,""],
+      ["SANITA","",40,""],["TR160 C/6 MOC BLA","",30,""],["MOCAMBO LITHE C/16","",30,""],
+    ]},
+    { nombre:"📦 Cacahuates, botanas, hoja tamal y chile japonés", items:[
+      ["CACAHUATE BLANCO SALADO 10KG","",1,""],["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
+      ["CACAHUATE GARAPIÑADO 10KG","",20,""],["CACAHUATE SALADO 10KG","",20,""],
+      ["CANTINERO TOTOPO Y AJO","",15,""],["MIXTO CON FRITURA 10KG","",10,""],
+      ["JAPONÉS HOT NUT 10KG","",10,""],["JAPONÉS 10KG","",10,""],
+      ["CHICHARRÓN CERDO KILO","",3,""],["CHICHARRÓN KRANKY KILO","",3,""],
+      ["HOJA TAMAL BULTOS","",10,""],["CHILE JAPONÉS BULTOS","",1,""],
+    ]},
+    { nombre:"📦 Conos", items:[["CONO DEL 8","",3,""],["CONO DEL 35","",10,""]]},
+  { nombre:"📦 Cremas, aderezos y demás", items:[
+    ["CREMA CAMELIA 10/1KG","",100,""],
+    ["ADEREZO VIRMAR 10/1KG","",100,""],
+    ["ADEREZO FROMELY 10/850GR","",40,""],
+    ["CREMA FROMELY 10/850GR","",40,""],
+    ["JUGO BONLANTI 4/10","",100,""],
+    ["BOLIFRUT BONLATI 10/15","",15,""],
+    ["TROLEBOLI BONLANTI 4/10","",10,""],
+    ["COBERTURA BONLATI","",5,""],
+    ["COBERTURA CURIOS","",50,""],
   ]},
-  { nombre:"📦 Conos", items:[["CONO DEL 8","",3,""],["CONO DEL 35","",10,""]]},
-{ nombre:"📦 Cremas, aderezos y demás", items:[
-  ["CREMA CAMELIA 10/1KG","",100,""],
-  ["ADEREZO VIRMAR 10/1KG","",100,""],
-  ["ADEREZO FROMELY 10/850GR","",40,""],
-  ["CREMA FROMELY 10/850GR","",40,""],
-  ["JUGO BONLANTI 4/10","",100,""],
-  ["BOLIFRUT BONLATI 10/15","",15,""],
-  ["TROLEBOLI BONLANTI 4/10","",10,""],
-  ["COBERTURA BONLATI","",5,""],
-  ["COBERTURA CURIOS","",50,""],
-]},
- { nombre:"📦 Puratos", items:[
-  ["CREMA VEGETAL AMBIANTE","",30,""],
-  ["CAJETA HORNEABLE PURATO","",10,""],
-  ["GLASSE DE FRESA PURATOS","",20,""],
-  ["GLASSE DE PIÑA PURATOS","",10,""],
-  ["RELLENO DE FRESA PURATOS","",10,""],
-  ["RELLENO DE PIÑA PURATOS","",10,""],
-  ["RELLENO DE VAINILLA","",5,""],
-]},
-{ nombre:"📦 Bolsas y rollos", items:[
-  // BOLSA NATURAL CORTADA
-  ["BOLSA NATURAL CORTADA • 6X12 NAT","",0,""],
-  ["BOLSA NATURAL CORTADA • 8X12 NAT","",0,""],
-  ["BOLSA NATURAL CORTADA • 10X20","",0,""],
-  ["BOLSA NATURAL CORTADA • 10X25","",0,""],
-  ["BOLSA NATURAL CORTADA • 12X20","",0,""],
-  ["BOLSA NATURAL CORTADA • 14X20","",0,""],
-  ["BOLSA NATURAL CORTADA • 15X25","",0,""],
-  ["BOLSA NATURAL CORTADA • 18X26","",0,""],
-  ["BOLSA NATURAL CORTADA • 20X30","",0,""],
-  ["BOLSA NATURAL CORTADA • 25X35","",0,""],
-  ["BOLSA NATURAL CORTADA • 25X40","",0,""],
-  ["BOLSA NATURAL CORTADA • 30X50","",0,""],
-  ["BOLSA NATURAL CORTADA • 30X60 CAL 300","",0,""],
-  ["BOLSA NATURAL CORTADA • 40X60","",0,""],
-  ["BOLSA NATURAL CORTADA • 50X70","",0,""],
-  ["BOLSA NATURAL CORTADA • 60X90","",0,""],
-  ["BOLSA NATURAL CORTADA • 70X90","",0,""],
-  ["BOLSA NATURAL CORTADA • 90X1.2","",0,""],
-
-  // BOLSA CAMISETA POLIPAPEL BIO
-  ["BOLSA CAMISETA POLIPAPEL BIO • MINI","",0,""],
-  ["BOLSA CAMISETA POLIPAPEL BIO • CH","",0,""],
-  ["BOLSA CAMISETA POLIPAPEL BIO • MED","",0,""],
-  ["BOLSA CAMISETA POLIPAPEL BIO • GRAD","",0,""],
-  ["BOLSA CAMISETA POLIPAPEL BIO • JUMBO","",0,""],
-
-  // BOLSA CAMISETA POLISEDA
-  ["BOLSA CAMISETA POLISEDA • MINI","",0,""],
-  ["BOLSA CAMISETA POLISEDA • CH","",0,""],
-  ["BOLSA CAMISETA POLISEDA • MED","",0,""],
-  ["BOLSA CAMISETA POLISEDA • GRAD","",0,""],
-
-  // BOLSA CAMISETA BAJA NEGRA
-  ["BOLSA CAMISETA BAJA NEGRA • CH","",0,""],
-  ["BOLSA CAMISETA BAJA NEGRA • MED","",0,""],
-  ["BOLSA CAMISETA BAJA NEGRA • GRAD","",0,""],
-
-  // ROLLO DE ALTA
-  ["ROLLO DE ALTA • 15X26","",0,""],
-  ["ROLLO DE ALTA • 18X26","",0,""],
-  ["ROLLO DE ALTA • 20X30","",0,""],
-  ["ROLLO DE ALTA • 20X30 C120","",0,""],
-  ["ROLLO DE ALTA • 25X35","",0,""],
-  ["ROLLO DE ALTA • 25X40","",0,""],
-  ["ROLLO DE ALTA • 30X40","",0,""],
-  ["ROLLO DE ALTA • 30X50","",0,""],
-  ["ROLLO DE ALTA • 40X60","",0,""],
-  ["ROLLO DE ALTA • 50X70","",0,""],
-
-  // ROLLO ALTA TIPO AMERICANO
-  ["ROLLO ALTA TIPO AMERICANO • 20X30 USA","",0,""],
-  ["ROLLO ALTA TIPO AMERICANO • 25X40 USA","",0,""],
-
-  // BOLSA BASURA
-  ["BOLSA BASURA • 50X70","",0,""],
-  ["BOLSA BASURA • 70X90","",0,""],
-  ["BOLSA BASURA • 90X120","",0,""]
-]},
-
-  { nombre:"📦 Tripas", items:[
-    ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
-    ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
-    ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
+   { nombre:"📦 Puratos", items:[
+    ["CREMA VEGETAL AMBIANTE","",30,""],
+    ["CAJETA HORNEABLE PURATO","",10,""],
+    ["GLASSE DE FRESA PURATOS","",20,""],
+    ["GLASSE DE PIÑA PURATOS","",10,""],
+    ["RELLENO DE FRESA PURATOS","",10,""],
+    ["RELLENO DE PIÑA PURATOS","",10,""],
+    ["RELLENO DE VAINILLA","",5,""],
   ]},
-  { nombre:"📦 Vinagres y vainilla", items:[
-    ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
-    ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
-    ["VINAGRE DE MANZANA GALÓN","",30,""],["VINAGRE DE MANZANA 12/1LT","",15,""],
-    ["VAINILLA 355ML C/24","",2,""],["VAINILLA GALÓN C/4","",4,""],
-    ["VAINILLA LITRO C/12","",2,""],["VAINILLA BLANCA 1LT","",1,""],
+  { nombre:"📦 Bolsas y rollos", items:[
+    // BOLSA NATURAL CORTADA
+    ["BOLSA NATURAL CORTADA • 6X12 NAT","",0,""],
+    ["BOLSA NATURAL CORTADA • 8X12 NAT","",0,""],
+    ["BOLSA NATURAL CORTADA • 10X20","",0,""],
+    ["BOLSA NATURAL CORTADA • 10X25","",0,""],
+    ["BOLSA NATURAL CORTADA • 12X20","",0,""],
+    ["BOLSA NATURAL CORTADA • 14X20","",0,""],
+    ["BOLSA NATURAL CORTADA • 15X25","",0,""],
+    ["BOLSA NATURAL CORTADA • 18X26","",0,""],
+    ["BOLSA NATURAL CORTADA • 20X30","",0,""],
+    ["BOLSA NATURAL CORTADA • 25X35","",0,""],
+    ["BOLSA NATURAL CORTADA • 25X40","",0,""],
+    ["BOLSA NATURAL CORTADA • 30X50","",0,""],
+    ["BOLSA NATURAL CORTADA • 30X60 CAL 300","",0,""],
+    ["BOLSA NATURAL CORTADA • 40X60","",0,""],
+    ["BOLSA NATURAL CORTADA • 50X70","",0,""],
+    ["BOLSA NATURAL CORTADA • 60X90","",0,""],
+    ["BOLSA NATURAL CORTADA • 70X90","",0,""],
+    ["BOLSA NATURAL CORTADA • 90X1.2","",0,""],
+  
+    // BOLSA CAMISETA POLIPAPEL BIO
+    ["BOLSA CAMISETA POLIPAPEL BIO • MINI","",0,""],
+    ["BOLSA CAMISETA POLIPAPEL BIO • CH","",0,""],
+    ["BOLSA CAMISETA POLIPAPEL BIO • MED","",0,""],
+    ["BOLSA CAMISETA POLIPAPEL BIO • GRAD","",0,""],
+    ["BOLSA CAMISETA POLIPAPEL BIO • JUMBO","",0,""],
+  
+    // BOLSA CAMISETA POLISEDA
+    ["BOLSA CAMISETA POLISEDA • MINI","",0,""],
+    ["BOLSA CAMISETA POLISEDA • CH","",0,""],
+    ["BOLSA CAMISETA POLISEDA • MED","",0,""],
+    ["BOLSA CAMISETA POLISEDA • GRAD","",0,""],
+  
+    // BOLSA CAMISETA BAJA NEGRA
+    ["BOLSA CAMISETA BAJA NEGRA • CH","",0,""],
+    ["BOLSA CAMISETA BAJA NEGRA • MED","",0,""],
+    ["BOLSA CAMISETA BAJA NEGRA • GRAD","",0,""],
+  
+    // ROLLO DE ALTA
+    ["ROLLO DE ALTA • 15X26","",0,""],
+    ["ROLLO DE ALTA • 18X26","",0,""],
+    ["ROLLO DE ALTA • 20X30","",0,""],
+    ["ROLLO DE ALTA • 20X30 C120","",0,""],
+    ["ROLLO DE ALTA • 25X35","",0,""],
+    ["ROLLO DE ALTA • 25X40","",0,""],
+    ["ROLLO DE ALTA • 30X40","",0,""],
+    ["ROLLO DE ALTA • 30X50","",0,""],
+    ["ROLLO DE ALTA • 40X60","",0,""],
+    ["ROLLO DE ALTA • 50X70","",0,""],
+  
+    // ROLLO ALTA TIPO AMERICANO
+    ["ROLLO ALTA TIPO AMERICANO • 20X30 USA","",0,""],
+    ["ROLLO ALTA TIPO AMERICANO • 25X40 USA","",0,""],
+  
+    // BOLSA BASURA
+    ["BOLSA BASURA • 50X70","",0,""],
+    ["BOLSA BASURA • 70X90","",0,""],
+    ["BOLSA BASURA • 90X120","",0,""]
   ]},
-  { nombre:"📦 Brochetas, cónicos y vasos", items:[
-    ["P/BROCHETA No.6 15CM","",2,""],["P/BROCHETA No.8 20CM","",2,""],
-    ["P/BROCHETA No.10 25CM","",2,""],["P/BROCHETA No.12 30CM","",3,""],
-    ["CÓNICO 106","",10,""],["CÓNICO 104","",5,""],["TAPA 0 CUEVAS C/2000","",20,""],
-    ["VASO 0 CUEVAS C/2000","",20,""],["TAPA 4-A CUEVAS C/2000","",3,""],
-    ["VASO 4-A CUEVAS C/2000","",3,""],
+  
+    { nombre:"📦 Tripas", items:[
+      ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
+      ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
+      ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
+    ]},
+    { nombre:"📦 Vinagres y vainilla", items:[
+      ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
+      ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
+      ["VINAGRE DE MANZANA GALÓN","",30,""],["VINAGRE DE MANZANA 12/1LT","",15,""],
+      ["VAINILLA 355ML C/24","",2,""],["VAINILLA GALÓN C/4","",4,""],
+      ["VAINILLA LITRO C/12","",2,""],["VAINILLA BLANCA 1LT","",1,""],
+    ]},
+    { nombre:"📦 Brochetas, cónicos y vasos", items:[
+      ["P/BROCHETA No.6 15CM","",2,""],["P/BROCHETA No.8 20CM","",2,""],
+      ["P/BROCHETA No.10 25CM","",2,""],["P/BROCHETA No.12 30CM","",3,""],
+      ["CÓNICO 106","",10,""],["CÓNICO 104","",5,""],["TAPA 0 CUEVAS C/2000","",20,""],
+      ["VASO 0 CUEVAS C/2000","",20,""],["TAPA 4-A CUEVAS C/2000","",3,""],
+      ["VASO 4-A CUEVAS C/2000","",3,""],
+    ]},
+    { nombre:"📦 Ciervo 2", items:[  
+    ["MIEL DE ABEJA 24/175GR","",2,""],  
+    ["CHAR RECT 12 PRIMO","",2,""],  
+    ["CHAR RECT 14 CUEVAS","",2,""],  
+    ["CHAR RECT 20 PRIMO C/100","",2,""],  
+    ["CHAR RED. #14 PRIMO C/250","",2,""],  
+    ["CHAR REDONDA 12 PRIMO C/300","",2,""],  
+    ["CHAR REDONDA 20 PRIMO C/100","",2,""],  
+    ["VASO PLAST 10 CRISTAL","",4,""],  
+    ["VASO GELATINERO 14","",1,""],  
+    ["VASO PLAST 15 CUEVAS","",1,""],  
+    ["VASO PLAST 16 CUEVAS","",1,""],  
+    ["VASO PLAST 17 CUEVAS","",1,""],  
+    ["VASO PLAST 19 CUEVAS","",1,""],  
+    ["VASO PLAST 1-C CUEVAS","",10,""],  
+    ["PALILLO DIENTES CIERVO 250/14","",2,""],  
+    ["PALILLO DIENTES BOTE 250/12","",2,""],  
   ]},
-  { nombre:"📦 Ciervo 2", items:[  
-  ["MIEL DE ABEJA 24/175GR","",2,""],  
-  ["CHAR RECT 12 PRIMO","",2,""],  
-  ["CHAR RECT 14 CUEVAS","",2,""],  
-  ["CHAR RECT 20 PRIMO C/100","",2,""],  
-  ["CHAR RED. #14 PRIMO C/250","",2,""],  
-  ["CHAR REDONDA 12 PRIMO C/300","",2,""],  
-  ["CHAR REDONDA 20 PRIMO C/100","",2,""],  
-  ["VASO PLAST 10 CRISTAL","",4,""],  
-  ["VASO GELATINERO 14","",1,""],  
-  ["VASO PLAST 15 CUEVAS","",1,""],  
-  ["VASO PLAST 16 CUEVAS","",1,""],  
-  ["VASO PLAST 17 CUEVAS","",1,""],  
-  ["VASO PLAST 19 CUEVAS","",1,""],  
-  ["VASO PLAST 1-C CUEVAS","",10,""],  
-  ["PALILLO DIENTES CIERVO 250/14","",2,""],  
-  ["PALILLO DIENTES BOTE 250/12","",2,""],  
-]},
-
-  { nombre:"📦 Cajas de pizza", items:[
-    ["CAJAS DE PIZZA 8","",100,""],["CAJAS DE PIZZA 10","",150,""],
-    ["CAJAS DE PIZZA 12","",200,""],["CAJAS DE PIZZA 14","",250,""],
-    ["CAJAS DE PIZZA 16","",150,""],["CAJAS DE PIZZA 18","",100,""],
-    ["CAJAS DE PIZZA 10 BLANCO","",50,""],["CAJAS DE PIZZA 12 BLANCO","",50,""],
-    ["CAJAS DE PIZZA 14 BLANCO","",50,""],["CAJAS DE PIZZA 16 BLANCO","",50,""],
+  
+    { nombre:"📦 Cajas de pizza", items:[
+      ["CAJAS DE PIZZA 8","",100,""],["CAJAS DE PIZZA 10","",150,""],
+      ["CAJAS DE PIZZA 12","",200,""],["CAJAS DE PIZZA 14","",250,""],
+      ["CAJAS DE PIZZA 16","",150,""],["CAJAS DE PIZZA 18","",100,""],
+      ["CAJAS DE PIZZA 10 BLANCO","",50,""],["CAJAS DE PIZZA 12 BLANCO","",50,""],
+      ["CAJAS DE PIZZA 14 BLANCO","",50,""],["CAJAS DE PIZZA 16 BLANCO","",50,""],
+    ]},
+    { nombre:"📦 Torito", items:[["TORITO LITRO","",60,""],["TORITO GALÓN","",60,""]]},
+    { nombre:"📦 Aluminios y encerados", items:[
+      ["ALUMINIO 5M C/24 BON","",30,""],["ALUMINIO 7M C/24 BON","",30,""],
+      ["ALUMINIO 10M C/24 BON","",10,""],["ALUMINIO 5M C/24 STAR","",30,""],
+      ["ALUMINIO 7M C/24 STAR","",30,""],
+    ]},
+  { nombre:"📦 REYMA DESECHABLE 1", items:[
+    // CHAROLA
+    ["CHAROLA • CH855RE","",0,""],
+    ["CHAROLA • CH066RE","",0,""],
+    ["CHAROLA • CH007","",0,""],
+    ["CHAROLA • CH835","",0,""],
+    ["CHAROLA • CH105","",0,""],
+    ["CHAROLA • CH1014","",0,""],
+    ["CHAROLA • CH9H","",0,""],
+    ["CHAROLA • CH8S","",0,""],
+    ["CHAROLA • CH855MA","",0,""],
+    ["CHAROLA • CH066MA","",0,""],
+  
+    // CONTENEDOR
+    ["CONTENEDOR • CN7X7D4P","",0,""],
+    ["CONTENEDOR • CN7X7L4P","",0,""],
+    ["CONTENEDOR • CN8X8D4P","",0,""],
+    ["CONTENEDOR • CN8X8L4P","",0,""],
+    ["CONTENEDOR • CN9X9D4P","",0,""],
+    ["CONTENEDOR • CN9X9L4P","",0,""],
+    ["CONTENEDOR • CNH10P (HAM)","",0,""],
+    ["CONTENEDOR • CNHD (HOT DOG)","",0,""],
+    ["CONTENEDOR • CNHO (HOGIE)","",0,""],
+  
+    // PLATOS TERMICOS
+    ["PLATOS TERMICOS • PH4","",0,""],
+    ["PLATOS TERMICOS • PH6","",0,""],
+    ["PLATOS TERMICOS • PH8","",0,""],
+    ["PLATOS TERMICOS • PH10","",0,""],
+    ["PLATOS TERMICOS • PT006","",0,""],
+    ["PLATOS TERMICOS • PT9D","",0,""],
+    ["PLATOS TERMICOS • PT8D","",0,""],
+    ["PLATOS TERMICOS • PT8L","",0,""],
+    ["PLATOS TERMICOS • PT10D","",0,""],
+    ["PLATOS TERMICOS • PT10L","",0,""],
+  
+    // LAMINA CORTADA
+    ["LAMINA CORTADA • LAC3040","",0,""]
   ]},
-  { nombre:"📦 Torito", items:[["TORITO LITRO","",60,""],["TORITO GALÓN","",60,""]]},
-  { nombre:"📦 Aluminios y encerados", items:[
-    ["ALUMINIO 5M C/24 BON","",30,""],["ALUMINIO 7M C/24 BON","",30,""],
-    ["ALUMINIO 10M C/24 BON","",10,""],["ALUMINIO 5M C/24 STAR","",30,""],
-    ["ALUMINIO 7M C/24 STAR","",30,""],
+  { nombre:"📦 REYMA DESECHABLE 2", items:[
+    // CHAROLAS COLORES
+    ["CHAROLAS COLORES • CH855AM","",0,""],
+    ["CHAROLAS COLORES • CH855NE","",0,""],
+    ["CHAROLAS COLORES • CH855RS","",0,""],
+    ["CHAROLAS COLORES • CH855AZUL","",0,""],
+    ["CHAROLAS COLORES • CH855RJ","",0,""],
+    ["CHAROLAS COLORES • CH007AZUL","",0,""],
+    ["CHAROLAS COLORES • CH007AM","",0,""],
+    ["CHAROLAS COLORES • CH007NE","",0,""],
+    ["CHAROLAS COLORES • CH007RS","",0,""],
+    ["CHAROLAS COLORES • CH007RJ","",0,""],
+    ["CHAROLAS COLORES • CH9HAM","",0,""],
+    ["CHAROLAS COLORES • CH9HNE","",0,""],
+    ["CHAROLAS COLORES • CH9HRS","",0,""],
+    ["CHAROLAS COLORES • CH9HAZUL","",0,""],
+    ["CHAROLAS COLORES • CH9HRJ","",0,""],
+    ["CHAROLAS COLORES • CH066AM","",0,""],
+    ["CHAROLAS COLORES • CH8SNEGRA","",0,""],
+  
+    // CONTENEDORES NEGROS
+    ["CONTENEDORES NEGROS • CN7X7LNE","",0,""],
+    ["CONTENEDORES NEGROS • CN7X7DNE","",0,""],
+    ["CONTENEDORES NEGROS • CN8X8DNE","",0,""],
+    ["CONTENEDORES NEGROS • CN8X8LNE","",0,""],
+    ["CONTENEDORES NEGROS • CN9X9DNE","",0,""],
+    ["CONTENEDORES NEGROS • CN9X9LNE","",0,""],
+    ["CONTENEDORES NEGROS • CGHAMNEGRA","",0,""],
+  
+    // DOMOS
+    ["DOMOS • R14","",0,""]
   ]},
-{ nombre:"📦 REYMA DESECHABLE 1", items:[
-  // CHAROLA
-  ["CHAROLA • CH855RE","",0,""],
-  ["CHAROLA • CH066RE","",0,""],
-  ["CHAROLA • CH007","",0,""],
-  ["CHAROLA • CH835","",0,""],
-  ["CHAROLA • CH105","",0,""],
-  ["CHAROLA • CH1014","",0,""],
-  ["CHAROLA • CH9H","",0,""],
-  ["CHAROLA • CH8S","",0,""],
-  ["CHAROLA • CH855MA","",0,""],
-  ["CHAROLA • CH066MA","",0,""],
-
-  // CONTENEDOR
-  ["CONTENEDOR • CN7X7D4P","",0,""],
-  ["CONTENEDOR • CN7X7L4P","",0,""],
-  ["CONTENEDOR • CN8X8D4P","",0,""],
-  ["CONTENEDOR • CN8X8L4P","",0,""],
-  ["CONTENEDOR • CN9X9D4P","",0,""],
-  ["CONTENEDOR • CN9X9L4P","",0,""],
-  ["CONTENEDOR • CNH10P (HAM)","",0,""],
-  ["CONTENEDOR • CNHD (HOT DOG)","",0,""],
-  ["CONTENEDOR • CNHO (HOGIE)","",0,""],
-
-  // PLATOS TERMICOS
-  ["PLATOS TERMICOS • PH4","",0,""],
-  ["PLATOS TERMICOS • PH6","",0,""],
-  ["PLATOS TERMICOS • PH8","",0,""],
-  ["PLATOS TERMICOS • PH10","",0,""],
-  ["PLATOS TERMICOS • PT006","",0,""],
-  ["PLATOS TERMICOS • PT9D","",0,""],
-  ["PLATOS TERMICOS • PT8D","",0,""],
-  ["PLATOS TERMICOS • PT8L","",0,""],
-  ["PLATOS TERMICOS • PT10D","",0,""],
-  ["PLATOS TERMICOS • PT10L","",0,""],
-
-  // LAMINA CORTADA
-  ["LAMINA CORTADA • LAC3040","",0,""]
-]},
-{ nombre:"📦 REYMA DESECHABLE 2", items:[
-  // CHAROLAS COLORES
-  ["CHAROLAS COLORES • CH855AM","",0,""],
-  ["CHAROLAS COLORES • CH855NE","",0,""],
-  ["CHAROLAS COLORES • CH855RS","",0,""],
-  ["CHAROLAS COLORES • CH855AZUL","",0,""],
-  ["CHAROLAS COLORES • CH855RJ","",0,""],
-  ["CHAROLAS COLORES • CH007AZUL","",0,""],
-  ["CHAROLAS COLORES • CH007AM","",0,""],
-  ["CHAROLAS COLORES • CH007NE","",0,""],
-  ["CHAROLAS COLORES • CH007RS","",0,""],
-  ["CHAROLAS COLORES • CH007RJ","",0,""],
-  ["CHAROLAS COLORES • CH9HAM","",0,""],
-  ["CHAROLAS COLORES • CH9HNE","",0,""],
-  ["CHAROLAS COLORES • CH9HRS","",0,""],
-  ["CHAROLAS COLORES • CH9HAZUL","",0,""],
-  ["CHAROLAS COLORES • CH9HRJ","",0,""],
-  ["CHAROLAS COLORES • CH066AM","",0,""],
-  ["CHAROLAS COLORES • CH8SNEGRA","",0,""],
-
-  // CONTENEDORES NEGROS
-  ["CONTENEDORES NEGROS • CN7X7LNE","",0,""],
-  ["CONTENEDORES NEGROS • CN7X7DNE","",0,""],
-  ["CONTENEDORES NEGROS • CN8X8DNE","",0,""],
-  ["CONTENEDORES NEGROS • CN8X8LNE","",0,""],
-  ["CONTENEDORES NEGROS • CN9X9DNE","",0,""],
-  ["CONTENEDORES NEGROS • CN9X9LNE","",0,""],
-  ["CONTENEDORES NEGROS • CGHAMNEGRA","",0,""],
-
-  // DOMOS
-  ["DOMOS • R14","",0,""]
-]},
-{ nombre:"📦 REYMA DESECHABLE 3", items:[
-  // VASOS PLÁSTICOS
-  ["VASOS PLASTICOS • VP4A","",0,""],
-  ["VASOS PLASTICOS • VP4CH","",0,""],
-  ["VASOS PLASTICOS • VPS5A","",0,""],
-  ["VASOS PLASTICOS • VP51/2","",0,""],
-  ["VASOS PLASTICOS • VP6","",0,""],
-  ["VASOS PLASTICOS • VP7","",0,""],
-  ["VASOS PLASTICOS • VP8","",0,""],
-  ["VASOS PLASTICOS • VP10","",0,""],
-  ["VASOS PLASTICOS • VP12","",0,""],
-  ["VASOS PLASTICOS • VP14","",0,""],
-  ["VASOS PLASTICOS • VP16A","",0,""],
-  ["VASOS PLASTICOS • VP16L","",0,""],
-  ["VASOS PLASTICOS • ENV1LT","",0,""],
-  ["VASOS PLASTICOS • ENV1/2LT","",0,""],
-  ["VASOS PLASTICOS • ENV1/4LT","",0,""],
-  ["VASOS PLASTICOS • TAPA REY (TR) VP","",0,""],
-  ["VASOS PLASTICOS • TAP REY C/R (TRR)","",0,""],
-
-  // VASOS TÉRMICOS
-  ["VASOS TERMICOS • VT4A","",0,""],
-  ["VASOS TERMICOS • VT4CH","",0,""],
-  ["VASOS TERMICOS • VT6","",0,""],
-  ["VASOS TERMICOS • VT8","",0,""],
-  ["VASOS TERMICOS • VT8A","",0,""],
-  ["VASOS TERMICOS • VT10","",0,""],
-  ["VASOS TERMICOS • VT12","",0,""],
-  ["VASOS TERMICOS • VT12A","",0,""],
-  ["VASOS TERMICOS • VT14","",0,""],
-  ["VASOS TERMICOS • VT16","",0,""],
-  ["VASOS TERMICOS • VT1/2LT","",0,""],
-  ["VASOS TERMICOS • VT1LT","",0,""],
-
-  // TAPAS P/ VASO PLÁSTICO
-  ["TAPA P/ VASO PLASTICO • TP1OZ","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP2OZ","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP51/24CH","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP4A8","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP10","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP1214","",0,""],
-  ["TAPA P/ VASO PLASTICO • TP16","",0,""],
-
-  // TAPAS P/ VASO TÉRMICO
-  ["TAPA P/ VASO TERMICO • TVT8","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT10","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT4A12","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT141620","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT4CH6","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT1LTR","",0,""],
-  ["TAPA P/ VASO TERMICO • TVT1LT","",0,""],
-  ["TAPA P/ VASO TERMICO • TTVT1L (TERM)","",0,""],
-
-  // LÍNEA EU (VPP Y TP)
-  ["LINEA EU • VP10EU","",0,""],
-  ["LINEA EU • VP12EU","",0,""],
-  ["LINEA EU • VP14EU","",0,""],
-  ["LINEA EU • VP16EU","",0,""],
-  ["LINEA EU • VP32EU","",0,""],
-  ["LINEA EU • TPEUR (RANURA)","",0,""],
-  ["LINEA EU • TPEU (LISA)","",0,""],
-  ["LINEA EU • TPDEU (DOMO)","",0,""],
-  ["LINEA EU • TP32EUR (RANURA)","",0,""],
-  ["LINEA EU • TP32EU (LISA)","",0,""],
-  ["LINEA EU • TPD16 EU","",0,""]
-]},
-{ nombre:"📦 REYMA DESECHABLE 4", items:[
-
-  // POPOTE BIO REYMA
-  ["POPOTE BIO REYMA • ESTUCH 21 BIO 4/500","",0,""],
-  ["POPOTE BIO REYMA • ESTUCH 26 BIO 4/500","",0,""],
-
-  // LINEA BIO REYMA
-  ["LINEA BIO REYMA • CH066MABIO","",0,""],
-  ["LINEA BIO REYMA • CH855MABIO","",0,""],
-  ["LINEA BIO REYMA • CN7X7L4PBIO","",0,""],
-  ["LINEA BIO REYMA • CN7X7D4PBIO","",0,""],
-  ["LINEA BIO REYMA • CN8X8D4PBIO","",0,""],
-  ["LINEA BIO REYMA • CN8X8L4PBIO","",0,""],
-  ["LINEA BIO REYMA • CN9X9D4PBIO","",0,""],
-  ["LINEA BIO REYMA • CN9X9L4PBIO","",0,""],
-  ["LINEA BIO REYMA • CNH10PBIO","",0,""],
-  ["LINEA BIO REYMA • CH835BIO","",0,""],
-  ["LINEA BIO REYMA • CH007BIO","",0,""],
-  ["LINEA BIO REYMA • CH855REBIO","",0,""],
-  ["LINEA BIO REYMA • CH9HBIO","",0,""],
-  ["LINEA BIO REYMA • PT9DBIO","",0,""],
-  ["LINEA BIO REYMA • PT8LBIO","",0,""],
-  ["LINEA BIO REYMA • PT8DBIO","",0,""]
-
-]},
-
-];
-/* Estado UI */
-let pagina = 0;
-let mostrarPedido = false;
-let lockNav = false;   // 🔒
-
-/* LocalStorage (opcional: descomenta si quieres persistir) */
-function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
-function loadData(){
-  const d = localStorage.getItem("inventariosData");
-  if(!d) return;
-  try{
-    const parsed = JSON.parse(d);
-    if(Array.isArray(parsed)){
-      for(let i=0;i<parsed.length;i++){ if(inventarios[i]) inventarios[i].items = parsed[i].items; }
-    }
-  }catch(e){ console.error(e); }
-}
-
-/* Toggles */
-function togglePedido(){
-  mostrarPedido = !mostrarPedido;
-  document.getElementById('switchPedido').classList.toggle('on', mostrarPedido);
-  document.getElementById('togglePedido').setAttribute('aria-pressed', String(mostrarPedido));
-  document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
-  render();
-}
-function toggleLock(){
-  lockNav = !lockNav;
-  document.getElementById('switchLock').classList.toggle('on', lockNav);
-  document.getElementById('toggleLock').setAttribute('aria-pressed', String(lockNav));
-  document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
-  document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
-}
-
-/* Render */
-function render(){
-  const data = inventarios[pagina];
-  document.getElementById("titulo").textContent = data.nombre;
-  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
-  document.getElementById("progress-bar").style.width = (((pagina+1)/inventarios.length)*100) + "%";
-
-  document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
-  document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
-  document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
-
-  const tbody = document.querySelector("#tabla tbody");
-  tbody.innerHTML = "";
-
-  data.items.forEach((row, i) => {
-    const tr = document.createElement("tr");
-
-    // Producto (1 línea, ellipsis)
-    const tdProducto = document.createElement("td");
-    tdProducto.textContent = row[0];
-    tdProducto.className = "producto";
-    tr.appendChild(tdProducto);
-
-    // Fila compacta: Inventario + Stock (en móvil quedan en una línea)
-    const tdInv = document.createElement("td");
-    const wrap = document.createElement("div");
-    wrap.className = "compact-row";
-
-    const tagInv = document.createElement("span");
-    tagInv.className = "tag"; tagInv.textContent = "Inventario";
-    const inputInv = document.createElement("input");
-    inputInv.type = "number"; inputInv.inputMode = "numeric"; inputInv.min = "0";
-    inputInv.value = row[1]; inputInv.className = "inv-input";
-inputInv.addEventListener("input", e => {
-  const v = e.target.value.replace(/\D/g,"");
-  inventarios[pagina].items[i][1] = v; e.target.value = v;
-  saveData(); // 👈 esto lo tienes comentado, hay que activarlo
-});
-    const stockBadge = document.createElement("span");
-    stockBadge.className = "stock-badge";
-    stockBadge.textContent = "Stock " + (row[2] ?? "").toString();
-
-    wrap.appendChild(tagInv);
-    wrap.appendChild(inputInv);
-    wrap.appendChild(stockBadge);
-    tdInv.appendChild(wrap);
-    tr.appendChild(tdInv);
-
-    // Pedido (opcional)
-    const tdPedido = document.createElement("td");
-    if(!mostrarPedido){ tdPedido.classList.add('hidden'); }
-    const inputPed = document.createElement("input");
-    inputPed.type = "number"; inputPed.inputMode = "numeric"; inputPed.min = "0";
-    inputPed.value = row[3] || "";
-inputPed.addEventListener("input", e => {
-  const v = e.target.value.replace(/\D/g,"");
-  inventarios[pagina].items[i][3] = v; e.target.value = v;
-  saveData(); // 👈 igual aquí
-});
-    tdPedido.appendChild(inputPed);
-    tr.appendChild(tdPedido);
-
-    tbody.appendChild(tr);
+  { nombre:"📦 REYMA DESECHABLE 3", items:[
+    // VASOS PLÁSTICOS
+    ["VASOS PLASTICOS • VP4A","",0,""],
+    ["VASOS PLASTICOS • VP4CH","",0,""],
+    ["VASOS PLASTICOS • VPS5A","",0,""],
+    ["VASOS PLASTICOS • VP51/2","",0,""],
+    ["VASOS PLASTICOS • VP6","",0,""],
+    ["VASOS PLASTICOS • VP7","",0,""],
+    ["VASOS PLASTICOS • VP8","",0,""],
+    ["VASOS PLASTICOS • VP10","",0,""],
+    ["VASOS PLASTICOS • VP12","",0,""],
+    ["VASOS PLASTICOS • VP14","",0,""],
+    ["VASOS PLASTICOS • VP16A","",0,""],
+    ["VASOS PLASTICOS • VP16L","",0,""],
+    ["VASOS PLASTICOS • ENV1LT","",0,""],
+    ["VASOS PLASTICOS • ENV1/2LT","",0,""],
+    ["VASOS PLASTICOS • ENV1/4LT","",0,""],
+    ["VASOS PLASTICOS • TAPA REY (TR) VP","",0,""],
+    ["VASOS PLASTICOS • TAP REY C/R (TRR)","",0,""],
+  
+    // VASOS TÉRMICOS
+    ["VASOS TERMICOS • VT4A","",0,""],
+    ["VASOS TERMICOS • VT4CH","",0,""],
+    ["VASOS TERMICOS • VT6","",0,""],
+    ["VASOS TERMICOS • VT8","",0,""],
+    ["VASOS TERMICOS • VT8A","",0,""],
+    ["VASOS TERMICOS • VT10","",0,""],
+    ["VASOS TERMICOS • VT12","",0,""],
+    ["VASOS TERMICOS • VT12A","",0,""],
+    ["VASOS TERMICOS • VT14","",0,""],
+    ["VASOS TERMICOS • VT16","",0,""],
+    ["VASOS TERMICOS • VT1/2LT","",0,""],
+    ["VASOS TERMICOS • VT1LT","",0,""],
+  
+    // TAPAS P/ VASO PLÁSTICO
+    ["TAPA P/ VASO PLASTICO • TP1OZ","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP2OZ","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP51/24CH","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP4A8","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP10","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP1214","",0,""],
+    ["TAPA P/ VASO PLASTICO • TP16","",0,""],
+  
+    // TAPAS P/ VASO TÉRMICO
+    ["TAPA P/ VASO TERMICO • TVT8","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT10","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT4A12","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT141620","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT4CH6","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT1LTR","",0,""],
+    ["TAPA P/ VASO TERMICO • TVT1LT","",0,""],
+    ["TAPA P/ VASO TERMICO • TTVT1L (TERM)","",0,""],
+  
+    // LÍNEA EU (VPP Y TP)
+    ["LINEA EU • VP10EU","",0,""],
+    ["LINEA EU • VP12EU","",0,""],
+    ["LINEA EU • VP14EU","",0,""],
+    ["LINEA EU • VP16EU","",0,""],
+    ["LINEA EU • VP32EU","",0,""],
+    ["LINEA EU • TPEUR (RANURA)","",0,""],
+    ["LINEA EU • TPEU (LISA)","",0,""],
+    ["LINEA EU • TPDEU (DOMO)","",0,""],
+    ["LINEA EU • TP32EUR (RANURA)","",0,""],
+    ["LINEA EU • TP32EU (LISA)","",0,""],
+    ["LINEA EU • TPD16 EU","",0,""]
+  ]},
+  { nombre:"📦 REYMA DESECHABLE 4", items:[
+  
+    // POPOTE BIO REYMA
+    ["POPOTE BIO REYMA • ESTUCH 21 BIO 4/500","",0,""],
+    ["POPOTE BIO REYMA • ESTUCH 26 BIO 4/500","",0,""],
+  
+    // LINEA BIO REYMA
+    ["LINEA BIO REYMA • CH066MABIO","",0,""],
+    ["LINEA BIO REYMA • CH855MABIO","",0,""],
+    ["LINEA BIO REYMA • CN7X7L4PBIO","",0,""],
+    ["LINEA BIO REYMA • CN7X7D4PBIO","",0,""],
+    ["LINEA BIO REYMA • CN8X8D4PBIO","",0,""],
+    ["LINEA BIO REYMA • CN8X8L4PBIO","",0,""],
+    ["LINEA BIO REYMA • CN9X9D4PBIO","",0,""],
+    ["LINEA BIO REYMA • CN9X9L4PBIO","",0,""],
+    ["LINEA BIO REYMA • CNH10PBIO","",0,""],
+    ["LINEA BIO REYMA • CH835BIO","",0,""],
+    ["LINEA BIO REYMA • CH007BIO","",0,""],
+    ["LINEA BIO REYMA • CH855REBIO","",0,""],
+    ["LINEA BIO REYMA • CH9HBIO","",0,""],
+    ["LINEA BIO REYMA • PT9DBIO","",0,""],
+    ["LINEA BIO REYMA • PT8LBIO","",0,""],
+    ["LINEA BIO REYMA • PT8DBIO","",0,""]
+  
+  ]},
+  
+  ];
+  /* Estado UI */
+  let pagina = 0;
+  let mostrarPedido = false;
+  let lockNav = false;   // 🔒
+  
+  /* LocalStorage (opcional: descomenta si quieres persistir) */
+  function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
+  function loadData(){
+    const d = localStorage.getItem("inventariosData");
+    if(!d) return;
+    try{
+      const parsed = JSON.parse(d);
+      if(Array.isArray(parsed)){
+        for(let i=0;i<parsed.length;i++){ if(inventarios[i]) inventarios[i].items = parsed[i].items; }
+      }
+    }catch(e){ console.error(e); }
+  }
+  
+  /* Toggles */
+  function togglePedido(){
+    mostrarPedido = !mostrarPedido;
+    document.getElementById('switchPedido').classList.toggle('on', mostrarPedido);
+    document.getElementById('togglePedido').setAttribute('aria-pressed', String(mostrarPedido));
+    document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
+    render();
+  }
+  function toggleLock(){
+    lockNav = !lockNav;
+    document.getElementById('switchLock').classList.toggle('on', lockNav);
+    document.getElementById('toggleLock').setAttribute('aria-pressed', String(lockNav));
+    document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
+    document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
+  }
+  
+  /* Render */
+  function render(){
+    const data = inventarios[pagina];
+    document.getElementById("titulo").textContent = data.nombre;
+    document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
+    document.getElementById("progress-bar").style.width = (((pagina+1)/inventarios.length)*100) + "%";
+  
+    document.getElementById("btn-anterior").disabled = lockNav || pagina===0;
+    document.getElementById("btn-siguiente").disabled = lockNav || (pagina===inventarios.length-1);
+    document.getElementById('th-pedido').classList.toggle('hidden', !mostrarPedido);
+  
+    const tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+  
+    data.items.forEach((row, i) => {
+      const tr = document.createElement("tr");
+  
+      // Producto (1 línea, ellipsis)
+      const tdProducto = document.createElement("td");
+      tdProducto.textContent = row[0];
+      tdProducto.className = "producto";
+      tr.appendChild(tdProducto);
+  
+      // Fila compacta: Inventario + Stock (en móvil quedan en una línea)
+      const tdInv = document.createElement("td");
+      const wrap = document.createElement("div");
+      wrap.className = "compact-row";
+  
+      const tagInv = document.createElement("span");
+      tagInv.className = "tag"; tagInv.textContent = "Inventario";
+      const inputInv = document.createElement("input");
+      inputInv.type = "number"; inputInv.inputMode = "numeric"; inputInv.min = "0";
+      inputInv.value = row[1]; inputInv.className = "inv-input";
+  inputInv.addEventListener("input", e => {
+    const v = e.target.value.replace(/\D/g,"");
+    inventarios[pagina].items[i][1] = v; e.target.value = v;
+    saveData(); // 👈 esto lo tienes comentado, hay que activarlo
   });
-}
-
-function siguiente(){ if(lockNav) return; if(pagina < inventarios.length-1){ pagina++; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
-function anterior(){ if(lockNav) return; if(pagina > 0){ pagina--; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
-
-/* Swipe táctil (respeta bloqueo) */
-let touchStartX=0, touchEndX=0;
-document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, false);
-document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
-function handleSwipe(){ if(lockNav) return; const min=50;
-  if(touchEndX < touchStartX && (touchStartX-touchEndX)>min) siguiente();
-  if(touchEndX > touchStartX && (touchEndX-touchStartX)>min) anterior();
-}
-
-/* Telegram */
-async function enviarTelegram(){
-  const data = inventarios[pagina];
-  let mensaje = `📦 ${data.nombre}\n`;
-  data.items.forEach(r => { if(r[1] && r[1].trim()!=="") mensaje += `${r[0]} → ${r[1]}\n`; });
-  if(mensaje.trim()===`📦 ${data.nombre}`){ alert("⚠ No hay inventario capturado en esta página."); return; }
-
-  const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
-  const CHAT_ID = "6617988297";
-  try{
-    const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
-      method:"POST", headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ chat_id:CHAT_ID, text:mensaje })
+      const stockBadge = document.createElement("span");
+      stockBadge.className = "stock-badge";
+      stockBadge.textContent = "Stock " + (row[2] ?? "").toString();
+  
+      wrap.appendChild(tagInv);
+      wrap.appendChild(inputInv);
+      wrap.appendChild(stockBadge);
+      tdInv.appendChild(wrap);
+      tr.appendChild(tdInv);
+  
+      // Pedido (opcional)
+      const tdPedido = document.createElement("td");
+      if(!mostrarPedido){ tdPedido.classList.add('hidden'); }
+      const inputPed = document.createElement("input");
+      inputPed.type = "number"; inputPed.inputMode = "numeric"; inputPed.min = "0";
+      inputPed.value = row[3] || "";
+  inputPed.addEventListener("input", e => {
+    const v = e.target.value.replace(/\D/g,"");
+    inventarios[pagina].items[i][3] = v; e.target.value = v;
+    saveData(); // 👈 igual aquí
+  });
+      tdPedido.appendChild(inputPed);
+      tr.appendChild(tdPedido);
+  
+      tbody.appendChild(tr);
     });
-    alert(resp.ok ? "✅ Inventario enviado a Telegram" : "❌ Error al enviar");
-  }catch(err){ console.error(err); alert("❌ Error de conexión"); }
-}
-
-/* Orden */
-function generarOrden(){
-  const data = inventarios[pagina];
-  let contenido = "";
-  data.items.forEach(r => {
-    if(r[3] && r[3].trim()!=="" && r[3]!=="0"){ contenido += `<p>📦 ${r[0]} → <strong>${r[3]}</strong></p>`; }
-  });
-  if(!contenido){ alert("⚠ No hay pedidos capturados en esta página."); return; }
-  document.getElementById("contenidoOrden").innerHTML = contenido;
-  document.getElementById("modalOrden").style.display = "flex";
-}
-function cerrarOrden(){ document.getElementById("modalOrden").style.display = "none"; }
-
-/* Init */
-loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
-render();
-</script>
-<script>
-// --- Persistencia ---
-function saveData(){
-  try{
-    localStorage.setItem("inventariosData", JSON.stringify(inventarios));
-  }catch(e){ console.error("No se pudo guardar en LocalStorage", e); }
-}
-function limpiarTodo(){
-  if(!confirm("¿Borrar TODA la captura (inventario y pedido) y limpiar el almacenamiento local?")){
-    return;
   }
-  // Vacía inventario (col 1) y pedido (col 3) de todas las páginas
-  for(let p=0; p<inventarios.length; p++){
-    for(let i=0; i<inventarios[p].items.length; i++){
-      inventarios[p].items[i][1] = ""; // inventario
-      inventarios[p].items[i][3] = ""; // pedido
-    }
+  
+  function siguiente(){ if(lockNav) return; if(pagina < inventarios.length-1){ pagina++; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
+  function anterior(){ if(lockNav) return; if(pagina > 0){ pagina--; render(); window.scrollTo({top:0,behavior:'smooth'}); } }
+  
+  /* Swipe táctil (respeta bloqueo) */
+  let touchStartX=0, touchEndX=0;
+  document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, false);
+  document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
+  function handleSwipe(){ if(lockNav) return; const min=50;
+    if(touchEndX < touchStartX && (touchStartX-touchEndX)>min) siguiente();
+    if(touchEndX > touchStartX && (touchEndX-touchStartX)>min) anterior();
   }
-  // Limpia LocalStorage
-  localStorage.removeItem("inventariosData");
+  
+  /* Telegram */
+  async function enviarTelegram(){
+    const data = inventarios[pagina];
+    let mensaje = `📦 ${data.nombre}\n`;
+    data.items.forEach(r => { if(r[1] && r[1].trim()!=="") mensaje += `${r[0]} → ${r[1]}\n`; });
+    if(mensaje.trim()===`📦 ${data.nombre}`){ alert("⚠ No hay inventario capturado en esta página."); return; }
+  
+    const BOT_TOKEN = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+    const CHAT_ID = "6617988297";
+    try{
+      const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ chat_id:CHAT_ID, text:mensaje })
+      });
+      alert(resp.ok ? "✅ Inventario enviado a Telegram" : "❌ Error al enviar");
+    }catch(err){ console.error(err); alert("❌ Error de conexión"); }
+  }
+  
+  /* Orden */
+  function generarOrden(){
+    const data = inventarios[pagina];
+    let contenido = "";
+    data.items.forEach(r => {
+      if(r[3] && r[3].trim()!=="" && r[3]!=="0"){ contenido += `<p>📦 ${r[0]} → <strong>${r[3]}</strong></p>`; }
+    });
+    if(!contenido){ alert("⚠ No hay pedidos capturados en esta página."); return; }
+    document.getElementById("contenidoOrden").innerHTML = contenido;
+    document.getElementById("modalOrden").style.display = "flex";
+  }
+  function cerrarOrden(){ document.getElementById("modalOrden").style.display = "none"; }
+  
+  /* Init */
+  loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
   render();
-  alert("Se limpió toda la información local.");
-}
-
-function loadData(){
-  const raw = localStorage.getItem("inventariosData");
-  if(!raw) return;
-  try{
-    const parsed = JSON.parse(raw);
-    if(Array.isArray(parsed)){
-      // si la estructura cambió, solo copia lo que exista
-      for(let p=0; p<inventarios.length; p++){
-        if(parsed[p] && Array.isArray(parsed[p].items)){
-          for(let i=0; i<inventarios[p].items.length; i++){
-            if(parsed[p].items[i]){
-              // Copiamos inventario (col 1) y pedido (col 3) si existen
-              inventarios[p].items[i][1] = parsed[p].items[i][1] ?? "";
-              inventarios[p].items[i][3] = parsed[p].items[i][3] ?? "";
+  </script>
+  <script>
+  // --- Persistencia ---
+  function saveData(){
+    try{
+      localStorage.setItem("inventariosData", JSON.stringify(inventarios));
+    }catch(e){ console.error("No se pudo guardar en LocalStorage", e); }
+  }
+  function limpiarTodo(){
+    if(!confirm("¿Borrar TODA la captura (inventario y pedido) y limpiar el almacenamiento local?")){
+      return;
+    }
+    // Vacía inventario (col 1) y pedido (col 3) de todas las páginas
+    for(let p=0; p<inventarios.length; p++){
+      for(let i=0; i<inventarios[p].items.length; i++){
+        inventarios[p].items[i][1] = ""; // inventario
+        inventarios[p].items[i][3] = ""; // pedido
+      }
+    }
+    // Limpia LocalStorage
+    localStorage.removeItem("inventariosData");
+    render();
+    alert("Se limpió toda la información local.");
+  }
+  
+  function loadData(){
+    const raw = localStorage.getItem("inventariosData");
+    if(!raw) return;
+    try{
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)){
+        // si la estructura cambió, solo copia lo que exista
+        for(let p=0; p<inventarios.length; p++){
+          if(parsed[p] && Array.isArray(parsed[p].items)){
+            for(let i=0; i<inventarios[p].items.length; i++){
+              if(parsed[p].items[i]){
+                // Copiamos inventario (col 1) y pedido (col 3) si existen
+                inventarios[p].items[i][1] = parsed[p].items[i][1] ?? "";
+                inventarios[p].items[i][3] = parsed[p].items[i][3] ?? "";
+              }
             }
           }
         }
       }
-    }
-  }catch(e){ console.error("No se pudo leer LocalStorage", e); }
-}
-</script>
-
-</body>
-</html>
+    }catch(e){ console.error("No se pudo leer LocalStorage", e); }
+  }
+  </script>
+  
+  </body>
+  </html>
