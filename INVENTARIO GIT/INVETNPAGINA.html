@@ -270,20 +270,21 @@
     ["TAPA EPS 516 PIQUETE","",20,""],
   ]},
   
-    { nombre:"📦 Palmex", items:[
-    ["10X10 C/15 KGS. PASTA","",80,""],
-    ["ANILLO C/20 KGS.","","-",""],
-    ["DONA C/20 KGS.","","-",""],
-    ["ESPACIAL C/15K","","-",""],
-    ["MINI CUADRO C/20 KGS.","",20,""],
-    ["ROTINI C/20 KGS.","",20,""],
-    ["RUEDA GRANDE C/13 KGS.","",20,""],
-    ["HOJUELA PAPA 8 KGS.","",30,""],
-    ["ARITOS 3 KGS.","","-",""],
-    ["ZUCARIN C/15 KGS.","","-",""],
-    ["CORN FLAKES 10 KGS.","","-",""],
-    ["ARROZ CHOCOLATE","","-",""],
-  ]},
+ { nombre:"📦 Palmex", items:[
+  ["10X10 C/15 KGS. PASTA","",80,""],
+  ["ANILLO C/20 KGS.","",0,""],
+  ["DONA C/20 KGS.","",0,""],
+  ["ESPACIAL C/15K","",0,""],
+  ["MINI CUADRO C/20 KGS.","",20,""],
+  ["ROTINI C/20 KGS.","",20,""],
+  ["RUEDA GRANDE C/13 KGS.","",20,""],
+  ["HOJUELA PAPA 8 KGS.","",30,""],
+  ["ARITOS 3 KGS.","",0,""],
+  ["ZUCARIN C/15 KGS.","",0,""],
+  ["CORN FLAKES 10 KGS.","",0,""],
+  ["ARROZ CHOCOLATE","",0,""],
+]},
+
   { nombre:"📦 Mega Alimento", items:[
     ["SALSA BOT 1 LTO. C/12","",150,""],
     ["SALSA BOT 1.5 C/12","",40,""],
@@ -409,11 +410,12 @@
     ["BOLSA BASURA • 90X120","",0,""]
   ]},
   
-    { nombre:"📦 Tripas", items:[
-      ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
-      ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","","-",""],
-      ["TRIPA 34","","-",""],["TRIPA 40","","-",""],
-    ]},
+{ nombre:"📦 Tripas", items:[
+  ["TRIPA 21","",4,""],["TRIPA 23","",4,""],["TRIPA 26","",2,""],
+  ["TRIPA 28","",4,""],["TRIPA 30","",2,""],["TRIPA 32","",0,""],
+  ["TRIPA 34","",0,""],["TRIPA 40","",0,""],
+]},
+
     { nombre:"📦 Vinagres y vainilla", items:[
       ["VINAGRE BLANCO 1LT C/12","",5,""],["VINAGRE BLANCO 4/4L","",10,""],
       ["VINAGRE BLANCO 355ML C/24","",3,""],["VINAGRE DE MANZANA 355ML C/24","",5,""],
@@ -629,10 +631,6 @@
   let mostrarPedido = false;
   let lockNav = false;   // 🔒
   
-  /* LocalStorage (opcional: descomenta si quieres persistir) */
-  function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
-  function loadData(){
-    const d = localStorage.getItem("inventariosData");
     if(!d) return;
     try{
       const parsed = JSON.parse(d);
