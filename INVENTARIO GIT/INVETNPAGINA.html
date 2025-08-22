@@ -687,12 +687,11 @@ function render(){
     const inputInv = document.createElement("input");
     inputInv.type = "number"; inputInv.inputMode = "numeric"; inputInv.min = "0";
     inputInv.value = row[1]; inputInv.className = "inv-input";
-    inputInv.addEventListener("input", e => {
-      const v = e.target.value.replace(/\D/g,"");
-      inventarios[pagina].items[i][1] = v; e.target.value = v;
-      // saveData();
-    });
-
+inputInv.addEventListener("input", e => {
+  const v = e.target.value.replace(/\D/g,"");
+  inventarios[pagina].items[i][1] = v; e.target.value = v;
+  saveData(); // 👈 esto lo tienes comentado, hay que activarlo
+});
     const stockBadge = document.createElement("span");
     stockBadge.className = "stock-badge";
     stockBadge.textContent = "Stock " + (row[2] ?? "").toString();
@@ -709,11 +708,11 @@ function render(){
     const inputPed = document.createElement("input");
     inputPed.type = "number"; inputPed.inputMode = "numeric"; inputPed.min = "0";
     inputPed.value = row[3] || "";
-    inputPed.addEventListener("input", e => {
-      const v = e.target.value.replace(/\D/g,"");
-      inventarios[pagina].items[i][3] = v; e.target.value = v;
-      // saveData();
-    });
+inputPed.addEventListener("input", e => {
+  const v = e.target.value.replace(/\D/g,"");
+  inventarios[pagina].items[i][3] = v; e.target.value = v;
+  saveData(); // 👈 igual aquí
+});
     tdPedido.appendChild(inputPed);
     tr.appendChild(tdPedido);
 
