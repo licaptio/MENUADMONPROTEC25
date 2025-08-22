@@ -9,8 +9,7 @@
       --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
       --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
+    *{box-sizing:border-box;margin:0;padding:0}    body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
       background:var(--bg); color:var(--text); line-height:1.45;
       padding:10px 10px 84px;
@@ -759,8 +758,6 @@
   /* Init */
   loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
   render();
-}
-
 /* ===== Guardar / Limpiar / Cargar ===== */
 function saveData(){
   try{
