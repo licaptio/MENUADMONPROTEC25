@@ -631,15 +631,6 @@
   let mostrarPedido = false;
   let lockNav = false;   // 🔒
   
-    if(!d) return;
-    try{
-      const parsed = JSON.parse(d);
-      if(Array.isArray(parsed)){
-        for(let i=0;i<parsed.length;i++){ if(inventarios[i]) inventarios[i].items = parsed[i].items; }
-      }
-    }catch(e){ console.error(e); }
-  }
-  
   /* Toggles */
   function togglePedido(){
     mostrarPedido = !mostrarPedido;
@@ -768,53 +759,58 @@
   /* Init */
   loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
   render();
-  </script>
-  <script>
-  // --- Persistencia ---
-  function saveData(){
-    try{
-      localStorage.setItem("inventariosData", JSON.stringify(inventarios));
-    }catch(e){ console.error("No se pudo guardar en LocalStorage", e); }
+    
+<script>
+function saveData(){
+  try{
+    localStorage.setItem("inventariosData", JSON.stringify(inventarios));
+  }catch(e){
+    console.error("No se pudo guardar en LocalStorage", e);
   }
-  function limpiarTodo(){
-    if(!confirm("¿Borrar TODA la captura (inventario y pedido) y limpiar el almacenamiento local?")){
-      return;
-    }
-    // Vacía inventario (col 1) y pedido (col 3) de todas las páginas
-    for(let p=0; p<inventarios.length; p++){
-      for(let i=0; i<inventarios[p].items.length; i++){
-        inventarios[p].items[i][1] = ""; // inventario
-        inventarios[p].items[i][3] = ""; // pedido
-      }
-    }
-    // Limpia LocalStorage
-    localStorage.removeItem("inventariosData");
-    render();
-    alert("Se limpió toda la información local.");
+}
+
+function limpiarTodo(){
+  if(!confirm("¿Borrar TODA la captura (inventario y pedido) y limpiar el almacenamiento local?")){
+    return;
   }
-  
-  function loadData(){
-    const raw = localStorage.getItem("inventariosData");
-    if(!raw) return;
-    try{
-      const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed)){
-        // si la estructura cambió, solo copia lo que exista
-        for(let p=0; p<inventarios.length; p++){
-          if(parsed[p] && Array.isArray(parsed[p].items)){
-            for(let i=0; i<inventarios[p].items.length; i++){
-              if(parsed[p].items[i]){
-                // Copiamos inventario (col 1) y pedido (col 3) si existen
-                inventarios[p].items[i][1] = parsed[p].items[i][1] ?? "";
-                inventarios[p].items[i][3] = parsed[p].items[i][3] ?? "";
-              }
+  // Vacía inventario (col 1) y pedido (col 3) de todas las páginas
+  for(let p=0; p<inventarios.length; p++){
+    for(let i=0; i<inventarios[p].items.length; i++){
+      inventarios[p].items[i][1] = ""; // inventario
+      inventarios[p].items[i][3] = ""; // pedido
+    }
+  }
+  // Limpia LocalStorage
+  localStorage.removeItem("inventariosData");
+  render();
+  alert("Se limpió toda la información local.");
+}
+
+function loadData(){
+  const raw = localStorage.getItem("inventariosData");
+  if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)){
+      // si la estructura cambió, solo copia lo que exista
+      for(let p=0; p<inventarios.length; p++){
+        if(parsed[p] && Array.isArray(parsed[p].items)){
+          for(let i=0; i<inventarios[p].items.length; i++){
+            if(parsed[p].items[i]){
+              // Copiamos inventario (col 1) y pedido (col 3) si existen
+              inventarios[p].items[i][1] = parsed[p].items[i][1] ?? "";
+              inventarios[p].items[i][3] = parsed[p].items[i][3] ?? "";
             }
           }
         }
       }
-    }catch(e){ console.error("No se pudo leer LocalStorage", e); }
+    }
+  }catch(e){
+    console.error("No se pudo leer LocalStorage", e);
   }
-  </script>
+}
+</script>
+
   
   </body>
   </html>
