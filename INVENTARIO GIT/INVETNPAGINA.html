@@ -759,8 +759,9 @@
   /* Init */
   loadData();   // si no quieres persistencia, comenta esta línea y también saveData() en inputs
   render();
-    
-<script>
+}
+
+/* ===== Guardar / Limpiar / Cargar ===== */
 function saveData(){
   try{
     localStorage.setItem("inventariosData", JSON.stringify(inventarios));
