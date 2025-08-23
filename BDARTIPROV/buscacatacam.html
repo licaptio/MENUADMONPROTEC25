@@ -158,52 +158,55 @@ async function buscarProductos(termino) {
   resultados = [];
 
   // Si es un código de barras numérico → primero intenta en codigoBarra
-if (/^\d+$/.test(termino)) {
-  // Buscar por código original
-  let q = query(
-    collection(db, "productos"),
-    where("activo", "==", true),
-    where("codigoBarra", "==", termino)
-  );
-  let snap = await getDocs(q);
+  if (/^\d+$/.test(termino)) {
+    let snap;
 
-  if (snap.empty) {
-    // Si no existe, buscar en equivalentes
-    q = query(
+    // Buscar por código original
+    let q = query(
       collection(db, "productos"),
       where("activo", "==", true),
-      where("codigosEquivalentes", "array-contains", termino)
+      where("codigoBarra", "==", termino)
     );
     snap = await getDocs(q);
+
+    // Si no encuentra → buscar en equivalentes
+    if (snap.empty) {
+      q = query(
+        collection(db, "productos"),
+        where("activo", "==", true),
+        where("codigosEquivalentes", "array-contains", termino)
+      );
+      snap = await getDocs(q);
+    }
+
+    resultados = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    if (resultados.length === 0) {
+      resultadosDiv.innerHTML = "❌ No se encontró este código en productos ni en equivalentes";
+      contador.textContent = "";
+    } else {
+      mostrarPagina(0);
+    }
+    return; // 👈 aquí ya terminamos, no seguimos al bloque de conceptos
   }
 
-  resultados = snap.docs.map(doc => ({
-  id: doc.id,
-  ...doc.data()
-}));
-console.log("Resultados encontrados:", resultados);
+  // 🔹 Buscar por concepto (si no es código)
+  const q = query(
+    collection(db, "productos"),
+    where("activo", "==", true)
+  );
+  const snap = await getDocs(q);
 
-  mostrarPagina(0);
-  return;
-}
- 
-// 🔹 Buscar por concepto (sin orderBy que pide índice)
-const q = query(
-  collection(db, "productos"),
-  where("activo", "==", true)
-);
-const snap = await getDocs(q);
-
-const palabras = termino.toLowerCase().split(" ");
-snap.forEach(doc => {
-  const p = { id: doc.id, ...doc.data() };
-  if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
-    resultados.push(p);
-  }
-});
-
-console.log("Resultados encontrados (por concepto):", resultados);
-
+  const palabras = termino.toLowerCase().split(" ");
+  snap.forEach(doc => {
+    const p = { id: doc.id, ...doc.data() };
+    if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
+      resultados.push(p);
+    }
+  });
 
   if (resultados.length === 0) {
     resultadosDiv.innerHTML = "❌ No se encontraron resultados";
@@ -212,7 +215,6 @@ console.log("Resultados encontrados (por concepto):", resultados);
     mostrarPagina(0);
   }
 }
-
 
     function mostrarPagina(n) {
       pagina = n;
