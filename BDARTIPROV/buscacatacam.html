@@ -158,20 +158,29 @@ async function buscarProductos(termino) {
   resultados = [];
 
   // Si es un código de barras numérico → primero intenta en codigoBarra
-  if (/^\d+$/.test(termino)) {
-    const q = query(
+if (/^\d+$/.test(termino)) {
+  // Buscar por código original
+  let q = query(
+    collection(db, "productos"),
+    where("activo", "==", true),
+    where("codigoBarra", "==", termino)
+  );
+  let snap = await getDocs(q);
+
+  if (snap.empty) {
+    // Si no existe, buscar en equivalentes
+    q = query(
       collection(db, "productos"),
       where("activo", "==", true),
-      where("codigoBarra", "==", termino)
+      where("codigosEquivalentes", "array-contains", termino)
     );
-    const snap = await getDocs(q);
-    resultados = snap.docs.map(doc => doc.data());
+    snap = await getDocs(q);
+  }
 
-    // 👉 Si encontró algo, ya terminamos
-    if (resultados.length > 0) {
-      mostrarPagina(0);
-      return;
-    }
+  resultados = snap.docs.map(doc => doc.data());
+  mostrarPagina(0);
+  return;
+}
     // Si no encontró nada, seguimos buscando en concepto
   }
 
