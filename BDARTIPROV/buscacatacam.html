@@ -159,39 +159,39 @@ async function buscarProductos(termino) {
 
   // Si es un código de barras numérico → primero intenta en codigoBarra
   if (/^\d+$/.test(termino)) {
-    let snap;
+  let q = query(
+    collection(db, "productos"),
+    where("activo", "==", true),
+    where("codigoBarra", "==", termino)
+  );
+  let snap = await getDocs(q);
+  let encontradoEn = "codigoBarra";
 
-    // Buscar por código original
-    let q = query(
+  if (snap.empty) {
+    q = query(
       collection(db, "productos"),
       where("activo", "==", true),
-      where("codigoBarra", "==", termino)
+      where("codigosEquivalentes", "array-contains", termino)
     );
     snap = await getDocs(q);
-
-    // Si no encuentra → buscar en equivalentes
-    if (snap.empty) {
-      q = query(
-        collection(db, "productos"),
-        where("activo", "==", true),
-        where("codigosEquivalentes", "array-contains", termino)
-      );
-      snap = await getDocs(q);
-    }
-
-    resultados = snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    if (resultados.length === 0) {
-      resultadosDiv.innerHTML = "❌ No se encontró este código en productos ni en equivalentes";
-      contador.textContent = "";
-    } else {
-      mostrarPagina(0);
-    }
-    return; // 👈 aquí ya terminamos, no seguimos al bloque de conceptos
+    encontradoEn = "equivalente";
   }
+
+  resultados = snap.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    coincidencia: encontradoEn,
+    codigoBuscado: termino
+  }));
+
+  if (resultados.length === 0) {
+    resultadosDiv.innerHTML = "❌ No se encontró este código en productos ni en equivalentes";
+    contador.textContent = "";
+  } else {
+    mostrarPagina(0);
+  }
+  return;
+}
 
   // 🔹 Buscar por concepto (si no es código)
   const q = query(
@@ -229,7 +229,10 @@ async function buscarProductos(termino) {
 div.innerHTML = `
   <b>${p.concepto || "SIN CONCEPTO"}</b><br>
   Código: ${p.codigoBarra || p.id}<br>
-  <div class="precios">
+  ${p.coincidencia === "equivalente" 
+    ? `<span style="color:#b00">🔗 Coincidencia en equivalente (${p.codigoBuscado})</span><br>` 
+    : ""}
+    <div class="precios">
     <span class="precio-publico">
       Público: $${p.precioPublico 
         ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
