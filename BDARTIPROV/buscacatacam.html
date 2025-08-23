@@ -244,7 +244,7 @@ div.innerHTML = `
 `;
 
         div.addEventListener("click", () => {
-          window.location.href = "producto.html?id=" + p.codigoBarra;
+          window.location.href = "producto.html?id=" + (p.codigoBarra || p.id);
         });
         resultadosDiv.appendChild(div);
       });
