@@ -177,7 +177,11 @@ if (/^\d+$/.test(termino)) {
     snap = await getDocs(q);
   }
 
-  resultados = snap.docs.map(doc => doc.data());
+  resultados = snap.docs.map(doc => ({
+  id: doc.id,
+  ...doc.data()
+}));
+
   mostrarPagina(0);
   return;
 }
@@ -217,27 +221,28 @@ if (/^\d+$/.test(termino)) {
       lista.forEach(p => {
         const div = document.createElement("div");
         div.className = "producto";
-        div.innerHTML = `
-          <b>${p.concepto}</b><br>
-          Código: ${p.codigoBarra}<br>
-          <div class="precios">
-            <span class="precio-publico">
-              Público: $${p.precioPublico 
-                ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-                : "—"}
-            </span>
-            <span class="precio-medio">
-              Medio Mayoreo: $${p.medioMayoreo 
-                ? Number(p.medioMayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-                : "—"}
-            </span>
-            <span class="precio-mayoreo">
-              Mayoreo: $${p.mayoreo 
-                ? Number(p.mayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-                : "—"}
-            </span>
-          </div>
-        `;
+div.innerHTML = `
+  <b>${p.concepto || "SIN CONCEPTO"}</b><br>
+  Código: ${p.codigoBarra || p.id}<br>
+  <div class="precios">
+    <span class="precio-publico">
+      Público: $${p.precioPublico 
+        ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
+    <span class="precio-medio">
+      Medio Mayoreo: $${p.medioMayoreo 
+        ? Number(p.medioMayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
+    <span class="precio-mayoreo">
+      Mayoreo: $${p.mayoreo 
+        ? Number(p.mayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+        : "—"}
+    </span>
+  </div>
+`;
+
         div.addEventListener("click", () => {
           window.location.href = "producto.html?id=" + p.codigoBarra;
         });
