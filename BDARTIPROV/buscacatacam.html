@@ -181,26 +181,29 @@ if (/^\d+$/.test(termino)) {
   id: doc.id,
   ...doc.data()
 }));
+console.log("Resultados encontrados:", resultados);
 
   mostrarPagina(0);
   return;
 }
  
-  // 🔹 Buscar por concepto
-  const q = query(
-    collection(db, "productos"),
-    where("activo", "==", true),
-    orderBy("concepto")
-  );
-  const snap = await getDocs(q);
+// 🔹 Buscar por concepto (sin orderBy que pide índice)
+const q = query(
+  collection(db, "productos"),
+  where("activo", "==", true)
+);
+const snap = await getDocs(q);
 
-  const palabras = termino.toLowerCase().split(" ");
-  snap.forEach(doc => {
-    const p = doc.data();
-    if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
-      resultados.push(p);
-    }
-  });
+const palabras = termino.toLowerCase().split(" ");
+snap.forEach(doc => {
+  const p = { id: doc.id, ...doc.data() };
+  if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
+    resultados.push(p);
+  }
+});
+
+console.log("Resultados encontrados (por concepto):", resultados);
+
 
   if (resultados.length === 0) {
     resultadosDiv.innerHTML = "❌ No se encontraron resultados";
