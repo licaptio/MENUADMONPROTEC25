@@ -181,9 +181,7 @@ if (/^\d+$/.test(termino)) {
   mostrarPagina(0);
   return;
 }
-    // Si no encontró nada, seguimos buscando en concepto
-  }
-
+ 
   // 🔹 Buscar por concepto
   const q = query(
     collection(db, "productos"),
