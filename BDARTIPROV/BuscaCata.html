@@ -181,17 +181,29 @@
       estado.textContent = "";
       resultados = [];
 
-      if (/^\d+$/.test(termino)) {
-        const q = query(
-          collection(db, "productos"),
-          where("activo", "==", true),
-          where("codigoBarra", "==", termino)
-        );
-        const snap = await getDocs(q);
-        resultados = snap.docs.map(doc => doc.data());
-        mostrarPagina(0);
-        return;
-      }
+if (/^\d+$/.test(termino)) {
+  // Buscar por código original
+  let q = query(
+    collection(db, "productos"),
+    where("activo", "==", true),
+    where("codigoBarra", "==", termino)
+  );
+  let snap = await getDocs(q);
+
+  if (snap.empty) {
+    // Si no existe, buscar en equivalentes
+    q = query(
+      collection(db, "productos"),
+      where("activo", "==", true),
+      where("codigosEquivalentes", "array-contains", termino)
+    );
+    snap = await getDocs(q);
+  }
+
+  resultados = snap.docs.map(doc => doc.data());
+  mostrarPagina(0);
+  return;
+}
 
       const q = query(
         collection(db, "productos"),
@@ -279,6 +291,7 @@ btnNext.disabled = fin >= resultados.length;
   </script>
 </body>
 </html>
+
 
 
 
