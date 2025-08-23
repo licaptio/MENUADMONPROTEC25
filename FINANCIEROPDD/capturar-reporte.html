@@ -156,11 +156,11 @@
   <thead>
     <tr><th colspan="17">INGRESOS NOMINALES FISCALES</th></tr>
     <tr>
+      <th>CUENTA</th>
       <th>CONCEPTO</th><th>AÑO</th>
       <th>ENERO</th><th>FEBRERO</th><th>MARZO</th><th>ABRIL</th><th>MAYO</th><th>JUNIO</th>
       <th>JULIO</th><th>AGOSTO</th><th>SEPTIEMBRE</th><th>OCTUBRE</th><th>NOVIEMBRE</th><th>DICIEMBRE</th>
       <th>ANUAL</th><th>Editar</th><th>Guardar</th>
-      <th>CUENTA</th>
     </tr>
   </thead>
   <tbody id="cuerpo-tabla"></tbody>
@@ -182,7 +182,7 @@ const campos = [
   'cuenta','concepto','anio','enero','febrero','marzo','abril','mayo','junio',
   'julio','agosto','septiembre','octubre','noviembre','diciembre'
 ];
-
+  
 
 async function cargarDatos() {
   const { data, error } = await clientSupabase
@@ -249,7 +249,7 @@ function recalcularAnual(tr) {
 }
 
 async function guardarFila(tr, id) {
-  const obj = { cuenta: '00000001' };  // 👈 Agregamos cuenta fija
+  const obj = {};
   campos.forEach((campo, i) => {
     const val = tr.children[i].innerText.trim();
     obj[campo] = (campo === 'anio') ? parseInt(val) :
@@ -334,8 +334,8 @@ async function cargarDatos() {
   const { data, error } = await clientSupabase
     .from('tablapdddatos')
     .select('*')
-    .eq('cuenta', '00000001')
-    .order('anio');
+    .order('anio');  // ✅ ahora carga todo, sin filtrar
+
 
   if (error) return alert("Error al cargar: " + error.message);
   cuerpo.innerHTML = "";
