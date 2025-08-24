@@ -16,19 +16,22 @@
   <button onclick="window.location.href='iniciacam.html'">Cancelar</button>
 
   <script>
-    function extraeUUID(raw) {
-      let m = raw.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
-      if (!m) m = raw.match(/id\s*=\s*([a-f0-9]{16,})/i);
-      if (m && m[1]) {
-        let v = m[1].toUpperCase().replace(/[^A-F0-9\-]/g, "");
-        const soloHex = v.replace(/-/g, "");
-        if (soloHex.length === 32) {
-          v = [soloHex.slice(0,8), soloHex.slice(8,12), soloHex.slice(12,16), soloHex.slice(16,20), soloHex.slice(20)].join("-");
-        }
-        return v;
-      }
-      return null;
+function extraeUUID(raw) {
+  try {
+    // 👀 Caso 1: QR con URL (SAT)
+    const url = new URL(raw);
+    const uuid = url.searchParams.get("id");
+    if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
+      return uuid.toUpperCase();
     }
+  } catch (e) {
+    // 👀 Caso 2: No era URL → buscamos patrón UUID directo
+    let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
+    if (m) return m[0].toUpperCase();
+  }
+  return null;
+}
+
 
     const html5QrCode = new Html5Qrcode("lectorQR");
     Html5Qrcode.getCameras().then(cameras => {
