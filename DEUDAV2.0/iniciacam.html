@@ -3,61 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <title>Inicio - QR CFDI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 🔑 importante para celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 📱 importante para celular -->
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      height: 100vh;                 
-      display: flex;                 
-      flex-direction: column;        
-      justify-content: center;       
-      align-items: center;           
-      background: #f7f9fc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 🌟 Fondo de Star como marca de agua */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; 
+      left: 0;
+      width: 100%; 
+      height: 100%;
+      background: url('star-fondo.png') no-repeat center center;
+      background-size: 60%;   /* tamaño de la marca de agua */
+      opacity: 0.15;          /* 🔥 transparencia para que no estorbe */
+      z-index: 0;
+    }
+
+    /* contenido principal */
+    .contenido {
+      position: relative;
+      z-index: 1;
       text-align: center;
-      padding: 1rem;
+      background: rgba(255, 255, 255, 0.8); /* fondo translúcido */
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
+
     h2 {
+      margin-bottom: 1rem;
       color: #333;
-      font-size: 1.6rem;       /* 📱 más grande */
-      margin-bottom: 2rem;
     }
-    .btn {
-      display: block;
-      width: 95%;              /* 📱 casi toda la pantalla */
-      max-width: 400px;        /* un poco más ancho */
-      margin: 0.8rem auto;
-      padding: 1.4rem;
-      font-size: 1.3rem;       /* 📱 texto más grande */
-      font-weight: bold;
+
+    button {
+      margin-top: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
       border: none;
-      border-radius: 14px;
-      box-shadow: 0 5px 10px rgba(0,0,0,0.15);
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
-    }
-    .btn:active {
-      transform: scale(0.96);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.25);
-    }
-    .btn-primary {
-      background: #0044cc;
+      border-radius: 8px;
+      background: #0077cc;
       color: white;
+      cursor: pointer;
     }
-    .btn-secondary {
-      background: #16a34a;
-      color: white;
+
+    button:hover {
+      background: #005fa3;
     }
   </style>
 </head>
 <body>
-  <h2>📑 Escanear CFDI con QR (SAT)</h2>
-
-  <button class="btn btn-primary" onclick="window.location.href='scanner.html'">
-    📷 Iniciar Escáner
-  </button>
-
-  <button class="btn btn-secondary" onclick="alert('Próximamente otras opciones')">
-    ⚙️ Opciones
-  </button>
+  <div class="contenido">
+    <h2>📲 Escanea tu CFDI</h2>
+    <button onclick="alert('Aquí va la función de la cámara 📷')">Iniciar cámara</button>
+  </div>
 </body>
 </html>
