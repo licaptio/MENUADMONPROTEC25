@@ -6,109 +6,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #f3f4f6;
-      color: #111827;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #1f2937;
-      font-size: 1.6rem;
-    }
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 1.2rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      margin-bottom: 1rem;
-    }
-    .label {
-      font-weight: 600;
-      color: #374151;
-    }
-    .value {
-      display: block;
-      background: #f9fafb;
-      padding: 6px 8px;
-      border-radius: 8px;
-      margin: 4px 0 10px;
-      font-size: 0.95rem;
-    }
-    textarea, select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      font-size: 1rem;
-      margin-top: 6px;
-    }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      font-size: 1.2rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 12px;
-      margin-top: 1rem;
-      color: white;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-      transition: transform 0.1s ease;
-    }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1rem; background: #f3f4f6; color: #111827; }
+    h2 { text-align: center; margin-bottom: 1rem; color: #1f2937; font-size: 1.6rem; }
+    .card { background: #fff; border-radius: 14px; padding: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 1rem; }
+    .label { font-weight: 600; color: #374151; }
+    .value { display: block; background: #f9fafb; padding: 6px 8px; border-radius: 8px; margin: 4px 0 10px; font-size: 0.95rem; }
+    textarea, select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #d1d5db; font-size: 1rem; margin-top: 6px; }
+    .btn { display: block; width: 100%; padding: 1rem; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 1rem; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.12); transition: transform 0.1s ease; }
     .btn:active { transform: scale(0.97); }
     .btn-green { background: #16a34a; }
     .btn-blue { background: #2563eb; }
     .btn-red { background: #dc2626; font-size: 1rem; padding: 6px 10px; width: auto; margin-top: 6px; }
-    #statusMsg {
-      margin: 12px 0;
-      font-weight: bold;
-      text-align: center;
-    }
-    .fotos-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 0.5rem;
-    }
-    .foto {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 6px;
-      text-align: center;
-      width: 100px;
-    }
-    .foto img {
-      width: 100%;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
+    #statusMsg { margin: 12px 0; font-weight: bold; text-align: center; }
+    .fotos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0.5rem; }
+    .foto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; text-align: center; width: 100px; }
+    .foto img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; }
   </style>
 </head>
 <body>
   <h2>📑 Factura detectada</h2>
 
-  <!-- Información principal -->
   <div id="result" class="card">Cargando factura...</div>
 
-  <!-- Subir fotos -->
+  <!-- Tomar foto -->
   <div class="card">
     <label class="label">📸 Tomar foto</label>
     <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none;">
     <button class="btn btn-blue" onclick="document.getElementById('fotoInput').click()">📸 Tomar foto</button>
-    <!-- preview -->
     <div id="previewContainer" style="margin-top:10px; text-align:center;"></div>
   </div>
 
-  <!-- Estado -->
   <div id="statusMsg"></div>
 
-  <!-- Guardar -->
   <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
 
   <script>
@@ -122,6 +51,7 @@
     const raw = params.get("raw");
 
     let factura = null;
+    let fotoPendiente = null; // ⚡ aquí se guarda la foto antes de subirla
 
     async function cargar() {
       const { data, error } = await supabaseClient
@@ -131,8 +61,7 @@
         .maybeSingle();
 
       if (error || !data) {
-        document.getElementById("result").innerHTML =
-          `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
+        document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
         return;
       }
 
@@ -178,17 +107,15 @@
         html += `<textarea id="notaTexto" placeholder="Escribe un comentario (opcional)"></textarea>`;
       }
 
-      // Fotos
-      html += `<span class="label">📷 Fotos:</span>
-        <div class="fotos-container">`;
+      // Fotos actuales
+      html += `<span class="label">📷 Fotos:</span><div class="fotos-container">`;
       if (factura.fotos && factura.fotos.length > 0) {
         factura.fotos.forEach((url, idx) => {
           html += `
             <div class="foto">
               <img src="${url}" alt="foto-${idx}" />
               <button class="btn btn-red" onclick="eliminarFoto('${url}')">Borrar</button>
-            </div>
-          `;
+            </div>`;
         });
       } else {
         html += `<p style="color:#999; font-style: italic;">— Sin fotos —</p>`;
@@ -198,11 +125,29 @@
       document.getElementById("result").innerHTML = html;
     }
 
+    // Precarga de foto
+    document.getElementById("fotoInput").addEventListener("change", (e) => {
+      fotoPendiente = e.target.files[0];
+      const container = document.getElementById("previewContainer");
+      container.innerHTML = "";
+      if (fotoPendiente) {
+        const preview = document.createElement("img");
+        preview.src = URL.createObjectURL(fotoPendiente);
+        preview.style.maxWidth = "150px";
+        preview.style.borderRadius = "8px";
+        preview.style.marginTop = "10px";
+        container.appendChild(preview);
+      }
+    });
+
     async function guardar() {
       const comentario = document.getElementById("notaTexto")?.value || "";
       const fisica = document.getElementById("fisicaSelect")?.value || "SI";
+      const status = document.getElementById("statusMsg");
+      status.innerText = "💾 Guardando...";
 
-      const { error } = await supabaseClient
+      // Primero actualizar texto / estado
+      let { error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({
           factura_fisicamente: fisica,
@@ -211,61 +156,41 @@
         .eq("uuid_cfdi", uuid);
 
       if (error) {
-        document.getElementById("statusMsg").innerText = "❌ Error al guardar";
-      } else {
-        document.getElementById("statusMsg").innerText = "✅ Factura actualizada";
-        setTimeout(() => window.location.href = "iniciacam.html", 1200);
-      }
-    }
-
-    // Subida automática al tomar foto
-    document.getElementById("fotoInput").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const container = document.getElementById("previewContainer");
-      const status = document.getElementById("statusMsg");
-      container.innerHTML = "";
-      status.innerText = "📸 Subiendo foto...";
-
-      // Previsualización rápida
-      const preview = document.createElement("img");
-      preview.src = URL.createObjectURL(file);
-      preview.style.maxWidth = "150px";
-      preview.style.borderRadius = "8px";
-      preview.style.marginTop = "10px";
-      container.appendChild(preview);
-
-      // Subir a Supabase
-      const filePath = `clientes/${uuid}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabaseClient.storage
-        .from("fotos-facturas")
-        .upload(filePath, file);
-
-      if (uploadError) {
-        status.innerText = "❌ Error al subir foto";
+        status.innerText = "❌ Error al guardar datos";
         return;
       }
 
-      // Obtener URL pública
-      const { data: { publicUrl } } = supabaseClient.storage
-        .from("fotos-facturas")
-        .getPublicUrl(filePath);
+      // Luego subir la foto pendiente si existe
+      if (fotoPendiente) {
+        const filePath = `clientes/${uuid}/${Date.now()}_${fotoPendiente.name}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from("fotos-facturas")
+          .upload(filePath, fotoPendiente);
 
-      // Actualizar array en BD
-      const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
-      const { error: dbError } = await supabaseClient
-        .from("deuda_limpia_pdd")
-        .update({ fotos: nuevasFotos })
-        .eq("uuid_cfdi", uuid);
+        if (uploadError) {
+          status.innerText = "❌ Error al subir foto";
+          return;
+        }
 
-      if (dbError) {
-        status.innerText = "❌ Error al guardar en BD";
-      } else {
-        status.innerText = "✅ Foto subida correctamente";
-        setTimeout(() => location.reload(), 1000);
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from("fotos-facturas")
+          .getPublicUrl(filePath);
+
+        const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
+        const { error: dbError } = await supabaseClient
+          .from("deuda_limpia_pdd")
+          .update({ fotos: nuevasFotos })
+          .eq("uuid_cfdi", uuid);
+
+        if (dbError) {
+          status.innerText = "❌ Error al guardar foto en BD";
+          return;
+        }
       }
-    });
+
+      status.innerText = "✅ Factura actualizada";
+      setTimeout(() => window.location.href = "iniciacam.html", 1200);
+    }
 
     async function eliminarFoto(url) {
       const nuevasFotos = factura.fotos.filter(f => f !== url);
