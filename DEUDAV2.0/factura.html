@@ -5,9 +5,32 @@
   <title>Factura</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    #result { background: #eef; padding: 1rem; border-radius: 6px; }
-    button { margin-top: 1rem; padding: 0.7rem 1.5rem; background: green; color: white; border: none; border-radius: 6px; }
+    body { font-family: sans-serif; padding: 1rem; text-align: center; background: #f7f9fc; }
+    h2 { color: #333; margin-bottom: 1rem; }
+    #result {
+      background: #eef;
+      padding: 1.2rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      text-align: left;
+      font-size: 1rem;
+      line-height: 1.6;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 320px;
+      background: green;
+      color: white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    }
+    button:active { transform: scale(0.97); }
   </style>
 </head>
 <body>
@@ -16,8 +39,10 @@
   <button onclick="guardar()">💾 Guardar y regresar</button>
 
   <script>
-    const supabaseClient = window.supabase.createClient("https://cvpbtjlupswbyxenugpz.supabase.co",
-      "TU_KEY_PUBLICA");
+    const supabaseClient = window.supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "TU_KEY_PUBLICA"
+    );
 
     const params = new URLSearchParams(window.location.search);
     const uuid = params.get("uuid");
@@ -32,12 +57,11 @@
         .maybeSingle();
 
       if (error || !data) {
-        document.getElementById("result").innerHTML = "<p>No encontrada</p>";
+        document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
         return;
       }
 
       factura = data;
-
       document.getElementById("result").innerHTML = `
         <p><b>UUID:</b> ${uuid}</p>
         <p><b>Fecha:</b> ${new Date(data.fecha).toLocaleString()}</p>
