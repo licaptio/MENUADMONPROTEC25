@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Inicio - QR CFDI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 📱 importante para celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
+    html, body { height: 100%; }
     body {
       font-family: sans-serif;
       margin: 0;
-      height: 100vh;
+      min-height: 100dvh;            /* mejor en móvil */
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -18,56 +20,52 @@
       overflow: hidden;
     }
 
-    /* 🌟 Fondo de Star como marca de agua */
+    /* 🌟 Star como marca de agua a pantalla completa */
     body::before {
       content: "";
-      position: absolute;
-      top: 0; 
-      left: 0;
-      width: 100%; 
-      height: 100%;
-      background: url('star-fondo.png') no-repeat center center;
-      background-size: 60%;   /* tamaño de la marca de agua */
-      opacity: 0.15;          /* 🔥 transparencia para que no estorbe */
-      z-index: 0;
+      position: fixed;               /* cubre toda la pantalla */
+      inset: 0;                      /* top/right/bottom/left: 0 */
+      background-image: url('star-fondo.png');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: cover;        /* ocupa todo */
+      opacity: 0.18;                 /* tenue */
+      z-index: 0;                    /* detrás del contenido */
+      pointer-events: none;          /* no bloquea clics */
     }
 
-    /* contenido principal */
     .contenido {
       position: relative;
       z-index: 1;
       text-align: center;
-      background: rgba(255, 255, 255, 0.8); /* fondo translúcido */
+      background: rgba(255, 255, 255, 0.82);
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      width: min(520px, 92vw);
     }
 
-    h2 {
-      margin-bottom: 1rem;
-      color: #333;
-    }
+    h2 { margin: 0 0 1rem; color: #333; }
 
     button {
       margin-top: 1rem;
       padding: 1rem 2rem;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       background: #0077cc;
-      color: white;
+      color: #fff;
       cursor: pointer;
+      width: 100%;
+      max-width: 340px;
     }
-
-    button:hover {
-      background: #005fa3;
-    }
+    button:hover { background: #005fa3; }
   </style>
 </head>
 <body>
   <div class="contenido">
     <h2>📲 Escanea tu CFDI</h2>
-    <button onclick="alert('Aquí va la función de la cámara 📷')">Iniciar cámara</button>
+    <button onclick="window.location.href='scanner.html'">Iniciar cámara</button>
   </div>
 </body>
 </html>
