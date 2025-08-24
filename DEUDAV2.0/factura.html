@@ -3,82 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <title>Factura</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; padding: 1rem; text-align: center; background: #f7f9fc; }
-    h2 { color: #333; margin-bottom: 1rem; }
-    #result {
-      background: #eef;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #1f2937;
+      font-size: 1.6rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
       padding: 1.2rem;
-      border-radius: 10px;
-      margin-top: 1rem;
-      text-align: left;
-      font-size: 1rem;
-      line-height: 1.6;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+    .label {
+      font-weight: 600;
+      color: #374151;
+    }
+    .value {
+      display: block;
+      background: #f9fafb;
+      padding: 6px 8px;
+      border-radius: 8px;
+      margin: 4px 0 10px;
+      font-size: 0.95rem;
     }
     textarea {
       width: 100%;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 1rem;
       margin-top: 6px;
+      resize: vertical;
     }
-    button {
-      margin-top: 1.2rem;
+    .btn {
+      display: block;
+      width: 100%;
       padding: 1rem;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: bold;
       border: none;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 320px;
-      background: green;
+      border-radius: 12px;
+      margin-top: 1rem;
       color: white;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+      transition: transform 0.1s ease;
     }
-    button:active { transform: scale(0.97); }
+    .btn:active { transform: scale(0.97); }
+    .btn-green { background: #16a34a; }
+    .btn-blue { background: #2563eb; }
+    .btn-red { background: #dc2626; font-size: 1rem; padding: 6px 10px; width: auto; margin-top: 6px; }
     #statusMsg {
-      margin: 10px 0;
+      margin: 12px 0;
       font-weight: bold;
-      color: #333;
-    }
-    .foto {
-      display: inline-block;
-      margin: 5px;
       text-align: center;
     }
-    .foto img {
-      width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;
+    .fotos-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 0.5rem;
     }
-    .foto button {
-      margin-top: 5px;
-      padding: 4px 8px;
-      font-size: 0.8rem;
-      background: red;
-      color: white;
-      border: none;
+    .foto {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px;
+      text-align: center;
+      width: 100px;
+    }
+    .foto img {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
       border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <h2>Factura detectada</h2>
-  <div id="result"></div>
+  <h2>📑 Factura detectada</h2>
+
+  <!-- Información principal -->
+  <div id="result" class="card">Cargando factura...</div>
 
   <!-- Subir fotos -->
-  <input type="file" id="fotoInput" accept="image/*" />
-  <button onclick="subirFoto()">📤 Subir foto</button>
+  <div class="card">
+    <label class="label">📸 Agregar foto</label>
+    <input type="file" id="fotoInput" accept="image/*" style="margin-top:8px;">
+    <button class="btn btn-blue" onclick="subirFoto()">Subir foto</button>
+  </div>
 
   <!-- Estado -->
   <div id="statusMsg"></div>
 
-  <button onclick="guardar()">💾 Guardar y regresar</button>
+  <!-- Guardar -->
+  <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
 
   <script>
     const supabaseClient = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"   // ⚠️ reemplaza con tu anon key
     );
 
     const params = new URLSearchParams(window.location.search);
@@ -95,53 +130,72 @@
         .maybeSingle();
 
       if (error || !data) {
-        document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
+        document.getElementById("result").innerHTML =
+          `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
         return;
       }
 
       factura = data;
+
       let html = `
-        <p><b>QR detectado (crudo):</b><br><span style="background:#fff; display:block; padding:6px;">${raw || "(no disponible)"}</span></p>
-        <p><b>UUID convertido:</b><br><span style="background:#fff; display:block; padding:6px;">${uuid}</span></p>
-        <p><b>Fecha:</b> ${new Date(data.fecha).toLocaleString()}</p>
-        <p><b>RFC:</b> ${data.rfc_emisor}</p>
-        <p><b>Razón Social:</b> ${data.razon_social_emisor}</p>
-        <p><b>Factura:</b> ${data.factura}</p>
-        <p><b>Total:</b> $${parseFloat(data.total).toFixed(2)}</p>
-        <p><b>Pagada:</b> ${data.factura_pagada || "NO"}</p>
-        <p><b>Física:</b> SI</p>
+        <span class="label">QR detectado (crudo):</span>
+        <span class="value">${raw || "(no disponible)"}</span>
+
+        <span class="label">UUID convertido:</span>
+        <span class="value">${uuid}</span>
+
+        <span class="label">Fecha:</span>
+        <span class="value">${new Date(data.fecha).toLocaleString()}</span>
+
+        <span class="label">RFC:</span>
+        <span class="value">${data.rfc_emisor}</span>
+
+        <span class="label">Razón Social:</span>
+        <span class="value">${data.razon_social_emisor}</span>
+
+        <span class="label">Factura:</span>
+        <span class="value">${data.factura}</span>
+
+        <span class="label">Total:</span>
+        <span class="value">$${parseFloat(data.total).toFixed(2)}</span>
+
+        <span class="label">Pagada:</span>
+        <span class="value">${data.factura_pagada || "NO"}</span>
+
+        <span class="label">Física:</span>
+        <span class="value">SI</span>
       `;
 
       // Notas
+      html += `<span class="label">📝 Notas:</span>`;
       if (factura.comentario_factura_fisica && factura.comentario_factura_fisica.trim() !== "") {
-        html += `<label><b>Notas:</b></label><br>
-          <textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
+        html += `<textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
       } else {
-        html += `<p style="color:#999; font-style: italic; text-align:center;">— Sin notas —</p>
-          <textarea id="notaTexto" placeholder="Escribe un comentario (opcional)"></textarea>`;
+        html += `<textarea id="notaTexto" placeholder="Escribe un comentario (opcional)"></textarea>`;
       }
 
       // Fotos
-      html += `<h3>Fotos</h3>`;
+      html += `<span class="label">📷 Fotos:</span>
+        <div class="fotos-container">`;
       if (factura.fotos && factura.fotos.length > 0) {
         factura.fotos.forEach((url, idx) => {
           html += `
             <div class="foto">
               <img src="${url}" alt="foto-${idx}" />
-              <button onclick="eliminarFoto('${url}')">❌ Borrar</button>
+              <button class="btn btn-red" onclick="eliminarFoto('${url}')">Borrar</button>
             </div>
           `;
         });
       } else {
-        html += `<p style="color:#999; font-style: italic; text-align:center;">— Sin fotos —</p>`;
+        html += `<p style="color:#999; font-style: italic;">— Sin fotos —</p>`;
       }
+      html += `</div>`;
 
       document.getElementById("result").innerHTML = html;
     }
 
     async function guardar() {
       const comentario = document.getElementById("notaTexto")?.value || "";
-
       const { error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({
@@ -196,7 +250,6 @@
 
     async function eliminarFoto(url) {
       const nuevasFotos = factura.fotos.filter(f => f !== url);
-
       const { error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({ fotos: nuevasFotos })
