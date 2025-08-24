@@ -38,14 +38,13 @@
       margin: 4px 0 10px;
       font-size: 0.95rem;
     }
-    textarea {
+    textarea, select {
       width: 100%;
       padding: 10px;
       border-radius: 10px;
       border: 1px solid #d1d5db;
       font-size: 1rem;
       margin-top: 6px;
-      resize: vertical;
     }
     .btn {
       display: block;
@@ -113,7 +112,7 @@
   <script>
     const supabaseClient = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"   // ⚠️ reemplaza con tu anon key
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
     const params = new URLSearchParams(window.location.search);
@@ -163,7 +162,10 @@
         <span class="value">${data.factura_pagada || "NO"}</span>
 
         <span class="label">Física:</span>
-        <span class="value">SI</span>
+        <select id="fisicaSelect">
+          <option value="SI" selected>SI</option>
+          <option value="NO">NO</option>
+        </select>
       `;
 
       // Notas
@@ -196,10 +198,12 @@
 
     async function guardar() {
       const comentario = document.getElementById("notaTexto")?.value || "";
+      const fisica = document.getElementById("fisicaSelect")?.value || "SI";
+
       const { error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({
-          factura_fisicamente: "SI",
+          factura_fisicamente: fisica,
           comentario_factura_fisica: comentario
         })
         .eq("uuid_cfdi", uuid);
