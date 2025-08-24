@@ -2,142 +2,95 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Escáner QR</title>
+  <title>Escáner de Factura</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       margin: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
       background: #f7f9fc;
-      padding: 1rem;
+      color: #222;
     }
     h2 {
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
-      color: #333;
+      font-size: 22px;
+      margin-bottom: 15px;
     }
-
-    #lectorQR {
-      margin: 1rem auto;
-      width: 95%;
-      max-width: 500px;
-      height: 70vh;        /* 👈 altura fija en móvil */
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;  /* necesario para overlay */
+    #lector {
+      width: 300px;
+      margin: auto;
     }
-
-    /* 🔥 Overlay con la mira */
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999; /* 👀 siempre arriba */
-      pointer-events: none; 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* Rectángulo verde */
-    .overlay::before {
-      content: "";
-      border: 3px solid rgba(0, 255, 0, 0.9);
-      width: 70%;
-      height: 40%;
-      box-sizing: border-box;
-      border-radius: 8px;
-    }
-
-    /* 🔧 Forzar video/canvas debajo */
-    #lectorQR video,
-    #lectorQR canvas {
-      position: absolute !important;
-      top: 0;
-      left: 0;
-      z-index: 1 !important;
-    }
-
     button {
-      margin-top: 1rem;
-      padding: 1.2rem;
-      font-size: 1.3rem;
+      margin-top: 15px;
+      padding: 12px 20px;
+      font-size: 16px;
       font-weight: bold;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       background: #e3342f;
       color: white;
-      width: 95%;
-      max-width: 400px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      transition: transform 0.1s ease;
+      cursor: pointer;
     }
-    button:active { transform: scale(0.97); }
+    button:active {
+      transform: scale(0.97);
+    }
   </style>
 </head>
 <body>
-  <h2>📷 Escaneando...</h2>
-  <div id="lectorQR">
-    <div class="overlay"></div> <!-- 👀 Mira verde -->
-  </div>
+  <h2>📷 Escaneando Factura...</h2>
+  <div id="lector"></div>
   <button onclick="cancelar()">❌ Cancelar</button>
 
-<script>
-  function extraeUUID(raw) {
-    try {
-      const url = new URL(raw);
-      const uuid = url.searchParams.get("id");
-      if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
-        return uuid.toUpperCase();
+  <script>
+    function extraeUUID(raw) {
+      try {
+        const url = new URL(raw);
+        const uuid = url.searchParams.get("id");
+        if (uuid && /^[A-F0-9-]{36}$/i.test(uuid)) {
+          return uuid.toUpperCase();
+        }
+      } catch (e) {
+        let m = raw.match(/[A-F0-9-]{36}/i);
+        if (m) return m[0].toUpperCase();
       }
-    } catch (e) {
-      let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
-      if (m) return m[0].toUpperCase();
+      return null;
     }
-    return null;
-  }
 
-  const html5QrCode = new Html5Qrcode("lectorQR");
+    const lector = new Html5Qrcode("lector");
 
-  Html5Qrcode.getCameras().then(cameras => {
-    if (cameras && cameras.length) {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const config = isMobile
-        ? { fps: 10 }
-        : { fps: 10, qrbox: { width: 300, height: 300 } };
-
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        qrCodeMessage => {
-          const uuid = extraeUUID(qrCodeMessage);
-          if (uuid) {
-            html5QrCode.stop().catch(()=>{});
-            window.location.href =
-              "factura.html?uuid=" + encodeURIComponent(uuid) +
-              "&raw=" + encodeURIComponent(qrCodeMessage);
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        lector.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 }, // 👈 Aquí está la mira verde automática
+          qrCodeMessage => {
+            const uuid = extraeUUID(qrCodeMessage);
+            if (uuid) {
+              lector.stop().catch(()=>{});
+              window.location.href =
+                "factura.html?uuid=" + encodeURIComponent(uuid) +
+                "&raw=" + encodeURIComponent(qrCodeMessage);
+            }
+          },
+          errorMessage => {
+            console.log("Falló escaneo:", errorMessage);
           }
-        },
-        errorMessage => { console.log("Falló escaneo:", errorMessage); }
-      );
-    }
-  });
-
-  function cancelar() {
-    html5QrCode.stop().catch(()=>{}).finally(()=>{
-      window.location.href = "iniciacam.html";
+        ).catch(err => {
+          console.error("Error al abrir cámara:", err);
+        });
+      }
     });
-  }
-</script>
+
+    function cancelar() {
+      lector.stop().catch(()=>{}).finally(()=>{
+        window.location.href = "iniciacam.html";
+      });
+    }
+  </script>
 </body>
 </html>
