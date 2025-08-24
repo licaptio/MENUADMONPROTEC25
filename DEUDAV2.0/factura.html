@@ -7,14 +7,14 @@
   <style>
     body { font-family: sans-serif; padding: 1rem; text-align: center; background: #f7f9fc; }
     h2 { color: #333; margin-bottom: 1rem; }
-    #result {
+    .card {
       background: #eef;
-      padding: 1.2rem;
+      padding: 1rem;
       border-radius: 10px;
       margin-top: 1rem;
       text-align: left;
       font-size: 1rem;
-      line-height: 1.6;
+      line-height: 1.5;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     button {
@@ -35,7 +35,22 @@
 </head>
 <body>
   <h2>Factura detectada</h2>
-  <div id="result"></div>
+
+  <!-- Datos en crudo -->
+  <div id="rawData" class="card">
+    <b>QR detectado (crudo):</b>
+    <p id="rawTexto">Cargando...</p>
+  </div>
+
+  <!-- UUID procesado -->
+  <div id="uuidData" class="card">
+    <b>UUID convertido:</b>
+    <p id="uuidTexto">Cargando...</p>
+  </div>
+
+  <!-- Factura -->
+  <div id="result" class="card"></div>
+
   <button onclick="guardar()">💾 Guardar y regresar</button>
 
   <script>
@@ -46,10 +61,23 @@
 
     const params = new URLSearchParams(window.location.search);
     const uuid = params.get("uuid");
+    const raw = params.get("raw");   // 👈 recibe el QR en crudo desde scanner.html si lo mandas
 
     let factura = null;
 
     async function cargar() {
+      // Mostrar primero el QR crudo
+      document.getElementById("rawTexto").innerText = raw || "No disponible";
+
+      // Mostrar UUID convertido
+      document.getElementById("uuidTexto").innerText = uuid || "No detectado";
+
+      if (!uuid) {
+        document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ UUID inválido</b></p>`;
+        return;
+      }
+
+      // Buscar en supabase
       const { data, error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .select("*")
@@ -63,7 +91,6 @@
 
       factura = data;
       document.getElementById("result").innerHTML = `
-        <p><b>UUID:</b> ${uuid}</p>
         <p><b>Fecha:</b> ${new Date(data.fecha).toLocaleString()}</p>
         <p><b>RFC:</b> ${data.rfc_emisor}</p>
         <p><b>Razón Social:</b> ${data.razon_social_emisor}</p>
