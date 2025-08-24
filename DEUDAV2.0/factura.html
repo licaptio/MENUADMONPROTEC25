@@ -97,16 +97,14 @@
   <div id="result" class="card">Cargando factura...</div>
 
   <!-- Subir fotos -->
-<div class="card">
-  <label class="label">📸 Tomar foto</label>
-  <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none;">
-  <button class="btn btn-blue" onclick="document.getElementById('fotoInput').click()">📸 Tomar foto</button>
-  
-  <!-- preview -->
-  <div id="previewContainer" style="margin-top:10px; text-align:center;"></div>
-  
-  <button class="btn btn-green" onclick="subirFoto()">⬆️ Subir foto</button>
-</div>
+  <div class="card">
+    <label class="label">📸 Tomar foto</label>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none;">
+    <button class="btn btn-blue" onclick="document.getElementById('fotoInput').click()">📸 Tomar foto</button>
+    <!-- preview -->
+    <div id="previewContainer" style="margin-top:10px; text-align:center;"></div>
+  </div>
+
   <!-- Estado -->
   <div id="statusMsg"></div>
 
@@ -220,13 +218,25 @@
       }
     }
 
-    async function subirFoto() {
-      const file = document.getElementById("fotoInput").files[0];
+    // Subida automática al tomar foto
+    document.getElementById("fotoInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
       if (!file) return;
 
+      const container = document.getElementById("previewContainer");
       const status = document.getElementById("statusMsg");
-      status.innerText = "📸 Cargando foto...";
+      container.innerHTML = "";
+      status.innerText = "📸 Subiendo foto...";
 
+      // Previsualización rápida
+      const preview = document.createElement("img");
+      preview.src = URL.createObjectURL(file);
+      preview.style.maxWidth = "150px";
+      preview.style.borderRadius = "8px";
+      preview.style.marginTop = "10px";
+      container.appendChild(preview);
+
+      // Subir a Supabase
       const filePath = `clientes/${uuid}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabaseClient.storage
         .from("fotos-facturas")
@@ -237,24 +247,25 @@
         return;
       }
 
+      // Obtener URL pública
       const { data: { publicUrl } } = supabaseClient.storage
         .from("fotos-facturas")
         .getPublicUrl(filePath);
 
+      // Actualizar array en BD
       const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
-
       const { error: dbError } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({ fotos: nuevasFotos })
         .eq("uuid_cfdi", uuid);
 
       if (dbError) {
-        status.innerText = "❌ Error al guardar foto en la BD";
+        status.innerText = "❌ Error al guardar en BD";
       } else {
-        status.innerText = "✅ Foto agregada";
+        status.innerText = "✅ Foto subida correctamente";
         setTimeout(() => location.reload(), 1000);
       }
-    }
+    });
 
     async function eliminarFoto(url) {
       const nuevasFotos = factura.fotos.filter(f => f !== url);
@@ -272,21 +283,6 @@
     }
 
     cargar();
-<script>
-  // Preview al tomar foto
-  document.getElementById("fotoInput").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    const container = document.getElementById("previewContainer");
-    container.innerHTML = "";
-    if (file) {
-      const preview = document.createElement("img");
-      preview.src = URL.createObjectURL(file);
-      preview.style.maxWidth = "150px";
-      preview.style.borderRadius = "8px";
-      preview.style.marginTop = "10px";
-      container.appendChild(preview);
-    }
-  });
-</script>
+  </script>
 </body>
 </html>
