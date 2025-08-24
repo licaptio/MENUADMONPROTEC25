@@ -55,51 +55,54 @@
   <div id="lectorQR"></div>
   <button onclick="cancelar()">❌ Cancelar</button>
 
-  <script>
-    function extraeUUID(raw) {
-      try {
-        // Caso 1: QR con URL (SAT)
-        const url = new URL(raw);
-        const uuid = url.searchParams.get("id");
-        if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
-          return uuid.toUpperCase();
-        }
-      } catch (e) {
-        // Caso 2: QR directo con UUID
-        let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
-        if (m) return m[0].toUpperCase();
+<script>
+  function extraeUUID(raw) {
+    try {
+      const url = new URL(raw);
+      const uuid = url.searchParams.get("id");
+      if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
+        return uuid.toUpperCase();
       }
-      return null;
+    } catch (e) {
+      let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
+      if (m) return m[0].toUpperCase();
     }
+    return null;
+  }
 
-    const html5QrCode = new Html5Qrcode("lectorQR");
+  const html5QrCode = new Html5Qrcode("lectorQR");
 
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        const boxSize = Math.min(window.innerWidth * 0.9, 400); // 📱 más grande en móvil
+  Html5Qrcode.getCameras().then(cameras => {
+    if (cameras && cameras.length) {
+      const boxSize = Math.min(window.innerWidth * 0.9, 400);
 
-        html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: boxSize },
-          qrCodeMessage => {
-            const uuid = extraeUUID(qrCodeMessage);
-            if (uuid) {
-              html5QrCode.stop().catch(()=>{});
-              // Enviar uuid y raw
-              window.location.href =
-                "factura.html?uuid=" + encodeURIComponent(uuid) +
-                "&raw=" + encodeURIComponent(qrCodeMessage);
-            }
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: boxSize, height: boxSize } },
+        qrCodeMessage => {
+          console.log("QR detectado:", qrCodeMessage); // 🔎 debug
+          const uuid = extraeUUID(qrCodeMessage);
+          if (uuid) {
+            html5QrCode.stop().catch(()=>{});
+            window.location.href =
+              "factura.html?uuid=" + encodeURIComponent(uuid) +
+              "&raw=" + encodeURIComponent(qrCodeMessage);
           }
-        );
-      }
-    });
-
-    function cancelar() {
-      html5QrCode.stop().catch(()=>{}).finally(()=>{
-        window.location.href = "iniciacam.html";
-      });
+        },
+        errorMessage => {
+          // Este callback evita que se "congele" el escaneo
+          console.log("Escaneo fallido:", errorMessage);
+        }
+      );
     }
-  </script>
+  });
+
+  function cancelar() {
+    html5QrCode.stop().catch(()=>{}).finally(()=>{
+      window.location.href = "iniciacam.html";
+    });
+  }
+</script>
+
 </body>
 </html>
