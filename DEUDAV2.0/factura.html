@@ -78,11 +78,12 @@
       }
 
       // Buscar en supabase
-      const { data, error } = await supabaseClient
-        .from("deuda_limpia_pdd")
-        .select("*")
-        .eq("uuid_cfdi", uuid)
-        .maybeSingle();
+const { data, error } = await supabaseClient
+  .from("deuda_limpia_pdd")
+  .select("*")
+  // 🔧 Normaliza: quita guiones y fuerza mayúsculas
+  .eq("uuid_cfdi", uuid.replace(/-/g, "").toUpperCase())
+  .maybeSingle();
 
       if (error || !data) {
         document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
