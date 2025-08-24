@@ -64,40 +64,40 @@
 
       factura = data;
 
-      let html = `
-        <span class="label">QR detectado:</span>
-        <span class="value">${raw || "(no disponible)"}</span>
+let html = `
+  <span class="label">QR detectado:</span>
+  <span class="value">${raw || "(no disponible)"}</span>
 
-        <span class="label">UUID:</span>
-        <span class="value">${uuid}</span>
+  <span class="label">UUID:</span>
+  <span class="value">${uuid}</span>
 
-        <span class="label">Fecha:</span>
-        <span class="value">${new Date(data.fecha).toLocaleDateString()}</span>
+  <!-- 👇 Aquí insertamos el botón justo después del UUID -->
+  <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
 
-        <span class="label">RFC:</span>
-        <span class="value">${data.rfc_emisor}</span>
+  <span class="label">Fecha:</span>
+  <span class="value">${new Date(data.fecha).toLocaleDateString()}</span>
 
-        <span class="label">Razón Social:</span>
-        <span class="value">${data.razon_social_emisor}</span>
+  <span class="label">RFC:</span>
+  <span class="value">${data.rfc_emisor}</span>
 
-        <span class="label">Factura:</span>
-        <span class="value">${data.factura}</span>
+  <span class="label">Razón Social:</span>
+  <span class="value">${data.razon_social_emisor}</span>
 
-        <span class="label">Total:</span>
-        <span class="value">$${parseFloat(data.total).toFixed(2)}</span>
+  <span class="label">Factura:</span>
+  <span class="value">${data.factura}</span>
 
-        <span class="label">Pagada:</span>
-        <span class="value">${data.factura_pagada || "NO"}</span>
+  <span class="label">Total:</span>
+  <span class="value">$${parseFloat(data.total).toFixed(2)}</span>
 
-        <span class="label">Física:</span>
-        <select id="fisicaSelect">
-          <option value="SI" selected>SI</option>
-          <option value="NO">NO</option>
-        </select>
+  <span class="label">Pagada:</span>
+  <span class="value">${data.factura_pagada || "NO"}</span>
 
-        <!-- 👇 Botón insertado dinámicamente justo aquí -->
-        <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
-      `;
+  <span class="label">Física:</span>
+  <select id="fisicaSelect">
+    <option value="SI" selected>SI</option>
+    <option value="NO">NO</option>
+  </select>
+`;
 
       // Comentarios
       if (factura.comentario_factura_fisica && factura.comentario_factura_fisica.trim() !== "") {
