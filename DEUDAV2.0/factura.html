@@ -27,9 +27,6 @@
   <h2>📑 Factura detectada</h2>
 
   <div id="result" class="card">Cargando factura...</div>
-
-  <!-- Botón de guardar rápido -->
-  <button class="btn btn-green" id="guardarBtn">💾 Guardar y regresar</button>
   <div id="statusMsg"></div>
 
   <!-- Tomar foto -->
@@ -97,9 +94,12 @@
           <option value="SI" selected>SI</option>
           <option value="NO">NO</option>
         </select>
+
+        <!-- 👇 Botón insertado dinámicamente justo aquí -->
+        <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
       `;
 
-      // Comentarios (si trae algo)
+      // Comentarios
       if (factura.comentario_factura_fisica && factura.comentario_factura_fisica.trim() !== "") {
         html += `<span class="label">📝 Notas:</span><textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
       } else {
@@ -138,14 +138,13 @@
       }
     });
 
-    // Guardar rápido
+    // Guardar
     async function guardar() {
       const comentario = document.getElementById("notaTexto")?.value || "";
       const fisica = document.getElementById("fisicaSelect")?.value || "SI";
       const status = document.getElementById("statusMsg");
       status.innerText = "💾 Guardando...";
 
-      // Actualizar texto
       let { error } = await supabaseClient
         .from("deuda_limpia_pdd")
         .update({ factura_fisicamente: fisica, comentario_factura_fisica: comentario })
@@ -156,31 +155,22 @@
         return;
       }
 
-      // Subir foto pendiente
       if (fotoPendiente) {
         const filePath = `clientes/${uuid}/${Date.now()}_${fotoPendiente.name}`;
         const { error: uploadError } = await supabaseClient.storage
           .from("fotos-facturas")
           .upload(filePath, fotoPendiente);
 
-        if (uploadError) {
-          status.innerText = "❌ Error al subir foto";
-          return;
-        }
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabaseClient.storage
+            .from("fotos-facturas")
+            .getPublicUrl(filePath);
 
-        const { data: { publicUrl } } = supabaseClient.storage
-          .from("fotos-facturas")
-          .getPublicUrl(filePath);
-
-        const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
-        const { error: dbError } = await supabaseClient
-          .from("deuda_limpia_pdd")
-          .update({ fotos: nuevasFotos })
-          .eq("uuid_cfdi", uuid);
-
-        if (dbError) {
-          status.innerText = "❌ Error al guardar foto";
-          return;
+          const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
+          await supabaseClient
+            .from("deuda_limpia_pdd")
+            .update({ fotos: nuevasFotos })
+            .eq("uuid_cfdi", uuid);
         }
       }
 
@@ -188,21 +178,15 @@
       setTimeout(() => window.location.href = "iniciacam.html", 1000);
     }
 
-    document.getElementById("guardarBtn").addEventListener("click", guardar);
-
     async function eliminarFoto(url) {
       const nuevasFotos = factura.fotos.filter(f => f !== url);
-      const { error } = await supabaseClient
+      await supabaseClient
         .from("deuda_limpia_pdd")
         .update({ fotos: nuevasFotos })
         .eq("uuid_cfdi", uuid);
 
-      if (error) {
-        document.getElementById("statusMsg").innerText = "❌ Error al borrar foto";
-      } else {
-        document.getElementById("statusMsg").innerText = "✅ Foto eliminada";
-        setTimeout(() => location.reload(), 800);
-      }
+      document.getElementById("statusMsg").innerText = "✅ Foto eliminada";
+      setTimeout(() => location.reload(), 800);
     }
 
     cargar();
