@@ -7,20 +7,27 @@
   <style>
     body { font-family: sans-serif; padding: 1rem; text-align: center; background: #f7f9fc; }
     h2 { color: #333; margin-bottom: 1rem; }
-    .card {
+    #result {
       background: #eef;
-      padding: 1rem;
+      padding: 1.2rem;
       border-radius: 10px;
       margin-top: 1rem;
       text-align: left;
       font-size: 1rem;
-      line-height: 1.5;
+      line-height: 1.6;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 6px;
+    }
     button {
-      margin-top: 1.5rem;
+      margin-top: 1.2rem;
       padding: 1rem;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: bold;
       border: none;
       border-radius: 10px;
@@ -31,25 +38,40 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     }
     button:active { transform: scale(0.97); }
+    #statusMsg {
+      margin: 10px 0;
+      font-weight: bold;
+      color: #333;
+    }
+    .foto {
+      display: inline-block;
+      margin: 5px;
+      text-align: center;
+    }
+    .foto img {
+      width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;
+    }
+    .foto button {
+      margin-top: 5px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
   <h2>Factura detectada</h2>
+  <div id="result"></div>
 
-  <!-- Datos en crudo -->
-  <div id="rawData" class="card">
-    <b>QR detectado (crudo):</b>
-    <p id="rawTexto">Cargando...</p>
-  </div>
+  <!-- Subir fotos -->
+  <input type="file" id="fotoInput" accept="image/*" />
+  <button onclick="subirFoto()">📤 Subir foto</button>
 
-  <!-- UUID procesado -->
-  <div id="uuidData" class="card">
-    <b>UUID convertido:</b>
-    <p id="uuidTexto">Cargando...</p>
-  </div>
-
-  <!-- Factura -->
-  <div id="result" class="card"></div>
+  <!-- Estado -->
+  <div id="statusMsg"></div>
 
   <button onclick="guardar()">💾 Guardar y regresar</button>
 
@@ -61,29 +83,16 @@
 
     const params = new URLSearchParams(window.location.search);
     const uuid = params.get("uuid");
-    const raw = params.get("raw");   // 👈 recibe el QR en crudo desde scanner.html si lo mandas
+    const raw = params.get("raw");
 
     let factura = null;
 
     async function cargar() {
-      // Mostrar primero el QR crudo
-      document.getElementById("rawTexto").innerText = raw || "No disponible";
-
-      // Mostrar UUID convertido
-      document.getElementById("uuidTexto").innerText = uuid || "No detectado";
-
-      if (!uuid) {
-        document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ UUID inválido</b></p>`;
-        return;
-      }
-
-      // Buscar en supabase
-const { data, error } = await supabaseClient
-  .from("deuda_limpia_pdd")
-  .select("*")
-  // 🔧 Normaliza: quita guiones y fuerza mayúsculas
-  .eq("uuid_cfdi", uuid.replace(/-/g, "").toUpperCase())
-  .maybeSingle();
+      const { data, error } = await supabaseClient
+        .from("deuda_limpia_pdd")
+        .select("*")
+        .eq("uuid_cfdi", uuid)
+        .maybeSingle();
 
       if (error || !data) {
         document.getElementById("result").innerHTML = `<p style="color:red;"><b>⚠️ Factura no encontrada</b></p>`;
@@ -91,7 +100,9 @@ const { data, error } = await supabaseClient
       }
 
       factura = data;
-      document.getElementById("result").innerHTML = `
+      let html = `
+        <p><b>QR detectado (crudo):</b><br><span style="background:#fff; display:block; padding:6px;">${raw || "(no disponible)"}</span></p>
+        <p><b>UUID convertido:</b><br><span style="background:#fff; display:block; padding:6px;">${uuid}</span></p>
         <p><b>Fecha:</b> ${new Date(data.fecha).toLocaleString()}</p>
         <p><b>RFC:</b> ${data.rfc_emisor}</p>
         <p><b>Razón Social:</b> ${data.razon_social_emisor}</p>
@@ -100,20 +111,102 @@ const { data, error } = await supabaseClient
         <p><b>Pagada:</b> ${data.factura_pagada || "NO"}</p>
         <p><b>Física:</b> SI</p>
       `;
+
+      // Notas
+      if (factura.comentario_factura_fisica && factura.comentario_factura_fisica.trim() !== "") {
+        html += `<label><b>Notas:</b></label><br>
+          <textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
+      } else {
+        html += `<p style="color:#999; font-style: italic; text-align:center;">— Sin notas —</p>
+          <textarea id="notaTexto" placeholder="Escribe un comentario (opcional)"></textarea>`;
+      }
+
+      // Fotos
+      html += `<h3>Fotos</h3>`;
+      if (factura.fotos && factura.fotos.length > 0) {
+        factura.fotos.forEach((url, idx) => {
+          html += `
+            <div class="foto">
+              <img src="${url}" alt="foto-${idx}" />
+              <button onclick="eliminarFoto('${url}')">❌ Borrar</button>
+            </div>
+          `;
+        });
+      } else {
+        html += `<p style="color:#999; font-style: italic; text-align:center;">— Sin fotos —</p>`;
+      }
+
+      document.getElementById("result").innerHTML = html;
     }
 
     async function guardar() {
-      if (!uuid) return;
+      const comentario = document.getElementById("notaTexto")?.value || "";
+
       const { error } = await supabaseClient
         .from("deuda_limpia_pdd")
-        .update({ factura_fisicamente: "SI" })
+        .update({
+          factura_fisicamente: "SI",
+          comentario_factura_fisica: comentario
+        })
         .eq("uuid_cfdi", uuid);
 
       if (error) {
-        alert("❌ Error al guardar");
+        document.getElementById("statusMsg").innerText = "❌ Error al guardar";
       } else {
-        alert("✅ Guardado y regresando...");
-        window.location.href = "iniciacam.html";
+        document.getElementById("statusMsg").innerText = "✅ Factura actualizada";
+        setTimeout(() => window.location.href = "iniciacam.html", 1200);
+      }
+    }
+
+    async function subirFoto() {
+      const file = document.getElementById("fotoInput").files[0];
+      if (!file) return;
+
+      const status = document.getElementById("statusMsg");
+      status.innerText = "📸 Cargando foto...";
+
+      const filePath = `clientes/${uuid}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from("fotos-facturas")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        status.innerText = "❌ Error al subir foto";
+        return;
+      }
+
+      const { data: { publicUrl } } = supabaseClient.storage
+        .from("fotos-facturas")
+        .getPublicUrl(filePath);
+
+      const nuevasFotos = factura.fotos ? [...factura.fotos, publicUrl] : [publicUrl];
+
+      const { error: dbError } = await supabaseClient
+        .from("deuda_limpia_pdd")
+        .update({ fotos: nuevasFotos })
+        .eq("uuid_cfdi", uuid);
+
+      if (dbError) {
+        status.innerText = "❌ Error al guardar foto en la BD";
+      } else {
+        status.innerText = "✅ Foto agregada";
+        setTimeout(() => location.reload(), 1000);
+      }
+    }
+
+    async function eliminarFoto(url) {
+      const nuevasFotos = factura.fotos.filter(f => f !== url);
+
+      const { error } = await supabaseClient
+        .from("deuda_limpia_pdd")
+        .update({ fotos: nuevasFotos })
+        .eq("uuid_cfdi", uuid);
+
+      if (error) {
+        document.getElementById("statusMsg").innerText = "❌ Error al borrar foto";
+      } else {
+        document.getElementById("statusMsg").innerText = "✅ Foto eliminada";
+        setTimeout(() => location.reload(), 1000);
       }
     }
 
