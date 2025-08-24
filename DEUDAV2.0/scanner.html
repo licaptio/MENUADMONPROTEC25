@@ -3,44 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <title>Escáner QR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 🔑 para móviles -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 1rem; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: #f7f9fc;
+      padding: 1rem;
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
     #lectorQR {
-      margin: auto;
-      width: 100%;
-      max-width: 90vw;   /* ocupa casi todo el ancho en celular */
-      height: auto;
+      margin: 1rem auto;
+      width: 95%;
+      max-width: 500px;
+      background: #000; /* fondo negro para mejor contraste */
+      border-radius: 12px;
+      overflow: hidden;
     }
     button {
       margin-top: 1rem;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
+      padding: 1.2rem;
+      font-size: 1.3rem;
+      font-weight: bold;
       border: none;
-      border-radius: 10px;
-      background: red;
+      border-radius: 12px;
+      background: #e3342f;
       color: white;
-      width: 90%;
-      max-width: 320px;
+      width: 95%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      transition: transform 0.1s ease;
+    }
+    button:active {
+      transform: scale(0.97);
     }
   </style>
 </head>
 <body>
-  <h2>Escaneando...</h2>
+  <h2>📷 Escaneando...</h2>
   <div id="lectorQR"></div>
-  <button onclick="cancelar()">Cancelar</button>
+  <button onclick="cancelar()">❌ Cancelar</button>
 
   <script>
     function extraeUUID(raw) {
       try {
-        // 👀 Caso 1: QR con URL (SAT)
+        // Caso 1: QR con URL (SAT)
         const url = new URL(raw);
         const uuid = url.searchParams.get("id");
         if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
           return uuid.toUpperCase();
         }
       } catch (e) {
-        // 👀 Caso 2: No era URL → buscamos patrón UUID directo
+        // Caso 2: QR directo con UUID
         let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
         if (m) return m[0].toUpperCase();
       }
@@ -51,7 +76,7 @@
 
     Html5Qrcode.getCameras().then(cameras => {
       if (cameras && cameras.length) {
-        const boxSize = Math.min(window.innerWidth * 0.8, 350); // ancho dinámico
+        const boxSize = Math.min(window.innerWidth * 0.9, 400); // 📱 más grande en móvil
 
         html5QrCode.start(
           { facingMode: "environment" },
@@ -60,7 +85,7 @@
             const uuid = extraeUUID(qrCodeMessage);
             if (uuid) {
               html5QrCode.stop().catch(()=>{});
-              // 👉 enviamos uuid y raw
+              // Enviar uuid y raw
               window.location.href =
                 "factura.html?uuid=" + encodeURIComponent(uuid) +
                 "&raw=" + encodeURIComponent(qrCodeMessage);
