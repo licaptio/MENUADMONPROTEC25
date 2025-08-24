@@ -6,73 +6,75 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 1rem; }
- #lectorQR {
-  margin: auto;
-  width: 100%;
-  max-width: 90vw;   /* ocupa casi todo el ancho en celular */
-  height: auto;
-}
-button {
-  margin-top: 1rem;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 10px;
-  background: red;
-  color: white;
-  width: 90%;
-  max-width: 320px;
-}
-
+    #lectorQR {
+      margin: auto;
+      width: 100%;
+      max-width: 90vw;   /* ocupa casi todo el ancho en celular */
+      height: auto;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: red;
+      color: white;
+      width: 90%;
+      max-width: 320px;
+    }
   </style>
 </head>
 <body>
   <h2>Escaneando...</h2>
   <div id="lectorQR"></div>
-<button onclick="cancelar()">Cancelar</button>
-  <script>
-function extraeUUID(raw) {
-  try {
-    // 👀 Caso 1: QR con URL (SAT)
-    const url = new URL(raw);
-    const uuid = url.searchParams.get("id");
-    if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
-      return uuid.toUpperCase();
-    }
-  } catch (e) {
-    // 👀 Caso 2: No era URL → buscamos patrón UUID directo
-    let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
-    if (m) return m[0].toUpperCase();
-  }
-  return null;
-}
+  <button onclick="cancelar()">Cancelar</button>
 
+  <script>
+    function extraeUUID(raw) {
+      try {
+        // 👀 Caso 1: QR con URL (SAT)
+        const url = new URL(raw);
+        const uuid = url.searchParams.get("id");
+        if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
+          return uuid.toUpperCase();
+        }
+      } catch (e) {
+        // 👀 Caso 2: No era URL → buscamos patrón UUID directo
+        let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
+        if (m) return m[0].toUpperCase();
+      }
+      return null;
+    }
 
     const html5QrCode = new Html5Qrcode("lectorQR");
-Html5Qrcode.getCameras().then(cameras => {
-  if (cameras && cameras.length) {
-    // Ancho dinámico: 80% de la pantalla o 350px, lo que sea menor
-    const boxSize = Math.min(window.innerWidth * 0.8, 350);
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: boxSize },
-      qrCodeMessage => {
-        const uuid = extraeUUID(qrCodeMessage);
-        if (uuid) {
-          html5QrCode.stop().catch(()=>{});
-          window.location.href = "factura.html?uuid=" + encodeURIComponent(uuid);
-        }
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        const boxSize = Math.min(window.innerWidth * 0.8, 350); // ancho dinámico
+
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: boxSize },
+          qrCodeMessage => {
+            const uuid = extraeUUID(qrCodeMessage);
+            if (uuid) {
+              html5QrCode.stop().catch(()=>{});
+              // 👉 enviamos uuid y raw
+              window.location.href =
+                "factura.html?uuid=" + encodeURIComponent(uuid) +
+                "&raw=" + encodeURIComponent(qrCodeMessage);
+            }
+          }
+        );
       }
-    );
-  }
-});
-function cancelar() {
-  html5QrCode.stop().catch(()=>{}).finally(()=>{
-    window.location.href = "iniciacam.html";
-  });
-}
+    });
 
+    function cancelar() {
+      html5QrCode.stop().catch(()=>{}).finally(()=>{
+        window.location.href = "iniciacam.html";
+      });
+    }
   </script>
 </body>
 </html>
