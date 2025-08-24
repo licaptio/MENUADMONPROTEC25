@@ -6,27 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1rem; background: #f3f4f6; color: #111827; }
-    h2 { text-align: center; margin-bottom: 1rem; color: #1f2937; font-size: 1.6rem; }
-    .card { background: #fff; border-radius: 14px; padding: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 1rem; }
-    .label { font-weight: 600; color: #374151; }
-    .value { display: block; background: #f9fafb; padding: 6px 8px; border-radius: 8px; margin: 4px 0 10px; font-size: 0.95rem; }
-    textarea, select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #d1d5db; font-size: 1rem; margin-top: 6px; }
-    .btn { display: block; width: 100%; padding: 1rem; font-size: 1.2rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 1rem; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.12); transition: transform 0.1s ease; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0.8rem; background: #f3f4f6; color: #111827; }
+    h2 { text-align: center; margin-bottom: 0.8rem; color: #1f2937; font-size: 1.4rem; }
+    .card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 0.8rem; }
+    .label { font-weight: 600; color: #374151; font-size: 0.9rem; }
+    .value { display: block; background: #f9fafb; padding: 6px 8px; border-radius: 6px; margin: 4px 0 10px; font-size: 0.9rem; }
+    textarea, select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9rem; margin-top: 6px; }
+    .btn { display: block; width: 100%; padding: 0.9rem; font-size: 1rem; font-weight: bold; border: none; border-radius: 10px; margin: 0.5rem 0; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.12); transition: transform 0.1s ease; }
     .btn:active { transform: scale(0.97); }
     .btn-green { background: #16a34a; }
     .btn-blue { background: #2563eb; }
-    .btn-red { background: #dc2626; font-size: 1rem; padding: 6px 10px; width: auto; margin-top: 6px; }
-    #statusMsg { margin: 12px 0; font-weight: bold; text-align: center; }
-    .fotos-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0.5rem; }
-    .foto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; text-align: center; width: 100px; }
-    .foto img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; }
+    .btn-red { background: #dc2626; font-size: 0.9rem; padding: 4px 8px; width: auto; margin-top: 6px; }
+    #statusMsg { margin: 10px 0; font-weight: bold; text-align: center; font-size: 0.9rem; }
+    .fotos-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.5rem; }
+    .foto { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px; text-align: center; width: 90px; }
+    .foto img { width: 100%; height: 70px; object-fit: cover; border-radius: 4px; }
   </style>
 </head>
 <body>
   <h2>📑 Factura detectada</h2>
 
   <div id="result" class="card">Cargando factura...</div>
+
+  <!-- Botón de guardar rápido -->
+  <button class="btn btn-green" id="guardarBtn">💾 Guardar y regresar</button>
+  <div id="statusMsg"></div>
 
   <!-- Tomar foto -->
   <div class="card">
@@ -35,10 +39,6 @@
     <button class="btn btn-blue" onclick="document.getElementById('fotoInput').click()">📸 Tomar foto</button>
     <div id="previewContainer" style="margin-top:10px; text-align:center;"></div>
   </div>
-
-  <div id="statusMsg"></div>
-
-  <button class="btn btn-green" onclick="guardar()">💾 Guardar y regresar</button>
 
   <script>
     const supabaseClient = window.supabase.createClient(
@@ -51,7 +51,7 @@
     const raw = params.get("raw");
 
     let factura = null;
-    let fotoPendiente = null; // ⚡ aquí se guarda la foto antes de subirla
+    let fotoPendiente = null;
 
     async function cargar() {
       const { data, error } = await supabaseClient
@@ -68,14 +68,14 @@
       factura = data;
 
       let html = `
-        <span class="label">QR detectado (crudo):</span>
+        <span class="label">QR detectado:</span>
         <span class="value">${raw || "(no disponible)"}</span>
 
-        <span class="label">UUID convertido:</span>
+        <span class="label">UUID:</span>
         <span class="value">${uuid}</span>
 
         <span class="label">Fecha:</span>
-        <span class="value">${new Date(data.fecha).toLocaleString()}</span>
+        <span class="value">${new Date(data.fecha).toLocaleDateString()}</span>
 
         <span class="label">RFC:</span>
         <span class="value">${data.rfc_emisor}</span>
@@ -99,12 +99,11 @@
         </select>
       `;
 
-      // Notas
-      html += `<span class="label">📝 Notas:</span>`;
+      // Comentarios (si trae algo)
       if (factura.comentario_factura_fisica && factura.comentario_factura_fisica.trim() !== "") {
-        html += `<textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
+        html += `<span class="label">📝 Notas:</span><textarea id="notaTexto">${factura.comentario_factura_fisica}</textarea>`;
       } else {
-        html += `<textarea id="notaTexto" placeholder="Escribe un comentario (opcional)"></textarea>`;
+        html += `<textarea id="notaTexto" placeholder="📝 Escribe comentario (opcional)" style="display:none;"></textarea>`;
       }
 
       // Fotos actuales
@@ -125,7 +124,7 @@
       document.getElementById("result").innerHTML = html;
     }
 
-    // Precarga de foto
+    // Precargar foto
     document.getElementById("fotoInput").addEventListener("change", (e) => {
       fotoPendiente = e.target.files[0];
       const container = document.getElementById("previewContainer");
@@ -134,33 +133,30 @@
         const preview = document.createElement("img");
         preview.src = URL.createObjectURL(fotoPendiente);
         preview.style.maxWidth = "150px";
-        preview.style.borderRadius = "8px";
-        preview.style.marginTop = "10px";
+        preview.style.borderRadius = "6px";
         container.appendChild(preview);
       }
     });
 
+    // Guardar rápido
     async function guardar() {
       const comentario = document.getElementById("notaTexto")?.value || "";
       const fisica = document.getElementById("fisicaSelect")?.value || "SI";
       const status = document.getElementById("statusMsg");
       status.innerText = "💾 Guardando...";
 
-      // Primero actualizar texto / estado
+      // Actualizar texto
       let { error } = await supabaseClient
         .from("deuda_limpia_pdd")
-        .update({
-          factura_fisicamente: fisica,
-          comentario_factura_fisica: comentario
-        })
+        .update({ factura_fisicamente: fisica, comentario_factura_fisica: comentario })
         .eq("uuid_cfdi", uuid);
 
       if (error) {
-        status.innerText = "❌ Error al guardar datos";
+        status.innerText = "❌ Error al guardar";
         return;
       }
 
-      // Luego subir la foto pendiente si existe
+      // Subir foto pendiente
       if (fotoPendiente) {
         const filePath = `clientes/${uuid}/${Date.now()}_${fotoPendiente.name}`;
         const { error: uploadError } = await supabaseClient.storage
@@ -183,14 +179,16 @@
           .eq("uuid_cfdi", uuid);
 
         if (dbError) {
-          status.innerText = "❌ Error al guardar foto en BD";
+          status.innerText = "❌ Error al guardar foto";
           return;
         }
       }
 
       status.innerText = "✅ Factura actualizada";
-      setTimeout(() => window.location.href = "iniciacam.html", 1200);
+      setTimeout(() => window.location.href = "iniciacam.html", 1000);
     }
+
+    document.getElementById("guardarBtn").addEventListener("click", guardar);
 
     async function eliminarFoto(url) {
       const nuevasFotos = factura.fotos.filter(f => f !== url);
@@ -203,7 +201,7 @@
         document.getElementById("statusMsg").innerText = "❌ Error al borrar foto";
       } else {
         document.getElementById("statusMsg").innerText = "✅ Foto eliminada";
-        setTimeout(() => location.reload(), 1000);
+        setTimeout(() => location.reload(), 800);
       }
     }
 
