@@ -34,21 +34,25 @@ function extraeUUID(raw) {
 
 
     const html5QrCode = new Html5Qrcode("lectorQR");
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          qrCodeMessage => {
-            const uuid = extraeUUID(qrCodeMessage);
-            if (uuid) {
-              html5QrCode.stop().catch(()=>{});
-              window.location.href = "factura.html?uuid=" + encodeURIComponent(uuid);
-            }
-          }
-        );
+Html5Qrcode.getCameras().then(cameras => {
+  if (cameras && cameras.length) {
+    // Ancho dinámico: 80% de la pantalla o 350px, lo que sea menor
+    const boxSize = Math.min(window.innerWidth * 0.8, 350);
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: boxSize },
+      qrCodeMessage => {
+        const uuid = extraeUUID(qrCodeMessage);
+        if (uuid) {
+          html5QrCode.stop().catch(()=>{});
+          window.location.href = "factura.html?uuid=" + encodeURIComponent(uuid);
+        }
       }
-    });
+    );
+  }
+});
+
   </script>
 </body>
 </html>
