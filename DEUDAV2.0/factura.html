@@ -97,12 +97,16 @@
   <div id="result" class="card">Cargando factura...</div>
 
   <!-- Subir fotos -->
-  <div class="card">
-    <label class="label">📸 Agregar foto</label>
-    <input type="file" id="fotoInput" accept="image/*" capture style="margin-top:8px;">
-    <button class="btn btn-blue" onclick="subirFoto()">Subir foto</button>
-  </div>
-
+<div class="card">
+  <label class="label">📸 Tomar foto</label>
+  <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none;">
+  <button class="btn btn-blue" onclick="document.getElementById('fotoInput').click()">📸 Tomar foto</button>
+  
+  <!-- preview -->
+  <div id="previewContainer" style="margin-top:10px; text-align:center;"></div>
+  
+  <button class="btn btn-green" onclick="subirFoto()">⬆️ Subir foto</button>
+</div>
   <!-- Estado -->
   <div id="statusMsg"></div>
 
@@ -268,18 +272,21 @@
     }
 
     cargar();
-document.getElementById("fotoInput").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const preview = document.createElement("img");
-    preview.src = URL.createObjectURL(file);
-    preview.style.maxWidth = "150px";
-    preview.style.marginTop = "10px";
-    document.getElementById("statusMsg").innerHTML = "";
-    document.getElementById("statusMsg").appendChild(preview);
-  }
-});
-
-  </script>
+<script>
+  // Preview al tomar foto
+  document.getElementById("fotoInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const container = document.getElementById("previewContainer");
+    container.innerHTML = "";
+    if (file) {
+      const preview = document.createElement("img");
+      preview.src = URL.createObjectURL(file);
+      preview.style.maxWidth = "150px";
+      preview.style.borderRadius = "8px";
+      preview.style.marginTop = "10px";
+      container.appendChild(preview);
+    }
+  });
+</script>
 </body>
 </html>
