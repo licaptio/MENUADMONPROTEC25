@@ -99,7 +99,7 @@
   <!-- Subir fotos -->
   <div class="card">
     <label class="label">📸 Agregar foto</label>
-    <input type="file" id="fotoInput" accept="image/*" capture="environment" style="margin-top:8px;">
+    <input type="file" id="fotoInput" accept="image/*" capture style="margin-top:8px;">
     <button class="btn btn-blue" onclick="subirFoto()">Subir foto</button>
   </div>
 
@@ -268,6 +268,18 @@
     }
 
     cargar();
+document.getElementById("fotoInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const preview = document.createElement("img");
+    preview.src = URL.createObjectURL(file);
+    preview.style.maxWidth = "150px";
+    preview.style.marginTop = "10px";
+    document.getElementById("statusMsg").innerHTML = "";
+    document.getElementById("statusMsg").appendChild(preview);
+  }
+});
+
   </script>
 </body>
 </html>
