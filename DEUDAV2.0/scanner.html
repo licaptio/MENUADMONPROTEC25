@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escáner QR</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 1rem; }
+    #lectorQR { margin: auto; width: 100%; max-width: 400px; }
+    button { margin-top: 1rem; padding: 0.7rem 1.5rem; background: red; color: white; border: none; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Escaneando...</h2>
+  <div id="lectorQR"></div>
+  <button onclick="window.location.href='iniciacam.html'">Cancelar</button>
+
+  <script>
+    function extraeUUID(raw) {
+      let m = raw.match(/id\s*=\s*([a-f0-9\-]{32,40})/i);
+      if (!m) m = raw.match(/id\s*=\s*([a-f0-9]{16,})/i);
+      if (m && m[1]) {
+        let v = m[1].toUpperCase().replace(/[^A-F0-9\-]/g, "");
+        const soloHex = v.replace(/-/g, "");
+        if (soloHex.length === 32) {
+          v = [soloHex.slice(0,8), soloHex.slice(8,12), soloHex.slice(12,16), soloHex.slice(16,20), soloHex.slice(20)].join("-");
+        }
+        return v;
+      }
+      return null;
+    }
+
+    const html5QrCode = new Html5Qrcode("lectorQR");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          qrCodeMessage => {
+            const uuid = extraeUUID(qrCodeMessage);
+            if (uuid) {
+              html5QrCode.stop().catch(()=>{});
+              window.location.href = "factura.html?uuid=" + encodeURIComponent(uuid);
+            }
+          }
+        );
+      }
+    });
+  </script>
+</body>
+</html>
