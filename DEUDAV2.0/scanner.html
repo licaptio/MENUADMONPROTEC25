@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Escáner QR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 🔑 para móviles -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
@@ -27,9 +27,30 @@
       margin: 1rem auto;
       width: 95%;
       max-width: 500px;
-      background: #000; /* fondo negro para mejor contraste */
+      background: #000;
       border-radius: 12px;
       overflow: hidden;
+      position: relative;
+    }
+    /* 🔥 Overlay con la mira */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* No bloquea el escaneo */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .overlay::before {
+      content: "";
+      border: 3px solid rgba(0, 255, 0, 0.7);
+      width: 70%;
+      height: 40%;
+      box-sizing: border-box;
+      border-radius: 8px;
     }
     button {
       margin-top: 1rem;
@@ -52,20 +73,20 @@
 </head>
 <body>
   <h2>📷 Escaneando...</h2>
-  <div id="lectorQR"></div>
+  <div id="lectorQR">
+    <div class="overlay"></div> <!-- 👀 Aquí está la mira -->
+  </div>
   <button onclick="cancelar()">❌ Cancelar</button>
 
 <script>
   function extraeUUID(raw) {
     try {
-      // Caso 1: QR con URL (SAT)
       const url = new URL(raw);
       const uuid = url.searchParams.get("id");
       if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
         return uuid.toUpperCase();
       }
     } catch (e) {
-      // Caso 2: QR directo con UUID
       let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
       if (m) return m[0].toUpperCase();
     }
@@ -76,17 +97,15 @@
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      // 🔑 Si es PC usa cuadro, si es móvil usa toda la pantalla
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const config = isMobile
-        ? { fps: 10 }   // móvil: usar pantalla completa
-        : { fps: 10, qrbox: { width: 300, height: 300 } }; // PC: cuadro más chico
+        ? { fps: 10 }   
+        : { fps: 10, qrbox: { width: 300, height: 300 } }; 
 
       html5QrCode.start(
         { facingMode: "environment" },
         config,
         qrCodeMessage => {
-          console.log("Detectado:", qrCodeMessage); // debug
           const uuid = extraeUUID(qrCodeMessage);
           if (uuid) {
             html5QrCode.stop().catch(()=>{});
@@ -96,7 +115,6 @@
           }
         },
         errorMessage => {
-          // 👀 importante en móviles: evita que se congele
           console.log("Falló escaneo:", errorMessage);
         }
       );
