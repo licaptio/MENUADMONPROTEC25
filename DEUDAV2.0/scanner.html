@@ -58,12 +58,14 @@
 <script>
   function extraeUUID(raw) {
     try {
+      // Caso 1: QR con URL (SAT)
       const url = new URL(raw);
       const uuid = url.searchParams.get("id");
       if (uuid && /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i.test(uuid)) {
         return uuid.toUpperCase();
       }
     } catch (e) {
+      // Caso 2: QR directo con UUID
       let m = raw.match(/[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}/i);
       if (m) return m[0].toUpperCase();
     }
@@ -74,13 +76,17 @@
 
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras && cameras.length) {
-      const boxSize = Math.min(window.innerWidth * 0.9, 400);
+      // 🔑 Si es PC usa cuadro, si es móvil usa toda la pantalla
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const config = isMobile
+        ? { fps: 10 }   // móvil: usar pantalla completa
+        : { fps: 10, qrbox: { width: 300, height: 300 } }; // PC: cuadro más chico
 
       html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: boxSize, height: boxSize } },
+        config,
         qrCodeMessage => {
-          console.log("QR detectado:", qrCodeMessage); // 🔎 debug
+          console.log("Detectado:", qrCodeMessage); // debug
           const uuid = extraeUUID(qrCodeMessage);
           if (uuid) {
             html5QrCode.stop().catch(()=>{});
@@ -90,8 +96,8 @@
           }
         },
         errorMessage => {
-          // Este callback evita que se "congele" el escaneo
-          console.log("Escaneo fallido:", errorMessage);
+          // 👀 importante en móviles: evita que se congele
+          console.log("Falló escaneo:", errorMessage);
         }
       );
     }
@@ -103,6 +109,5 @@
     });
   }
 </script>
-
 </body>
 </html>
