@@ -159,6 +159,7 @@ function mostrarTabla(data) {
     <thead>
       <tr>
         <th>Fecha</th>
+        <th>Día</th>
         <th>UUID</th>
         <th>RFC Emisor</th>
         <th>Razón Social</th>
@@ -172,6 +173,7 @@ function mostrarTabla(data) {
     <tbody>`;
 
   for (const f of data) {
+    const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
     const fotosArr = normalizaFotos(f.fotos);
 
     let fotosHtml = "—";
@@ -185,15 +187,16 @@ function mostrarTabla(data) {
 
     html += `<tr>
       <td>${f.fecha || "-"}</td>
-<td>
-  ${
-    f.uuid_cfdi
-      ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" 
-           target="_blank" rel="noopener noreferrer"
-           title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
-      : "-"
-  }
-</td>
+      <td style="text-align:center;">${dias}</td>
+      <td>
+        ${
+          f.uuid_cfdi
+            ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
+                 target="_blank" rel="noopener noreferrer"
+                 title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
+            : "-"
+        }
+      </td>
       <td>${f.rfc_emisor || "-"}</td>
       <td>${f.razon_social_emisor || "-"}</td>
       <td>${f.factura || "-"}</td>
@@ -210,6 +213,17 @@ function mostrarTabla(data) {
 
   html += `</tbody></table>`;
   document.getElementById("tablaResultados").innerHTML = html;
+}
+
+// Cuenta días desde HOY a la fecha de la factura (redondeo por día UTC para evitar desfases de zona horaria)
+function calcDiasDesdeHoy(fechaISO) {
+  const f = new Date(fechaISO);
+  const hoy = new Date();
+  // normalizar a medianoche UTC
+  const utcF = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate());
+  const utcHoy = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+  const diff = Math.floor((utcHoy - utcF) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff : "—";
 }
 
 // 🔧 Convierte lo que venga en f.fotos a un arreglo de URLs
@@ -301,6 +315,7 @@ function normalizaFotos(fotos) {
   </script>
 </body>
 </html>
+
 
 
 
