@@ -150,54 +150,74 @@
       mostrarTabla(data);
     }
 
-    function mostrarTabla(data) {
-      let html = `<table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Día</th>
-            <th>UUID</th>
-            <th>RFC Emisor</th>
-            <th>Razón Social</th>
-            <th>Factura</th>
-            <th>Total</th>
-            <th>¿Pagada?</th>
-            <th>¿Física?</th>
-          </tr>
-        </thead>
-        <tbody>`;
+<script>
+function mostrarTabla(data) {
+  let html = `<table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>UUID</th>
+        <th>RFC Emisor</th>
+        <th>Razón Social</th>
+        <th>Factura</th>
+        <th>Total</th>
+        <th>¿Pagada?</th>
+        <th>¿Física?</th>
+        <th>Fotos</th>
+      </tr>
+    </thead>
+    <tbody>`;
 
-      const hoy = new Date();
+  for (const f of data) {
+    const fotosArr = normalizaFotos(f.fotos);
 
-      for (const f of data) {
-        let dias = "-";
-        if (f.fecha) {
-          const fechaFactura = new Date(f.fecha);
-          const diff = Math.floor((hoy - fechaFactura) / (1000 * 60 * 60 * 24));
-          dias = diff >= 0 ? diff : "-";
-        }
-
-        html += `<tr>
-          <td>${f.fecha || "-"}</td>
-          <td>${dias}</td>
-          <td>${f.uuid_cfdi || "-"}</td>
-          <td>${f.rfc_emisor || "-"}</td>
-          <td>${f.razon_social_emisor || "-"}</td>
-          <td>${f.factura || "-"}</td>
-          <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
-            ${(f.factura_pagada || 'NO').toUpperCase()}
-          </td>
-          <td style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
-            ${(f.factura_fisicamente || 'NO').toUpperCase()}
-          </td>
-        </tr>`;
-      }
-
-      html += `</tbody></table>`;
-      document.getElementById("tablaResultados").innerHTML = html;
+    let fotosHtml = "—";
+    if (fotosArr.length > 0) {
+      const primeros = fotosArr.slice(0, 3)
+        .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
+        .join(' ');
+      const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
+      fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
     }
 
+    html += `<tr>
+      <td>${f.fecha || "-"}</td>
+      <td>${f.uuid_cfdi || "-"}</td>
+      <td>${f.rfc_emisor || "-"}</td>
+      <td>${f.razon_social_emisor || "-"}</td>
+      <td>${f.factura || "-"}</td>
+      <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
+        ${(f.factura_pagada || 'NO').toUpperCase()}
+      </td>
+      <td style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
+        ${(f.factura_fisicamente || 'NO').toUpperCase()}
+      </td>
+      <td style="text-align:center;">${fotosHtml}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+  document.getElementById("tablaResultados").innerHTML = html;
+}
+
+// 🔧 Convierte lo que venga en f.fotos a un arreglo de URLs
+function normalizaFotos(fotos) {
+  if (!fotos) return [];
+  if (Array.isArray(fotos)) return fotos.filter(Boolean);
+
+  if (typeof fotos === "string") {
+    // intenta JSON
+    try {
+      const arr = JSON.parse(fotos);
+      if (Array.isArray(arr)) return arr.filter(Boolean);
+    } catch {}
+    // o coma-separado
+    return fotos.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+</script>
     async function togglePago(id, celda) {
       const actual = celda.textContent.trim().toUpperCase();
       const nuevo = actual === "SI" ? "NO" : "SI";
@@ -270,3 +290,4 @@
   </script>
 </body>
 </html>
+
