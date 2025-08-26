@@ -41,6 +41,16 @@
   #btn-anterior{background:#9ca3af} #btn-siguiente{background:var(--ok)}
   #btn-enviar{background:var(--warn)} #btn-orden{background:#6d28d9}
   #btn-limpiar{background:#ef4444}
+/* Quitar spinners de los inputs tipo number */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
 </style>
 </head>
 <body>
