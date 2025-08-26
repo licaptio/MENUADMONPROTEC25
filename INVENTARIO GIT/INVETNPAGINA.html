@@ -73,6 +73,17 @@ input[type=number] {
   cursor:pointer; font-size:1rem;
 }
 @keyframes fadeIn {from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+.indice {
+  background:#fff; border:1px solid var(--border); border-radius:10px;
+  padding:8px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,.05);
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.indice button {
+  background:var(--secondary); color:#fff; border:none;
+  padding:6px 10px; border-radius:6px; cursor:pointer;
+  font-size:0.85rem;
+}
+.indice button:hover { background:#2563eb; }
 
 </style>
 </head>
@@ -654,6 +665,16 @@ function limpiarTodo(){
   localStorage.removeItem("inventariosData");
   render();
 }
+function renderIndice(){
+  const indiceDiv = document.getElementById("indice");
+  indiceDiv.innerHTML = "";
+  inventarios.forEach((g,i)=>{
+    const btn = document.createElement("button");
+    btn.textContent = g.nombre.replace("📦 ",""); // texto sin emoji
+    btn.onclick = ()=>{ pagina=i; render(); };
+    indiceDiv.appendChild(btn);
+  });
+}
 
 /* Telegram y Orden (igual que tenías) */
 function enviarTelegram(){ alert("aquí va tu envío a Telegram"); }
@@ -692,7 +713,7 @@ function cerrarModal(){ document.getElementById("ordenModal").style.display="non
 
 
 /* init */
-loadData(); render();
+loadData(); render(); renderIndice();
 </script>
 <div id="ordenModal" class="modal">
   <div class="modal-content">
