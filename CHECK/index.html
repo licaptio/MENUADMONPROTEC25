@@ -30,7 +30,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let columnas = 3; // columnas iniciales
+    let columnas = 3; // valor inicial por defecto
 
     async function cargar() {
       const { data, error } = await supabase.from("checklist_json").select("*").order("id");
@@ -38,6 +38,13 @@
         console.error("Error cargando:", error);
         return;
       }
+
+      // 🔑 Ajustar automáticamente al número de columnas máximo encontrado en Supabase
+      if (data && data.length > 0) {
+        const maxCols = Math.max(...data.map(f => (f.checks ? f.checks.length : 0)));
+        columnas = maxCols > 0 ? maxCols : columnas;
+      }
+
       renderTabla(data);
     }
 
