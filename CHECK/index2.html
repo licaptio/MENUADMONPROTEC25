@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Checklist</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h2 { text-align:center; }
+    table { border-collapse: collapse; margin: 20px auto; background: #fff; }
+    td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    input[type="text"] { padding: 5px; }
+    button { margin: 5px; padding: 6px 12px; }
+  </style>
+</head>
+<body>
+  <h2>✅ Checklist</h2>
+
+  <div style="text-align:center;">
+    <input type="text" id="nuevaTarea" placeholder="Nueva tarea">
+    <button onclick="agregarFila()">➕ Agregar fila</button>
+    <button onclick="agregarColumna()">➕ Agregar columna</button>
+  </div>
+
+  <table id="tabla"></table>
+
+  <script>
+    // 🔑 Credenciales Supabase
+    const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let columnas = 3; // valor inicial por defecto
+
+    async function cargar() {
+      const { data, error } = await supabase.from("checklist_json").select("*").order("id");
+      if (error) {
+        console.error("Error cargando:", error);
+        return;
+      }
+
+      // 🔑 Ajustar automáticamente al número de columnas máximo encontrado en Supabase
+      if (data && data.length > 0) {
+        const maxCols = Math.max(...data.map(f => (f.checks ? f.checks.length : 0)));
+        columnas = maxCols > 0 ? maxCols : columnas;
+      }
+
+      renderTabla(data);
+    }
+
+    function renderTabla(filas) {
+      const tabla = document.getElementById("tabla");
+      tabla.innerHTML = "";
+
+      // encabezado
+      let header = "<tr><th>Tarea</th>";
+      for (let c=0; c<columnas; c++) header += `<th>C${c+1}</th>`;
+      header += "</tr>";
+      tabla.innerHTML += header;
+
+      // filas
+      filas.forEach(f => {
+        let checks = f.checks || [];
+
+        // asegurar que tenga tantas columnas como definimos
+        if (checks.length < columnas) {
+          checks = [...checks, ...Array(columnas - checks.length).fill(false)];
+        }
+
+        let row = `<tr><td>${f.tarea}</td>`;
+        for (let c=0; c<columnas; c++) {
+          const val = checks[c] ? "checked" : "";
+          row += `<td><input type="checkbox" onchange="guardarCheck(${f.id}, ${c}, this.checked)" ${val}></td>`;
+        }
+        row += "</tr>";
+        tabla.innerHTML += row;
+      });
+    }
+
+    async function guardarCheck(id, col, valor) {
+      const { data, error } = await supabase.from("checklist_json").select("checks").eq("id", id).single();
+      if (error) { console.error("Error leyendo checks:", error); return; }
+      let checks = data.checks || [];
+      checks[col] = valor;
+      const { error: upErr } = await supabase.from("checklist_json").update({ checks }).eq("id", id);
+      if (upErr) console.error("Error guardando check:", upErr);
+    }
+
+    // ⬇️ Funciones globales
+    window.agregarFila = async function() {
+      const tarea = document.getElementById("nuevaTarea").value.trim();
+      if (!tarea) return alert("Escribe una tarea");
+      const { error } = await supabase.from("checklist_json").insert([{ tarea, checks: Array(columnas).fill(false) }]);
+      if (error) { console.error("Error insertando fila:", error); return; }
+      document.getElementById("nuevaTarea").value = "";
+      cargar();
+    };
+
+    window.agregarColumna = async function() {
+      columnas++;
+
+      // traer todas las filas
+      const { data, error } = await supabase.from("checklist_json").select("id, checks");
+      if (error) { console.error(error); return; }
+
+      // expandir cada fila con un false extra
+      for (let fila of data) {
+        let checks = fila.checks || [];
+        checks.push(false);
+        await supabase.from("checklist_json").update({ checks }).eq("id", fila.id);
+      }
+
+      cargar();
+    };
+
+    cargar();
+  </script>
+</body>
+</html>
