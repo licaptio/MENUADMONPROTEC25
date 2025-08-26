@@ -41,6 +41,9 @@
     td {
       background-color: #fff;
     }
+  .uuid-link { color:#0b6efd; text-decoration:underline; }
+.uuid-link:hover { text-decoration:none; }
+
   </style>
 </head>
 <body>
@@ -182,7 +185,15 @@ function mostrarTabla(data) {
 
     html += `<tr>
       <td>${f.fecha || "-"}</td>
-      <td>${f.uuid_cfdi || "-"}</td>
+<td>
+  ${
+    f.uuid_cfdi
+      ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" 
+           target="_blank" rel="noopener noreferrer"
+           title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
+      : "-"
+  }
+</td>
       <td>${f.rfc_emisor || "-"}</td>
       <td>${f.razon_social_emisor || "-"}</td>
       <td>${f.factura || "-"}</td>
@@ -290,5 +301,6 @@ function normalizaFotos(fotos) {
   </script>
 </body>
 </html>
+
 
 
