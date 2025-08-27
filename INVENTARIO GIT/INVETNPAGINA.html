@@ -700,7 +700,54 @@ function limpiarTodo(){
 
   
 /* Telegram y Orden (igual que tenías) */
-function enviarTelegram(){ alert("aquí va tu envío a Telegram"); }
+function enviarTelegram(){
+  const data = inventarios[pagina];
+  if(!data || !data.items) return;
+
+  let mensaje = `📦 *${data.nombre}*\n\n`;
+
+  data.items.forEach(row=>{
+    const invManual = parseInt(row[1])||0;
+    const pedido    = parseInt(row[3])||0;
+    const acum      = parseInt(row[4])||0;
+
+    if(invManual>0 || pedido>0 || acum>0){
+      mensaje += `• ${row[0]} `;
+      if(invManual>0) mensaje += `(Inv: ${invManual}) `;
+      if(pedido>0)    mensaje += `(Ped: ${pedido}) `;
+      if(acum>0)      mensaje += `(Acum: ${acum}) `;
+      mensaje += `\n`;
+    }
+  });
+
+  if(mensaje.trim()===`📦 *${data.nombre}*`){
+    alert("⚠ No hay datos en esta página para enviar");
+    return;
+  }
+
+  const token  = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw"; // ✅ tu token
+  const chatId = "6617988297"; // ✅ tu chat_id
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      chat_id: chatId,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    console.log("Enviado:",data);
+    alert("✅ Página enviada a Telegram");
+  })
+  .catch(err=>{
+    console.error(err);
+    alert("❌ Error al enviar a Telegram");
+  });
+}
+
 function generarOrden(){
   const modal = document.getElementById("ordenModal");
   const list = document.getElementById("orden-list");
