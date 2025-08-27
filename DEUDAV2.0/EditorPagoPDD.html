@@ -163,7 +163,7 @@ function mostrarTabla(data) {
         <th>UUID</th>
         <th>RFC Emisor</th>
         <th>Razón Social</th>
-        <th>Factura</th>
+        <th>Serie/Factura</th>
         <th>Total</th>
         <th>¿Pagada?</th>
         <th>¿Física?</th>
@@ -199,7 +199,7 @@ function mostrarTabla(data) {
       </td>
       <td>${f.rfc_emisor || "-"}</td>
       <td>${f.razon_social_emisor || "-"}</td>
-      <td>${f.factura || "-"}</td>
+      <td>${formatSerieFactura(f.serie, f.factura)}</td>
       <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
         ${(f.factura_pagada || 'NO').toUpperCase()}
@@ -213,6 +213,14 @@ function mostrarTabla(data) {
 
   html += `</tbody></table>`;
   document.getElementById("tablaResultados").innerHTML = html;
+}
+function formatSerieFactura(serie, factura) {
+  const s = (serie ?? "").toString().trim();
+  const f = (factura ?? "").toString().trim(); // respeta ceros a la izquierda
+  if (s && f) return `${s}\u2011${f}`; // \u2011 = guion no separable
+  if (f) return f;
+  if (s) return s;
+  return "—";
 }
 
 // Cuenta días desde HOY a la fecha de la factura (redondeo por día UTC para evitar desfases de zona horaria)
@@ -315,6 +323,7 @@ function normalizaFotos(fotos) {
   </script>
 </body>
 </html>
+
 
 
 
