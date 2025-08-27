@@ -695,12 +695,23 @@ function loadData(){
   }catch(e){console.error(e);}
 }
 function limpiarTodo(){
-  if(!confirm("¿Borrar todo inventario?")) return;
-  inventarios.forEach(g=>g.items.forEach(r=>{r[1]="";r[3]="";r[4]=0;}));
-  localStorage.removeItem("inventariosData");
-  render();
-}
+  if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
 
+  // Reiniciar campos de cada producto
+  inventarios.forEach(g=>g.items.forEach(r=>{
+    r[1] = "";   // inventario manual
+    r[3] = "";   // pedido
+    r[4] = 0;    // acumulado
+  }));
+
+  // 🔥 Aquí se limpia también el localStorage
+  localStorage.removeItem("inventariosData");
+
+  // Render de nuevo
+  render();
+
+  alert("✅ Inventario y localStorage limpiados");
+}
   
 /* Telegram y Orden (igual que tenías) */
 function enviarTelegram(){
