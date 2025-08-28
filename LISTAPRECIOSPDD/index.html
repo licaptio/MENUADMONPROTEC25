@@ -5,111 +5,132 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de Precios PROVEEDORA DE DULCES</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f4f4f4; 
-      margin: 0; 
-      padding: 0; 
-      display: flex; 
-      flex-direction: column; 
-      min-height: 100vh;
+    :root {
+      --primary:#2c3e50; 
+      --accent:#3498db; 
+      --bg:#f4f6fa; 
+      --card:#ffffff; 
+      --border:#e0e0e0;
     }
-    .container { 
-      flex: 1; 
-      max-width: 800px; 
-      margin: auto; 
-      background: white; 
-      padding: 20px; 
-      border-radius: 10px; 
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin:0; padding:0;
+      background:var(--bg);
+      display:flex; flex-direction:column;
+      min-height:100vh;
+
+      /* Fondo con STAR */
+      background: url("STARTRONE.png") no-repeat center fixed;
+      background-size: cover;
     }
-    h1 { 
-      text-align: center; 
-      color: #333; 
-      margin-bottom: 20px;
+    /* Capa de oscurecimiento para legibilidad */
+    body::before {
+      content:"";
+      position:fixed;
+      top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.6);
+      z-index:-1;
     }
-    .item { 
-      margin: 10px 0; 
-      padding: 12px; 
-      border: 1px solid #ddd; 
-      border-radius: 6px;
-      transition: background 0.3s ease; 
+    header {
+      text-align:center;
+      padding:30px 20px;
+      color:#fff;
     }
-    .item:hover { 
-      background: #f0f4ff; 
+    header h1 {
+      margin:0;
+      font-size:2rem;
+      text-shadow:0 2px 6px rgba(0,0,0,0.6);
     }
-    a { 
-      color: #1f4fff; 
-      text-decoration: none; 
-      font-weight: bold; 
-      display: block; 
+    .container {
+      flex:1;
+      max-width:900px;
+      margin:20px auto;
+      padding:20px;
     }
-    a:hover { 
-      text-decoration: underline; 
+    .search {
+      text-align:center;
+      margin-bottom:20px;
     }
-    footer { 
-      text-align: center; 
-      padding: 12px; 
-      font-size: 14px; 
-      color: #555; 
-      background: #f9f9f9;
-      border-top: 1px solid #ddd;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
+    .search input {
+      width:90%;
+      max-width:400px;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      font-size:1rem;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px,1fr));
+      gap:16px;
+    }
+    .item {
+      background:rgba(255,255,255,0.9);
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.15);
+      padding:16px;
+      transition:transform .2s, box-shadow .2s;
+      text-align:center;
+    }
+    .item:hover {
+      transform:translateY(-5px);
+      box-shadow:0 8px 18px rgba(0,0,0,0.25);
+    }
+    .item a {
+      color:var(--accent);
+      font-weight:600;
+      text-decoration:none;
+      display:block;
+    }
+    .item a:hover { text-decoration:underline; }
+    footer {
+      text-align:center;
+      padding:14px;
+      font-size:14px;
+      color:#fff;
+      background:rgba(0,0,0,0.7);
+      border-top:1px solid rgba(255,255,255,0.2);
     }
   </style>
+  <script>
+    function filtrar() {
+      let input = document.getElementById("busqueda").value.toLowerCase();
+      let items = document.querySelectorAll(".item");
+      items.forEach(item=>{
+        let text=item.innerText.toLowerCase();
+        item.style.display=text.includes(input)?"block":"none";
+      });
+    }
+  </script>
 </head>
 <body>
-  <div class="container">
+  <header>
     <h1>📑 Lista de Precios PROVEEDORA DE DULCES</h1>
-    
-    <div class="item">
-      <a href="POVASAJUNIO25.jpeg" target="_blank">POVASA JUNIO 2025</a>
+    <p>Catálogos y listas actualizadas</p>
+  </header>
+
+  <div class="container">
+    <div class="search">
+      <input type="text" id="busqueda" placeholder="🔍 Buscar..." onkeyup="filtrar()">
     </div>
-    <div class="item">
-      <a href="POAVASAAGO25.jpeg" target="_blank">POVASA AGOSTO 2025</a>
-    </div>
-    <div class="item">
-      <a href="REYMAAGO25.pdf#view=FitH" target="_blank">REYMA AGOSTO 2025</a>
-    </div>
-    <div class="item">
-      <a href="PROMOREYMAAGO25.jpg" target="_blank">REYMA PROMO VIEJA 25</a>
-    </div>
-    <div class="item">
-      <a href="MAJORECATAAGO25.pdf#view=FitH" target="_blank">CATÁLOGO MAJORE DESECHABLES AGOSTO 2025</a>
-    </div>
-    <div class="item">
-      <a href="MAJOREAGO25.jpg#view=FitH" target="_blank">LISTA MAJORE DESECHABLES AGOSTO 2025 BAR</a>
-    </div>
-    <div class="item">
-      <a href="KILLIEMZO2025.pdf#view=FitH" target="_blank">KILLIE PLASTIC MARZO 2025</a>
-    </div>
-    <div class="item">
-      <a href="SMMTYAGO25.jpeg#view=FitH" target="_blank">SMMTY AGOSTO 2025</a>
-    </div>
-    <div class="item">
-      <a href="CORREOSPDD.pdf#view=FitH" target="_blank">CORREOS PDD CONFIGURACION</a>
-    </div>
-    <div class="item">
-      <a href="EMPRESARIALPDD2025.pdf#view=FitH" target="_blank">POLIZA EMPRESARIAL 2025</a>
-    </div>        
-    <div class="item">
-      <a href="HOJATAMALCHILEPDD.pdf#view=FitH" target="_blank">COSTO DE CHILE Y HOJA TAMAL</a>
-    </div>
-    <div class="item">
-      <a href="REYMACLIENTE41AGO25.pdf#view=FitH" target="_blank">CLIENTE REYMA LISTA B41 AGOSTO 2025</a>
+    <div class="grid">
+      <div class="item"><a href="POVASAJUNIO25.jpeg" target="_blank">POVASA JUNIO 2025</a></div>
+      <div class="item"><a href="POAVASAAGO25.jpeg" target="_blank">POVASA AGOSTO 2025</a></div>
+      <div class="item"><a href="REYMAAGO25.pdf#view=FitH" target="_blank">REYMA AGOSTO 2025</a></div>
+      <div class="item"><a href="PROMOREYMAAGO25.jpg" target="_blank">REYMA PROMO VIEJA 25</a></div>
+      <div class="item"><a href="MAJORECATAAGO25.pdf#view=FitH" target="_blank">CATÁLOGO MAJORE DESECHABLES AGOSTO 2025</a></div>
+      <div class="item"><a href="MAJOREAGO25.jpg#view=FitH" target="_blank">LISTA MAJORE DESECHABLES AGOSTO 2025 BAR</a></div>
+      <div class="item"><a href="KILLIEMZO2025.pdf#view=FitH" target="_blank">KILLIE PLASTIC MARZO 2025</a></div>
+      <div class="item"><a href="SMMTYAGO25.jpeg#view=FitH" target="_blank">SMMTY AGOSTO 2025</a></div>
+      <div class="item"><a href="CORREOSPDD.pdf#view=FitH" target="_blank">CORREOS PDD CONFIGURACION</a></div>
+      <div class="item"><a href="EMPRESARIALPDD2025.pdf#view=FitH" target="_blank">POLIZA EMPRESARIAL 2025</a></div>
+      <div class="item"><a href="HOJATAMALCHILEPDD.pdf#view=FitH" target="_blank">COSTO DE CHILE Y HOJA TAMAL</a></div>
+      <div class="item"><a href="REYMACLIENTE41AGO25.pdf#view=FitH" target="_blank">CLIENTE REYMA LISTA B41 AGOSTO 2025</a></div>
     </div>
   </div>
 
   <footer>
-    🚀 Powered by <strong>PROVSOFT</strong>
+    🚀 Powered by <strong>PROVSOFT</strong> | 🛡️ Custodiado por Star
   </footer>
 </body>
 </html>
-
-
-
-
-
