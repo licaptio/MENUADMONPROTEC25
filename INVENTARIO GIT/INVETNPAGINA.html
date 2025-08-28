@@ -466,6 +466,8 @@ function render(){
 
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
+// Activo la navegación con flechas cada vez que se renderiza
+activarNavegacionTeclas();
 
   // 👉 SI ESTÁS EN EL ÍNDICE (página 0)
   if(pagina === 0){
@@ -713,6 +715,38 @@ function generarImagen(){
     nuevaVentana.document.write("<img src='"+imgData+"' style='width:100%;'/>");
   });
 }
+// === Navegación con flechas en inputs ===
+function activarNavegacionTeclas(){
+  const inputs = Array.from(document.querySelectorAll("#tabla input"));
+
+  inputs.forEach((inp, idx) => {
+    inp.addEventListener("keydown", e => {
+      let col = idx % 2;              // 0 = inventario manual, 1 = pedido
+      let row = Math.floor(idx / 2);  // fila actual
+      let totalFilas = document.querySelectorAll("#tabla tbody tr").length;
+
+      if(e.key === "ArrowRight"){ // →
+        e.preventDefault();
+        if(col === 0 && inputs[idx+1]) inputs[idx+1].focus();
+      }
+      if(e.key === "ArrowLeft"){ // ←
+        e.preventDefault();
+        if(col === 1 && inputs[idx-1]) inputs[idx-1].focus();
+      }
+      if(e.key === "ArrowDown"){ // ↓
+        e.preventDefault();
+        let target = (row+1)*2 + col;
+        if(target < inputs.length) inputs[target].focus();
+      }
+      if(e.key === "ArrowUp"){ // ↑
+        e.preventDefault();
+        let target = (row-1)*2 + col;
+        if(target >= 0) inputs[target].focus();
+      }
+    });
+  });
+}
+
 </script>
 
 </body>
