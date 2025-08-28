@@ -671,16 +671,49 @@ render();  // 👉 Al iniciar, pagina=0 → abre índice
 
 </script>
 <div id="ordenModal" class="modal">
-  <div class="modal-content">
-    <!-- Logo Proveedora -->
-    <img src="LOGO.jpg" alt="Logo Proveedora" style="max-width:180px; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;">
+  <div class="modal-content" id="ordenContenido" style="text-align:center; padding:20px;">
     
-    <h3>ORDEN DE COMPRA</h3>
-    <div id="orden-id" style="font-weight:bold;margin-bottom:10px;"></div>
-    <ul id="orden-list"></ul>
-    <button onclick="cerrarModal()">Cerrar</button>
+    <!-- Logo -->
+    <img src="LOGO.jpg" alt="Logo Proveedora" 
+         style="max-width:160px; margin:0 auto 15px; display:block;">
+    
+    <!-- Encabezado -->
+    <h3 style="margin:0; font-size:1.5rem; color:#222;">ORDEN DE COMPRA</h3>
+    
+    <!-- Lista de productos -->
+    <ul id="orden-list" 
+        style="list-style:none; padding:0; margin:15px 0; text-align:left; font-size:1rem; color:#333;">
+    </ul>
+
+    <!-- Botones -->
+    <div style="margin-top:15px;">
+      <button onclick="generarImagen()" 
+              style="background:#16a34a; color:#fff; border:none; padding:10px 20px;
+                     border-radius:8px; font-size:1rem; cursor:pointer; margin-right:10px;">
+        📸 Generar Imagen
+      </button>
+      <button onclick="cerrarModal()" 
+              style="background:#2563eb; color:#fff; border:none; padding:10px 20px;
+                     border-radius:8px; font-size:1rem; cursor:pointer;">
+        Cerrar
+      </button>
+    </div>
   </div>
 </div>
+
+<!-- Librería html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+function generarImagen(){
+  const contenido = document.getElementById("ordenContenido");
+  html2canvas(contenido, {scale:2}).then(canvas => {
+    // Abre la imagen en nueva pestaña lista para copiar o guardar
+    const imgData = canvas.toDataURL("image/png");
+    const nuevaVentana = window.open("");
+    nuevaVentana.document.write("<img src='"+imgData+"' style='width:100%;'/>");
+  });
+}
+</script>
 
 </body>
 </html>
