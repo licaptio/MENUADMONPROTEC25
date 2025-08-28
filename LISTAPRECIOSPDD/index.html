@@ -12,17 +12,18 @@
       --card:#ffffff; 
       --border:#e0e0e0;
     }
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin:0; padding:0;
-      background:var(--bg);
-      display:flex; flex-direction:column;
-      min-height:100vh;
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin:0; padding:0;
+  background: var(--bg);
+  display:flex; flex-direction:column;
+  min-height:100vh;
 
-      /* Fondo con STAR */
-      background: url("STARTRONE.png") no-repeat center fixed;
-      background-size: cover;
-    }
+  /* Imagen de fondo con STAR */
+  background: url("STARTRONE.png") no-repeat center top fixed;
+  background-size: cover;
+}
+
     /* Capa de oscurecimiento para legibilidad */
     body::before {
       content:"";
@@ -91,17 +92,7 @@
       background:rgba(0,0,0,0.7);
       border-top:1px solid rgba(255,255,255,0.2);
     }
- body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  margin:0; padding:0;
-  background: var(--bg);
-  display:flex; flex-direction:column;
-  min-height:100vh;
 
-  /* Imagen de fondo con STAR */
-  background: url("STARTRONE.png") no-repeat center top fixed;
-  background-size: cover;
-}
 
   </style>
   <script>
