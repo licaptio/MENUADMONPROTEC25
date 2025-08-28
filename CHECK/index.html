@@ -12,73 +12,27 @@
       --card:#ffffff; 
       --border:#e0e0e0;
       --text:#333;
-      --accent:#16a34a;
     }
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { 
-      font-family: "Segoe UI", Arial, sans-serif; 
-      background:var(--bg); 
-      color:var(--text);
-      padding:20px; 
-      min-height:100vh; 
-      display:flex; 
-      flex-direction:column; 
-    }
-    h2 { 
-      text-align:center; 
-      color:var(--primary); 
-      margin-bottom:20px; 
-    }
-    .controls { 
-      text-align:center; 
-      margin-bottom:20px; 
-    }
-    input[type="text"] { 
-      padding:8px; 
-      width:240px; 
-      border:1px solid var(--border); 
-      border-radius:6px;
-      margin-right:8px;
-    }
-    button { 
-      background:var(--secondary); 
-      color:#fff; 
-      border:none; 
-      padding:6px 12px; 
-      border-radius:6px;
-      cursor:pointer; 
-      transition:.2s;
-      margin:4px;
-      font-size:0.85rem;
-    }
+    body { font-family:"Segoe UI",Arial,sans-serif; background:var(--bg); padding:20px; min-height:100vh; display:flex; flex-direction:column; }
+    h2 { text-align:center; color:var(--primary); margin-bottom:20px; }
+    .controls { text-align:center; margin-bottom:20px; }
+    input[type="text"] { padding:8px; width:240px; border:1px solid var(--border); border-radius:6px; margin-right:8px; }
+    button { background:var(--secondary); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; transition:.2s; margin:4px; font-size:0.85rem; }
     button:hover { background:#2980b9; }
-    table { 
-      border-collapse: collapse; 
-      margin:0 auto; 
-      background:var(--card); 
-      box-shadow:0 2px 6px rgba(0,0,0,.08); 
-      border-radius:8px; 
-      overflow:hidden;
-    }
-    th, td { 
-      border:1px solid var(--border); 
-      padding:8px 12px; 
-      text-align:center; 
-    }
+    table { border-collapse: collapse; margin:0 auto; background:var(--card); box-shadow:0 2px 6px rgba(0,0,0,.08); border-radius:8px; overflow:hidden; }
+    th, td { border:1px solid var(--border); padding:8px 12px; text-align:center; }
     th { background:var(--primary); color:#fff; }
     td input[type="checkbox"] { transform:scale(1.2); cursor:pointer; }
     td input.editing { width:95%; padding:4px; }
-    footer { 
-      margin-top:auto; 
-      text-align:center; 
-      padding:12px; 
-      font-size:0.9rem; 
-      color:#666; 
+    footer { margin-top:auto; text-align:center; padding:12px; font-size:0.9rem; color:#666; }
+    footer span { font-weight:bold; color:var(--secondary);}
+
+    /* 🔥 Animación fade out */
+    .fade-out {
+      opacity: 0;
+      transition: opacity 0.6s ease-out;
     }
-    footer span { 
-      font-weight:bold; 
-      color:var(--secondary);
-    }
+    .oculto { display:none; }
   </style>
 </head>
 <body>
@@ -88,6 +42,7 @@
     <input type="text" id="nuevaTarea" placeholder="Nueva tarea...">
     <button onclick="agregarFila()">➕ Agregar fila</button>
     <button onclick="agregarColumna()">➕ Agregar columna</button>
+    <button onclick="mostrarTodas()">👀 Mostrar todas</button>
   </div>
 
   <table id="tabla"></table>
@@ -96,13 +51,13 @@
     Powered by <span>PROVSOFT</span> 🚀
   </footer>
 
-  <script>
+<script>
     // 🔑 Credenciales Supabase
     const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let columnas = 3; // valor inicial
+    
+  let columnas = 3; // valor inicial
 
     async function cargar() {
       const { data, error } = await supabase.from("checklist_json").select("*").order("id");
@@ -155,7 +110,21 @@
       checks[col] = valor;
       const { error: upErr } = await supabase.from("checklist_json").update({ checks }).eq("id", id);
       if (upErr) console.error("Error guardando check:", upErr);
+
+      // ocultar fila con animación fade-out si se marcó
+      if (valor) {
+        const fila = document.getElementById(`fila-${id}`);
+        fila.classList.add("fade-out");
+        setTimeout(() => fila.classList.add("oculto"), 600); // esperar a que termine la animación
+      }
     }
+
+    // Mostrar todas las filas ocultas
+    window.mostrarTodas = function() {
+      document.querySelectorAll("tr.fade-out, tr.oculto").forEach(f => {
+        f.classList.remove("fade-out", "oculto");
+      });
+    };
 
     // Función para editar nombre de la tarea
     window.editarFila = function(id, tareaActual) {
