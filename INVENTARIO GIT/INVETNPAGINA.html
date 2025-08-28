@@ -634,7 +634,7 @@ function enviarTelegram(){
 function generarOrden(){
   const modal = document.getElementById("ordenModal");
   const list = document.getElementById("orden-list");
-  const ordenId = document.getElementById("orden-id");
+  
 
   list.innerHTML = "";
 
@@ -643,8 +643,7 @@ function generarOrden(){
              Math.random().toString(36).substr(2,3).toUpperCase();
 
   // Ahora muestra con "PROVEEDORA"
-  ordenId.textContent = `${id} PROVEEDORA`;
-
+  
   inventarios.forEach(g=>{
     g.items.forEach(row=>{
       const pedido = parseInt(row[3])||0;
