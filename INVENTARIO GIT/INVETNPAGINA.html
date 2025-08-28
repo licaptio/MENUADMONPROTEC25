@@ -459,6 +459,9 @@ input[type=number] {
   ];
 let pagina = 0;
 
+<script>
+// ... (todo tu código previo) ...
+
 function render(){
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
@@ -466,10 +469,7 @@ function render(){
 
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
-// Activo la navegación con flechas cada vez que se renderiza
-activarNavegacionTeclas();
 
-  // 👉 SI ESTÁS EN EL ÍNDICE (página 0)
   if(pagina === 0){
     const indiceDiv = document.getElementById("indice");
     indiceDiv.style.display = "flex";
@@ -477,16 +477,15 @@ activarNavegacionTeclas();
     indiceDiv.innerHTML = "";
 
     inventarios.forEach((g,i)=>{
-      if(i===0) return; // no volver a mostrar el índice
+      if(i===0) return;
       const btn = document.createElement("button");
       btn.textContent = g.nombre.replace("📦 ","");
       btn.onclick = ()=>{ pagina=i; render(); };
       indiceDiv.appendChild(btn);
     });
-    return; // 👈 Salimos aquí
+    return;
   }
 
-  // 👉 SI NO ES EL ÍNDICE (cualquier otra página)
   document.getElementById("indice").style.display = "none";
   document.querySelector(".table-container").style.display = "block";
 
@@ -546,9 +545,43 @@ activarNavegacionTeclas();
     tr.appendChild(tdAcum);
     tbody.appendChild(tr);
   });
+
+  // 👉 ACTIVO navegación con flechas después de pintar la tabla
+  activarNavegacionTeclas();
 }
 
+// === Navegación con flechas en inputs ===
+function activarNavegacionTeclas(){
+  const inputs = Array.from(document.querySelectorAll("#tabla input"));
+  inputs.forEach((inp, idx) => {
+    inp.addEventListener("keydown", e => {
+      let col = idx % 2;              // 0 = inventario manual, 1 = pedido
+      let row = Math.floor(idx / 2);  // fila actual
 
+      if(e.key === "ArrowRight"){ // →
+        e.preventDefault();
+        if(col === 0 && inputs[idx+1]) inputs[idx+1].focus();
+      }
+      if(e.key === "ArrowLeft"){ // ←
+        e.preventDefault();
+        if(col === 1 && inputs[idx-1]) inputs[idx-1].focus();
+      }
+      if(e.key === "ArrowDown"){ // ↓
+        e.preventDefault();
+        let target = (row+1)*2 + col;
+        if(target < inputs.length) inputs[target].focus();
+      }
+      if(e.key === "ArrowUp"){ // ↑
+        e.preventDefault();
+        let target = (row-1)*2 + col;
+        if(target >= 0) inputs[target].focus();
+      }
+    });
+  });
+}
+
+// ... (resto de tu código: siguiente, anterior, saveData, loadData, etc.)
+</script>
 function siguiente(){ if(pagina<inventarios.length-1){ pagina++; render(); } }
 function anterior(){ if(pagina>0){ pagina--; render(); } }
 
