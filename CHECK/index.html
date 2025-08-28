@@ -55,119 +55,122 @@
     // 🔑 Credenciales Supabase
     const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);  
   let columnas = 3; // valor inicial
 
-    async function cargar() {
-      const { data, error } = await supabase.from("checklist_json").select("*").order("id");
-      if (error) { console.error("Error cargando:", error); return; }
+  async function cargar() {
+    const { data, error } = await supabase.from("checklist_json").select("*").order("id");
+    if (error) { console.error("Error cargando:", error); return; }
 
-      if (data && data.length > 0) {
-        const maxCols = Math.max(...data.map(f => (f.checks ? f.checks.length : 0)));
-        columnas = maxCols > 0 ? maxCols : columnas;
-      }
-      renderTabla(data);
+    if (data && data.length > 0) {
+      const maxCols = Math.max(...data.map(f => (f.checks ? f.checks.length : 0)));
+      columnas = maxCols > 0 ? maxCols : columnas;
     }
+    renderTabla(data);
+  }
 
-    function renderTabla(filas) {
-      const tabla = document.getElementById("tabla");
-      tabla.innerHTML = "";
+  function renderTabla(filas) {
+    const tabla = document.getElementById("tabla");
+    tabla.innerHTML = "";
 
-      // encabezado
-      let header = "<tr><th>Tarea</th>";
-      for (let c=0; c<columnas; c++) header += `<th>C${c+1}</th>`;
-      header += "<th>Acciones</th></tr>";
-      tabla.innerHTML += header;
+    // encabezado
+    let header = "<tr><th>Tarea</th>";
+    for (let c=0; c<columnas; c++) header += `<th>C${c+1}</th>`;
+    header += "<th>Acciones</th></tr>";
+    tabla.innerHTML += header;
 
-      // filas
-      filas.forEach(f => {
-        let checks = f.checks || [];
-        if (checks.length < columnas) {
-          checks = [...checks, ...Array(columnas - checks.length).fill(false)];
-        }
-
-        let row = `<tr id="fila-${f.id}">
-          <td id="tarea-${f.id}">${f.tarea}</td>`;
-
-        for (let c=0; c<columnas; c++) {
-          const val = checks[c] ? "checked" : "";
-          row += `<td><input type="checkbox" onchange="guardarCheck(${f.id}, ${c}, this.checked)" ${val}></td>`;
-        }
-
-        row += `<td>
-                  <button onclick="editarFila(${f.id}, '${f.tarea.replace(/'/g,"\\'")}')">✏️ Editar</button>
-                </td>
-        </tr>`;
-        tabla.innerHTML += row;
-      });
-    }
-
-    async function guardarCheck(id, col, valor) {
-      const { data, error } = await supabase.from("checklist_json").select("checks").eq("id", id).single();
-      if (error) { console.error("Error leyendo checks:", error); return; }
-      let checks = data.checks || [];
-      checks[col] = valor;
-      const { error: upErr } = await supabase.from("checklist_json").update({ checks }).eq("id", id);
-      if (upErr) console.error("Error guardando check:", upErr);
-
-      // ocultar fila con animación fade-out si se marcó
-      if (valor) {
-        const fila = document.getElementById(`fila-${id}`);
-        fila.classList.add("fade-out");
-        setTimeout(() => fila.classList.add("oculto"), 600); // esperar a que termine la animación
+    // filas
+    filas.forEach(f => {
+      let checks = f.checks || [];
+      if (checks.length < columnas) {
+        checks = [...checks, ...Array(columnas - checks.length).fill(false)];
       }
-    }
 
-    // Mostrar todas las filas ocultas
-    window.mostrarTodas = function() {
-      document.querySelectorAll("tr.fade-out, tr.oculto").forEach(f => {
-        f.classList.remove("fade-out", "oculto");
-      });
-    };
+      let row = `<tr id="fila-${f.id}">
+        <td id="tarea-${f.id}">${f.tarea}</td>`;
 
-    // Función para editar nombre de la tarea
-    window.editarFila = function(id, tareaActual) {
-      const celda = document.getElementById(`tarea-${id}`);
-      celda.innerHTML = `<input type="text" id="edit-${id}" class="editing" value="${tareaActual}"> 
-                         <button onclick="guardarEdicion(${id})">💾 Guardar</button>`;
-    };
-
-    // Guardar edición
-    window.guardarEdicion = async function(id) {
-      const nuevoTexto = document.getElementById(`edit-${id}`).value.trim();
-      if (!nuevoTexto) return alert("El nombre no puede estar vacío");
-
-      const { error } = await supabase.from("checklist_json").update({ tarea: nuevoTexto }).eq("id", id);
-      if (error) { console.error("Error actualizando tarea:", error); return; }
-
-      cargar(); // refrescar tabla
-    };
-
-    // ⬇️ Funciones globales
-    window.agregarFila = async function() {
-      const tarea = document.getElementById("nuevaTarea").value.trim();
-      if (!tarea) return alert("Escribe una tarea");
-      const { error } = await supabase.from("checklist_json").insert([{ tarea, checks: Array(columnas).fill(false) }]);
-      if (error) { console.error("Error insertando fila:", error); return; }
-      document.getElementById("nuevaTarea").value = "";
-      cargar();
-    };
-
-    window.agregarColumna = async function() {
-      columnas++;
-      const { data, error } = await supabase.from("checklist_json").select("id, checks");
-      if (error) { console.error(error); return; }
-
-      for (let fila of data) {
-        let checks = fila.checks || [];
-        checks.push(false);
-        await supabase.from("checklist_json").update({ checks }).eq("id", fila.id);
+      for (let c=0; c<columnas; c++) {
+        const val = checks[c] ? "checked" : "";
+        row += `<td><input type="checkbox" onchange="guardarCheck(${f.id}, ${c}, this.checked)" ${val}></td>`;
       }
-      cargar();
-    };
+
+      row += `<td>
+                <button onclick="editarFila(${f.id}, '${f.tarea.replace(/'/g,"\\'")}')">✏️ Editar</button>
+                <button onclick="eliminarFila(${f.id})" style="background:#e74c3c;">🗑️ Eliminar</button>
+              </td>
+      </tr>`;
+      tabla.innerHTML += row;
+    });
+  }
+
+  async function guardarCheck(id, col, valor) {
+    const { data, error } = await supabase.from("checklist_json").select("checks").eq("id", id).single();
+    if (error) { console.error("Error leyendo checks:", error); return; }
+    let checks = data.checks || [];
+    checks[col] = valor;
+    const { error: upErr } = await supabase.from("checklist_json").update({ checks }).eq("id", id);
+    if (upErr) console.error("Error guardando check:", upErr);
+
+    if (valor) {
+      const fila = document.getElementById(`fila-${id}`);
+      fila.classList.add("fade-out");
+      setTimeout(() => fila.classList.add("oculto"), 600);
+    }
+  }
+
+  // 🔥 Eliminar fila de Supabase
+  window.eliminarFila = async function(id) {
+    if (!confirm("¿Seguro que quieres eliminar esta fila?")) return;
+    const { error } = await supabase.from("checklist_json").delete().eq("id", id);
+    if (error) { console.error("Error eliminando fila:", error); return; }
+    cargar(); // refrescar tabla
+  };
+
+  window.mostrarTodas = function() {
+    document.querySelectorAll("tr.fade-out, tr.oculto").forEach(f => {
+      f.classList.remove("fade-out", "oculto");
+    });
+  };
+
+  window.editarFila = function(id, tareaActual) {
+    const celda = document.getElementById(`tarea-${id}`);
+    celda.innerHTML = `<input type="text" id="edit-${id}" class="editing" value="${tareaActual}"> 
+                       <button onclick="guardarEdicion(${id})">💾 Guardar</button>`;
+  };
+
+  window.guardarEdicion = async function(id) {
+    const nuevoTexto = document.getElementById(`edit-${id}`).value.trim();
+    if (!nuevoTexto) return alert("El nombre no puede estar vacío");
+
+    const { error } = await supabase.from("checklist_json").update({ tarea: nuevoTexto }).eq("id", id);
+    if (error) { console.error("Error actualizando tarea:", error); return; }
 
     cargar();
-  </script>
+  };
+
+  window.agregarFila = async function() {
+    const tarea = document.getElementById("nuevaTarea").value.trim();
+    if (!tarea) return alert("Escribe una tarea");
+    const { error } = await supabase.from("checklist_json").insert([{ tarea, checks: Array(columnas).fill(false) }]);
+    if (error) { console.error("Error insertando fila:", error); return; }
+    document.getElementById("nuevaTarea").value = "";
+    cargar();
+  };
+
+  window.agregarColumna = async function() {
+    columnas++;
+    const { data, error } = await supabase.from("checklist_json").select("id, checks");
+    if (error) { console.error(error); return; }
+
+    for (let fila of data) {
+      let checks = fila.checks || [];
+      checks.push(false);
+      await supabase.from("checklist_json").update({ checks }).eq("id", fila.id);
+    }
+    cargar();
+  };
+
+  cargar();
+</script>
 </body>
 </html>
