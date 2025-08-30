@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comparador Catálogo Firestore</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; font-size: 14px; }
+    th { background: #eee; }
+    .cambio { background: #ffdddd; }
+    .nuevo { background: #ddffdd; }
+  </style>
+</head>
+<body>
+  <h1>📦 Comparador de Productos Firestore</h1>
+  <input type="file" id="fileInput" />
+  <button id="checkBtn">Comparar con Firestore</button>
+  <button id="updateBtn" disabled>Actualizar Cambios</button>
+
+  <div id="log"></div>
+  <table id="tablaCambios"></table>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { 
+      getFirestore, doc, getDoc, writeBatch, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let productosNuevos = [];
+    let productosFinales = [];
+
+    // Parser de cada línea del TXT
+    function parseLine(line) {
+      const tokens = line.match(/"[^"]*"|\S+/g) || [];
+      const cols = tokens.map(t => t.replace(/"/g, ''));
+      return {
+        codigoBarra: cols[0],
+        concepto: cols[1],
+        costoSinImpuesto: parseFloat(cols[2]) || 0,
+        medioMayoreo: parseFloat(cols[4]) || 0,
+        precioPublico: parseFloat(cols[8]) || 0,
+        mayoreo: parseFloat(cols[26]) || 0,
+        claveSat: cols[34],
+        unidadMedidaSat: cols[35]
+        // 🔹 Nota: aquí ya no ponemos "activo"
+      };
+    }
+
+    // Leer archivo TXT
+    document.getElementById("fileInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        const lines = evt.target.result.split("\n").filter(l => l.trim() !== "");
+        const temp = {};
+        lines.forEach(line => {
+          const p = parseLine(line);
+          temp[p.codigoBarra] = p; // 🔹 última coincidencia gana
+        });
+        productosNuevos = Object.values(temp);
+        document.getElementById("log").innerText = `📂 Cargados ${productosNuevos.length} productos`;
+      };
+      reader.readAsText(file, "latin1");
+    });
+
+    // Comparar con Firestore
+    document.getElementById("checkBtn").addEventListener("click", async () => {
+      const tabla = document.getElementById("tablaCambios");
+      tabla.innerHTML = "<tr><th>Código</th><th>Concepto</th><th>Campo</th><th>Actual</th><th>Nuevo</th></tr>";
+      productosFinales = [];
+
+      for (const p of productosNuevos) {
+        const ref = doc(db, "productos", String(p.codigoBarra));
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          // 🔹 Producto ya existente → NO se toca "activo"
+          const actual = snap.data();
+          let cambiosDoc = {};
+
+          for (const campo of ["costoSinImpuesto","medioMayoreo","precioPublico","mayoreo","claveSat","unidadMedidaSat"]) {
+            if (String(actual[campo] ?? "") !== String(p[campo])) {
+              tabla.innerHTML += `<tr class="cambio">
+                <td>${p.codigoBarra}</td>
+                <td>${p.concepto}</td>
+                <td>${campo}</td>
+                <td>${actual[campo] ?? "(vacío)"}</td>
+                <td>${p[campo]}</td>
+              </tr>`;
+              cambiosDoc[campo] = p[campo];
+            }
+          }
+
+          if (Object.keys(cambiosDoc).length > 0) {
+            cambiosDoc.actualizadoEn = serverTimestamp(); 
+            productosFinales.push({ref, data:cambiosDoc});
+          }
+        } else {
+          // 🔹 Producto nuevo → se agrega con plantilla base
+          const nuevo = {
+            ...p,
+            departamento: "SIN DEPARTAMENTO",
+            marca: "GENERICA",
+            equivalente: "",
+            activo: true,
+            actualizadoEn: serverTimestamp()
+          };
+
+          tabla.innerHTML += `<tr class="nuevo">
+            <td>${p.codigoBarra}</td>
+            <td>${p.concepto}</td>
+            <td colspan="3">🆕 Nuevo producto</td>
+          </tr>`;
+
+          productosFinales.push({ref, data:nuevo});
+        }
+      }
+
+      if (productosFinales.length) {
+        document.getElementById("updateBtn").disabled = false;
+        document.getElementById("log").innerText = `⚠️ Detectados ${productosFinales.length} productos con cambios/nuevos`;
+      } else {
+        document.getElementById("log").innerText = "✅ No hay cambios detectados";
+      }
+    });
+
+    // Subir cambios a Firestore
+    document.getElementById("updateBtn").addEventListener("click", async () => {
+      const batch = writeBatch(db);
+      for (const pf of productosFinales) {
+        batch.set(pf.ref, pf.data, { merge:true });
+      }
+      await batch.commit();
+      document.getElementById("log").innerText = "🎉 Cambios aplicados en Firestore con fecha de actualización";
+    });
+  </script>
+</body>
+</html>
