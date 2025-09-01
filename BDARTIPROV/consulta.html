@@ -33,6 +33,8 @@
       if (!snap.exists()) {
         document.getElementById("detalle").innerHTML = "<p style='color:red;'>⚠️ No se encontró el producto.</p>";
         document.getElementById("editor").style.display = "none";
+        document.getElementById("alertaRoja").style.display = "none";
+        document.getElementById("alertaAmarilla").style.display = "none";
         return;
       }
 
@@ -61,9 +63,27 @@
       document.getElementById("concepto").value = data.concepto || "";
       document.getElementById("departamento").value = data.departamento || "";
       document.getElementById("marca").value = data.marca || "";
-      document.getElementById("ivaTasa").value = data.ivaTasa ?? 0;
-      document.getElementById("iepsTasa").value = data.iepsTasa ?? 0;
+
+      // Convertir decimales a porcentajes para mostrar
+      document.getElementById("ivaTasa").value = (data.ivaTasa ?? 0) * 100;
+      document.getElementById("iepsTasa").value = (data.iepsTasa ?? 0) * 100;
+
       document.getElementById("activo").checked = data.activo === true;
+
+      // 🔴 Alerta roja si no tiene impuestos
+      if ((data.ivaTasa ?? 0) === 0 && (data.iepsTasa ?? 0) === 0) {
+        document.getElementById("alertaRoja").style.display = "block";
+      } else {
+        document.getElementById("alertaRoja").style.display = "none";
+      }
+
+      // 🟡 Alerta amarilla si tiene marca GENERICA o depto SIN DEPARTAMENTO
+      if ((data.marca || "").toUpperCase() === "GENERICA" || 
+          (data.departamento || "").toUpperCase() === "SIN DEPARTAMENTO") {
+        document.getElementById("alertaAmarilla").style.display = "block";
+      } else {
+        document.getElementById("alertaAmarilla").style.display = "none";
+      }
 
       document.getElementById("editor").style.display = "block";
     }
@@ -73,12 +93,16 @@
       const codigo = document.getElementById("codigoShow").innerText;
       const ref = doc(db, "productos", codigo);
 
+      // Convertir de porcentaje (ej. 16) a decimal (0.16)
+      const iva = parseFloat(document.getElementById("ivaTasa").value) || 0;
+      const ieps = parseFloat(document.getElementById("iepsTasa").value) || 0;
+
       const cambios = {
         concepto: document.getElementById("concepto").value,
         departamento: document.getElementById("departamento").value,
         marca: document.getElementById("marca").value,
-        ivaTasa: parseFloat(document.getElementById("ivaTasa").value) || 0,
-        iepsTasa: parseFloat(document.getElementById("iepsTasa").value) || 0,
+        ivaTasa: iva / 100,
+        iepsTasa: ieps / 100,
         activo: document.getElementById("activo").checked,
         actualizadoEn: new Date()
       };
@@ -98,6 +122,8 @@
     input[type="text"], input[type="number"] { width: 100%; padding: 5px; }
     button { margin-top: 15px; padding: 10px 15px; cursor: pointer; }
     #editor { display: none; margin-top: 20px; }
+    #alertaRoja { display: none; background: #ffcccc; border: 1px solid red; padding: 10px; margin-top: 15px; color: #900; font-weight: bold; }
+    #alertaAmarilla { display: none; background: #fff3cd; border: 1px solid #ffcc00; padding: 10px; margin-top: 15px; color: #856404; font-weight: bold; }
     table { border-collapse: collapse; margin-top: 10px; }
     td { border: 1px solid #ddd; padding: 5px; }
   </style>
@@ -108,6 +134,10 @@
     <label>Código de barras</label>
     <input type="text" id="codigo" placeholder="Escribe código exacto...">
     <button onclick="buscarArticulo()">Traer</button>
+
+    <!-- Alertas -->
+    <div id="alertaRoja">⚠️ Este artículo no tiene impuestos configurados (IVA/IEPS en 0). Revisa por favor.</div>
+    <div id="alertaAmarilla">⚠️ Este artículo está con marca GENERICA o SIN DEPARTAMENTO. Completa la información.</div>
 
     <div id="detalle"></div>
 
@@ -122,10 +152,10 @@
       <label>Marca</label>
       <input type="text" id="marca">
 
-      <label>IVA Tasa</label>
+      <label>IVA Tasa (%)</label>
       <input type="number" step="0.01" id="ivaTasa">
 
-      <label>IEPS Tasa</label>
+      <label>IEPS Tasa (%)</label>
       <input type="number" step="0.01" id="iepsTasa">
 
       <label><input type="checkbox" id="activo"> Activo</label>
