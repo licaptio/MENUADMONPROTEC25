@@ -455,14 +455,14 @@ input[type=number] {
   ["VP16L MAJORE","",10,""]
 ]},
 
-  
   ];
 let pagina = 0;
 
 <script>
 // ... (todo tu código previo) ...
 
-function render(){
+// === Render principal ===
+function render(){ 
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
   document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
@@ -489,36 +489,37 @@ function render(){
   document.getElementById("indice").style.display = "none";
   document.querySelector(".table-container").style.display = "block";
 
-  data.items.forEach((row,i) => {
+  data.items.forEach((row,i)=>{
     const tr = document.createElement("tr");
 
-    // producto
+    // Producto
     const tdProd = document.createElement("td");
     tdProd.textContent = row[0];
     tdProd.className="producto";
     tr.appendChild(tdProd);
 
-    // inventario manual con input
+    // Inventario manual
     const tdInv = document.createElement("td");
     const input = document.createElement("input");
-    input.type="number"; input.min="0"; input.placeholder="+"; input.style.width="70px";
+    input.type="number"; input.min="0"; input.placeholder="+";
+    input.style.width="70px";
     tdInv.appendChild(input);
     tr.appendChild(tdInv);
 
-    // stock
+    // Stock
     const tdStock = document.createElement("td");
     tdStock.textContent = row[2] ?? "";
     tr.appendChild(tdStock);
 
-    // pedido
+    // Pedido
     const tdPedido = document.createElement("td");
     const inpPed = document.createElement("input");
-    inpPed.type="number"; inpPed.min="0"; inpPed.value = row[3]||"";
+    inpPed.type="number"; inpPed.min="0"; inpPed.value=row[3]||"";
     inpPed.oninput = e => { row[3]=e.target.value; saveData(); };
     tdPedido.appendChild(inpPed);
     tr.appendChild(tdPedido);
 
-    // inventario acumulado
+    // Inventario acumulado
     const tdAcum = document.createElement("td");
     row[4] = row[4] || 0;
     const spanVal = document.createElement("span");
@@ -546,46 +547,14 @@ function render(){
     tbody.appendChild(tr);
   });
 
-  // 👉 ACTIVO navegación con flechas después de pintar la tabla
   activarNavegacionTeclas();
 }
 
-// === Navegación con flechas en inputs ===
-function activarNavegacionTeclas(){
-  const inputs = Array.from(document.querySelectorAll("#tabla input"));
-  inputs.forEach((inp, idx) => {
-    inp.addEventListener("keydown", e => {
-      let col = idx % 2;              // 0 = inventario manual, 1 = pedido
-      let row = Math.floor(idx / 2);  // fila actual
-
-      if(e.key === "ArrowRight"){ // →
-        e.preventDefault();
-        if(col === 0 && inputs[idx+1]) inputs[idx+1].focus();
-      }
-      if(e.key === "ArrowLeft"){ // ←
-        e.preventDefault();
-        if(col === 1 && inputs[idx-1]) inputs[idx-1].focus();
-      }
-      if(e.key === "ArrowDown"){ // ↓
-        e.preventDefault();
-        let target = (row+1)*2 + col;
-        if(target < inputs.length) inputs[target].focus();
-      }
-      if(e.key === "ArrowUp"){ // ↑
-        e.preventDefault();
-        let target = (row-1)*2 + col;
-        if(target >= 0) inputs[target].focus();
-      }
-    });
-  });
-}
-
-// ... (resto de tu código: siguiente, anterior, saveData, loadData, etc.)
-</script>
+// === Funciones de navegación ===
 function siguiente(){ if(pagina<inventarios.length-1){ pagina++; render(); } }
 function anterior(){ if(pagina>0){ pagina--; render(); } }
 
-/* Guardado local */
+// === Guardado Local ===
 function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
 function loadData(){
   const raw = localStorage.getItem("inventariosData");
@@ -596,22 +565,21 @@ function loadData(){
     }
   }catch(e){console.error(e);}
 }
+
 function limpiarTodo(){
   if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
-
-  // Reiniciar campos de cada producto
   inventarios.forEach(g=>g.items.forEach(r=>{
-    r[1] = "";   // inventario manual
-    r[3] = "";   // pedido
-    r[4] = 0;    // acumulado
+    r[1] = ""; r[3] = ""; r[4] = 0;
   }));
-
-  // 🔥 Aquí se limpia también el localStorage
   localStorage.removeItem("inventariosData");
-
-  // Render de nuevo
   render();
+  alert("✅ Inventario y localStorage limpiados");
+}
 
+// === Inicialización ===
+loadData();
+render();
+</script>
   alert("✅ Inventario y localStorage limpiados");
 }
   
