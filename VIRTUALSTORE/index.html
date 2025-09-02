@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Recorrido Bodega General</title>
+  <title>Recorrido Almacén Central</title>
   <style>
     body {
       margin: 0;
@@ -47,57 +47,100 @@
   <script>
     const viewer = document.getElementById("viewer");
 
-    // Secciones con sus fotos y puntos de navegación
+    // Secciones y rutas de imágenes (subcarpeta almacencentral)
     const secciones = {
-      entrada: {
-        nombre: "Entrada Bodega General",
-        img: "entrada.jpg",
+      almceninicio: {
+        img: "almacencentral/almceninicio.jpg",
         hotspots: [
-          { x: "70%", y: "70%", destino: "pasillo1" }
+          { x: "70%", y: "70%", destino: "pas1" }
         ]
       },
-      pasillo1: {
-        nombre: "Pasillo 1 – Vista General",
-        img: "pasillo1.jpg",
+      pas1: {
+        img: "almacencentral/pas1.jpg",
         hotspots: [
-          { x: "20%", y: "50%", destino: "lado_izquierdo1" },
-          { x: "50%", y: "60%", destino: "centro_azucar" },
-          { x: "80%", y: "40%", destino: "fondo1" },
-          { x: "70%", y: "70%", destino: "derecho1" },
-          { x: "10%", y: "90%", destino: "entrada" }
+          { x: "15%", y: "50%", destino: "pas1izq1" },
+          { x: "45%", y: "60%", destino: "pas1cen1" },
+          { x: "75%", y: "40%", destino: "pas1fondo1" },
+          { x: "65%", y: "70%", destino: "pas1der1" },
+          { x: "10%", y: "90%", destino: "almceninicio" }
         ]
       },
-      lado_izquierdo1: {
-        nombre: "Pasillo 1 – Lado Izquierdo 1",
-        img: "lado_izquierdo1.jpg",
+      pas1izq1: {
+        img: "almacencentral/pas1izq1.jpg",
         hotspots: [
-          { x: "50%", y: "90%", destino: "pasillo1" }
+          { x: "50%", y: "90%", destino: "pas1" }
         ]
       },
-      centro_azucar: {
-        nombre: "Pasillo 1 – Centro Azúcar",
-        img: "centro_azucar.jpg",
+      pas1cen1: {
+        img: "almacencentral/pas1cen1.jpg",
         hotspots: [
-          { x: "50%", y: "90%", destino: "pasillo1" }
+          { x: "50%", y: "50%", destino: "pas1cen2" },
+          { x: "50%", y: "90%", destino: "pas1" }
         ]
       },
-      fondo1: {
-        nombre: "Pasillo 1 – Fondo",
-        img: "fondo1.jpg",
+      pas1cen2: {
+        img: "almacencentral/pas1cen2.jpg",
         hotspots: [
-          { x: "50%", y: "90%", destino: "pasillo1" }
+          { x: "50%", y: "90%", destino: "pas1cen1" }
         ]
       },
-      derecho1: {
-        nombre: "Pasillo 1 – Lado Derecho",
-        img: "derecho1.jpg",
+      pas1fondo1: {
+        img: "almacencentral/pas1fondo1.jpg",
         hotspots: [
-          { x: "50%", y: "90%", destino: "pasillo1" }
+          { x: "50%", y: "50%", destino: "pas1fondo2" },
+          { x: "50%", y: "90%", destino: "pas1" }
+        ]
+      },
+      pas1fondo2: {
+        img: "almacencentral/pas1fondo2.jpg",
+        hotspots: [
+          { x: "50%", y: "50%", destino: "pas1fondo3" },
+          { x: "50%", y: "90%", destino: "pas1fondo1" }
+        ]
+      },
+      pas1fondo3: {
+        img: "almacencentral/pas1fondo3.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pas1fondo2" }
+        ]
+      },
+      pas1der1: {
+        img: "almacencentral/pas1der1.jpg",
+        hotspots: [
+          { x: "50%", y: "50%", destino: "pas1der2" },
+          { x: "50%", y: "90%", destino: "pas1" }
+        ]
+      },
+      pas1der2: {
+        img: "almacencentral/pas1der2.jpg",
+        hotspots: [
+          { x: "50%", y: "50%", destino: "pas1der3" },
+          { x: "50%", y: "90%", destino: "pas1der1" }
+        ]
+      },
+      pas1der3: {
+        img: "almacencentral/pas1der3.jpg",
+        hotspots: [
+          { x: "50%", y: "50%", destino: "pas1der4" },
+          { x: "50%", y: "90%", destino: "pas1der2" }
+        ]
+      },
+      pas1der4: {
+        img: "almacencentral/pas1der4.jpg",
+        hotspots: [
+          { x: "50%", y: "50%", destino: "pas1der5" },
+          { x: "50%", y: "90%", destino: "pas1der3" }
+        ]
+      },
+      pas1der5: {
+        img: "almacencentral/pas1der5.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pas1der4" }
         ]
       }
     };
 
-    let actual = "entrada";
+    let actual = "almceninicio";
 
     function mostrarSeccion(id) {
       const sec = secciones[id];
