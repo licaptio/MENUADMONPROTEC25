@@ -457,10 +457,6 @@ input[type=number] {
 
   ];
 let pagina = 0;
-
-<script>
-// ... (todo tu código previo) ...
-
 // === Render principal ===
 function render(){ 
   const data = inventarios[pagina];
@@ -579,10 +575,7 @@ function limpiarTodo(){
 // === Inicialización ===
 loadData();
 render();
-</script>
-  alert("✅ Inventario y localStorage limpiados");
-}
-  
+ 
 /* Telegram y Orden (igual que tenías) */
 function enviarTelegram(){
   const data = inventarios[pagina];
