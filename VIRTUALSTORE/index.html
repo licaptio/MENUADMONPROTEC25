@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Recorrido Bodega General</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+      font-family: Arial, sans-serif;
+    }
+    #viewer {
+      width: 90%;
+      height: 90%;
+      background-size: cover;
+      background-position: center;
+      border: 4px solid #fff;
+      border-radius: 10px;
+      position: relative;
+      transition: opacity 1s ease-in-out;
+    }
+    .hidden { opacity: 0; }
+
+    .hotspot {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(0, 128, 255, 0.4);
+      border: 2px solid #fff;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+    }
+    .hotspot:hover {
+      background: rgba(0, 128, 255, 0.8);
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="viewer"></div>
+
+  <script>
+    const viewer = document.getElementById("viewer");
+
+    // Secciones con sus fotos y puntos de navegación
+    const secciones = {
+      entrada: {
+        nombre: "Entrada Bodega General",
+        img: "entrada.jpg",
+        hotspots: [
+          { x: "70%", y: "70%", destino: "pasillo1" }
+        ]
+      },
+      pasillo1: {
+        nombre: "Pasillo 1 – Vista General",
+        img: "pasillo1.jpg",
+        hotspots: [
+          { x: "20%", y: "50%", destino: "lado_izquierdo1" },
+          { x: "50%", y: "60%", destino: "centro_azucar" },
+          { x: "80%", y: "40%", destino: "fondo1" },
+          { x: "70%", y: "70%", destino: "derecho1" },
+          { x: "10%", y: "90%", destino: "entrada" }
+        ]
+      },
+      lado_izquierdo1: {
+        nombre: "Pasillo 1 – Lado Izquierdo 1",
+        img: "lado_izquierdo1.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pasillo1" }
+        ]
+      },
+      centro_azucar: {
+        nombre: "Pasillo 1 – Centro Azúcar",
+        img: "centro_azucar.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pasillo1" }
+        ]
+      },
+      fondo1: {
+        nombre: "Pasillo 1 – Fondo",
+        img: "fondo1.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pasillo1" }
+        ]
+      },
+      derecho1: {
+        nombre: "Pasillo 1 – Lado Derecho",
+        img: "derecho1.jpg",
+        hotspots: [
+          { x: "50%", y: "90%", destino: "pasillo1" }
+        ]
+      }
+    };
+
+    let actual = "entrada";
+
+    function mostrarSeccion(id) {
+      const sec = secciones[id];
+      viewer.classList.add("hidden");
+      setTimeout(() => {
+        viewer.style.backgroundImage = `url(${sec.img})`;
+        viewer.innerHTML = "";
+        sec.hotspots.forEach(h => {
+          const hs = document.createElement("div");
+          hs.className = "hotspot";
+          hs.style.left = h.x;
+          hs.style.top = h.y;
+          hs.ondblclick = () => mostrarSeccion(h.destino);
+          viewer.appendChild(hs);
+        });
+        viewer.classList.remove("hidden");
+        actual = id;
+      }, 800);
+    }
+
+    mostrarSeccion(actual);
+  </script>
+</body>
+</html>
