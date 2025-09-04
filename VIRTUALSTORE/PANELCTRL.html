@@ -59,31 +59,47 @@
       });
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const id = document.getElementById("idSeccion").value;
-      const nombre = document.getElementById("nombreSeccion").value;
-      const bodega = document.getElementById("bodegaId").value;
-      const archivo = document.getElementById("foto").files[0];
+ form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = document.getElementById("idSeccion").value;
+  const nombre = document.getElementById("nombreSeccion").value;
+  const bodega = document.getElementById("bodegaId").value;
+  const archivo = document.getElementById("foto").files[0];
 
-      // Subir a storage
-      const { data: storage, error: err1 } = await supabase
-        .storage.from("recorridos")
-        .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
+  // Subir a storage
+  const { data: storage, error: err1 } = await supabase
+    .storage.from("recorridos")
+    .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
 
-      if (err1) { alert("Error al subir imagen"); return; }
+  if (err1) { alert("Error al subir imagen"); return; }
 
-      const url = supabase.storage.from("recorridos").getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
+  const urlPublica = supabase
+    .storage
+    .from("recorridos")
+    .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
 
-      // Insertar en tabla
-      const { error: err2 } = await supabase.from("secciones").insert([
-        { id: id, bodega_id: bodega, nombre: nombre, img_url: url }
-      ]);
+// 🔹 Insertar en la tabla secciones con ID personalizado
+const { data, error } = await supabase
+  .from("secciones")
+  .insert([
+    {
+      id: id,               // tu propio ID (ej. B1A1)
+      bodega_id: bodega,
+      nombre: nombre,
+      img_url: urlPublica
+    }
+  ]);
 
-      if (err2) { alert("Error al guardar en DB"); return; }
-      cargarSecciones();
-      form.reset();
-    });
+
+  if (error) { 
+    console.error(error);
+    alert("Error al guardar en DB"); 
+    return; 
+  }
+
+  cargarSecciones();
+  form.reset();
+});
 
     async function eliminar(id) {
       if (!confirm("¿Eliminar sección " + id + "?")) return;
