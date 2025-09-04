@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Secciones</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:20px; }
+    input, select, button { margin:5px; padding:8px; }
+    table { border-collapse: collapse; margin-top:20px; width:100%; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+  </style>
+</head>
+<body>
+  <h1>📦 Gestor de Secciones</h1>
+
+  <form id="formSeccion">
+    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
+    <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
+    <select id="bodegaId">
+      <option value="1">Bodega 1</option>
+      <option value="2">Bodega 2</option>
+    </select>
+    <input type="file" id="foto" accept="image/*" required>
+    <button type="submit">➕ Crear sección</button>
+  </form>
+
+  <h2>📋 Lista de secciones</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Nombre</th><th>Bodega</th><th>Imagen</th><th>Acciones</th></tr>
+    </thead>
+    <tbody id="tablaSecciones"></tbody>
+  </table>
+
+  <script>
+    // Configura con tus credenciales Supabase
+    const supabase = window.supabase.createClient(
+      "https://TU-PROYECTO.supabase.co",
+      "TU-API-KEY"
+    );
+
+    const form = document.getElementById("formSeccion");
+    const tabla = document.getElementById("tablaSecciones");
+
+    async function cargarSecciones() {
+      const { data, error } = await supabase.from("secciones").select("*");
+      tabla.innerHTML = "";
+      data.forEach(sec => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${sec.id}</td>
+          <td>${sec.nombre}</td>
+          <td>${sec.bodega_id}</td>
+          <td><img src="${sec.img_url}" width="100"></td>
+          <td><button onclick="eliminar('${sec.id}')">❌</button></td>
+        `;
+        tabla.appendChild(row);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("idSeccion").value;
+      const nombre = document.getElementById("nombreSeccion").value;
+      const bodega = document.getElementById("bodegaId").value;
+      const archivo = document.getElementById("foto").files[0];
+
+      // Subir a storage
+      const { data: storage, error: err1 } = await supabase
+        .storage.from("recorridos")
+        .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
+
+      if (err1) { alert("Error al subir imagen"); return; }
+
+      const url = supabase.storage.from("recorridos").getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
+
+      // Insertar en tabla
+      const { error: err2 } = await supabase.from("secciones").insert([
+        { id: id, bodega_id: bodega, nombre: nombre, img_url: url }
+      ]);
+
+      if (err2) { alert("Error al guardar en DB"); return; }
+      cargarSecciones();
+      form.reset();
+    });
+
+    async function eliminar(id) {
+      if (!confirm("¿Eliminar sección " + id + "?")) return;
+      await supabase.from("secciones").delete().eq("id", id);
+      cargarSecciones();
+    }
+
+    cargarSecciones();
+  </script>
+</body>
+</html>
