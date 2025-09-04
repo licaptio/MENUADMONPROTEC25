@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Visor de Secciones</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:20px; }
+    h1 { color:#333; }
+    table { border-collapse: collapse; margin-top:20px; width:100%; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    img { border-radius:8px; }
+  </style>
+</head>
+<body>
+  <h1>🏪 Visor de Bodegas y Secciones</h1>
+  <table>
+    <thead>
+      <tr><th>Bodega</th><th>Sección</th><th>Imagen</th></tr>
+    </thead>
+    <tbody id="tabla"></tbody>
+  </table>
+
+  <script>
+    // Configuración Supabase
+    const supabase = window.supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+    );
+
+    const tabla = document.getElementById("tabla");
+
+    async function cargar() {
+      const { data, error } = await supabase
+        .from("secciones")
+        .select(`
+          id,
+          nombre,
+          img_url,
+          bodega:bodega_id (nombre)
+        `);
+
+      if (error) {
+        console.error(error);
+        alert("Error cargando datos");
+        return;
+      }
+
+      tabla.innerHTML = "";
+      data.forEach(sec => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${sec.bodega.nombre}</td>
+          <td>${sec.nombre}</td>
+          <td><img src="${sec.img_url}" width="120"></td>
+        `;
+        tabla.appendChild(row);
+      });
+    }
+
+    cargar();
+  </script>
+</body>
+</html>
