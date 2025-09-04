@@ -2,63 +2,101 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Visor de Secciones</title>
+  <title>Virtual Store - Recorridos</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin:20px; }
-    h1 { color:#333; }
-    table { border-collapse: collapse; margin-top:20px; width:100%; }
-    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
-    img { border-radius:8px; }
+    body { font-family: Arial, sans-serif; margin:20px; background:#f4f4f9; }
+    h1 { text-align:center; color:#333; }
+    #mapa {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
+      margin: auto;
+      border: 2px solid #444;
+      background: #fff;
+    }
+    canvas {
+      position:absolute;
+      top:0;
+      left:0;
+      z-index:1;
+    }
+    .seccion {
+      position: absolute;
+      text-align:center;
+      transform: translate(-50%, -50%);
+      z-index:2;
+    }
+    .seccion img {
+      width: 120px;
+      border-radius: 10px;
+      border: 2px solid #444;
+    }
+    .seccion span {
+      display:block;
+      font-weight:bold;
+      margin-top:5px;
+    }
   </style>
 </head>
 <body>
-  <h1>🏪 Visor de Bodegas y Secciones</h1>
-  <table>
-    <thead>
-      <tr><th>Bodega</th><th>Sección</th><th>Imagen</th></tr>
-    </thead>
-    <tbody id="tabla"></tbody>
-  </table>
+  <h1>🗺️ Recorrido Virtual</h1>
+  <div id="mapa">
+    <canvas id="canvas"></canvas>
+  </div>
 
   <script>
-    // Configuración Supabase
+    // Conexión con Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    const tabla = document.getElementById("tabla");
+    const mapa = document.getElementById("mapa");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-    async function cargar() {
-      const { data, error } = await supabase
-        .from("secciones")
-        .select(`
-          id,
-          nombre,
-          img_url,
-          bodega:bodega_id (nombre)
-        `);
+    async function cargarMapa() {
+      // Ajustar canvas al tamaño del mapa
+      canvas.width = mapa.clientWidth;
+      canvas.height = 600; // alto fijo, cámbialo si ocupas más
 
-      if (error) {
-        console.error(error);
-        alert("Error cargando datos");
-        return;
-      }
+      // Traer secciones
+      const { data: secciones } = await supabase.from("secciones").select("*");
+      // Traer enlaces
+      const { data: enlaces } = await supabase.from("enlaces").select("*");
 
-      tabla.innerHTML = "";
-      data.forEach(sec => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${sec.bodega.nombre}</td>
-          <td>${sec.nombre}</td>
-          <td><img src="${sec.img_url}" width="120"></td>
+      // Dibujar secciones en el mapa
+      secciones.forEach((sec, i) => {
+        const div = document.createElement("div");
+        div.className = "seccion";
+        div.style.left = (100 + i*200) + "px"; // distribuye horizontal
+        div.style.top = "200px";              // todas a la misma altura
+        div.innerHTML = `
+          <img src="${sec.img_url}" alt="${sec.nombre}">
+          <span>${sec.nombre}</span>
         `;
-        tabla.appendChild(row);
+        mapa.appendChild(div);
+        sec._x = 100 + i*200;
+        sec._y = 200;
+      });
+
+      // Dibujar enlaces en el canvas
+      enlaces.forEach(enl => {
+        const origen = secciones.find(s => s.id === enl.desde);
+        const destino = secciones.find(s => s.id === enl.hacia);
+        if (origen && destino) {
+          ctx.beginPath();
+          ctx.moveTo(origen._x + (enl.x || 0), origen._y + (enl.y || 0));
+          ctx.lineTo(destino._x, destino._y);
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
       });
     }
 
-    cargar();
+    cargarMapa();
   </script>
 </body>
 </html>
