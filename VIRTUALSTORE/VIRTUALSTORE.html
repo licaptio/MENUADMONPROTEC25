@@ -2,18 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Virtual Store - Recorridos</title>
+  <title>Recorrido Virtual</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin:20px; background:#f4f4f9; }
-    h1 { text-align:center; color:#333; }
+    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
+    h1 { text-align:center; padding:20px; background:#333; color:white; }
     #mapa {
       position: relative;
       width: 100%;
-      max-width: 1000px;
-      margin: auto;
+      max-width: 1200px;
+      height: 700px;
+      margin:20px auto;
       border: 2px solid #444;
-      background: #fff;
+      background: white;
+      overflow: hidden;
     }
     canvas {
       position:absolute;
@@ -26,16 +28,83 @@
       text-align:center;
       transform: translate(-50%, -50%);
       z-index:2;
+      cursor:pointer;
     }
     .seccion img {
-      width: 120px;
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
       border-radius: 10px;
-      border: 2px solid #444;
+      border: 2px solid #333;
+      transition: transform 0.3s;
+    }
+    .seccion img:hover {
+      transform: scale(1.1);
     }
     .seccion span {
       display:block;
-      font-weight:bold;
       margin-top:5px;
+      font-weight:bold;
+    }
+    /* 🔹 Modo recorrido tipo Street View */
+    #visor {
+      position: fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,0.95);
+      display:none;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      color:white;
+      z-index:100;
+      opacity:0;
+      transition: opacity 0.8s ease-in-out;
+    }
+    #visor.mostrar {
+      display:flex;
+      opacity:1;
+    }
+    #visor img {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px black;
+      opacity:0;
+      transform: scale(1.1);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+    #visor img.visible {
+      opacity:1;
+      transform: scale(1);
+    }
+    #navegacion {
+      margin-top:20px;
+    }
+    #navegacion button {
+      margin:5px;
+      padding:10px 15px;
+      background:#1f6feb;
+      border:none;
+      border-radius:5px;
+      color:white;
+      cursor:pointer;
+      transition: background 0.3s;
+    }
+    #navegacion button:hover {
+      background:#0f4fc5;
+    }
+    #cerrar {
+      position:absolute;
+      top:20px;
+      right:20px;
+      background:red;
+      border:none;
+      color:white;
+      padding:10px 15px;
+      cursor:pointer;
+      border-radius:5px;
+      font-size:16px;
     }
   </style>
 </head>
@@ -45,8 +114,15 @@
     <canvas id="canvas"></canvas>
   </div>
 
+  <!-- 🔹 Visor de recorrido -->
+  <div id="visor">
+    <button id="cerrar">X</button>
+    <h2 id="visorTitulo"></h2>
+    <img id="visorImagen" src="">
+    <div id="navegacion"></div>
+  </div>
+
   <script>
-    // Conexión con Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
@@ -56,45 +132,85 @@
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
+    const visor = document.getElementById("visor");
+    const visorTitulo = document.getElementById("visorTitulo");
+    const visorImagen = document.getElementById("visorImagen");
+    const navegacion = document.getElementById("navegacion");
+    const cerrarBtn = document.getElementById("cerrar");
+
+    let secciones = [];
+    let enlaces = [];
+
     async function cargarMapa() {
-      // Ajustar canvas al tamaño del mapa
       canvas.width = mapa.clientWidth;
-      canvas.height = 600; // alto fijo, cámbialo si ocupas más
+      canvas.height = mapa.clientHeight;
 
-      // Traer secciones
-      const { data: secciones } = await supabase.from("secciones").select("*");
-      // Traer enlaces
-      const { data: enlaces } = await supabase.from("enlaces").select("*");
+      const res1 = await supabase.from("secciones").select("*");
+      const res2 = await supabase.from("enlaces").select("*");
+      secciones = res1.data;
+      enlaces = res2.data;
 
-      // Dibujar secciones en el mapa
-      secciones.forEach((sec, i) => {
+      secciones.forEach(sec => {
         const div = document.createElement("div");
         div.className = "seccion";
-        div.style.left = (100 + i*200) + "px"; // distribuye horizontal
-        div.style.top = "200px";              // todas a la misma altura
+        div.style.left = (sec.x || Math.random()*1000) + "px";
+        div.style.top = (sec.y || Math.random()*500) + "px";
         div.innerHTML = `
           <img src="${sec.img_url}" alt="${sec.nombre}">
           <span>${sec.nombre}</span>
         `;
         mapa.appendChild(div);
-        sec._x = 100 + i*200;
-        sec._y = 200;
+        sec._x = parseInt(div.style.left);
+        sec._y = parseInt(div.style.top);
+
+        div.addEventListener("click", () => abrirVisor(sec.id));
       });
 
-      // Dibujar enlaces en el canvas
       enlaces.forEach(enl => {
         const origen = secciones.find(s => s.id === enl.desde);
         const destino = secciones.find(s => s.id === enl.hacia);
         if (origen && destino) {
           ctx.beginPath();
-          ctx.moveTo(origen._x + (enl.x || 0), origen._y + (enl.y || 0));
+          ctx.moveTo(origen._x, origen._y);
           ctx.lineTo(destino._x, destino._y);
-          ctx.strokeStyle = "red";
+          ctx.strokeStyle = "blue";
           ctx.lineWidth = 3;
           ctx.stroke();
         }
       });
     }
+
+    function abrirVisor(idSeccion) {
+      const sec = secciones.find(s => s.id === idSeccion);
+      if (!sec) return;
+
+      visorTitulo.textContent = sec.nombre;
+      visorImagen.classList.remove("visible"); // reinicia animación
+      visorImagen.src = sec.img_url;
+
+      // 🔹 retrasa la animación de aparición
+      visorImagen.onload = () => {
+        setTimeout(() => visorImagen.classList.add("visible"), 50);
+      };
+
+      navegacion.innerHTML = "";
+      const conexiones = enlaces.filter(e => e.desde === idSeccion);
+      conexiones.forEach(e => {
+        const destino = secciones.find(s => s.id === e.hacia);
+        if (destino) {
+          const btn = document.createElement("button");
+          btn.textContent = "Ir a " + destino.nombre;
+          btn.onclick = () => abrirVisor(destino.id);
+          navegacion.appendChild(btn);
+        }
+      });
+
+      visor.classList.add("mostrar");
+    }
+
+    cerrarBtn.addEventListener("click", () => {
+      visor.classList.remove("mostrar");
+    });
 
     cargarMapa();
   </script>
