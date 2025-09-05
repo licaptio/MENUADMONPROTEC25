@@ -1,91 +1,217 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Recorrido Virtual</title>
+  <title>Gestión de Secciones</title>
+  <title>Gestión de Secciones y Conexiones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background: black;
-    }
-    #viewer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      transition: opacity 1s;
-    }
-    .hotspot {
-      position: absolute;
-      width: 30px;
-      height: 30px;
-      background: red;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid white;
-      transform: translate(-50%, -50%);
-    }
-  </style>
-</head>
+    body { font-family: Arial, sans-serif; margin:20px; }
+@@ -14,18 +14,18 @@
 <body>
-  <div id="viewer"></div>
+  <h1>📦 Gestor de Secciones</h1>
+
+  <!-- Crear secciones -->
+  <form id="formSeccion">
+    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
+    <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
+<select id="bodegaId">
+  <option value="B1">Bodega Central</option>
+  <option value="B2">Bodega Líquido</option>
+  <option value="B3">Bodega Zapata</option>
+  <option value="B4">Bodega Cigarro</option>
+  <option value="B5">Bodega Tienda PDD</option>
+  <option value="B6">Bodega Extra</option>
+</select>
+
+    <select id="bodegaId">
+      <option value="B1">Bodega Central</option>
+      <option value="B2">Bodega Líquido</option>
+      <option value="B3">Bodega Zapata</option>
+      <option value="B4">Bodega Cigarro</option>
+      <option value="B5">Bodega Tienda PDD</option>
+      <option value="B6">Bodega Extra</option>
+    </select>
+    <input type="file" id="foto" accept="image/*" required>
+    <button type="submit">➕ Crear sección</button>
+  </form>
+@@ -38,8 +38,29 @@ <h2>📋 Lista de secciones</h2>
+    <tbody id="tablaSecciones"></tbody>
+  </table>
+
+  <hr>
+
+  <!-- Crear conexiones -->
+  <h2>🔗 Crear Conexión entre Secciones</h2>
+  <form id="formEnlace">
+    <select id="fromSeccion"></select>
+    →
+    <select id="toSeccion"></select>
+    <input type="number" id="coordX" placeholder="X" required>
+    <input type="number" id="coordY" placeholder="Y" required>
+    <button type="submit">➕ Crear Enlace</button>
+  </form>
+
+  <h2>📋 Lista de enlaces</h2>
+  <table>
+    <thead>
+      <tr><th>Desde</th><th>Hacia</th><th>X</th><th>Y</th></tr>
+    </thead>
+    <tbody id="tablaEnlaces"></tbody>
+  </table>
 
   <script>
-    // 🔹 Configuración Supabase
+    // Configura con tus credenciales Supabase
+    // Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-    );
+@@ -48,71 +69,109 @@ <h2>📋 Lista de secciones</h2>
+    const form = document.getElementById("formSeccion");
+    const tabla = document.getElementById("tablaSecciones");
 
-    let secciones = {};
-    let enlaces = [];
-    let actual = null;
-
-    async function cargarDatos() {
-      const { data: secs } = await supabase.from("secciones").select("*");
-      const { data: links } = await supabase.from("enlaces").select("*");
-
-      // Guardamos secciones por id para acceso rápido
-      secs.forEach(s => secciones[s.id] = s);
-      enlaces = links;
-
-      if (secs.length > 0) {
-        mostrarSeccion(secs[0].id); // 🔹 Arranca en la primera sección
-      }
+    // Cargar secciones en tabla
+    async function cargarSecciones() {
+      const { data, error } = await supabase.from("secciones").select("*");
+      tabla.innerHTML = "";
+      if (error) return console.error(error);
+      data.forEach(sec => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${sec.id}</td>
+          <td>${sec.nombre}</td>
+          <td>${sec.bodega_id}</td>
+          <td><img src="${sec.img_url}" width="100"></td>
+          <td><button onclick="eliminar('${sec.id}')">❌</button></td>
+          <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
+        `;
+        tabla.appendChild(row);
+      });
+      cargarSeccionesSelects();
     }
 
-    function mostrarSeccion(id) {
-      actual = id;
-      const viewer = document.getElementById("viewer");
+ form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = document.getElementById("idSeccion").value;
+  const nombre = document.getElementById("nombreSeccion").value;
+  const bodega = document.getElementById("bodegaId").value;
+  const archivo = document.getElementById("foto").files[0];
 
-      // Fade out
-      viewer.style.opacity = 0;
-      setTimeout(() => {
-        viewer.style.backgroundImage = `url(${secciones[id].img_url})`;
-        viewer.innerHTML = ""; // limpia hotspots
+  // Subir a storage
+  const { data: storage, error: err1 } = await supabase
+    .storage.from("recorridos")
+    .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
 
-        // Hotspots para esta sección
-        const misEnlaces = enlaces.filter(e => e.from_seccion === id);
-        misEnlaces.forEach(e => {
-          const hs = document.createElement("div");
-          hs.className = "hotspot";
-          hs.style.left = e.x + "%";
-          hs.style.top = e.y + "%";
-          hs.onclick = () => mostrarSeccion(e.to_seccion);
-          viewer.appendChild(hs);
-        });
+  if (err1) { alert("Error al subir imagen"); return; }
 
-        // Fade in
-        viewer.style.opacity = 1;
-      }, 800);
+  const urlPublica = supabase
+    .storage
+    .from("recorridos")
+    .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
+
+// 🔹 Insertar en la tabla secciones con ID personalizado
+const { data, error } = await supabase
+  .from("secciones")
+  .insert([
+    {
+      id: id,               // tu propio ID (ej. B1A1)
+      bodega_id: bodega,
+      nombre: nombre,
+      img_url: urlPublica
+    }
+  ]);
+    // Insertar seccion
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("idSeccion").value;
+      const nombre = document.getElementById("nombreSeccion").value;
+      const bodega = document.getElementById("bodegaId").value;
+      const archivo = document.getElementById("foto").files[0];
+
+      const { error: err1 } = await supabase
+        .storage.from("recorridos")
+        .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
+
+      if (err1) { alert("Error al subir imagen"); return; }
+
+      const urlPublica = supabase
+        .storage.from("recorridos")
+        .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
+
+  if (error) { 
+    console.error(error);
+    alert("Error al guardar en DB"); 
+    return; 
+  }
+      const { error: err2 } = await supabase.from("secciones").insert([
+        { id, bodega_id: bodega, nombre, img_url: urlPublica }
+      ]);
+
+  cargarSecciones();
+  form.reset();
+});
+      if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
+
+    async function eliminar(id) {
+      cargarSecciones();
+      form.reset();
+    });
+
+    async function eliminarSeccion(id) {
+      if (!confirm("¿Eliminar sección " + id + "?")) return;
+      await supabase.from("secciones").delete().eq("id", id);
+      cargarSecciones();
     }
 
-    cargarDatos();
+    // -------- Enlaces --------
+    const formEnlace = document.getElementById("formEnlace");
+    const tablaEnlaces = document.getElementById("tablaEnlaces");
+
+    async function cargarSeccionesSelects() {
+      const { data, error } = await supabase.from("secciones").select("id");
+      if (error) return console.error(error);
+      const from = document.getElementById("fromSeccion");
+      const to = document.getElementById("toSeccion");
+      from.innerHTML = ""; to.innerHTML = "";
+      data.forEach(s => {
+        from.innerHTML += `<option value="${s.id}">${s.id}</option>`;
+        to.innerHTML += `<option value="${s.id}">${s.id}</option>`;
+      });
+    }
+
+    formEnlace.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const from = document.getElementById("fromSeccion").value;
+      const to = document.getElementById("toSeccion").value;
+      const x = document.getElementById("coordX").value;
+      const y = document.getElementById("coordY").value;
+
+      const { error } = await supabase.from("enlaces").insert([
+        { from_seccion: from, to_seccion: to, x, y }
+      ]);
+      if (error) { console.error(error); alert("Error al guardar enlace"); return; }
+
+      cargarEnlaces();
+      formEnlace.reset();
+    });
+
+    async function cargarEnlaces() {
+      const { data, error } = await supabase.from("enlaces").select("*");
+      tablaEnlaces.innerHTML = "";
+      if (error) return console.error(error);
+      data.forEach(e => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${e.from_seccion}</td>
+          <td>${e.to_seccion}</td>
+          <td>${e.x}</td>
+          <td>${e.y}</td>
+        `;
+        tablaEnlaces.appendChild(row);
+      });
+    }
+
+    cargarSecciones();
+    cargarEnlaces();
   </script>
 </body>
 </html>
