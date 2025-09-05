@@ -1,12 +1,16 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Gestión de Secciones</title>
   <title>Gestión de Secciones y Conexiones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial, sans-serif; margin:20px; }
-@@ -14,18 +14,18 @@
+    input, select, button { margin:5px; padding:8px; }
+    table { border-collapse: collapse; margin-top:20px; width:100%; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+  </style>
+</head>
 <body>
   <h1>📦 Gestor de Secciones</h1>
 
@@ -14,15 +18,6 @@
   <form id="formSeccion">
     <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
     <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
-<select id="bodegaId">
-  <option value="B1">Bodega Central</option>
-  <option value="B2">Bodega Líquido</option>
-  <option value="B3">Bodega Zapata</option>
-  <option value="B4">Bodega Cigarro</option>
-  <option value="B5">Bodega Tienda PDD</option>
-  <option value="B6">Bodega Extra</option>
-</select>
-
     <select id="bodegaId">
       <option value="B1">Bodega Central</option>
       <option value="B2">Bodega Líquido</option>
@@ -34,7 +29,12 @@
     <input type="file" id="foto" accept="image/*" required>
     <button type="submit">➕ Crear sección</button>
   </form>
-@@ -38,8 +38,29 @@ <h2>📋 Lista de secciones</h2>
+
+  <h2>📋 Lista de secciones</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Nombre</th><th>Bodega</th><th>Imagen</th><th>Acciones</th></tr>
+    </thead>
     <tbody id="tablaSecciones"></tbody>
   </table>
 
@@ -60,16 +60,16 @@
   </table>
 
   <script>
-    // Configura con tus credenciales Supabase
     // Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-@@ -48,71 +69,109 @@ <h2>📋 Lista de secciones</h2>
+    );
+
     const form = document.getElementById("formSeccion");
     const tabla = document.getElementById("tablaSecciones");
 
-    // Cargar secciones en tabla
+    // Cargar secciones
     async function cargarSecciones() {
       const { data, error } = await supabase.from("secciones").select("*");
       tabla.innerHTML = "";
@@ -81,7 +81,6 @@
           <td>${sec.nombre}</td>
           <td>${sec.bodega_id}</td>
           <td><img src="${sec.img_url}" width="100"></td>
-          <td><button onclick="eliminar('${sec.id}')">❌</button></td>
           <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
         `;
         tabla.appendChild(row);
@@ -89,37 +88,7 @@
       cargarSeccionesSelects();
     }
 
- form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const id = document.getElementById("idSeccion").value;
-  const nombre = document.getElementById("nombreSeccion").value;
-  const bodega = document.getElementById("bodegaId").value;
-  const archivo = document.getElementById("foto").files[0];
-
-  // Subir a storage
-  const { data: storage, error: err1 } = await supabase
-    .storage.from("recorridos")
-    .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
-
-  if (err1) { alert("Error al subir imagen"); return; }
-
-  const urlPublica = supabase
-    .storage
-    .from("recorridos")
-    .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
-
-// 🔹 Insertar en la tabla secciones con ID personalizado
-const { data, error } = await supabase
-  .from("secciones")
-  .insert([
-    {
-      id: id,               // tu propio ID (ej. B1A1)
-      bodega_id: bodega,
-      nombre: nombre,
-      img_url: urlPublica
-    }
-  ]);
-    // Insertar seccion
+    // Crear seccion
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const id = document.getElementById("idSeccion").value;
@@ -137,25 +106,17 @@ const { data, error } = await supabase
         .storage.from("recorridos")
         .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
 
-  if (error) { 
-    console.error(error);
-    alert("Error al guardar en DB"); 
-    return; 
-  }
       const { error: err2 } = await supabase.from("secciones").insert([
         { id, bodega_id: bodega, nombre, img_url: urlPublica }
       ]);
 
-  cargarSecciones();
-  form.reset();
-});
       if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
 
-    async function eliminar(id) {
       cargarSecciones();
       form.reset();
     });
 
+    // Eliminar seccion
     async function eliminarSeccion(id) {
       if (!confirm("¿Eliminar sección " + id + "?")) return;
       await supabase.from("secciones").delete().eq("id", id);
