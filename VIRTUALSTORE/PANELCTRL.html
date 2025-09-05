@@ -9,8 +9,9 @@
     input, select, button { margin:5px; padding:8px; }
     table { border-collapse: collapse; margin-top:20px; width:100%; }
     th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    button { cursor:pointer; }
 
-    /* Modal */
+    /* Modal para marcar coordenadas */
     #modal {
       display:none;
       position:fixed;
@@ -84,12 +85,12 @@
   <h2>📋 Lista de enlaces</h2>
   <table>
     <thead>
-      <tr><th>Desde</th><th>Hacia</th><th>X</th><th>Y</th></tr>
+      <tr><th>Desde</th><th>Hacia</th><th>X</th><th>Y</th><th>Acciones</th></tr>
     </thead>
     <tbody id="tablaEnlaces"></tbody>
   </table>
 
-  <!-- Modal -->
+  <!-- Modal para marcar coordenadas -->
   <div id="modal">
     <div style="position:relative;">
       <img id="visorImg" src="" alt="Imagen Sección">
@@ -101,7 +102,7 @@
     // Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+      "TU_PUBLIC_ANON_KEY"
     );
 
     const form = document.getElementById("formSeccion");
@@ -109,7 +110,6 @@
     const formEnlace = document.getElementById("formEnlace");
     const tablaEnlaces = document.getElementById("tablaEnlaces");
 
-    // Modal
     const modal = document.getElementById("modal");
     const visorImg = document.getElementById("visorImg");
     const puntoPreview = document.getElementById("puntoPreview");
@@ -212,9 +212,22 @@
           <td>${e.to_seccion}</td>
           <td>${e.x}</td>
           <td>${e.y}</td>
+          <td>
+            <button onclick="eliminarEnlace('${e.from_seccion}','${e.to_seccion}')">❌</button>
+          </td>
         `;
         tablaEnlaces.appendChild(row);
       });
+    }
+
+    // Eliminar enlace
+    async function eliminarEnlace(from, to) {
+      if (!confirm(`¿Eliminar enlace de ${from} a ${to}?`)) return;
+      await supabase.from("enlaces")
+        .delete()
+        .eq("from_seccion", from)
+        .eq("to_seccion", to);
+      cargarEnlaces();
     }
 
     // ------- Modal para marcar coordenadas -------
