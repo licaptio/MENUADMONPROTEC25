@@ -1,252 +1,268 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Gestión de Secciones y Conexiones</title>
+  <title>Recorrido Virtual</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin:20px; }
-    input, select, button { margin:5px; padding:8px; }
-    table { border-collapse: collapse; margin-top:20px; width:100%; }
-    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
-
-    /* Modal para marcar coordenadas */
-    #modal {
-      display:none;
-      position:fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.7);
-      justify-content:center;
-      align-items:center;
-      z-index:1000;
-    }
-    #visorImg {
-      max-width: 90%;
-      max-height: 90%;
-      border: 3px solid #fff;
+    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
+    h1 { text-align:center; padding:20px; background:#333; color:white; }
+    #mapa {
       position: relative;
-      cursor: crosshair;
+      width: 100%;
+      max-width: 1200px;
+      height: 700px;
+      margin:20px auto;
+      border: 2px solid #444;
+      background: white;
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
     }
-    #puntoPreview {
+    canvas {
+      position:absolute;
+      top:0;
+      left:0;
+      z-index:1;
+    #viewer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 1s;
+    }
+    .seccion {
+    .hotspot {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      text-align:center;
+      width: 30px;
+      height: 30px;
       background: red;
       border-radius: 50%;
+      cursor: pointer;
       border: 2px solid white;
       transform: translate(-50%, -50%);
-      display: none;
-      pointer-events: none;
+      z-index:2;
+      cursor:pointer;
+    }
+    .seccion img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid #333;
+      transition: transform 0.3s;
+    }
+    .seccion img:hover {
+      transform: scale(1.1);
+    }
+    .seccion span {
+      display:block;
+      margin-top:5px;
+      font-weight:bold;
+    }
+    /* 🔹 Modo recorrido tipo Street View */
+    #visor {
+      position: fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,0.95);
+      display:none;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      color:white;
+      z-index:100;
+      opacity:0;
+      transition: opacity 0.8s ease-in-out;
+    }
+    #visor.mostrar {
+      display:flex;
+      opacity:1;
+    }
+    #visor img {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px black;
+      opacity:0;
+      transform: scale(1.1);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+    #visor img.visible {
+      opacity:1;
+      transform: scale(1);
+    }
+    #navegacion {
+      margin-top:20px;
+    }
+    #navegacion button {
+      margin:5px;
+      padding:10px 15px;
+      background:#1f6feb;
+      border:none;
+      border-radius:5px;
+      color:white;
+      cursor:pointer;
+      transition: background 0.3s;
+    }
+    #navegacion button:hover {
+      background:#0f4fc5;
+    }
+    #cerrar {
+      position:absolute;
+      top:20px;
+      right:20px;
+      background:red;
+      border:none;
+      color:white;
+      padding:10px 15px;
+      cursor:pointer;
+      border-radius:5px;
+      font-size:16px;
     }
   </style>
 </head>
 <body>
-  <h1>📦 Gestor de Secciones</h1>
-
-  <!-- Crear secciones -->
-  <form id="formSeccion">
-    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
-    <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
-    <select id="bodegaId">
-      <option value="B1">Bodega Central</option>
-      <option value="B2">Bodega Líquido</option>
-      <option value="B3">Bodega Zapata</option>
-      <option value="B4">Bodega Cigarro</option>
-      <option value="B5">Bodega Tienda PDD</option>
-      <option value="B6">Bodega Extra</option>
-    </select>
-    <input type="file" id="foto" accept="image/*" required>
-    <button type="submit">➕ Crear sección</button>
-  </form>
-
-  <h2>📋 Lista de secciones</h2>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Nombre</th><th>Bodega</th><th>Imagen</th><th>Acciones</th></tr>
-    </thead>
-    <tbody id="tablaSecciones"></tbody>
-  </table>
-
-  <hr>
-
-  <!-- Crear conexiones -->
-  <h2>🔗 Crear Conexión entre Secciones</h2>
-  <form id="formEnlace">
-    <select id="fromSeccion"></select>
-    →
-    <select id="toSeccion"></select>
-    <input type="number" id="coordX" placeholder="X" required>
-    <input type="number" id="coordY" placeholder="Y" required>
-    <button type="submit">➕ Crear Enlace</button>
-  </form>
-
-  <h2>📋 Lista de enlaces</h2>
-  <table>
-    <thead>
-      <tr><th>Desde</th><th>Hacia</th><th>X</th><th>Y</th></tr>
-    </thead>
-    <tbody id="tablaEnlaces"></tbody>
-  </table>
-
-  <!-- Modal para seleccionar coordenadas -->
-  <div id="modal">
-    <div style="position:relative;">
-      <img id="visorImg" src="" alt="Imagen Sección">
-      <div id="puntoPreview"></div>
-    </div>
+  <h1>🗺️ Recorrido Virtual</h1>
+  <div id="mapa">
+    <canvas id="canvas"></canvas>
   </div>
 
+  <!-- 🔹 Visor de recorrido -->
+  <div id="visor">
+    <button id="cerrar">X</button>
+    <h2 id="visorTitulo"></h2>
+    <img id="visorImagen" src="">
+    <div id="navegacion"></div>
+  </div>
+  <div id="viewer"></div>
+
   <script>
-    // Configuración Supabase
+    // 🔹 Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    const form = document.getElementById("formSeccion");
-    const tabla = document.getElementById("tablaSecciones");
-    const formEnlace = document.getElementById("formEnlace");
-    const tablaEnlaces = document.getElementById("tablaEnlaces");
+    const mapa = document.getElementById("mapa");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-    // Modal
-    const modal = document.getElementById("modal");
-    const visorImg = document.getElementById("visorImg");
-    const puntoPreview = document.getElementById("puntoPreview");
+    const visor = document.getElementById("visor");
+    const visorTitulo = document.getElementById("visorTitulo");
+    const visorImagen = document.getElementById("visorImagen");
+    const navegacion = document.getElementById("navegacion");
+    const cerrarBtn = document.getElementById("cerrar");
 
-    let currentImgId = null;
+    let secciones = [];
+    let secciones = {};
+    let enlaces = [];
+    let actual = null;
 
-    // Cargar secciones
-    async function cargarSecciones() {
-      const { data, error } = await supabase.from("secciones").select("*");
-      tabla.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(sec => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${sec.id}</td>
-          <td>${sec.nombre}</td>
-          <td>${sec.bodega_id}</td>
-          <td>
-            <img src="${sec.img_url}" width="100"><br>
-            <button type="button" onclick="abrirVisor('${sec.img_url}')">📍 Marcar punto</button>
-          </td>
-          <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
+    async function cargarMapa() {
+      canvas.width = mapa.clientWidth;
+      canvas.height = mapa.clientHeight;
+
+      const res1 = await supabase.from("secciones").select("*");
+      const res2 = await supabase.from("enlaces").select("*");
+      secciones = res1.data;
+      enlaces = res2.data;
+
+      secciones.forEach(sec => {
+        const div = document.createElement("div");
+        div.className = "seccion";
+        div.style.left = (sec.x || Math.random()*1000) + "px";
+        div.style.top = (sec.y || Math.random()*500) + "px";
+        div.innerHTML = `
+          <img src="${sec.img_url}" alt="${sec.nombre}">
+          <span>${sec.nombre}</span>
         `;
-        tabla.appendChild(row);
+        mapa.appendChild(div);
+        sec._x = parseInt(div.style.left);
+        sec._y = parseInt(div.style.top);
+    async function cargarDatos() {
+      const { data: secs } = await supabase.from("secciones").select("*");
+      const { data: links } = await supabase.from("enlaces").select("*");
+
+        div.addEventListener("click", () => abrirVisor(sec.id));
       });
-      cargarSeccionesSelects();
+      // Guardamos secciones por id para acceso rápido
+      secs.forEach(s => secciones[s.id] = s);
+      enlaces = links;
+
+      enlaces.forEach(enl => {
+        const origen = secciones.find(s => s.id === enl.desde);
+        const destino = secciones.find(s => s.id === enl.hacia);
+        if (origen && destino) {
+          ctx.beginPath();
+          ctx.moveTo(origen._x, origen._y);
+          ctx.lineTo(destino._x, destino._y);
+          ctx.strokeStyle = "blue";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+      });
+      if (secs.length > 0) {
+        mostrarSeccion(secs[0].id); // 🔹 Arranca en la primera sección
+      }
     }
 
-    // Crear seccion
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const id = document.getElementById("idSeccion").value;
-      const nombre = document.getElementById("nombreSeccion").value;
-      const bodega = document.getElementById("bodegaId").value;
-      const archivo = document.getElementById("foto").files[0];
+    function abrirVisor(idSeccion) {
+      const sec = secciones.find(s => s.id === idSeccion);
+      if (!sec) return;
+    function mostrarSeccion(id) {
+      actual = id;
+      const viewer = document.getElementById("viewer");
 
-      const { error: err1 } = await supabase
-        .storage.from("recorridos")
-        .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
+      visorTitulo.textContent = sec.nombre;
+      visorImagen.classList.remove("visible"); // reinicia animación
+      visorImagen.src = sec.img_url;
+      // Fade out
+      viewer.style.opacity = 0;
+      setTimeout(() => {
+        viewer.style.backgroundImage = `url(${secciones[id].img_url})`;
+        viewer.innerHTML = ""; // limpia hotspots
 
-      if (err1) { alert("Error al subir imagen"); return; }
+      // 🔹 retrasa la animación de aparición
+      visorImagen.onload = () => {
+        setTimeout(() => visorImagen.classList.add("visible"), 50);
+      };
+        // Hotspots para esta sección
+        const misEnlaces = enlaces.filter(e => e.from_seccion === id);
+        misEnlaces.forEach(e => {
+          const hs = document.createElement("div");
+          hs.className = "hotspot";
+          hs.style.left = e.x + "%";
+          hs.style.top = e.y + "%";
+          hs.onclick = () => mostrarSeccion(e.to_seccion);
+          viewer.appendChild(hs);
+        });
 
-      const urlPublica = supabase
-        .storage.from("recorridos")
-        .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
+      navegacion.innerHTML = "";
+      const conexiones = enlaces.filter(e => e.desde === idSeccion);
+      conexiones.forEach(e => {
+        const destino = secciones.find(s => s.id === e.hacia);
+        if (destino) {
+          const btn = document.createElement("button");
+          btn.textContent = "Ir a " + destino.nombre;
+          btn.onclick = () => abrirVisor(destino.id);
+          navegacion.appendChild(btn);
+        }
+      });
 
-      const { error: err2 } = await supabase.from("secciones").insert([
-        { id, bodega_id: bodega, nombre, img_url: urlPublica }
-      ]);
+      visor.classList.add("mostrar");
+        // Fade in
+        viewer.style.opacity = 1;
+      }, 800);
+    }
 
-      if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
-
-      cargarSecciones();
-      form.reset();
+    cerrarBtn.addEventListener("click", () => {
+      visor.classList.remove("mostrar");
     });
 
-    // Eliminar seccion
-    async function eliminarSeccion(id) {
-      if (!confirm("¿Eliminar sección " + id + "?")) return;
-      await supabase.from("secciones").delete().eq("id", id);
-      cargarSecciones();
-    }
-
-    // -------- Enlaces --------
-    async function cargarSeccionesSelects() {
-      const { data, error } = await supabase.from("secciones").select("id");
-      if (error) return console.error(error);
-      const from = document.getElementById("fromSeccion");
-      const to = document.getElementById("toSeccion");
-      from.innerHTML = ""; to.innerHTML = "";
-      data.forEach(s => {
-        from.innerHTML += `<option value="${s.id}">${s.id}</option>`;
-        to.innerHTML += `<option value="${s.id}">${s.id}</option>`;
-      });
-    }
-
-    formEnlace.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const from = document.getElementById("fromSeccion").value;
-      const to = document.getElementById("toSeccion").value;
-      const x = document.getElementById("coordX").value;
-      const y = document.getElementById("coordY").value;
-
-      const { error } = await supabase.from("enlaces").insert([
-        { from_seccion: from, to_seccion: to, x, y }
-      ]);
-      if (error) { console.error(error); alert("Error al guardar enlace"); return; }
-
-      cargarEnlaces();
-      formEnlace.reset();
-    });
-
-    async function cargarEnlaces() {
-      const { data, error } = await supabase.from("enlaces").select("*");
-      tablaEnlaces.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(e => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${e.from_seccion}</td>
-          <td>${e.to_seccion}</td>
-          <td>${e.x}</td>
-          <td>${e.y}</td>
-        `;
-        tablaEnlaces.appendChild(row);
-      });
-    }
-
-    // ------- Modal para marcar coordenadas -------
-    function abrirVisor(imgUrl) {
-      visorImg.src = imgUrl;
-      modal.style.display = "flex";
-    }
-
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.style.display = "none";
-    };
-
-    visorImg.onclick = (e) => {
-      const rect = visorImg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-      puntoPreview.style.left = x + "%";
-      puntoPreview.style.top = y + "%";
-      puntoPreview.style.display = "block";
-
-      document.getElementById("coordX").value = x.toFixed(1);
-      document.getElementById("coordY").value = y.toFixed(1);
-
-      alert(`📍 Coordenada marcada: X=${x.toFixed(1)}%, Y=${y.toFixed(1)}%`);
-      modal.style.display = "none";
-    };
-
-    // Inicializar
-    cargarSecciones();
-    cargarEnlaces();
+    cargarMapa();
+    cargarDatos();
   </script>
 </body>
 </html>
