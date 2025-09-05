@@ -5,214 +5,87 @@
   <title>Recorrido Virtual</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
-    h1 { text-align:center; padding:20px; background:#333; color:white; }
-    #mapa {
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+    #viewer {
       position: relative;
       width: 100%;
-      max-width: 1200px;
-      height: 700px;
-      margin:20px auto;
-      border: 2px solid #444;
-      background: white;
-      overflow: hidden;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 1s;
     }
-    canvas {
-      position:absolute;
-      top:0;
-      left:0;
-      z-index:1;
-    }
-    .seccion {
+    .hotspot {
       position: absolute;
-      text-align:center;
+      width: 30px;
+      height: 30px;
+      background: red;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
       transform: translate(-50%, -50%);
-      z-index:2;
-      cursor:pointer;
-    }
-    .seccion img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 2px solid #333;
-      transition: transform 0.3s;
-    }
-    .seccion img:hover {
-      transform: scale(1.1);
-    }
-    .seccion span {
-      display:block;
-      margin-top:5px;
-      font-weight:bold;
-    }
-    /* 🔹 Modo recorrido tipo Street View */
-    #visor {
-      position: fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background: rgba(0,0,0,0.95);
-      display:none;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
-      color:white;
-      z-index:100;
-      opacity:0;
-      transition: opacity 0.8s ease-in-out;
-    }
-    #visor.mostrar {
-      display:flex;
-      opacity:1;
-    }
-    #visor img {
-      max-width: 90%;
-      max-height: 80%;
-      border-radius: 10px;
-      box-shadow: 0 0 20px black;
-      opacity:0;
-      transform: scale(1.1);
-      transition: opacity 1s ease, transform 1s ease;
-    }
-    #visor img.visible {
-      opacity:1;
-      transform: scale(1);
-    }
-    #navegacion {
-      margin-top:20px;
-    }
-    #navegacion button {
-      margin:5px;
-      padding:10px 15px;
-      background:#1f6feb;
-      border:none;
-      border-radius:5px;
-      color:white;
-      cursor:pointer;
-      transition: background 0.3s;
-    }
-    #navegacion button:hover {
-      background:#0f4fc5;
-    }
-    #cerrar {
-      position:absolute;
-      top:20px;
-      right:20px;
-      background:red;
-      border:none;
-      color:white;
-      padding:10px 15px;
-      cursor:pointer;
-      border-radius:5px;
-      font-size:16px;
     }
   </style>
 </head>
 <body>
-  <h1>🗺️ Recorrido Virtual</h1>
-  <div id="mapa">
-    <canvas id="canvas"></canvas>
-  </div>
-
-  <!-- 🔹 Visor de recorrido -->
-  <div id="visor">
-    <button id="cerrar">X</button>
-    <h2 id="visorTitulo"></h2>
-    <img id="visorImagen" src="">
-    <div id="navegacion"></div>
-  </div>
+  <div id="viewer"></div>
 
   <script>
+    // 🔹 Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    const mapa = document.getElementById("mapa");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-
-    const visor = document.getElementById("visor");
-    const visorTitulo = document.getElementById("visorTitulo");
-    const visorImagen = document.getElementById("visorImagen");
-    const navegacion = document.getElementById("navegacion");
-    const cerrarBtn = document.getElementById("cerrar");
-
-    let secciones = [];
+    let secciones = {};
     let enlaces = [];
+    let actual = null;
 
-    async function cargarMapa() {
-      canvas.width = mapa.clientWidth;
-      canvas.height = mapa.clientHeight;
+    async function cargarDatos() {
+      const { data: secs } = await supabase.from("secciones").select("*");
+      const { data: links } = await supabase.from("enlaces").select("*");
 
-      const res1 = await supabase.from("secciones").select("*");
-      const res2 = await supabase.from("enlaces").select("*");
-      secciones = res1.data;
-      enlaces = res2.data;
+      // Guardamos secciones por id para acceso rápido
+      secs.forEach(s => secciones[s.id] = s);
+      enlaces = links;
 
-      secciones.forEach(sec => {
-        const div = document.createElement("div");
-        div.className = "seccion";
-        div.style.left = (sec.x || Math.random()*1000) + "px";
-        div.style.top = (sec.y || Math.random()*500) + "px";
-        div.innerHTML = `
-          <img src="${sec.img_url}" alt="${sec.nombre}">
-          <span>${sec.nombre}</span>
-        `;
-        mapa.appendChild(div);
-        sec._x = parseInt(div.style.left);
-        sec._y = parseInt(div.style.top);
-
-        div.addEventListener("click", () => abrirVisor(sec.id));
-      });
-
-      enlaces.forEach(enl => {
-        const origen = secciones.find(s => s.id === enl.desde);
-        const destino = secciones.find(s => s.id === enl.hacia);
-        if (origen && destino) {
-          ctx.beginPath();
-          ctx.moveTo(origen._x, origen._y);
-          ctx.lineTo(destino._x, destino._y);
-          ctx.strokeStyle = "blue";
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        }
-      });
+      if (secs.length > 0) {
+        mostrarSeccion(secs[0].id); // 🔹 Arranca en la primera sección
+      }
     }
 
-    function abrirVisor(idSeccion) {
-      const sec = secciones.find(s => s.id === idSeccion);
-      if (!sec) return;
+    function mostrarSeccion(id) {
+      actual = id;
+      const viewer = document.getElementById("viewer");
 
-      visorTitulo.textContent = sec.nombre;
-      visorImagen.classList.remove("visible"); // reinicia animación
-      visorImagen.src = sec.img_url;
+      // Fade out
+      viewer.style.opacity = 0;
+      setTimeout(() => {
+        viewer.style.backgroundImage = `url(${secciones[id].img_url})`;
+        viewer.innerHTML = ""; // limpia hotspots
 
-      // 🔹 retrasa la animación de aparición
-      visorImagen.onload = () => {
-        setTimeout(() => visorImagen.classList.add("visible"), 50);
-      };
+        // Hotspots para esta sección
+        const misEnlaces = enlaces.filter(e => e.from_seccion === id);
+        misEnlaces.forEach(e => {
+          const hs = document.createElement("div");
+          hs.className = "hotspot";
+          hs.style.left = e.x + "%";
+          hs.style.top = e.y + "%";
+          hs.onclick = () => mostrarSeccion(e.to_seccion);
+          viewer.appendChild(hs);
+        });
 
-      navegacion.innerHTML = "";
-      const conexiones = enlaces.filter(e => e.desde === idSeccion);
-      conexiones.forEach(e => {
-        const destino = secciones.find(s => s.id === e.hacia);
-        if (destino) {
-          const btn = document.createElement("button");
-          btn.textContent = "Ir a " + destino.nombre;
-          btn.onclick = () => abrirVisor(destino.id);
-          navegacion.appendChild(btn);
-        }
-      });
-
-      visor.classList.add("mostrar");
+        // Fade in
+        viewer.style.opacity = 1;
+      }, 800);
     }
 
-    cerrarBtn.addEventListener("click", () => {
-      visor.classList.remove("mostrar");
-    });
-
-    cargarMapa();
+    cargarDatos();
   </script>
 </body>
 </html>
