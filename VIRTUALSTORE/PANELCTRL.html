@@ -70,23 +70,27 @@
     const tabla = document.getElementById("tablaSecciones");
 
     // Cargar secciones
-    async function cargarSecciones() {
-      const { data, error } = await supabase.from("secciones").select("*");
-      tabla.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(sec => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${sec.id}</td>
-          <td>${sec.nombre}</td>
-          <td>${sec.bodega_id}</td>
-          <td><img src="${sec.img_url}" width="100"></td>
-          <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
-        `;
-        tabla.appendChild(row);
-      });
-      cargarSeccionesSelects();
-    }
+async function cargarSecciones() {
+  const { data, error } = await supabase.from("secciones").select("*");
+  tabla.innerHTML = "";
+  if (error) return console.error(error);
+
+  data.forEach(sec => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${sec.id}</td>
+      <td>${sec.nombre}</td>
+      <td>${sec.bodega_id}</td>
+      <td>
+        <img src="${sec.img_url}" width="100"><br>
+        <button type="button" onclick="abrirVisor('${sec.img_url}')">📍 Marcar punto</button>
+      </td>
+      <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
+    `;
+    tabla.appendChild(row);
+  });
+  cargarSeccionesSelects();
+}
 
     // Crear seccion
     form.addEventListener("submit", async (e) => {
