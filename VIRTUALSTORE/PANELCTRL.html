@@ -2,176 +2,76 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Gestión de Secciones y Conexiones</title>
+  <title>🗺️ Recorrido Virtual</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
   <style>
-    body { font-family: Arial, sans-serif; margin:20px; }
-    input, select, button { margin:5px; padding:8px; }
-    table { border-collapse: collapse; margin-top:20px; width:100%; }
-    th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#fff; }
+    h1 { text-align:center; padding:15px; background:#222; margin:0; }
+    #panorama { width:100%; height:90vh; }
   </style>
 </head>
 <body>
-  <h1>📦 Gestor de Secciones</h1>
-
-  <!-- Crear secciones -->
-  <form id="formSeccion">
-    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
-    <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
-    <select id="bodegaId">
-      <option value="B1">Bodega Central</option>
-      <option value="B2">Bodega Líquido</option>
-      <option value="B3">Bodega Zapata</option>
-      <option value="B4">Bodega Cigarro</option>
-      <option value="B5">Bodega Tienda PDD</option>
-      <option value="B6">Bodega Extra</option>
-    </select>
-    <input type="file" id="foto" accept="image/*" required>
-    <button type="submit">➕ Crear sección</button>
-  </form>
-
-  <h2>📋 Lista de secciones</h2>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Nombre</th><th>Bodega</th><th>Imagen</th><th>Acciones</th></tr>
-    </thead>
-    <tbody id="tablaSecciones"></tbody>
-  </table>
-
-  <hr>
-
-  <!-- Crear conexiones -->
-  <h2>🔗 Crear Conexión entre Secciones</h2>
-  <form id="formEnlace">
-    <select id="fromSeccion"></select>
-    →
-    <select id="toSeccion"></select>
-    <input type="number" id="coordX" placeholder="X" required>
-    <input type="number" id="coordY" placeholder="Y" required>
-    <button type="submit">➕ Crear Enlace</button>
-  </form>
-
-  <h2>📋 Lista de enlaces</h2>
-  <table>
-    <thead>
-      <tr><th>Desde</th><th>Hacia</th><th>X</th><th>Y</th></tr>
-    </thead>
-    <tbody id="tablaEnlaces"></tbody>
-  </table>
+  <h1>🌍 Recorrido Virtual</h1>
+  <div id="panorama"></div>
 
   <script>
-    // Configuración Supabase
+    // 🚀 Conexión Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    const form = document.getElementById("formSeccion");
-    const tabla = document.getElementById("tablaSecciones");
+    let viewer;
+    let scenes = {};
 
-    // Cargar secciones en tabla
-    async function cargarSecciones() {
-      const { data, error } = await supabase.from("secciones").select("*");
-      tabla.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(sec => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${sec.id}</td>
-          <td>${sec.nombre}</td>
-          <td>${sec.bodega_id}</td>
-          <td><img src="${sec.img_url}" width="100"></td>
-          <td><button onclick="eliminarSeccion('${sec.id}')">❌</button></td>
-        `;
-        tabla.appendChild(row);
+    async function cargarRecorrido() {
+      // 📌 1. Traer todas las secciones
+      const { data: secciones, error: err1 } = await supabase.from("secciones").select("*");
+      if (err1) { console.error(err1); return; }
+
+      // 📌 2. Traer todos los enlaces
+      const { data: enlaces, error: err2 } = await supabase.from("enlaces").select("*");
+      if (err2) { console.error(err2); return; }
+
+      // 📌 3. Construir escenas
+      secciones.forEach(sec => {
+        scenes[sec.id] = {
+          title: sec.nombre,
+          hfov: 110,
+          pitch: 0,
+          yaw: 0,
+          type: "equirectangular",
+          panorama: sec.img_url,
+          hotSpots: []  // se rellenan abajo
+        };
       });
-      cargarSeccionesSelects();
-    }
 
-    // Insertar seccion
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const id = document.getElementById("idSeccion").value;
-      const nombre = document.getElementById("nombreSeccion").value;
-      const bodega = document.getElementById("bodegaId").value;
-      const archivo = document.getElementById("foto").files[0];
+      // 📌 4. Agregar enlaces como hotspots
+      enlaces.forEach(enl => {
+        if (scenes[enl.from_seccion]) {
+          scenes[enl.from_seccion].hotSpots.push({
+            pitch: parseFloat(enl.y), // vertical
+            yaw: parseFloat(enl.x),   // horizontal
+            type: "scene",
+            text: `Ir a ${enl.to_seccion}`,
+            sceneId: enl.to_seccion
+          });
+        }
+      });
 
-      const { error: err1 } = await supabase
-        .storage.from("recorridos")
-        .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
-
-      if (err1) { alert("Error al subir imagen"); return; }
-
-      const urlPublica = supabase
-        .storage.from("recorridos")
-        .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
-
-      const { error: err2 } = await supabase.from("secciones").insert([
-        { id, bodega_id: bodega, nombre, img_url: urlPublica }
-      ]);
-
-      if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
-
-      cargarSecciones();
-      form.reset();
-    });
-
-    async function eliminarSeccion(id) {
-      if (!confirm("¿Eliminar sección " + id + "?")) return;
-      await supabase.from("secciones").delete().eq("id", id);
-      cargarSecciones();
-    }
-
-    // -------- Enlaces --------
-    const formEnlace = document.getElementById("formEnlace");
-    const tablaEnlaces = document.getElementById("tablaEnlaces");
-
-    async function cargarSeccionesSelects() {
-      const { data, error } = await supabase.from("secciones").select("id");
-      if (error) return console.error(error);
-      const from = document.getElementById("fromSeccion");
-      const to = document.getElementById("toSeccion");
-      from.innerHTML = ""; to.innerHTML = "";
-      data.forEach(s => {
-        from.innerHTML += `<option value="${s.id}">${s.id}</option>`;
-        to.innerHTML += `<option value="${s.id}">${s.id}</option>`;
+      // 📌 5. Inicializar viewer
+      viewer = pannellum.viewer('panorama', {
+        default: {
+          firstScene: secciones[0]?.id || "",
+          sceneFadeDuration: 1000
+        },
+        scenes: scenes
       });
     }
 
-    formEnlace.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const from = document.getElementById("fromSeccion").value;
-      const to = document.getElementById("toSeccion").value;
-      const x = document.getElementById("coordX").value;
-      const y = document.getElementById("coordY").value;
-
-      const { error } = await supabase.from("enlaces").insert([
-        { from_seccion: from, to_seccion: to, x, y }
-      ]);
-      if (error) { console.error(error); alert("Error al guardar enlace"); return; }
-
-      cargarEnlaces();
-      formEnlace.reset();
-    });
-
-    async function cargarEnlaces() {
-      const { data, error } = await supabase.from("enlaces").select("*");
-      tablaEnlaces.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(e => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${e.from_seccion}</td>
-          <td>${e.to_seccion}</td>
-          <td>${e.x}</td>
-          <td>${e.y}</td>
-        `;
-        tablaEnlaces.appendChild(row);
-      });
-    }
-
-    cargarSecciones();
-    cargarEnlaces();
+    cargarRecorrido();
   </script>
 </body>
 </html>
