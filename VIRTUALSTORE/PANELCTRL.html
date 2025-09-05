@@ -2,76 +2,90 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>🗺️ Recorrido Virtual</title>
+  <title>Recorrido Virtual</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#fff; }
-    h1 { text-align:center; padding:15px; background:#222; margin:0; }
-    #panorama { width:100%; height:90vh; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+    #viewer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 1s;
+    }
+    .hotspot {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: red;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      transform: translate(-50%, -50%);
+    }
   </style>
 </head>
 <body>
-  <h1>🌍 Recorrido Virtual</h1>
-  <div id="panorama"></div>
+  <div id="viewer"></div>
 
   <script>
-    // 🚀 Conexión Supabase
+    // 🔹 Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    let viewer;
-    let scenes = {};
+    let secciones = {};
+    let enlaces = [];
+    let actual = null;
 
-    async function cargarRecorrido() {
-      // 📌 1. Traer todas las secciones
-      const { data: secciones, error: err1 } = await supabase.from("secciones").select("*");
-      if (err1) { console.error(err1); return; }
+    async function cargarDatos() {
+      const { data: secs } = await supabase.from("secciones").select("*");
+      const { data: links } = await supabase.from("enlaces").select("*");
 
-      // 📌 2. Traer todos los enlaces
-      const { data: enlaces, error: err2 } = await supabase.from("enlaces").select("*");
-      if (err2) { console.error(err2); return; }
+      // Guardamos secciones por id para acceso rápido
+      secs.forEach(s => secciones[s.id] = s);
+      enlaces = links;
 
-      // 📌 3. Construir escenas
-      secciones.forEach(sec => {
-        scenes[sec.id] = {
-          title: sec.nombre,
-          hfov: 110,
-          pitch: 0,
-          yaw: 0,
-          type: "equirectangular",
-          panorama: sec.img_url,
-          hotSpots: []  // se rellenan abajo
-        };
-      });
-
-      // 📌 4. Agregar enlaces como hotspots
-      enlaces.forEach(enl => {
-        if (scenes[enl.from_seccion]) {
-          scenes[enl.from_seccion].hotSpots.push({
-            pitch: parseFloat(enl.y), // vertical
-            yaw: parseFloat(enl.x),   // horizontal
-            type: "scene",
-            text: `Ir a ${enl.to_seccion}`,
-            sceneId: enl.to_seccion
-          });
-        }
-      });
-
-      // 📌 5. Inicializar viewer
-      viewer = pannellum.viewer('panorama', {
-        default: {
-          firstScene: secciones[0]?.id || "",
-          sceneFadeDuration: 1000
-        },
-        scenes: scenes
-      });
+      if (secs.length > 0) {
+        mostrarSeccion(secs[0].id); // 🔹 Arranca en la primera sección
+      }
     }
 
-    cargarRecorrido();
+    function mostrarSeccion(id) {
+      actual = id;
+      const viewer = document.getElementById("viewer");
+
+      // Fade out
+      viewer.style.opacity = 0;
+      setTimeout(() => {
+        viewer.style.backgroundImage = `url(${secciones[id].img_url})`;
+        viewer.innerHTML = ""; // limpia hotspots
+
+        // Hotspots para esta sección
+        const misEnlaces = enlaces.filter(e => e.from_seccion === id);
+        misEnlaces.forEach(e => {
+          const hs = document.createElement("div");
+          hs.className = "hotspot";
+          hs.style.left = e.x + "%";
+          hs.style.top = e.y + "%";
+          hs.onclick = () => mostrarSeccion(e.to_seccion);
+          viewer.appendChild(hs);
+        });
+
+        // Fade in
+        viewer.style.opacity = 1;
+      }, 800);
+    }
+
+    cargarDatos();
   </script>
 </body>
 </html>
