@@ -6,13 +6,13 @@
   <title>Detalle del Producto</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-width: 650px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-width: 650px; margin:auto; }
     .fila { margin: 4px 0; }
     .clave { font-weight: bold; color: #333; }
     .valor { margin-left: 6px; }
     .grupo { margin: 15px 0; padding-top: 10px; border-top: 2px solid #ddd; }
 
-    /* 🔹 Estilo del botón */
+    /* Botón volver */
     .btn { 
       display: inline-block; 
       margin-top: 20px; 
@@ -25,7 +25,7 @@
     }
     .btn:hover { background: #0056b3; }
 
-    /* 🔹 Estilo especial para precio público */
+    /* Precios destacados */
     .precio-publico {
       font-size: 1.4em;
       font-weight: bold;
@@ -36,21 +36,24 @@
       from { color: #00cc00; }
       to { color: #009900; }
     }
-.costo-neto {
-  font-size: 1.4em;          /* igual tamaño que precio público */
-  font-weight: bold;
-  color: red;
-  animation: parpadeoRojo 1s infinite alternate;
-}
-@keyframes parpadeoRojo {
-  from { color: #ff0000; }
-  to { color: #cc0000; }
-}
+    .costo-neto {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: red;
+      animation: parpadeoRojo 1s infinite alternate;
+    }
+    @keyframes parpadeoRojo {
+      from { color: #ff0000; }
+      to { color: #cc0000; }
+    }
+
+    .aviso { color: red; font-weight: bold; margin-top: 20px; text-align:center; }
   </style>
 </head>
 <body>
   <h2>📦 Detalle del Producto</h2>
   <div id="detalle" class="card">Cargando...</div>
+  <div id="aviso" class="aviso"></div>
   <a id="btnVolver" class="btn">⬅ Volver a búsqueda</a>
 
   <script type="module">
@@ -63,64 +66,65 @@
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
       projectId: "inventariopv-643f1",
-      storageBucket: "inventariopv-643f1.firebasestorage.app",
-      messagingSenderId: "96242533231",
-      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 🔹 Leer parámetro de la URL
+    // ===============================
+    // 🗄️ IndexedDB Helpers
+    // ===============================
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("provsoftDB", 1);
+        request.onsuccess = e => resolve(e.target.result);
+        request.onerror = e => reject(e);
+      });
+    }
+    async function getProductoOffline(codigoBarra) {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("productos", "readonly");
+        const store = tx.objectStore("productos");
+        const req = store.get(codigoBarra);
+        req.onsuccess = () => resolve(req.result || null);
+      });
+    }
+
+    // ===============================
+    // 🔎 Captura parámetro
+    // ===============================
     const params = new URLSearchParams(window.location.search);
     const codigo = params.get("id");
     const detalleDiv = document.getElementById("detalle");
+    const avisoDiv = document.getElementById("aviso");
 
     function formatoMoneda(valor) {
       if (isNaN(valor)) return valor;
       return valor.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
     }
 
-    async function cargarProducto() {
-      if (!codigo) {
-        detalleDiv.innerHTML = "❌ No se especificó un producto.";
-        return;
+    // ===============================
+    // 🚀 Renderizar producto
+    // ===============================
+    function renderProducto(p) {
+      let costoBase = Number(p.costoSinImpuesto) || 0;
+      let ieps = costoBase * (Number(p.iepsTasa) || 0);
+      let subtotal = costoBase + ieps;
+      let iva = subtotal * (Number(p.ivaTasa) || 0);
+      let costoNeto = subtotal + iva;
+      let margen = 0;
+      if (costoNeto > 0 && p.precioPublico) {
+        margen = ((Number(p.precioPublico) - costoNeto) / costoNeto) * 100;
       }
 
-      const q = query(collection(db, "productos"), where("codigoBarra", "==", codigo));
-      const snap = await getDocs(q);
-
-      if (snap.empty) {
-        detalleDiv.innerHTML = "❌ Producto no encontrado.";
-        return;
-      }
-
-      const p = snap.docs[0].data();
-      // Calcular costo neto con impuestos
-let costoBase = Number(p.costoSinImpuesto) || 0;
-let ieps = costoBase * (Number(p.iepsTasa) || 0);
-let subtotal = costoBase + ieps;
-let iva = subtotal * (Number(p.ivaTasa) || 0);
-
-let costoNeto = subtotal + iva;  // costo + IEPS + IVA
-let margen = 0;
-if (costoNeto > 0 && p.precioPublico) {
-  margen = ((Number(p.precioPublico) - costoNeto) / costoNeto) * 100;
-}
-
-      let html = `
+      detalleDiv.innerHTML = `
         <div class="fila"><span class="clave">codigoBarra:</span> <span class="valor">${p.codigoBarra}</span></div>
-        
         <div class="fila"><span class="clave">concepto:</span> <span class="valor">${p.concepto}</span></div>
         <div class="fila"><span class="clave">costoSinImpuesto:</span> <span class="valor">${formatoMoneda(p.costoSinImpuesto)}</span></div>
-  <div class="fila">
-  <span class="clave">costoNeto (impuestos incluidos):</span> 
-  <span class="valor costo-neto">${formatoMoneda(costoNeto)}</span>
-</div>
-<div class="fila">
-  <span class="clave">margen vs precio público:</span> 
-  <span class="valor">${margen.toFixed(2)} %</span>
-</div>
+        <div class="fila"><span class="clave">costoNeto (impuestos incluidos):</span> 
+          <span class="valor costo-neto">${formatoMoneda(costoNeto)}</span></div>
+        <div class="fila"><span class="clave">margen vs precio público:</span> 
+          <span class="valor">${margen.toFixed(2)} %</span></div>
 
         <div class="grupo"></div>
         <div class="fila"><span class="clave">precioPublico:</span> <span class="valor precio-publico">${formatoMoneda(p.precioPublico)}</span></div>
@@ -142,27 +146,55 @@ if (costoNeto > 0 && p.precioPublico) {
         <div class="grupo"></div>
         <div class="fila"><span class="clave">claveSat:</span> <span class="valor">${p.claveSat}</span></div>
         <div class="fila"><span class="clave">unidadMedidaSat:</span> <span class="valor">${p.unidadMedidaSat}</span></div>
-      
       `;
+    }
 
-      detalleDiv.innerHTML = html;
+    // ===============================
+    // 🚀 Lógica de carga con Offline/Online
+    // ===============================
+    async function cargarProducto() {
+      if (!codigo) {
+        detalleDiv.innerHTML = "❌ No se especificó un producto.";
+        return;
+      }
+
+      // 1. Intentar en IndexedDB
+      const pLocal = await getProductoOffline(codigo);
+      if (pLocal) {
+        renderProducto(pLocal);
+        return;
+      }
+
+      // 2. Si no está y hay internet, buscar en Firestore
+      if (navigator.onLine) {
+        try {
+          const q = query(collection(db, "productos"), where("codigoBarra", "==", codigo));
+          const snap = await getDocs(q);
+          if (snap.empty) {
+            detalleDiv.innerHTML = "❌ Producto no encontrado en Firestore.";
+            return;
+          }
+          renderProducto(snap.docs[0].data());
+        } catch (err) {
+          avisoDiv.textContent = "❌ Error al consultar Firestore.";
+        }
+      } else {
+        // 3. No hay internet y no está en offline
+        detalleDiv.innerHTML = `<p><b>Código:</b> ${codigo}</p>`;
+        avisoDiv.textContent = "⚠️ Esta información no está disponible offline, sólo en la consulta en línea.";
+      }
     }
 
     cargarProducto();
   </script>
-<script>
-  const btn = document.getElementById("btnVolver");
-  if (document.referrer.includes("buscacatacam.html")) {
-    btn.href = "buscacatacam.html";
-  } else {
-    btn.href = "BuscaCata.html";
-  }
-</script>
 
+  <script>
+    const btn = document.getElementById("btnVolver");
+    if (document.referrer.includes("buscacatacam.html")) {
+      btn.href = "buscacatacam.html";
+    } else {
+      btn.href = "BuscaCata.html";
+    }
+  </script>
 </body>
 </html>
-
-
-
-
-
