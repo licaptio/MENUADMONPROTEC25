@@ -147,7 +147,7 @@
       const tx = db.transaction("productos", "readwrite");
       const store = tx.objectStore("productos");
       lista.forEach(p => store.put(p));
-      return tx.complete;
+      return tx.done || new Promise(resolve => tx.oncomplete = resolve);
     }
 
     async function getAllProductos() {
