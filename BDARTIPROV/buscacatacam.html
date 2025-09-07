@@ -51,45 +51,31 @@
       margin-right: auto;
       display: none;
     }
-  .resultados {
-  margin-top: 20px;
-  text-align: left;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.producto {
-  border: 2px solid #333;   /* 👈 marco negro */
-  border-radius: 8px;
-  padding: 12px;
-  margin: 10px 0;
-  background: #fff;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* sombra ligera */
-}
-
-.producto b {
-  font-size: 15px;
-}
-
-.precios {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column; /* precios en columna en pantallas chicas */
-  gap: 2px;
-}
-
-.precio-publico {
-  font-weight: bold;
-  color: #1a7c1a;
-}
-.precio-medio {
-  color: #004080;
-}
-.precio-mayoreo {
-  color: #b36b00;
-}
-
+    .resultados {
+      margin-top: 20px;
+      text-align: left;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .producto {
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      background: #fff;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+    }
+    .producto b { font-size: 15px; }
+    .precios {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .precio-publico { font-weight: bold; color: #1a7c1a; }
+    .precio-medio { color: #004080; }
+    .precio-mayoreo { color: #b36b00; }
   </style>
 </head>
 <body>
@@ -107,21 +93,14 @@
   <div id="contador" class="contador"></div>
   <div id="resultados" class="resultados"></div>
 
-  <div class="paginacion">
-    <button id="prev" class="btn-pag" disabled>⬅ Anterior</button>
-    <button id="next" class="btn-pag" disabled>Siguiente ➡</button>
-  </div>
-
-  <footer>
-    Powered by <b>PROVSOFT</b>
-  </footer>
+  <footer>Powered by <b>PROVSOFT</b></footer>
 
   <!-- Librería para cámara -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } 
+    import { getFirestore, collection, query, where, getDocs } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // 🔹 Configuración Firebase
@@ -133,142 +112,107 @@
       messagingSenderId: "96242533231",
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     const input = document.getElementById("buscador");
     const resultadosDiv = document.getElementById("resultados");
-    const barraProgreso = document.getElementById("barraProgreso");
-    const estado = document.getElementById("estado");
     const contador = document.getElementById("contador");
-    const btnPrev = document.getElementById("prev");
-    const btnNext = document.getElementById("next");
     const divLector = document.getElementById("lector");
 
     let resultados = [];
-    let pagina = 0;
-    const porPagina = 20;
 
-// 🔹 Buscar productos
-async function buscarProductos(termino) {
-  resultadosDiv.innerHTML = "⏳ Buscando...";
-  barraProgreso.value = 0;
-  estado.textContent = "";
-  resultados = [];
-
-  // Si es un código de barras numérico → primero intenta en codigoBarra
-  if (/^\d+$/.test(termino)) {
-  let q = query(
-    collection(db, "productos"),
-    where("activo", "==", true),
-    where("codigoBarra", "==", termino)
-  );
-  let snap = await getDocs(q);
-  let encontradoEn = "codigoBarra";
-
-  if (snap.empty) {
-    q = query(
-      collection(db, "productos"),
-      where("activo", "==", true),
-      where("codigosEquivalentes", "array-contains", termino)
-    );
-    snap = await getDocs(q);
-    encontradoEn = "equivalente";
-  }
-
-  resultados = snap.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    coincidencia: encontradoEn,
-    codigoBuscado: termino
-  }));
-
-  if (resultados.length === 0) {
-    resultadosDiv.innerHTML = "❌ No se encontró este código en productos ni en equivalentes";
-    contador.textContent = "";
-  } else {
-    mostrarPagina(0);
-  }
-  return;
-}
-
-  // 🔹 Buscar por concepto (si no es código)
-  const q = query(
-    collection(db, "productos"),
-    where("activo", "==", true)
-  );
-  const snap = await getDocs(q);
-
-  const palabras = termino.toLowerCase().split(" ");
-  snap.forEach(doc => {
-    const p = { id: doc.id, ...doc.data() };
-    if (p.concepto && palabras.every(pal => p.concepto.toLowerCase().includes(pal))) {
-      resultados.push(p);
-    }
-  });
-
-  if (resultados.length === 0) {
-    resultadosDiv.innerHTML = "❌ No se encontraron resultados";
-    contador.textContent = "";
-  } else {
-    mostrarPagina(0);
-  }
-}
-
-    function mostrarPagina(n) {
-      pagina = n;
-      resultadosDiv.innerHTML = "";
-      const inicio = pagina * porPagina;
-      const fin = inicio + porPagina;
-      const lista = resultados.slice(inicio, fin);
-
-      lista.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "producto";
-div.innerHTML = `
-  <b>${p.concepto || "SIN CONCEPTO"}</b><br>
-  Código: ${p.codigoBarra || p.id}<br>
-  ${p.coincidencia === "equivalente" 
-    ? `<span style="color:#b00">🔗 Coincidencia en equivalente (${p.codigoBuscado})</span><br>` 
-    : ""}
-    <div class="precios">
-    <span class="precio-publico">
-      Público: $${p.precioPublico 
-        ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-        : "—"}
-    </span>
-    <span class="precio-medio">
-      Medio Mayoreo: $${p.medioMayoreo 
-        ? Number(p.medioMayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-        : "—"}
-    </span>
-    <span class="precio-mayoreo">
-      Mayoreo: $${p.mayoreo 
-        ? Number(p.mayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-        : "—"}
-    </span>
-  </div>
-`;
-
-        div.addEventListener("click", () => {
-          window.location.href = "producto.html?id=" + (p.codigoBarra || p.id);
-        });
-        resultadosDiv.appendChild(div);
+    // ===============================
+    // 🗄️ IndexedDB Helpers
+    // ===============================
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("provsoftDB", 1);
+        request.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("productos")) {
+            db.createObjectStore("productos", { keyPath: "codigoBarra" });
+          }
+          if (!db.objectStoreNames.contains("meta")) {
+            db.createObjectStore("meta", { keyPath: "clave" });
+          }
+        };
+        request.onsuccess = e => resolve(e.target.result);
+        request.onerror = e => reject(e);
       });
-
-      contador.textContent = 
-        "Resultados: " + resultados.length + 
-        " | Página " + (pagina + 1) + 
-        " de " + Math.ceil(resultados.length / porPagina);
-
-      btnPrev.disabled = pagina === 0;
-      btnNext.disabled = fin >= resultados.length;
     }
 
-    btnPrev.addEventListener("click", () => mostrarPagina(pagina - 1));
-    btnNext.addEventListener("click", () => mostrarPagina(pagina + 1));
+    async function saveProductos(lista) {
+      const db = await openDB();
+      const tx = db.transaction("productos", "readwrite");
+      const store = tx.objectStore("productos");
+      lista.forEach(p => store.put(p));
+      return tx.complete;
+    }
 
+    async function getAllProductos() {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("productos", "readonly");
+        const store = tx.objectStore("productos");
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+      });
+    }
+
+    async function saveMeta(clave, valor) {
+      const db = await openDB();
+      const tx = db.transaction("meta", "readwrite");
+      tx.objectStore("meta").put({ clave, valor });
+    }
+
+    async function getMeta(clave) {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("meta", "readonly");
+        const store = tx.objectStore("meta");
+        const req = store.get(clave);
+        req.onsuccess = () => resolve(req.result ? req.result.valor : null);
+      });
+    }
+
+    // ===============================
+    // 🔄 Sincronización
+    // ===============================
+    async function syncProductos() {
+      const lastSync = await getMeta("lastSync");
+      const ahora = Date.now();
+      const unDia = 24 * 60 * 60 * 1000;
+
+      if (lastSync && (ahora - lastSync) < unDia) {
+        console.log("📦 Usando catálogo local (IndexedDB)");
+        return;
+      }
+
+      console.log("⬇️ Descargando catálogo de Firestore...");
+      const q = query(collection(db, "productos"), where("activo", "==", true));
+      const snap = await getDocs(q);
+      const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      await saveProductos(lista);
+      await saveMeta("lastSync", ahora);
+      console.log("✅ Catálogo actualizado en IndexedDB");
+    }
+
+    // ===============================
+    // 🔎 Buscar en IndexedDB
+    // ===============================
+    async function buscarLocal(termino) {
+      const productos = await getAllProductos();
+      termino = termino.toLowerCase();
+      return productos.filter(p =>
+        (p.codigoBarra && p.codigoBarra.includes(termino)) ||
+        (p.concepto && p.concepto.toLowerCase().includes(termino))
+      );
+    }
+
+    // ===============================
+    // 📌 Eventos de la UI
+    // ===============================
     let debounceTimer;
     input.addEventListener("input", () => {
       clearTimeout(debounceTimer);
@@ -278,14 +222,34 @@ div.innerHTML = `
         contador.textContent = "";
         return;
       }
-      debounceTimer = setTimeout(() => buscarProductos(termino), 800);
+      debounceTimer = setTimeout(async () => {
+        resultados = await buscarLocal(termino);
+        mostrarResultados();
+      }, 500);
     });
+
+    function mostrarResultados() {
+      resultadosDiv.innerHTML = "";
+      resultados.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "producto";
+        div.innerHTML = `
+          <b>${p.concepto || "SIN CONCEPTO"}</b><br>
+          Código: ${p.codigoBarra || p.id}<br>
+          <div class="precios">
+            <span class="precio-publico">Público: $${p.precioPublico || "—"}</span>
+            <span class="precio-medio">Medio Mayoreo: $${p.medioMayoreo || "—"}</span>
+            <span class="precio-mayoreo">Mayoreo: $${p.mayoreo || "—"}</span>
+          </div>`;
+        resultadosDiv.appendChild(div);
+      });
+      contador.textContent = "Resultados: " + resultados.length;
+    }
 
     // 📷 ESCÁNER DE CÓDIGO
     window.iniciarEscaneo = function() {
       divLector.style.display = "block";
       const lector = new Html5Qrcode("lector");
-
       lector.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
@@ -293,15 +257,14 @@ div.innerHTML = `
           input.value = codigo;
           lector.stop();
           divLector.style.display = "none";
-          buscarProductos(codigo);
+          buscarLocal(codigo).then(r => { resultados = r; mostrarResultados(); });
         },
-        error => {
-          console.log("Escaneo fallido:", error);
-        }
-      ).catch(err => {
-        console.error("Error al abrir cámara:", err);
-      });
+        error => { console.log("Escaneo fallido:", error); }
+      ).catch(err => { console.error("Error al abrir cámara:", err); });
     }
+
+    // 🔹 Al iniciar, sincroniza
+    await syncProductos();
   </script>
 </body>
 </html>
