@@ -12,67 +12,25 @@
       text-align: center;
       color: #222;
     }
-    h1 {
-      font-size: 28px;
-      margin-bottom: 5px;
-    }
-    h2 {
-      font-size: 16px;
-      font-weight: normal;
-      margin-top: 0;
-      color: #555;
-    }
+    h1 { font-size: 28px; margin-bottom: 5px; }
+    h2 { font-size: 16px; font-weight: normal; margin-top: 0; color: #555; }
     input {
-      width: 90%;
-      max-width: 400px;
-      padding: 10px;
-      margin: 15px auto;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      display: block;
+      width: 90%; max-width: 400px; padding: 10px; margin: 15px auto;
+      border: 1px solid #ccc; border-radius: 6px; font-size: 14px; display: block;
     }
     button {
-      margin-top: 10px;
-      padding: 10px 16px;
-      background: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      margin-top: 10px; padding: 10px 16px; background: #0066cc; color: white;
+      border: none; border-radius: 6px; cursor: pointer;
     }
-    button:hover {
-      background: #004a99;
-    }
-    #lector {
-      margin-top: 15px;
-      width: 300px;
-      margin-left: auto;
-      margin-right: auto;
-      display: none;
-    }
-    .resultados {
-      margin-top: 20px;
-      text-align: left;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    button:hover { background: #004a99; }
+    #lector { margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; display: none; }
+    .resultados { margin-top: 20px; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; }
     .producto {
-      border: 2px solid #333;
-      border-radius: 8px;
-      padding: 12px;
-      margin: 10px 0;
-      background: #fff;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      border: 2px solid #333; border-radius: 8px; padding: 12px; margin: 10px 0;
+      background: #fff; box-shadow: 2px 2px 6px rgba(0,0,0,0.1); cursor: pointer;
     }
     .producto b { font-size: 15px; }
-    .precios {
-      margin-top: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+    .precios { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
     .precio-publico { font-weight: bold; color: #1a7c1a; }
     .precio-medio { color: #004080; }
     .precio-mayoreo { color: #b36b00; }
@@ -95,7 +53,6 @@
 
   <footer>Powered by <b>PROVSOFT</b></footer>
 
-  <!-- Librería para cámara -->
   <script src="html5-qrcode.min.js"></script>
 
   <script type="module">
@@ -103,7 +60,7 @@
     import { getFirestore, collection, query, where, getDocs } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // 🔹 Configuración Firebase
+    // 🔹 Config Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -160,6 +117,16 @@
       });
     }
 
+    async function getProductoOffline(codigoBarra) {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("productos", "readonly");
+        const store = tx.objectStore("productos");
+        const req = store.get(codigoBarra);
+        req.onsuccess = () => resolve(req.result || null);
+      });
+    }
+
     async function saveMeta(clave, valor) {
       const db = await openDB();
       const tx = db.transaction("meta", "readwrite");
@@ -176,40 +143,41 @@
       });
     }
 
-// 🔄 Sincronización
-// ===============================
-async function syncProductos() {
-  try {
-    const lastSync = await getMeta("lastSync");
-    const ahora = Date.now();
-    const unDia = 24 * 60 * 60 * 1000;
+    // ===============================
+    // 🔄 Sincronización
+    // ===============================
+    async function syncProductos() {
+      try {
+        const lastSync = await getMeta("lastSync");
+        const ahora = Date.now();
+        const unDia = 24 * 60 * 60 * 1000;
 
-    if (lastSync && (ahora - lastSync) < unDia) {
-      console.log("📦 Usando catálogo local (IndexedDB)");
-      return;
+        if (lastSync && (ahora - lastSync) < unDia) {
+          console.log("📦 Usando catálogo local (IndexedDB)");
+          return;
+        }
+
+        console.log("⬇️ Intentando descargar catálogo de Firestore...");
+        const q = query(collection(db, "productos"), where("activo", "==", true));
+        const snap = await getDocs(q);
+
+        if (snap.empty) throw new Error("No se pudo descargar catálogo");
+
+        const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        await saveProductos(lista);
+        await saveMeta("lastSync", ahora);
+        console.log("✅ Catálogo actualizado en IndexedDB");
+      } catch (err) {
+        console.warn("⚠️ Error al sincronizar con Firestore:", err.message);
+
+        const productosLocales = await getAllProductos();
+        if (productosLocales.length > 0) {
+          console.log("📦 Usando catálogo local en modo offline");
+        } else {
+          alert("❌ No hay internet y tampoco hay catálogo local.\nConéctate al menos una vez para bajar datos.");
+        }
+      }
     }
-
-    console.log("⬇️ Intentando descargar catálogo de Firestore...");
-    const q = query(collection(db, "productos"), where("activo", "==", true));
-    const snap = await getDocs(q);
-
-    if (snap.empty) throw new Error("No se pudo descargar catálogo");
-
-    const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    await saveProductos(lista);
-    await saveMeta("lastSync", ahora);
-    console.log("✅ Catálogo actualizado en IndexedDB");
-  } catch (err) {
-    console.warn("⚠️ Error al sincronizar con Firestore:", err.message);
-
-    const productosLocales = await getAllProductos();
-    if (productosLocales.length > 0) {
-      console.log("📦 Usando catálogo local en modo offline");
-    } else {
-      alert("❌ No hay internet y tampoco hay catálogo local.\nConéctate al menos una vez para bajar datos.");
-    }
-  }
-}
 
     // ===============================
     // 🔎 Buscar en IndexedDB
@@ -254,20 +222,27 @@ async function syncProductos() {
             <span class="precio-medio">Medio Mayoreo: $${p.medioMayoreo || "—"}</span>
             <span class="precio-mayoreo">Mayoreo: $${p.mayoreo || "—"}</span>
           </div>`;
-div.addEventListener("click", () => {
-  if (!navigator.onLine) {
-    alert("⚠️ Sin conexión a internet: Solo puedes consultar productos ya guardados en tu catálogo local.");
-    return;
-  }
-  window.location.href = `producto.html?id=${encodeURIComponent(p.codigoBarra)}`;
-});
+
+        div.addEventListener("click", async () => {
+          if (!navigator.onLine) {
+            // Verificar si el producto existe en IndexedDB
+            const existeOffline = await getProductoOffline(p.codigoBarra);
+            if (!existeOffline) {
+              alert("⚠️ Este producto no está disponible offline.\nConéctate a internet para consultarlo.");
+              return;
+            }
+          }
+          window.location.href = `producto.html?id=${encodeURIComponent(p.codigoBarra)}`;
+        });
 
         resultadosDiv.appendChild(div);
       });
       contador.textContent = "Resultados: " + resultados.length;
     }
 
+    // ===============================
     // 📷 ESCÁNER DE CÓDIGO
+    // ===============================
     window.iniciarEscaneo = function() {
       divLector.style.display = "block";
       const lector = new Html5Qrcode("lector");
