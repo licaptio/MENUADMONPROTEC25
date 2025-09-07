@@ -179,24 +179,41 @@
     // ===============================
     // 🔄 Sincronización
     // ===============================
-    async function syncProductos() {
-      const lastSync = await getMeta("lastSync");
-      const ahora = Date.now();
-      const unDia = 24 * 60 * 60 * 1000;
+    // ===============================
+// 🔄 Sincronización
+// ===============================
+async function syncProductos() {
+  try {
+    const lastSync = await getMeta("lastSync");
+    const ahora = Date.now();
+    const unDia = 24 * 60 * 60 * 1000;
 
-      if (lastSync && (ahora - lastSync) < unDia) {
-        console.log("📦 Usando catálogo local (IndexedDB)");
-        return;
-      }
-
-      console.log("⬇️ Descargando catálogo de Firestore...");
-      const q = query(collection(db, "productos"), where("activo", "==", true));
-      const snap = await getDocs(q);
-      const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      await saveProductos(lista);
-      await saveMeta("lastSync", ahora);
-      console.log("✅ Catálogo actualizado en IndexedDB");
+    if (lastSync && (ahora - lastSync) < unDia) {
+      console.log("📦 Usando catálogo local (IndexedDB)");
+      return;
     }
+
+    console.log("⬇️ Intentando descargar catálogo de Firestore...");
+    const q = query(collection(db, "productos"), where("activo", "==", true));
+    const snap = await getDocs(q);
+
+    if (snap.empty) throw new Error("No se pudo descargar catálogo");
+
+    const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    await saveProductos(lista);
+    await saveMeta("lastSync", ahora);
+    console.log("✅ Catálogo actualizado en IndexedDB");
+  } catch (err) {
+    console.warn("⚠️ Error al sincronizar con Firestore:", err.message);
+
+    const productosLocales = await getAllProductos();
+    if (productosLocales.length > 0) {
+      console.log("📦 Usando catálogo local en modo offline");
+    } else {
+      alert("❌ No hay internet y tampoco hay catálogo local.\nConéctate al menos una vez para bajar datos.");
+    }
+  }
+}
 
     // ===============================
     // 🔎 Buscar en IndexedDB
