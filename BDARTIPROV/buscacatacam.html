@@ -254,8 +254,12 @@ async function syncProductos() {
             <span class="precio-medio">Medio Mayoreo: $${p.medioMayoreo || "—"}</span>
             <span class="precio-mayoreo">Mayoreo: $${p.mayoreo || "—"}</span>
           </div>`;
-        div.addEventListener("click", () => {
-  window.location.href = `producto.html?id=${encodeURIComponent(p.id)}`;
+div.addEventListener("click", () => {
+  if (!navigator.onLine) {
+    alert("⚠️ Sin conexión a internet: Solo puedes consultar productos ya guardados en tu catálogo local.");
+    return;
+  }
+  window.location.href = `producto.html?id=${encodeURIComponent(p.codigoBarra)}`;
 });
 
         resultadosDiv.appendChild(div);
