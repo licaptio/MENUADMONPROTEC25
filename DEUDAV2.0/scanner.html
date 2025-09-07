@@ -47,6 +47,17 @@
   <button onclick="cancelar()">❌ Cancelar</button>
 
   <script>
+    // 🔊 función beep
+    function beep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime); // tono
+      oscillator.connect(ctx.destination);
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.15); // duración 150ms
+    }
+
     function extraeUUID(raw) {
       try {
         const url = new URL(raw);
@@ -62,15 +73,19 @@
     }
 
     const lector = new Html5Qrcode("lector");
+    let yaDetectado = false; // 👈 evita lecturas dobles
 
     Html5Qrcode.getCameras().then(cameras => {
       if (cameras && cameras.length) {
         lector.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: 250 }, // 👈 Aquí está la mira verde automática
+          { fps: 10, qrbox: 250 },
           qrCodeMessage => {
+            if (yaDetectado) return;
             const uuid = extraeUUID(qrCodeMessage);
             if (uuid) {
+              yaDetectado = true;
+              beep(); // 🔊 suena cuando detecta
               lector.stop().catch(()=>{});
               window.location.href =
                 "factura.html?uuid=" + encodeURIComponent(uuid) +
