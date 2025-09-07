@@ -254,6 +254,10 @@ async function syncProductos() {
             <span class="precio-medio">Medio Mayoreo: $${p.medioMayoreo || "—"}</span>
             <span class="precio-mayoreo">Mayoreo: $${p.mayoreo || "—"}</span>
           </div>`;
+        div.addEventListener("click", () => {
+  window.location.href = `producto.html?id=${encodeURIComponent(p.id)}`;
+});
+
         resultadosDiv.appendChild(div);
       });
       contador.textContent = "Resultados: " + resultados.length;
