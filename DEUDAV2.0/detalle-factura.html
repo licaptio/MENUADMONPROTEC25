@@ -40,6 +40,14 @@
   <h2>Detalle de Factura</h2>
   <div class="info" id="contenedor"></div>
 
+  <!-- 📷 Input para abrir cámara -->
+  <div style="margin-top:20px; padding:10px; border:1px solid #ccc; border-radius:6px; background:#fff;">
+    <h3>Subir Foto de Factura</h3>
+    <input type="file" accept="image/*" capture="environment" id="fotoInput">
+    <button onclick="subirFoto()" style="margin-top:10px;">📤 Subir Foto</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const uuid = params.get("uuid");
@@ -47,145 +55,160 @@
 
     const contenedor = document.getElementById('contenedor');
     const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+    const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
+
+    const supabaseClient = window.supabase.createClient(supabaseUrl, apiKey);
 
     if (!uuid && !folio) {
       contenedor.innerHTML = '<p class="error">Folio o UUID no proporcionado en la URL.</p>';
     } else {
       const url = uuid
-        ? `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${uuid}`  
-        : `https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/deuda_limpia_pdd?factura=eq.${folio}`;
+        ? `${supabaseUrl}/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${uuid}`  
+        : `${supabaseUrl}/rest/v1/deuda_limpia_pdd?factura=eq.${folio}`;
 
-      fetch(url, {
-        headers: { apikey: apiKey }
-      })
+      fetch(url, { headers: { apikey: apiKey } })
       .then(r => r.json())
-.then(json => {
-  if (json.length === 0) {
-    contenedor.innerHTML = `<p class="error">No se encontró información para el ${uuid ? 'UUID' : 'folio'}.</p>`;
-    return;
-  }
+      .then(json => {
+        if (json.length === 0) {
+          contenedor.innerHTML = `<p class="error">No se encontró información para el ${uuid ? 'UUID' : 'folio'}.</p>`;
+          return;
+        }
 
-  const f = json[0];
-  const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+        const f = json[0];
+        const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
 
-  let conceptosHTML = '';
-let subtotal = 0;
-let impuestos = 0;
-let tipoImp = 'IVA (16%)';
+        let conceptosHTML = '';
+        let subtotal = 0;
+        let impuestos = 0;
+        let tipoImp = 'IVA (16%)';
 
-if (Array.isArray(f.conceptos_detalle)) {
-  const conceptos = f.conceptos_detalle;
-for (let c of conceptos) {
-  let tipoImp = c.tipoImpuesto || 'SIN IMP';
-const totalSinImp = c.cantidad * c.costoUnitario;
-const imp = totalSinImp * c.tasaImpuesto;
-const totalConcepto = totalSinImp + imp;
+        if (Array.isArray(f.conceptos_detalle)) {
+          const conceptos = f.conceptos_detalle;
+          for (let c of conceptos) {
+            let tipoImp = c.tipoImpuesto || 'SIN IMP';
+            const totalSinImp = c.cantidad * c.costoUnitario;
+            const imp = totalSinImp * c.tasaImpuesto;
+            subtotal += totalSinImp;
+            impuestos += imp;
 
-  subtotal += totalSinImp;
-  impuestos += imp;
+            if (c.tasaImpuesto === 0) tipoImp = 'Tasa 0%';
+            if ((c.tipoImpuesto || "").toUpperCase().includes("IEPS")) tipoImp = 'IEPS';
 
-  if (c.tasaImpuesto === 0) tipoImp = 'Tasa 0%';
-  if ((c.tipoImpuesto || "").toUpperCase().includes("IEPS")) tipoImp = 'IEPS';
-
-  conceptosHTML += `
-    <tr>
-      <td>${c.cantidad}</td>
-      <td>${c.codigoSAT}</td>
-      <td>${c.descripcion}</td>
-      <td>$${c.costoUnitario.toFixed(2)}</td>
-      <td>${(c.tasaImpuesto * 100).toFixed(2)}%</td>
-      <td>$${totalSinImp.toFixed(2)}</td>
-    </tr>`;
-}
-
-
-    
-  }
-
-  contenedor.innerHTML = `
-    <div class="campo">
-  <span>UUID:</span> 
-  <span id="uuidTexto">${f.uuid_cfdi}</span>
-  <button onclick="copiarUUID()" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem;">📋 Copiar</button>
-</div>
-
-    <div class="campo"><span>Factura:</span> ${f.factura}</div>
-    <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
-    <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
-    <div class="campo"><span>Fecha:</span> ${new Date(f.fecha).toLocaleDateString('es-MX')}</div>
-    <div class="campo"><span>Total:</span> ${formatoPesos.format(f.total)}</div>
-    <div class="campo"><span>Recibida físicamente:</span> ${f.factura_fisicamente}</div>
-    <div class="campo"><span>Comentario:</span> ${f.comentario_factura_fisica || "Sin comentario"}</div>
-    ${f.concepto ? `<div class="campo"><span>Resumen de Concepto:</span></div>
-    <div style="border: 1px solid #ccc; background: #f9f9f9; padding: 10px; border-radius: 6px;">
-      <ul style="margin: 0; padding-left: 20px; list-style-type: none;">
-        ${f.concepto.split('•').map(item => {
-          const match = item.match(/(\d+)\s×\s(.+?)\s\(SAT\s(\d+)\).*?Unitario:\s*\$?([\d.]+)\s*\+\s*([\d.]+)%/i);
-          if (match) {
-            const [, cantidad, descripcion, codigoSAT, unitario, impuesto] = match;
-            let tipo = "IVA";
-            if (item.toUpperCase().includes("IEPS")) tipo = "IEPS";
-            if (parseFloat(impuesto) === 0) tipo = "Tasa 0%";
-            return `<li style="margin-bottom: 10px;">
-              <strong>${cantidad} ×</strong> ${descripcion}<br>
-              <small>Código SAT: ${codigoSAT} | Unitario: $${parseFloat(unitario).toFixed(2)} | ${tipo}: ${parseFloat(impuesto).toFixed(2)}%</small>
-            </li>`;
-          } else {
-            return `<li style="margin-bottom: 10px;">${item.trim()}</li>`;
+            conceptosHTML += `
+              <tr>
+                <td>${c.cantidad}</td>
+                <td>${c.codigoSAT}</td>
+                <td>${c.descripcion}</td>
+                <td>$${c.costoUnitario.toFixed(2)}</td>
+                <td>${(c.tasaImpuesto * 100).toFixed(2)}%</td>
+                <td>$${totalSinImp.toFixed(2)}</td>
+              </tr>`;
           }
-        }).join('')}
-      </ul>
-    </div>` : ''}
-    ${Array.isArray(f.fotos) && f.fotos[0] ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
-    <div class="campo"><span>Conceptos:</span></div>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-      <thead>
-        <tr style="background: #dbe5f1; color: #003366;">
-          <th>Cantidad</th>
-          <th>Código SAT</th>
-          <th>Descripción</th>
-          <th>Costo Unitario</th>
-          <th>Impuesto</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${conceptosHTML || `<tr><td colspan="7" style="text-align: center;">No hay conceptos registrados.</td></tr>`}
-      </tbody>
-      <tfoot>
-        <tr style="background: #eee;">
-          <td colspan="6" style="text-align: right; font-weight: bold;">SUBTOTAL</td>
-          <td style="text-align: right;">${formatoPesos.format(subtotal)}</td>
-        </tr>
-        <tr style="background: #eee;">
-          <td colspan="6" style="text-align: right; font-weight: bold;">${tipoImp}</td>
-          <td style="text-align: right;">${formatoPesos.format(impuestos)}</td>
-        </tr>
-        <tr style="background: #003366; color: white;">
-          <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL</td>
-          <td style="text-align: right;">${formatoPesos.format(subtotal + impuestos)}</td>
-        </tr>
-      </tfoot>
-    </table>`;
-})
+        }
 
-
+        contenedor.innerHTML = `
+          <div class="campo">
+            <span>UUID:</span> 
+            <span id="uuidTexto">${f.uuid_cfdi}</span>
+            <button onclick="copiarUUID()" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem;">📋 Copiar</button>
+          </div>
+          <div class="campo"><span>Factura:</span> ${f.factura}</div>
+          <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
+          <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
+          <div class="campo"><span>Fecha:</span> ${new Date(f.fecha).toLocaleDateString('es-MX')}</div>
+          <div class="campo"><span>Total:</span> ${formatoPesos.format(f.total)}</div>
+          <div class="campo"><span>Recibida físicamente:</span> ${f.factura_fisicamente}</div>
+          <div class="campo"><span>Comentario:</span> ${f.comentario_factura_fisica || "Sin comentario"}</div>
+          ${Array.isArray(f.fotos) && f.fotos[0] ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
+          <div class="campo"><span>Conceptos:</span></div>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr style="background: #dbe5f1; color: #003366;">
+                <th>Cantidad</th>
+                <th>Código SAT</th>
+                <th>Descripción</th>
+                <th>Costo Unitario</th>
+                <th>Impuesto</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${conceptosHTML || `<tr><td colspan="7" style="text-align: center;">No hay conceptos registrados.</td></tr>`}
+            </tbody>
+            <tfoot>
+              <tr style="background: #eee;">
+                <td colspan="6" style="text-align: right; font-weight: bold;">SUBTOTAL</td>
+                <td style="text-align: right;">${formatoPesos.format(subtotal)}</td>
+              </tr>
+              <tr style="background: #eee;">
+                <td colspan="6" style="text-align: right; font-weight: bold;">${tipoImp}</td>
+                <td style="text-align: right;">${formatoPesos.format(impuestos)}</td>
+              </tr>
+              <tr style="background: #003366; color: white;">
+                <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL</td>
+                <td style="text-align: right;">${formatoPesos.format(subtotal + impuestos)}</td>
+              </tr>
+            </tfoot>
+          </table>`;
+      })
       .catch(err => {
         contenedor.innerHTML = '<p class="error">Error al cargar los datos: ' + err.message + '</p>';
       });
     }
-function copiarUUID() {
-  const texto = document.getElementById("uuidTexto").textContent;
-  navigator.clipboard.writeText(texto)
-    .then(() => {
-      alert("✅ UUID copiado al portapapeles");
-    })
-    .catch(() => {
-      alert("❌ No se pudo copiar el UUID");
-    });
-}
 
+    function copiarUUID() {
+      const texto = document.getElementById("uuidTexto").textContent;
+      navigator.clipboard.writeText(texto)
+        .then(() => alert("✅ UUID copiado al portapapeles"))
+        .catch(() => alert("❌ No se pudo copiar el UUID"));
+    }
 
+    async function subirFoto() {
+      const fileInput = document.getElementById("fotoInput");
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Selecciona o toma una foto primero 📷");
+        return;
+      }
+
+      const nombreArchivo = `${crypto.randomUUID()}.jpg`;
+
+      // Subir al bucket
+      const { data, error } = await supabaseClient.storage
+        .from("fotos-facturas")
+        .upload(`clientes/${nombreArchivo}`, file, {
+          contentType: file.type,
+          upsert: false
+        });
+
+      if (error) {
+        alert("❌ Error al subir foto: " + error.message);
+        return;
+      }
+
+      // Obtener URL pública
+      const { data: urlData } = supabaseClient.storage
+        .from("fotos-facturas")
+        .getPublicUrl(`clientes/${nombreArchivo}`);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Actualizar en la tabla
+      if (uuid) {
+        const { error: updateError } = await supabaseClient
+          .from("deuda_limpia_pdd")
+          .update({ fotos: [publicUrl] })
+          .eq("uuid_cfdi", uuid);
+
+        if (updateError) {
+          alert("⚠️ Foto subida pero no se guardó en la tabla: " + updateError.message);
+        } else {
+          alert("📌 Foto asociada al UUID en deuda_limpia_pdd");
+        }
+      } else {
+        alert("✅ Foto subida, pero no hay UUID para asociar");
+      }
+    }
   </script>
 </body>
 </html>
