@@ -3,22 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <title>Detalle de Factura</title>
+  <!-- 👇 Esto hace que en móvil se vea bien -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f3f6fa;
-      padding: 30px;
-      max-width: 800px;
+      padding: 15px;
+      max-width: 900px;
       margin: auto;
     }
     h2 {
       color: #003366;
+      text-align: center;
+      margin-bottom: 20px;
     }
     .info {
       background: white;
       border-radius: 8px;
-      padding: 20px;
+      padding: 15px;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
     }
     .campo {
       margin-bottom: 10px;
@@ -33,6 +40,72 @@
     }
     a {
       color: #0066cc;
+      word-break: break-word;
+    }
+    .upload-box {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .upload-box h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      color: #003366;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 10px 0;
+      font-size: 1rem;
+      width: 100%;
+    }
+    button {
+      padding: 12px 18px;
+      background: #0066cc;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%; /* en móvil ocupa ancho completo */
+    }
+    button:hover {
+      background: #004c99;
+    }
+    /* 👇 Hace que la tabla sea desplazable en pantallas chicas */
+    .tabla-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      min-width: 600px; /* para que active el scroll en móvil */
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: center;
+    }
+    thead tr {
+      background: #dbe5f1;
+      color: #003366;
+    }
+    tfoot tr {
+      background: #eee;
+    }
+    @media (max-width: 600px) {
+      h2 {
+        font-size: 1.3rem;
+      }
+      .info {
+        font-size: 0.9rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -40,11 +113,11 @@
   <h2>Detalle de Factura</h2>
   <div class="info" id="contenedor"></div>
 
-  <!-- 📷 Input para abrir cámara -->
-  <div style="margin-top:20px; padding:10px; border:1px solid #ccc; border-radius:6px; background:#fff;">
+  <!-- 📷 Subir foto -->
+  <div class="upload-box">
     <h3>Subir Foto de Factura</h3>
     <input type="file" accept="image/*" capture="environment" id="fotoInput">
-    <button onclick="subirFoto()" style="margin-top:10px;">📤 Subir Foto</button>
+    <button onclick="subirFoto()">📤 Subir Foto</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -54,9 +127,8 @@
     const folio = params.get("folio");
 
     const contenedor = document.getElementById('contenedor');
-    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+    const apiKey = "TU_API_KEY"; // ⚠️ cámbiala por la tuya
     const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-
     const supabaseClient = window.supabase.createClient(supabaseUrl, apiKey);
 
     if (!uuid && !folio) {
@@ -69,145 +141,90 @@
       fetch(url, { headers: { apikey: apiKey } })
       .then(r => r.json())
       .then(json => {
-        if (json.length === 0) {
-          contenedor.innerHTML = `<p class="error">No se encontró información para el ${uuid ? 'UUID' : 'folio'}.</p>`;
+        if (!json.length) {
+          contenedor.innerHTML = `<p class="error">No se encontró información.</p>`;
           return;
         }
 
         const f = json[0];
         const formatoPesos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
 
+        let subtotal = 0, impuestos = 0;
         let conceptosHTML = '';
-        let subtotal = 0;
-        let impuestos = 0;
-        let tipoImp = 'IVA (16%)';
 
         if (Array.isArray(f.conceptos_detalle)) {
-          const conceptos = f.conceptos_detalle;
-          for (let c of conceptos) {
-            let tipoImp = c.tipoImpuesto || 'SIN IMP';
+          for (let c of f.conceptos_detalle) {
             const totalSinImp = c.cantidad * c.costoUnitario;
             const imp = totalSinImp * c.tasaImpuesto;
             subtotal += totalSinImp;
             impuestos += imp;
-
-            if (c.tasaImpuesto === 0) tipoImp = 'Tasa 0%';
-            if ((c.tipoImpuesto || "").toUpperCase().includes("IEPS")) tipoImp = 'IEPS';
-
             conceptosHTML += `
               <tr>
                 <td>${c.cantidad}</td>
                 <td>${c.codigoSAT}</td>
                 <td>${c.descripcion}</td>
                 <td>$${c.costoUnitario.toFixed(2)}</td>
-                <td>${(c.tasaImpuesto * 100).toFixed(2)}%</td>
+                <td>${(c.tasaImpuesto*100).toFixed(2)}%</td>
                 <td>$${totalSinImp.toFixed(2)}</td>
               </tr>`;
           }
         }
 
         contenedor.innerHTML = `
-          <div class="campo">
-            <span>UUID:</span> 
-            <span id="uuidTexto">${f.uuid_cfdi}</span>
-            <button onclick="copiarUUID()" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem;">📋 Copiar</button>
-          </div>
+          <div class="campo"><span>UUID:</span> ${f.uuid_cfdi}</div>
           <div class="campo"><span>Factura:</span> ${f.factura}</div>
           <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
           <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
           <div class="campo"><span>Fecha:</span> ${new Date(f.fecha).toLocaleDateString('es-MX')}</div>
           <div class="campo"><span>Total:</span> ${formatoPesos.format(f.total)}</div>
-          <div class="campo"><span>Recibida físicamente:</span> ${f.factura_fisicamente}</div>
-          <div class="campo"><span>Comentario:</span> ${f.comentario_factura_fisica || "Sin comentario"}</div>
-          ${Array.isArray(f.fotos) && f.fotos[0] ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
+          ${Array.isArray(f.fotos) && f.fotos[0] ? 
+            `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
           <div class="campo"><span>Conceptos:</span></div>
-          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-            <thead>
-              <tr style="background: #dbe5f1; color: #003366;">
-                <th>Cantidad</th>
-                <th>Código SAT</th>
-                <th>Descripción</th>
-                <th>Costo Unitario</th>
-                <th>Impuesto</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${conceptosHTML || `<tr><td colspan="7" style="text-align: center;">No hay conceptos registrados.</td></tr>`}
-            </tbody>
-            <tfoot>
-              <tr style="background: #eee;">
-                <td colspan="6" style="text-align: right; font-weight: bold;">SUBTOTAL</td>
-                <td style="text-align: right;">${formatoPesos.format(subtotal)}</td>
-              </tr>
-              <tr style="background: #eee;">
-                <td colspan="6" style="text-align: right; font-weight: bold;">${tipoImp}</td>
-                <td style="text-align: right;">${formatoPesos.format(impuestos)}</td>
-              </tr>
-              <tr style="background: #003366; color: white;">
-                <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL</td>
-                <td style="text-align: right;">${formatoPesos.format(subtotal + impuestos)}</td>
-              </tr>
-            </tfoot>
-          </table>`;
-      })
-      .catch(err => {
-        contenedor.innerHTML = '<p class="error">Error al cargar los datos: ' + err.message + '</p>';
+          <div class="tabla-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cantidad</th><th>Código SAT</th><th>Descripción</th>
+                  <th>Costo Unitario</th><th>Impuesto</th><th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${conceptosHTML || `<tr><td colspan="6">No hay conceptos registrados.</td></tr>`}
+              </tbody>
+              <tfoot>
+                <tr><td colspan="5" style="text-align:right;font-weight:bold;">SUBTOTAL</td><td>${formatoPesos.format(subtotal)}</td></tr>
+                <tr><td colspan="5" style="text-align:right;font-weight:bold;">IVA</td><td>${formatoPesos.format(impuestos)}</td></tr>
+                <tr style="background:#003366;color:#fff;">
+                  <td colspan="5" style="text-align:right;font-weight:bold;">TOTAL</td>
+                  <td>${formatoPesos.format(subtotal+impuestos)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>`;
       });
-    }
-
-    function copiarUUID() {
-      const texto = document.getElementById("uuidTexto").textContent;
-      navigator.clipboard.writeText(texto)
-        .then(() => alert("✅ UUID copiado al portapapeles"))
-        .catch(() => alert("❌ No se pudo copiar el UUID"));
     }
 
     async function subirFoto() {
       const fileInput = document.getElementById("fotoInput");
       const file = fileInput.files[0];
-      if (!file) {
-        alert("Selecciona o toma una foto primero 📷");
-        return;
-      }
+      if (!file) return alert("Selecciona una foto 📷");
 
       const nombreArchivo = `${crypto.randomUUID()}.jpg`;
-
-      // Subir al bucket
-      const { data, error } = await supabaseClient.storage
+      const { error } = await supabaseClient.storage
         .from("fotos-facturas")
-        .upload(`clientes/${nombreArchivo}`, file, {
-          contentType: file.type,
-          upsert: false
-        });
+        .upload(`clientes/${nombreArchivo}`, file, { contentType: file.type });
+      if (error) return alert("❌ Error: " + error.message);
 
-      if (error) {
-        alert("❌ Error al subir foto: " + error.message);
-        return;
-      }
-
-      // Obtener URL pública
       const { data: urlData } = supabaseClient.storage
         .from("fotos-facturas")
         .getPublicUrl(`clientes/${nombreArchivo}`);
 
-      const publicUrl = urlData.publicUrl;
-
-      // Actualizar en la tabla
       if (uuid) {
-        const { error: updateError } = await supabaseClient
-          .from("deuda_limpia_pdd")
-          .update({ fotos: [publicUrl] })
+        await supabaseClient.from("deuda_limpia_pdd")
+          .update({ fotos: [urlData.publicUrl] })
           .eq("uuid_cfdi", uuid);
-
-        if (updateError) {
-          alert("⚠️ Foto subida pero no se guardó en la tabla: " + updateError.message);
-        } else {
-          alert("📌 Foto asociada al UUID en deuda_limpia_pdd");
-        }
-      } else {
-        alert("✅ Foto subida, pero no hay UUID para asociar");
       }
+      alert("✅ Foto subida correctamente");
     }
   </script>
 </body>
