@@ -142,6 +142,7 @@
       actualizarTransform();
 
       img.src = secciones[id].img_url;
+      img.style.objectFit = secciones[id].display_mode || "contain";
       viewer.querySelectorAll(".hotspot").forEach(h => h.remove());
 
       // Hotspots
