@@ -13,13 +13,19 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-color: #f4f6f8;
+      background: url('TRILOBAS.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-shadow: 1px 1px 2px black;
     }
 
     h1 {
       margin-bottom: 1.5em;
-      font-size: 1.7em;
-      color: #333;
+      font-size: 1.8em;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 10px;
     }
 
     .menu-links {
@@ -36,36 +42,42 @@
       text-decoration: none;
       border-radius: 10px;
       font-size: 1.05em;
-      font-weight: 500;
+      font-weight: 600;
       text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, opacity 0.3s;
     }
 
     .menu-links a:hover {
-      transform: scale(1.03);
+      transform: scale(1.05);
+      opacity: 0.9;
     }
 
-    /* Colores únicos */
-    .btn1  { background: #17a2b8; }   /* cyan */
-    .btn2  { background: #6f42c1; }   /* morado */
-    .btn3  { background: #e83e8c; }   /* rosa */
-    .btn4  { background: #fd7e14; }   /* naranja */
-    .btn5  { background: #20c997; }   /* verde agua */
-    .btn6  { background: #ffc107; color: #212529; }  /* amarillo */
-    .btn7  { background: #6610f2; }   /* púrpura intenso */
-    .btn8  { background: #343a40; }   /* gris oscuro */
-    .btn9  { background: #17a2b8; }   /* repetir cyan */
-    .btn10 { background: #007bff; }   /* repetir azul */
-    .btn11 { background: #e83e8c; }  /* rosa fuerte */
-    .btn14 { background: #84cc16; }  /* verde lima */
-
+    /* 🎨 Colores únicos para cada botón */
+    .btn1  { background: #e67e22; }  /* AlikaBot */
+    .btn2  { background: #3498db; }  /* Auditoría Precio */
+    .btn3  { background: #16a34a; }  /* Catálogo Artículos */
+    .btn4  { background: #9b59b6; }  /* Catálogo Artículos PDD */
+    .btn5  { background: #c0392b; }  /* Checklist */
+    .btn6  { background: #f59e0b; }  /* Control Pago */
+    .btn7  { background: #1abc9c; }  /* Deuda V2 */
+    .btn8  { background: #2c3e50; }  /* Diario */
+    .btn9  { background: #e91e63; }  /* Entrada Fact INV */
+    .btn10 { background: #3b82f6; }  /* Finanzas */
+    .btn11 { background: #10b981; }  /* Inventario GIT */
+    .btn12 { background: #9333ea; }  /* Inv. Zapata */
+    .btn13 { background: #ef4444; }  /* Lista Precios PDD */
+    .btn14 { background: #84cc16; }  /* Sergio Aguayo */
+    .btn15 { background: #d97706; }  /* Tienda Virtual */
 
     footer {
       margin-top: 3em;
       text-align: center;
       font-size: 13px;
-      color: #666;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 6px;
     }
 
     #fecha-hora {
@@ -77,69 +89,32 @@
         grid-template-columns: 1fr 1fr;
       }
     }
-  .menu-links a {
-  display: block;
-  margin: 10px 0;
-  padding: 15px;
-  border-radius: 10px;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 16px;
-  font-weight: bold;
-  text-decoration: none;
-  text-align: center;
-  color: white;          /* todas letras blancas */
-  transition: transform 0.2s, background 0.3s;
-}
-
-.menu-links a:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
-}
-
-/* Colores diferentes por cada botón */
-.btn1 { background: #e67e22; }  /* naranja */
-.btn2 { background: #3498db; }  /* azul */
-.btn3 { background: #16a34a; }  /* verde */
-.btn4 { background: #8e44ad; }  /* morado */
-.btn5 { background: #c0392b; }  /* rojo */
-.btn6 { background: #f59e0b; }  /* ámbar */
-.btn7 { background: #1abc9c; }  /* turquesa */
-.btn8 { background: #2c3e50; }  /* gris oscuro */
-.btn9 { background: #e91e63; }  /* rosa */
-.btn10 { background: #3b82f6; } /* azul más claro */
-.btn11 { background: #10b981; } /* verde esmeralda */
-.btn12 { background: #9333ea; } /* violeta */
-.btn13 { background: #ef4444; } /* rojo intenso */
-
   </style>
 </head>
 <body>
 
   <h1>📋 Menú Principal</h1>
 
-<div class="menu-links">
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/ALIKALOBABOTS/index.html" target="_blank" class="btn1">🦊 AlikaBot</a>
-  <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn2">📘 Diario</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn3">📦 Inventario GIT</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn4">💰 Deuda V2</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank" class="btn6">🏷️ Inv. Zapata</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/CONTROLPAGOS/index.html" target="_blank" class="btn5">📥 Control Pago</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn7">📘 Sergio Aguayo</a>
-  <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank" class="btn8">📘 Catálogo Artículos</a>
-  <a href="FINANCIEROPDD/index.html" class="btn9">📊 Finanzas</a>
-  <a href="AUDPRECIO/INDEX.html" target="_blank" class="btn10">📑 Auditoría de Precio</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/ENTRADAFACTINV/index.html" target="_blank" class="btn12">📥 Entrada Fact INV</a>
-  <a href="BDARTIPROV/index.html" class="btn13">📚 Catálogo de Artículos PDD</a>
-  <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn11">📑 Lista Precios PDD</a>
-  <a href="CHECK/index.html" target="_blank" class="btn14">✅ Checklist</a>
-  <a href="VIRTUALSTORE/index.html" target="_blank" class="btn14">✅ Tienda Virtual</a>                                                                      
-
-
-</div>
-
+  <div class="menu-links">
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ALIKALOBABOTS/index.html" target="_blank" class="btn1">🦊 AlikaBot</a>
+    <a href="AUDPRECIO/INDEX.html" target="_blank" class="btn2">📑 Auditoría de Precio</a>
+    <a href="https://licaptio.github.io/catafirebase/index.html" target="_blank" class="btn3">📘 Catálogo Artículos</a>
+    <a href="BDARTIPROV/index.html" class="btn4">📚 Catálogo de Artículos PDD</a>
+    <a href="CHECK/index.html" target="_blank" class="btn5">✅ Checklist</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/CONTROLPAGOS/index.html" target="_blank" class="btn6">📥 Control Pago</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn7">💰 Deuda V2</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn8">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ENTRADAFACTINV/index.html" target="_blank" class="btn9">📥 Entrada Fact INV</a>
+    <a href="FINANCIEROPDD/index.html" class="btn10">📊 Finanzas</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn11">📦 Inventario GIT</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank" class="btn12">🏷️ Inv. Zapata</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn14">📘 Sergio Aguayo</a>
+    <a href="VIRTUALSTORE/index.html" target="_blank" class="btn15">🛒 Tienda Virtual</a>
+  </div>
 
   <footer>
-    <div>📦 powered by PROVSOFT· <span id="fecha-hora">⏳</span></div>
+    <div>📦 powered by PROVSOFT · <span id="fecha-hora">⏳</span></div>
   </footer>
 
   <script>
@@ -150,7 +125,6 @@
       const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
     }
-
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
   </script>
