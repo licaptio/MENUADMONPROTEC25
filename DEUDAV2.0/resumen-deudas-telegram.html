@@ -121,7 +121,7 @@ const proveedoresContado = [
   "RADIOMOVIL DIPSA",	
   "SERVICIOS GASOLINEROS DE MEXICO",	
   "PEÑAFIEL BEBIDAS",
-  "DELIA EUSTOLIA TORRES GARCIA	",
+  "DELIA EUSTOLIA TORRES GARCIA",
   "BONAFONT",
   "BOTANAS Y DERIVADOS",
   "ANDRES EULALIO RAMIREZ CRUZ",
@@ -308,24 +308,13 @@ function generarResumenTextoContado(facturas) {
 async function enviarTelegram() {
   const telegramToken = "7349070760:AAHYA8YPoDWfUuLMjgUDubRi9CSYZi4Oirg";
   const chatId = "6617988297";
+  if (!telegramToken || !chatId) return alert("Falta configurar el TOKEN o el CHAT ID.");
 
-  if (!telegramToken || !chatId) {
-    alert("Falta configurar el TOKEN o el CHAT ID.");
-    return;
-  }
+  // 1) Escapar para MarkdownV2
+  let texto = escapeMarkdownV2(resumenTelegram).trim();
 
-  // Sanitiza para Markdown (Telegram lo odia cuando no cierras * o usas caracteres raros)
-let texto = resumenTelegram
-  .replace(/([_*[\]()~`>#+=\-|{}!])/g, "\\$1")  // Escapa correctamente para Markdown
-  .trim();
-
-  console.log("Resumen a enviar:", texto);
-  const partes = [];
-  const MAX_LENGTH = 4000;
-
-  for (let i = 0; i < texto.length; i += MAX_LENGTH) {
-    partes.push(texto.slice(i, i + MAX_LENGTH));
-  }
+  // 2) Partir por BYTES UTF-8 (no por caracteres)
+  const partes = splitByUtf8Bytes(texto, 4000); // margen bajo 4096
 
   try {
     for (const parte of partes) {
@@ -335,26 +324,53 @@ let texto = resumenTelegram
         body: JSON.stringify({
           chat_id: chatId,
           text: parte,
-          parse_mode: "Markdown"
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true
         })
       });
-
       const body = await res.json();
-
       if (!body.ok) {
-        console.error("❌ Telegram respondió con error:", body);
+        console.error("❌ Telegram error:", body);
         alert("Error al enviar: " + (body.description || "desconocido"));
         return;
       }
     }
-
     alert("Resumen enviado por Telegram ✅");
-  } catch (error) {
-    console.error("❌ Error en el envío:", error);
+  } catch (err) {
+    console.error("❌ Error en el envío:", err);
     alert("Hubo un error al enviar el resumen");
   }
 }
 
+// Escapa caracteres reservados para MarkdownV2
+function escapeMarkdownV2(text) {
+  return text
+    .replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1')
+    .replace(/</g, '\\<')
+    .replace(/>/g, '\\>');
+}
+
+// Corta por BYTES UTF-8 sin romper emojis
+function splitByUtf8Bytes(str, maxBytes) {
+  const enc = new TextEncoder();
+  const partes = [];
+  let actual = '';
+  let bytesActual = 0;
+
+  for (const ch of str) { // recorre por code points
+    const b = enc.encode(ch).length;
+    if (bytesActual + b > maxBytes) {
+      partes.push(actual);
+      actual = ch;
+      bytesActual = b;
+    } else {
+      actual += ch;
+      bytesActual += b;
+    }
+  }
+  if (actual) partes.push(actual);
+  return partes;
+}
     document.addEventListener("DOMContentLoaded", cargar);
   </script>
 </body>
