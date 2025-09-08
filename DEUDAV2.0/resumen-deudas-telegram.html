@@ -313,6 +313,9 @@ async function enviarTelegram() {
   // 1) Escapar para MarkdownV2
   let texto = escapeMarkdownV2(resumenTelegram).trim();
 
+  // ✅ Rehabilita negritas para segmentos *...* que pusiste en tus generadores
+texto = texto.replace(/\\\*(.+?)\\\*/g, '*$1*');
+  
   // 2) Partir por BYTES UTF-8 (no por caracteres)
   const partes = splitByUtf8Bytes(texto, 4000); // margen bajo 4096
 
