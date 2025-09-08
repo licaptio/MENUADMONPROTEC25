@@ -23,27 +23,31 @@
     #viewer {
       position: relative;
       width: 100%;
-      height: calc(100% - 60px); /* ocupa todo excepto el header */
+      height: calc(100% - 60px);
       overflow: hidden;
     }
     #viewer img {
       width: 100%;
       height: 100%;
-      object-fit: cover;  /* 🔹 ahora llena ancho y alto */
+      object-fit: cover; /* 🔹 llena toda la pantalla */
     }
     .hotspot {
       position: absolute;
-      width: 30px;
-      height: 30px;
-      background: red;
+      width: 28px;
+      height: 28px;
+      background: grey;   /* 🔹 gris en vez de rojo */
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid white;
       transform: translate(-50%, -50%);
-      transition: transform 0.2s;
+      animation: parpadeo 2s infinite ease-in-out; /* 🔹 parpadeo lento */
     }
     .hotspot:hover {
       transform: translate(-50%, -50%) scale(1.2);
+    }
+    @keyframes parpadeo {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
   </style>
 </head>
