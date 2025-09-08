@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Gestión de Secciones y Conexiones</title>
+  <title>📦 Panel de Control Secciones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial, sans-serif; margin:20px; background:#f8f9fa; }
@@ -37,6 +37,12 @@
     }
     .card h3 { margin:5px 0; }
     .card p { margin:2px 0; color:#555; }
+    .acciones { margin-top:10px; }
+    .acciones select {
+      margin:5px;
+      padding:5px;
+      border-radius:5px;
+    }
     .acciones button {
       margin:5px;
       background:#dc3545;
@@ -68,7 +74,7 @@
   </style>
 </head>
 <body>
-  <h1>📦 Gestor de Secciones</h1>
+  <h1>📦 Panel de Control</h1>
 
   <!-- Crear secciones -->
   <form id="formSeccion">
@@ -121,10 +127,8 @@
 
     const gridSecciones = document.getElementById("gridSecciones");
     const gridEnlaces = document.getElementById("gridEnlaces");
-
     const form = document.getElementById("formSeccion");
     const formEnlace = document.getElementById("formEnlace");
-
     const modal = document.getElementById("modal");
     const visorImg = document.getElementById("visorImg");
     const puntoPreview = document.getElementById("puntoPreview");
@@ -144,6 +148,11 @@
           <p><b>ID:</b> ${sec.id}</p>
           <p><b>Bodega:</b> ${sec.bodega_id}</p>
           <div class="acciones">
+            <label>Modo:</label>
+            <select onchange="cambiarModo('${sec.id}', this.value)">
+              <option value="contain" ${sec.display_mode === "contain" ? "selected" : ""}>Centrada</option>
+              <option value="cover" ${sec.display_mode === "cover" ? "selected" : ""}>Pantalla completa</option>
+            </select>
             <button onclick="abrirVisor('${sec.img_url}')">📍 Marcar</button>
             <button onclick="eliminarSeccion('${sec.id}')">❌</button>
           </div>
@@ -164,7 +173,6 @@
       const { error: err1 } = await supabase
         .storage.from("recorridos")
         .upload(`bodega${bodega}/${id}.jpg`, archivo, { upsert: true });
-
       if (err1) { alert("Error al subir imagen"); return; }
 
       const urlPublica = supabase
@@ -172,14 +180,25 @@
         .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
 
       const { error: err2 } = await supabase.from("secciones").insert([
-        { id, bodega_id: bodega, nombre, img_url: urlPublica }
+        { id, bodega_id: bodega, nombre, img_url: urlPublica, display_mode: "contain" }
       ]);
-
       if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
 
       cargarSecciones();
       form.reset();
     });
+
+    // 🔹 Cambiar modo de visualización
+    async function cambiarModo(id, modo) {
+      const { error } = await supabase
+        .from("secciones")
+        .update({ display_mode: modo })
+        .eq("id", id);
+      if (error) {
+        console.error(error);
+        alert("❌ Error al actualizar el modo de visualización");
+      }
+    }
 
     // 🔹 Eliminar sección
     async function eliminarSeccion(id) {
@@ -250,7 +269,6 @@
       visorImg.src = imgUrl;
       modal.style.display = "flex";
     }
-
     modal.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
 
     visorImg.onclick = (e) => {
