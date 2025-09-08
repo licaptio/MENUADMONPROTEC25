@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>🗺️ Recorrido Virtual</title>
+  <title>🗺️ Recorrido Virtual con Zonas de Zoom</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body, html {
@@ -12,6 +12,7 @@
       width: 100%;
       background: black;
       font-family: Arial, sans-serif;
+      overflow: hidden;
     }
     h1 {
       text-align: center;
@@ -25,29 +26,72 @@
       width: 100%;
       height: calc(100% - 60px);
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     #viewer img {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* 🔹 llena toda la pantalla */
+      object-fit: contain;
     }
     .hotspot {
       position: absolute;
       width: 28px;
       height: 28px;
-      background: grey;   /* 🔹 gris en vez de rojo */
+      background: grey;
       border-radius: 50%;
-      cursor: pointer;
       border: 2px solid white;
       transform: translate(-50%, -50%);
-      animation: parpadeo 2s infinite ease-in-out; /* 🔹 parpadeo lento */
-    }
-    .hotspot:hover {
-      transform: translate(-50%, -50%) scale(1.2);
+      animation: parpadeo 2s infinite ease-in-out;
+      cursor: pointer;
+      z-index: 5;
     }
     @keyframes parpadeo {
       0%, 100% { opacity: 0.4; }
       50% { opacity: 1; }
+    }
+
+    /* 🔹 Zonas invisibles de zoom */
+    .zoom-zone {
+      position: absolute;
+      background: rgba(0,0,0,0); /* invisible */
+      cursor: zoom-in;
+      z-index: 4;
+    }
+
+    /* 🔹 Modal de zoom */
+    #zoomModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #zoomModal img {
+      max-width: 90%;
+      max-height: 90%;
+      border: 3px solid white;
+      box-shadow: 0 0 20px black;
+      animation: zoomIn 0.5s ease;
+    }
+    @keyframes zoomIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    #closeZoom {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -57,8 +101,13 @@
     <img id="viewerImg" src="" alt="Sección">
   </div>
 
+  <!-- 🔹 Modal de Zoom -->
+  <div id="zoomModal">
+    <button id="closeZoom">Cerrar ✖</button>
+    <img id="zoomImg" src="">
+  </div>
+
   <script>
-    // 🔹 Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
@@ -67,6 +116,12 @@
     let secciones = {};  
     let enlaces = [];
     let actual = null;
+    const viewer = document.getElementById("viewer");
+    const img = document.getElementById("viewerImg");
+
+    const zoomModal = document.getElementById("zoomModal");
+    const zoomImg = document.getElementById("zoomImg");
+    const closeZoom = document.getElementById("closeZoom");
 
     async function cargarDatos() {
       const { data: secs } = await supabase.from("secciones").select("*");
@@ -77,34 +132,50 @@
       secs.forEach(s => secciones[s.id] = s);
       enlaces = links || [];
 
-      mostrarSeccion("PDD"); // 🔹 arranca en esta sección
+      mostrarSeccion("PDD"); 
     }
 
     function mostrarSeccion(id) {
       actual = id;
-      const viewer = document.getElementById("viewer");
-      const img = document.getElementById("viewerImg");
+      img.src = secciones[id].img_url;
+      viewer.querySelectorAll(".hotspot, .zoom-zone").forEach(el => el.remove());
 
-      // Fade out
-      viewer.style.opacity = 0;
-      setTimeout(() => {
-        img.src = secciones[id].img_url;
-        viewer.querySelectorAll(".hotspot").forEach(h => h.remove());
+      // Hotspots de navegación
+      const misEnlaces = enlaces.filter(e => e.from_seccion === id);
+      misEnlaces.forEach(e => {
+        const hs = document.createElement("div");
+        hs.className = "hotspot";
+        hs.style.left = e.x + "%";
+        hs.style.top = e.y + "%";
+        hs.onclick = () => mostrarSeccion(e.to_seccion);
+        viewer.appendChild(hs);
+      });
 
-        // Hotspots
-        const misEnlaces = enlaces.filter(e => e.from_seccion === id);
-        misEnlaces.forEach(e => {
-          const hs = document.createElement("div");
-          hs.className = "hotspot";
-          hs.style.left = e.x + "%";
-          hs.style.top = e.y + "%";
-          hs.onclick = () => mostrarSeccion(e.to_seccion);
-          viewer.appendChild(hs);
-        });
+      // 🔹 Ejemplo: zonas invisibles para zoom manual
+      // (puedes meterlas en tu tabla "zonas" de Supabase si quieres)
+      const zonasEjemplo = [
+        { x: 10, y: 20, w: 20, h: 30 }, // izquierda
+        { x: 60, y: 20, w: 30, h: 30 }  // derecha
+      ];
 
-        viewer.style.opacity = 1; // fade in
-      }, 500);
+      zonasEjemplo.forEach(z => {
+        const zone = document.createElement("div");
+        zone.className = "zoom-zone";
+        zone.style.left = z.x + "%";
+        zone.style.top = z.y + "%";
+        zone.style.width = z.w + "%";
+        zone.style.height = z.h + "%";
+        zone.onclick = () => abrirZoom(secciones[id].img_url);
+        viewer.appendChild(zone);
+      });
     }
+
+    function abrirZoom(src) {
+      zoomImg.src = src;
+      zoomModal.style.display = "flex";
+    }
+
+    closeZoom.onclick = () => zoomModal.style.display = "none";
 
     cargarDatos();
   </script>
