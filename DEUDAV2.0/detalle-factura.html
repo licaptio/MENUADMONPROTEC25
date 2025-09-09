@@ -126,12 +126,14 @@
   <h2>Detalle de Factura</h2>
   <div class="info" id="contenedor"></div>
 
-  <!-- 📷 Subir foto -->
-  <div class="upload-box">
-    <h3>Subir Foto de Factura</h3>
-    <input type="file" accept="image/*" capture="environment" id="fotoInput">
-    <button onclick="subirFoto()">📤 Subir Foto</button>
-  </div>
+<!-- 📷 Subir foto -->
+<div class="upload-box">
+  <h3>Subir Foto de Factura</h3>
+  <!-- 👇 abre la cámara directamente -->
+  <input type="file" accept="image/*" capture="environment" id="fotoInput">
+  <button onclick="subirFoto()">📤 Tomar y Subir Foto</button>
+</div>
+
 
   <!-- Toast -->
   <div id="toast" class="toast">Copiado</div>
@@ -282,3 +284,4 @@
   </script>
 </body>
 </html>
+
