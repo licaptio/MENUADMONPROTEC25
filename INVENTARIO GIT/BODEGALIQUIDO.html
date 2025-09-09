@@ -161,92 +161,12 @@ let pagina = 0;
 
 // === Render ===
 function render(){ 
-  const data = inventarios[pagina];
-  document.getElementById("titulo").textContent = data.nombre;
-  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
-
-  const tbody = document.querySelector("#tabla tbody");
-  tbody.innerHTML = "";
-
-  data.items.forEach((row,i)=>{
-    const tr = document.createElement("tr");
-
-    // Producto
-    const tdProd = document.createElement("td");
-    tdProd.textContent = row[0];
-    tdProd.className="producto";
-    tdProd.setAttribute("data-label","Producto");
-    tr.appendChild(tdProd);
-
-    // Inventario manual
-    const tdInv = document.createElement("td");
-    tdInv.setAttribute("data-label","Inventario manual");
-    const input = document.createElement("input");
-    input.type="number"; input.min="0"; input.placeholder="+";
-    tdInv.appendChild(input);
-    tr.appendChild(tdInv);
-
-    // Stock
-    const tdStock = document.createElement("td");
-    tdStock.textContent = row[2] ?? "";
-    tdStock.setAttribute("data-label","Stock");
-    tr.appendChild(tdStock);
-
-    // Pedido
-    const tdPedido = document.createElement("td");
-    tdPedido.setAttribute("data-label","Pedido");
-    const inpPed = document.createElement("input");
-    inpPed.type="number"; inpPed.min="0"; inpPed.value=row[3]||"";
-    inpPed.oninput = e => { row[3]=e.target.value; saveData(); };
-    tdPedido.appendChild(inpPed);
-    tr.appendChild(tdPedido);
-
-    // Inventario acumulado
-    const tdAcum = document.createElement("td");
-    tdAcum.setAttribute("data-label","Inventario acumulado");
-    row[4] = row[4] || 0;
-    const spanVal = document.createElement("span");
-    spanVal.textContent = row[4];
-    tdAcum.appendChild(spanVal);
-
-    const spinner = document.createElement("div");
-    spinner.className="spinner";
-    const btnMenos = document.createElement("button"); btnMenos.textContent="−";
-    const btnMas = document.createElement("button"); btnMas.textContent="+";
-    spinner.appendChild(btnMenos); spinner.appendChild(btnMas);
-    tdAcum.appendChild(spinner);
-
-    input.onchange = () => {
-      let v = parseInt(input.value)||0;
-      row[4] += v;
-      spanVal.textContent = row[4];
-      input.value="";
-      saveData();
-    };
-    btnMas.onclick = () => { row[4]++; spanVal.textContent=row[4]; saveData(); };
-    btnMenos.onclick = () => { if(row[4]>0){ row[4]--; spanVal.textContent=row[4]; saveData(); } };
-
-    tr.appendChild(tdAcum);
-    tbody.appendChild(tr);
-  });
-
-  activarNavegacionTeclas();
+  /* ... tu código de render ... */
 }
 
 // === Navegación con flechas ===
 function activarNavegacionTeclas(){
-  const filas = Array.from(document.querySelectorAll("#tabla tbody tr"));
-  filas.forEach((fila, filaIndex) => {
-    const inputs = Array.from(fila.querySelectorAll("input"));
-    inputs.forEach((inp, colIndex) => {
-      inp.addEventListener("keydown", e => {
-        if(e.key === "ArrowRight"){ e.preventDefault(); if(colIndex < inputs.length-1){ inputs[colIndex+1].focus(); } }
-        if(e.key === "ArrowLeft"){ e.preventDefault(); if(colIndex > 0){ inputs[colIndex-1].focus(); } }
-        if(e.key === "ArrowDown"){ e.preventDefault(); if(filaIndex < filas.length-1){ const nextInputs = filas[filaIndex+1].querySelectorAll("input"); if(nextInputs[colIndex]) nextInputs[colIndex].focus(); } }
-        if(e.key === "ArrowUp"){ e.preventDefault(); if(filaIndex > 0){ const prevInputs = filas[filaIndex-1].querySelectorAll("input"); if(prevInputs[colIndex]) prevInputs[colIndex].focus(); } }
-      });
-    });
-  });
+  /* ... tu código de flechas ... */
 }
 
 // === Navegación páginas ===
@@ -351,13 +271,15 @@ render();
 
 <!-- Modal Orden -->
 <div id="ordenModal" class="modal">
-  <div class="modal-content" id="ordenContenido">
+  <div class="modal-content">
     <h3>ORDEN DE COMPRA</h3>
     <ul id="orden-list"></ul>
     <button onclick="cerrarModal()">Cerrar</button>
   </div>
 </div>
 
+
 </body>
 </html>
+
 
