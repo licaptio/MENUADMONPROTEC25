@@ -27,21 +27,21 @@
       margin-bottom: 20px;
       font-size: 0.95rem;
     }
-    .campo {
-      margin-bottom: 10px;
+    .campo { margin-bottom: 10px; }
+    .campo span { font-weight: bold; color: #003366; }
+
+    /* 👉 UUID en línea con botón */
+    .campo-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap; /* si el UUID es largo, permite salto ordenado */
     }
-    .campo span {
-      font-weight: bold;
-      color: #003366;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-    }
-    a {
-      color: #0066cc;
-      word-break: break-word;
-    }
+    #uuidText { word-break: break-all; }
+
+    .error { color: red; font-weight: bold; }
+    a { color: #0066cc; word-break: break-word; }
+
     .upload-box {
       background: #fff;
       padding: 15px;
@@ -49,17 +49,14 @@
       border-radius: 8px;
       margin-bottom: 20px;
     }
-    .upload-box h3 {
-      margin: 0 0 10px;
-      font-size: 1rem;
-      color: #003366;
-    }
+    .upload-box h3 { margin: 0 0 10px; font-size: 1rem; color: #003366; }
     input[type="file"] {
       display: block;
       margin: 10px 0;
       font-size: 1rem;
       width: 100%;
     }
+
     button {
       padding: 12px 18px;
       background: #0066cc;
@@ -70,45 +67,9 @@
       font-size: 1rem;
       width: 100%; /* en móvil ocupa ancho completo */
     }
-    button:hover {
-      background: #004c99;
-    }
-    /* 👇 Hace que la tabla sea desplazable en pantallas chicas */
-    .tabla-wrapper {
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.9rem;
-      min-width: 600px; /* para que active el scroll en móvil */
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      text-align: center;
-    }
-    thead tr {
-      background: #dbe5f1;
-      color: #003366;
-    }
-    tfoot tr {
-      background: #eee;
-    }
-    @media (max-width: 600px) {
-      h2 {
-        font-size: 1.3rem;
-      }
-      .info {
-        font-size: 0.9rem;
-      }
-      table {
-        font-size: 0.8rem;
-      }
-    }
+    button:hover { background: #004c99; }
 
-    /* Botón mini en línea (para UUID copiar) */
+    /* Botón mini en línea (para copiar) */
     .mini-btn {
       display: inline-block;
       padding: 4px 8px;
@@ -122,6 +83,25 @@
       width: auto; /* override al button global */
     }
     .mini-btn:hover { background:#004c99; }
+
+    /* 👇 Hace que la tabla sea desplazable en pantallas chicas */
+    .tabla-wrapper { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      min-width: 600px; /* para que active el scroll en móvil */
+    }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+    thead tr { background: #dbe5f1; color: #003366; }
+    tfoot tr { background: #eee; }
+
+    @media (max-width: 600px) {
+      h2 { font-size: 1.3rem; }
+      .info { font-size: 0.9rem; }
+      table { font-size: 0.8rem; }
+    }
 
     /* Toast (mensaje flotante) */
     .toast {
@@ -171,7 +151,7 @@
       contenedor.innerHTML = '<p class="error">Folio o UUID no proporcionado en la URL.</p>';
     } else {
       const url = uuid
-        ? `${supabaseUrl}/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${uuid}`  
+        ? `${supabaseUrl}/rest/v1/deuda_limpia_pdd?uuid_cfdi=eq.${uuid}`
         : `${supabaseUrl}/rest/v1/deuda_limpia_pdd?factura=eq.${folio}`;
 
       fetch(url, { headers: { apikey: apiKey } })
@@ -207,18 +187,19 @@
           }
 
           contenedor.innerHTML = `
-            <div class="campo">
+            <div class="campo campo-inline">
               <span>UUID:</span>
               <span id="uuidText">${f.uuid_cfdi}</span>
-              <button class="mini-btn" onclick="copiarUUID('${f.uuid_cfdi}')">📋 Copiar</button>
+              <button type="button" class="mini-btn" onclick="copiarUUID('${f.uuid_cfdi}')" title="Copiar UUID">📋 Copiar</button>
             </div>
             <div class="campo"><span>Factura:</span> ${f.factura}</div>
             <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor}</div>
             <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor}</div>
             <div class="campo"><span>Fecha:</span> ${new Date(f.fecha).toLocaleDateString('es-MX')}</div>
             <div class="campo"><span>Total:</span> ${formatoPesos.format(f.total)}</div>
-            ${Array.isArray(f.fotos) && f.fotos[0] ? 
-              `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>` : ""}
+            ${Array.isArray(f.fotos) && f.fotos[0]
+              ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank">Ver imagen</a></div>`
+              : ""}
             <div class="campo"><span>Conceptos:</span></div>
             <div class="tabla-wrapper">
               <table>
