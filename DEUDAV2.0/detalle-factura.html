@@ -126,6 +126,7 @@
   <h2>Detalle de Factura</h2>
   <div class="info" id="contenedor"></div>
 
+
 <!-- 📷 Subir foto -->
 <div class="upload-box">
   <h3>Subir Foto de Factura</h3>
@@ -227,28 +228,35 @@
         });
     }
 
-    async function subirFoto() {
-      const fileInput = document.getElementById("fotoInput");
-      const file = fileInput.files[0];
-      if (!file) return alert("Selecciona una foto 📷");
+async function subirFoto() {
+  const fileInput = document.getElementById("fotoInput");
+  const file = fileInput.files[0];
+  if (!file) return alert("Selecciona o toma una foto 📷");
 
-      const nombreArchivo = `${crypto.randomUUID()}.jpg`;
-      const { error } = await supabaseClient.storage
-        .from("fotos-facturas")
-        .upload(`clientes/${nombreArchivo}`, file, { contentType: file.type });
-      if (error) return alert("❌ Error: " + error.message);
+  const nombreArchivo = `${crypto.randomUUID()}.jpg`;
 
-      const { data: urlData } = supabaseClient.storage
-        .from("fotos-facturas")
-        .getPublicUrl(`clientes/${nombreArchivo}`);
+  // Subir al bucket
+  const { error } = await supabaseClient.storage
+    .from("fotos-facturas")
+    .upload(`clientes/${nombreArchivo}`, file, { contentType: file.type });
 
-      if (uuid) {
-        await supabaseClient.from("deuda_limpia_pdd")
-          .update({ fotos: [urlData.publicUrl] })
-          .eq("uuid_cfdi", uuid);
-      }
-      alert("✅ Foto subida correctamente");
-    }
+  if (error) return alert("❌ Error al subir: " + error.message);
+
+  // Obtener URL pública
+  const { data: urlData } = supabaseClient.storage
+    .from("fotos-facturas")
+    .getPublicUrl(`clientes/${nombreArchivo}`);
+
+  if (uuid) {
+    // Actualizar la BD con la nueva foto
+    await supabaseClient
+      .from("deuda_limpia_pdd")
+      .update({ fotos: [urlData.publicUrl] })
+      .eq("uuid_cfdi", uuid);
+  }
+
+  alert("✅ Foto tomada y subida correctamente");
+}
 
     /* ====== Toast + Copiar UUID ====== */
     function showToast(msg = "Copiado") {
@@ -284,4 +292,5 @@
   </script>
 </body>
 </html>
+
 
