@@ -45,34 +45,75 @@
     .uuid-link { color:#0b6efd; text-decoration:underline; }
     .uuid-link:hover { text-decoration:none; }
 
-    /* 👉 Responsive: convierte tabla en tarjetas en móviles */
-    @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      thead { display: none; }
-      tr {
-        margin-bottom: 15px;
-        background: #fff;
-        border-radius: 6px;
-        box-shadow: 0 2px 4px rgba(0,0,0,.1);
-        padding: 10px;
-      }
-      td {
-        border: none;
-        border-bottom: 1px solid #eee;
-        padding: 8px 5px;
-        font-size: 0.9rem;
-      }
-      td:last-child { border-bottom: none; }
-      td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        display: block;
-        margin-bottom: 2px;
-        color: #007bff;
-      }
-    }
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead { display: none; }
+
+  tr {
+    margin-bottom: 18px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+  }
+
+  td {
+    border: none;
+    border-bottom: 1px dashed #ddd;
+    padding: 10px 6px;
+    font-size: 0.95rem;
+  }
+  td:last-child {
+    border-bottom: none;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+    color: #0056b3;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* 💲 Total resaltado */
+  td[data-label="Total"] {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #28a745;
+    text-align: right;
+  }
+
+  /* Estado Pagada/Física con chips */
+  td[data-label="¿Pagada?"], td[data-label="¿Física?"] {
+    text-align: center;
+  }
+  td[data-label="¿Pagada?"]::before, td[data-label="¿Física?"]::before {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  td[data-label="¿Pagada?"], td[data-label="¿Física?"] {
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  td[data-label="¿Pagada?"]:contains("SI"),
+  td[data-label="¿Física?"]:contains("SI") {
+    background: #e6ffed;
+    color: #1e7e34;
+  }
+  td[data-label="¿Pagada?"]:contains("NO"),
+  td[data-label="¿Física?"]:contains("NO") {
+    background: #fff3f3;
+    color: #cc0000;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -337,3 +378,4 @@
   </script>
 </body>
 </html>
+
