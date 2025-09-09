@@ -113,6 +113,14 @@
   <h2>Detalle de Factura</h2>
   <div class="info" id="contenedor"></div>
 
+  <div class="campo">
+  <span>UUID:</span> 
+  <span id="uuidText">${f.uuid_cfdi}</span>
+  <button onclick="copiarUUID('${f.uuid_cfdi}')" style="margin-left:8px;font-size:0.8rem;padding:4px 8px;cursor:pointer;">
+    📋 Copiar
+  </button>
+</div>
+  
   <!-- 📷 Subir foto -->
   <div class="upload-box">
     <h3>Subir Foto de Factura</h3>
@@ -226,7 +234,16 @@
       }
       alert("✅ Foto subida correctamente");
     }
+function copiarUUID(texto) {
+  navigator.clipboard.writeText(texto).then(() => {
+    alert("✅ UUID copiado al portapapeles");
+  }).catch(err => {
+    alert("❌ Error al copiar: " + err);
+  });
+}
+
   </script>
 </body>
 </html>
+
 
