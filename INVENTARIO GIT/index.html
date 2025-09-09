@@ -19,9 +19,9 @@
 
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 15px;
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
     }
 
@@ -30,14 +30,19 @@
       font-size: 16px;
       color: #ffffff;
       background: #0077cc;
-      padding: 12px 15px;
+      padding: 14px 18px;
       border-radius: 10px;
       display: block;
       transition: background 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* Botón de GASOLINA OXXO EOX en rojo */
+    /* Hover */
+    .grid-container a:hover {
+      background: #005fa3;
+    }
+
+    /* Botón especial GASOLINA */
     .grid-container a[href*="eox"] {
       background: #dc3545;
     }
@@ -45,20 +50,18 @@
       background: #a71d2a;
     }
 
-    /* Hover para los demás */
-    .grid-container a:hover {
-      background: #005fa3;
+    /* Botón especial INVENTARIO DIARIO */
+    .grid-container a.telegram {
+      background: #28a745;
     }
-.grid-container a.telegram {
-  background: #28a745;
-}
-.grid-container a.telegram:hover {
-  background: #1e7e34;
-}
-  /* Footer */
+    .grid-container a.telegram:hover {
+      background: #1e7e34;
+    }
+
+    /* Footer */
     footer {
       text-align: center;
-      margin-top: 30px;
+      margin-top: 40px;
       padding: 15px 10px;
       background: #222;
       color: #fff;
@@ -74,20 +77,18 @@
 <body>
   <h1>Menú de Inventarios</h1>
   <div class="grid-container">
-    <a href="CIGARROINV.html">CIGARRO PDD GIBRAN REVISION </a>
+    <a href="CACAOHUATE.html">CACAHUATE</a>
+    <a href="CERILLO.html">CERILLO</a>
+    <a href="CIGARROINV.html">CIGARROS</a>
     <a href="CONVERMEX.html">CONVERMEX</a>
+    <a href="HIGIENICO GENERICO.html">HIGIÉNICO</a>
     <a href="SAMS10MAS1.html">SAMS CLUB</a>
     <a href="https://eox.mx" target="_blank">GASOLINA OXXO EOX</a>
     <a href="INVETNPAGINA.html" class="telegram">INVENTARIO DIARIO PDD</a>
-    </div>
- <footer>
+  </div>
+  
+  <footer>
     Powered by <span>PROVSOFT</span>
   </footer>
 </body>
 </html>
-
-
-
-
-
-
