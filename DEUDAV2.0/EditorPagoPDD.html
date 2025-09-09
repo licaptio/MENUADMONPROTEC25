@@ -33,6 +33,7 @@
       padding: 8px;
       border: 1px solid #ccc;
       font-size: 0.9em;
+      text-align: left;
     }
     th {
       background-color: #007bff;
@@ -41,9 +42,37 @@
     td {
       background-color: #fff;
     }
-  .uuid-link { color:#0b6efd; text-decoration:underline; }
-.uuid-link:hover { text-decoration:none; }
+    .uuid-link { color:#0b6efd; text-decoration:underline; }
+    .uuid-link:hover { text-decoration:none; }
 
+    /* 👉 Responsive: convierte tabla en tarjetas en móviles */
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead { display: none; }
+      tr {
+        margin-bottom: 15px;
+        background: #fff;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        padding: 10px;
+      }
+      td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        padding: 8px 5px;
+        font-size: 0.9rem;
+      }
+      td:last-child { border-bottom: none; }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 2px;
+        color: #007bff;
+      }
+    }
   </style>
 </head>
 <body>
@@ -82,7 +111,6 @@
 
     async function cargarRFCs() {
       const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
-
       if (error) {
         console.error("❌ Error al obtener RFCs:", error);
         alert("Error al obtener datos únicos");
@@ -153,119 +181,108 @@
       mostrarTabla(data);
     }
 
+    function mostrarTabla(data) {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Día</th>
+            <th>UUID</th>
+            <th>RFC Emisor</th>
+            <th>Razón Social</th>
+            <th>Serie/Factura</th>
+            <th>Total</th>
+            <th>¿Pagada?</th>
+            <th>¿Física?</th>
+            <th>Fotos</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-function mostrarTabla(data) {
-  let html = `<table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Día</th>
-        <th>UUID</th>
-        <th>RFC Emisor</th>
-        <th>Razón Social</th>
-        <th>Serie/Factura</th>
-        <th>Total</th>
-        <th>¿Pagada?</th>
-        <th>¿Física?</th>
-        <th>Fotos</th>
-      </tr>
-    </thead>
-    <tbody>`;
+      for (const f of data) {
+        const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
+        const fotosArr = normalizaFotos(f.fotos);
 
-  for (const f of data) {
-    const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
-    const fotosArr = normalizaFotos(f.fotos);
+        let fotosHtml = "—";
+        if (fotosArr.length > 0) {
+          const primeros = fotosArr.slice(0, 3)
+            .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
+            .join(' ');
+          const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
+          fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
+        }
 
-    let fotosHtml = "—";
-    if (fotosArr.length > 0) {
-      const primeros = fotosArr.slice(0, 3)
-        .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
-        .join(' ');
-      const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
-      fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
+        html += `<tr>
+          <td data-label="Fecha">${f.fecha || "-"}</td>
+          <td data-label="Día" style="text-align:center;">${dias}</td>
+          <td data-label="UUID">${
+            f.uuid_cfdi
+              ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
+                   target="_blank" rel="noopener noreferrer"
+                   title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
+              : "-"
+          }</td>
+          <td data-label="RFC Emisor">${f.rfc_emisor || "-"}</td>
+          <td data-label="Razón Social">${f.razon_social_emisor || "-"}</td>
+          <td data-label="Serie/Factura">${formatSerieFactura(f.serie, f.factura)}</td>
+          <td data-label="Total" style="text-align:right;">${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+          <td data-label="¿Pagada?" style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
+            ${(f.factura_pagada || 'NO').toUpperCase()}
+          </td>
+          <td data-label="¿Física?" style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
+            ${(f.factura_fisicamente || 'NO').toUpperCase()}
+          </td>
+          <td data-label="Fotos" style="text-align:center;">${fotosHtml}</td>
+        </tr>`;
+      }
+
+      html += `</tbody></table>`;
+      document.getElementById("tablaResultados").innerHTML = html;
     }
 
-    html += `<tr>
-      <td>${f.fecha || "-"}</td>
-      <td style="text-align:center;">${dias}</td>
-      <td>
-        ${
-          f.uuid_cfdi
-            ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
-                 target="_blank" rel="noopener noreferrer"
-                 title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
-            : "-"
-        }
-      </td>
-      <td>${f.rfc_emisor || "-"}</td>
-      <td>${f.razon_social_emisor || "-"}</td>
-      <td>${formatSerieFactura(f.serie, f.factura)}</td>
-      <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-      <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
-        ${(f.factura_pagada || 'NO').toUpperCase()}
-      </td>
-      <td style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
-        ${(f.factura_fisicamente || 'NO').toUpperCase()}
-      </td>
-      <td style="text-align:center;">${fotosHtml}</td>
-    </tr>`;
-  }
+    function formatSerieFactura(serie, factura) {
+      const s = (serie ?? "").toString().trim();
+      const f = (factura ?? "").toString().trim();
+      if (s && f) return `${s}\u2011${f}`;
+      if (f) return f;
+      if (s) return s;
+      return "—";
+    }
 
-  html += `</tbody></table>`;
-  document.getElementById("tablaResultados").innerHTML = html;
-}
-function formatSerieFactura(serie, factura) {
-  const s = (serie ?? "").toString().trim();
-  const f = (factura ?? "").toString().trim(); // respeta ceros a la izquierda
-  if (s && f) return `${s}\u2011${f}`; // \u2011 = guion no separable
-  if (f) return f;
-  if (s) return s;
-  return "—";
-}
+    function calcDiasDesdeHoy(fechaISO) {
+      const f = new Date(fechaISO);
+      const hoy = new Date();
+      const utcF = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate());
+      const utcHoy = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+      const diff = Math.floor((utcHoy - utcF) / (1000 * 60 * 60 * 24));
+      return diff >= 0 ? diff : "—";
+    }
 
-// Cuenta días desde HOY a la fecha de la factura (redondeo por día UTC para evitar desfases de zona horaria)
-function calcDiasDesdeHoy(fechaISO) {
-  const f = new Date(fechaISO);
-  const hoy = new Date();
-  // normalizar a medianoche UTC
-  const utcF = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate());
-  const utcHoy = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
-  const diff = Math.floor((utcHoy - utcF) / (1000 * 60 * 60 * 24));
-  return diff >= 0 ? diff : "—";
-}
-
-// 🔧 Convierte lo que venga en f.fotos a un arreglo de URLs
-function normalizaFotos(fotos) {
-  if (!fotos) return [];
-  if (Array.isArray(fotos)) return fotos.filter(Boolean);
-
-  if (typeof fotos === "string") {
-    // intenta JSON
-    try {
-      const arr = JSON.parse(fotos);
-      if (Array.isArray(arr)) return arr.filter(Boolean);
-    } catch {}
-    // o coma-separado
-    return fotos.split(",").map(s => s.trim()).filter(Boolean);
-  }
-  return [];
-}
+    function normalizaFotos(fotos) {
+      if (!fotos) return [];
+      if (Array.isArray(fotos)) return fotos.filter(Boolean);
+      if (typeof fotos === "string") {
+        try {
+          const arr = JSON.parse(fotos);
+          if (Array.isArray(arr)) return arr.filter(Boolean);
+        } catch {}
+        return fotos.split(",").map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
 
     async function togglePago(id, celda) {
       const actual = celda.textContent.trim().toUpperCase();
       const nuevo = actual === "SI" ? "NO" : "SI";
-
       const { error } = await supabase
         .from(tabla)
         .update({ factura_pagada: nuevo })
         .eq("id", id);
-
       if (error) {
         alert("❌ Error al actualizar en Supabase");
         console.error(error);
         return;
       }
-
       celda.textContent = nuevo;
       celda.style.color = (nuevo === "SI") ? "green" : "red";
     }
@@ -273,18 +290,15 @@ function normalizaFotos(fotos) {
     async function toggleFisica(id, celda) {
       const actual = celda.textContent.trim().toUpperCase();
       const nuevo = actual === "SI" ? "NO" : "SI";
-
       const { error } = await supabase
         .from(tabla)
         .update({ factura_fisicamente: nuevo })
         .eq("id", id);
-
       if (error) {
         alert("❌ Error al actualizar en Supabase");
         console.error(error);
         return;
       }
-
       celda.textContent = nuevo;
     }
 
@@ -323,8 +337,3 @@ function normalizaFotos(fotos) {
   </script>
 </body>
 </html>
-
-
-
-
-
