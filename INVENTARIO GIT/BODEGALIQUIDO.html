@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Paginación Inventarios</title>
+<style>
+  :root{
+    --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
+    --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Arial, sans-serif;
+    background:var(--bg); color:var(--text);
+    padding:10px 10px 84px;
+  }
+  .container{max-width:900px;margin:0 auto}
+  header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
+  h2{
+    font-size:1.12rem;text-align:center;color:var(--primary);
+    background:var(--card);border-radius:12px;padding:8px 10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:6px;
+    display:flex;justify-content:center;gap:8px;align-items:center
+  }
+
+  /* Tabla escritorio */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
+  thead th{background:var(--primary);color:#fff;padding:.6rem}
+  td{padding:.5rem;border-bottom:1px solid var(--border)}
+  .producto{font-weight:bold}
+
+  .spinner{display:inline-flex;align-items:center;gap:4px}
+  .spinner button{
+    background:#e5e7eb;border:none;border-radius:6px;padding:2px 6px;
+    cursor:pointer;font-size:1rem;font-weight:bold;line-height:1
+  }
+
+  /* Barra acciones */
+  .actions{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:8px;border-top:1px solid #ddd}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  button.action{padding:.6rem .5rem;font-weight:bold;border:none;border-radius:10px;color:#fff}
+  #btn-anterior{background:#9ca3af} #btn-siguiente{background:var(--ok)}
+  #btn-enviar{background:var(--warn)} #btn-orden{background:#6d28d9}
+  #btn-limpiar{background:#ef4444}
+
+  /* Quitar spinners en number */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+    width: 100%;
+  }
+
+  /* Responsive móvil */
+  @media (max-width: 768px){
+    table thead{display:none;}
+    table, tbody, tr, td{display:block;width:100%}
+    tr{
+      margin-bottom:12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:#fff;
+      padding:8px;
+      box-shadow:0 2px 4px rgba(0,0,0,.05);
+    }
+    td{
+      border:none;
+      padding:6px 4px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    td::before{
+      content: attr(data-label);
+      font-weight:bold;
+      color:var(--muted);
+      flex:1;
+      text-align:left;
+    }
+    td input{max-width:120px}
+    .spinner{margin-left:auto}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h2><span>📦</span><span id="titulo"></span></h2>
+      <div id="pagination-info" style="text-align:center;margin-bottom:6px;color:#555"></div>
+    </header>
+
+    <div class="table-container">
+      <table id="tabla">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Inventario manual</th>
+            <th>Stock</th>
+            <th>Pedido</th>
+            <th>Inventario acumulado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Barra acciones -->
+  <div class="actions">
+    <div class="grid">
+      <button id="btn-anterior" class="action" onclick="anterior()">⬅ Anterior</button>
+      <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
+      <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
+      <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
+      <button id="btn-siguiente" class="action" onclick="siguiente()">Siguiente ➡</button>
+    </div>
+  </div>
+
+<script>
+/* ===== Datos ===== */
+const inventarios = [
+    { nombre:"📦 BODEGA LIQUIDO", items:[
+      ["MORENA SWITEN 907","",50,""],
+      ["NUTRILECHE C90 PAQ","",8,""],
+      ["KARTAMUS 12 CAMA","",100,""],
+      ["HARIMASA C10","",100,""],
+      ["CHILE FARO ROD","",100,""],
+      ["KLEENEX 80","",100,""],
+    ]},
+];
+
+let pagina = 0;
+
+// === Render ===
+function render(){ 
+  const data = inventarios[pagina];
+  document.getElementById("titulo").textContent = data.nombre;
+  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
+
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+
+  data.items.forEach((row,i)=>{
+    const tr = document.createElement("tr");
+
+    // Producto
+    const tdProd = document.createElement("td");
+    tdProd.textContent = row[0];
+    tdProd.className="producto";
+    tdProd.setAttribute("data-label","Producto");
+    tr.appendChild(tdProd);
+
+    // Inventario manual
+    const tdInv = document.createElement("td");
+    tdInv.setAttribute("data-label","Inventario manual");
+    const input = document.createElement("input");
+    input.type="number"; input.min="0"; input.placeholder="+";
+    tdInv.appendChild(input);
+    tr.appendChild(tdInv);
+
+    // Stock
+    const tdStock = document.createElement("td");
+    tdStock.textContent = row[2] ?? "";
+    tdStock.setAttribute("data-label","Stock");
+    tr.appendChild(tdStock);
+
+    // Pedido
+    const tdPedido = document.createElement("td");
+    tdPedido.setAttribute("data-label","Pedido");
+    const inpPed = document.createElement("input");
+    inpPed.type="number"; inpPed.min="0"; inpPed.value=row[3]||"";
+    inpPed.oninput = e => { row[3]=e.target.value; saveData(); };
+    tdPedido.appendChild(inpPed);
+    tr.appendChild(tdPedido);
+
+    // Inventario acumulado
+    const tdAcum = document.createElement("td");
+    tdAcum.setAttribute("data-label","Inventario acumulado");
+    row[4] = row[4] || 0;
+    const spanVal = document.createElement("span");
+    spanVal.textContent = row[4];
+    tdAcum.appendChild(spanVal);
+
+    const spinner = document.createElement("div");
+    spinner.className="spinner";
+    const btnMenos = document.createElement("button"); btnMenos.textContent="−";
+    const btnMas = document.createElement("button"); btnMas.textContent="+";
+    spinner.appendChild(btnMenos); spinner.appendChild(btnMas);
+    tdAcum.appendChild(spinner);
+
+    input.onchange = () => {
+      let v = parseInt(input.value)||0;
+      row[4] += v;
+      spanVal.textContent = row[4];
+      input.value="";
+      saveData();
+    };
+    btnMas.onclick = () => { row[4]++; spanVal.textContent=row[4]; saveData(); };
+    btnMenos.onclick = () => { if(row[4]>0){ row[4]--; spanVal.textContent=row[4]; saveData(); } };
+
+    tr.appendChild(tdAcum);
+    tbody.appendChild(tr);
+  });
+
+  activarNavegacionTeclas();
+}
+
+// === Navegación con flechas ===
+function activarNavegacionTeclas(){
+  const filas = Array.from(document.querySelectorAll("#tabla tbody tr"));
+  filas.forEach((fila, filaIndex) => {
+    const inputs = Array.from(fila.querySelectorAll("input"));
+    inputs.forEach((inp, colIndex) => {
+      inp.addEventListener("keydown", e => {
+        if(e.key === "ArrowRight"){ e.preventDefault(); if(colIndex < inputs.length-1){ inputs[colIndex+1].focus(); } }
+        if(e.key === "ArrowLeft"){ e.preventDefault(); if(colIndex > 0){ inputs[colIndex-1].focus(); } }
+        if(e.key === "ArrowDown"){ e.preventDefault(); if(filaIndex < filas.length-1){ const nextInputs = filas[filaIndex+1].querySelectorAll("input"); if(nextInputs[colIndex]) nextInputs[colIndex].focus(); } }
+        if(e.key === "ArrowUp"){ e.preventDefault(); if(filaIndex > 0){ const prevInputs = filas[filaIndex-1].querySelectorAll("input"); if(prevInputs[colIndex]) prevInputs[colIndex].focus(); } }
+      });
+    });
+  });
+}
+
+// === Navegación páginas ===
+function siguiente(){ if(pagina<inventarios.length-1){ pagina++; render(); } }
+function anterior(){ if(pagina>0){ pagina--; render(); } }
+
+// === Guardado ===
+function saveData(){ localStorage.setItem("inventariosData", JSON.stringify(inventarios)); }
+function loadData(){
+  const raw = localStorage.getItem("inventariosData");
+  if(!raw) return;
+  try{ const parsed=JSON.parse(raw);
+    if(Array.isArray(parsed)){
+      parsed.forEach((p,pi)=>{ if(inventarios[pi]) inventarios[pi].items=p.items; });
+    }
+  }catch(e){console.error(e);}
+}
+function limpiarTodo(){
+  if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
+  inventarios.forEach(g=>g.items.forEach(r=>{
+    r[1] = ""; r[3] = ""; r[4] = 0;
+  }));
+  localStorage.removeItem("inventariosData");
+  render();
+  alert("✅ Inventario y localStorage limpiados");
+}
+
+loadData();
+render();
+</script>
+</body>
+</html>
