@@ -84,6 +84,30 @@
     td input{max-width:120px}
     .spinner{margin-left:auto}
   }
+
+  /* Modal */
+  .modal {
+    display:none; position:fixed; z-index:100; left:0; top:0;
+    width:100%; height:100%; background:rgba(0,0,0,0.4);
+    justify-content:center; align-items:center;
+  }
+  .modal-content {
+    background:#fff; padding:20px; border-radius:12px;
+    max-width:400px; width:90%; text-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    animation:fadeIn .3s;
+  }
+  .modal-content h3 {margin-bottom:10px; color:#111;}
+  .modal-content ul {list-style:none; padding:0; margin:10px 0;}
+  .modal-content li {padding:6px 0; border-bottom:1px solid #eee;}
+  .modal-content li:last-child{border-bottom:none;}
+  .modal-content strong{color:#000; font-weight:700;}
+  .modal button {
+    background:#2563eb; color:white; border:none;
+    padding:8px 20px; border-radius:8px; margin-top:12px;
+    cursor:pointer; font-size:1rem;
+  }
+  @keyframes fadeIn {from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
 </style>
 </head>
 <body>
@@ -250,8 +274,89 @@ function limpiarTodo(){
   alert("✅ Inventario y localStorage limpiados");
 }
 
+/* === Enviar Telegram === */
+function enviarTelegram(){
+  const data = inventarios[pagina];
+  if(!data || !data.items) return;
+
+  let mensaje = `📦 ${data.nombre}\n\`\`\`\nProducto                          Acum\n--------------------------------------\n`;
+
+  data.items.forEach(row=>{
+    const acum = parseInt(row[4])||0;
+    if(acum>0){
+      const nombre = row[0].padEnd(30," ").slice(0,30);
+      const acuStr = String(acum).padStart(4," ");
+      mensaje += `${nombre} ${acuStr}\n`;
+    }
+  });
+
+  mensaje += `\`\`\``;
+
+  if(mensaje.trim()===`📦 ${data.nombre}\n\`\`\`\nProducto                          Acum\n--------------------------------------\n\`\`\``){
+    alert("⚠ No hay acumulados en esta página para enviar");
+    return;
+  }
+
+  const token  = "TU_TOKEN"; // 🔴 pon tu token
+  const chatId = "TU_CHAT_ID"; // 🔴 pon tu chat_id
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      chat_id: chatId,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    console.log("Enviado:",data);
+    alert("✅ Acumulado enviado a Telegram");
+  })
+  .catch(err=>{
+    console.error(err);
+    alert("❌ Error al enviar a Telegram");
+  });
+}
+
+/* === Generar Orden === */
+function generarOrden(){
+  const modal = document.getElementById("ordenModal");
+  const list = document.getElementById("orden-list");
+  list.innerHTML = "";
+
+  inventarios.forEach(g=>{
+    g.items.forEach(row=>{
+      const pedido = parseInt(row[3])||0;
+      if(pedido>0){
+        const li = document.createElement("li");
+        li.innerHTML = `📦 ${row[0]} → <strong>${pedido}</strong>`;
+        list.appendChild(li);
+      }
+    });
+  });
+
+  if(list.children.length===0){
+    list.innerHTML = "<li>No hay productos con pedido</li>";
+  }
+
+  modal.style.display="flex";
+}
+function cerrarModal(){ document.getElementById("ordenModal").style.display="none"; }
+
 loadData();
 render();
 </script>
+
+<!-- Modal Orden -->
+<div id="ordenModal" class="modal">
+  <div class="modal-content" id="ordenContenido">
+    <h3>ORDEN DE COMPRA</h3>
+    <ul id="orden-list"></ul>
+    <button onclick="cerrarModal()">Cerrar</button>
+  </div>
+</div>
+
 </body>
 </html>
