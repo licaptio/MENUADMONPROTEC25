@@ -7,90 +7,124 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      padding: 20px;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #121212;
+      color: #f1f1f1;
+      padding: 15px;
       margin: 0;
     }
 
     h2 {
       text-align: center;
-      margin: 10px 0;
+      margin: 5px 0 10px;
+      font-weight: 600;
     }
 
     #fechaHoraActual {
       text-align: center;
-      font-size: 1.1em;
-      margin: 10px 0;
+      font-size: 1em;
+      margin: 10px 0 15px;
       color: #f9c74f;
+      font-weight: 500;
     }
 
+    /* Botón filtro */
     .boton-filtro {
       display: block;
-      margin: 10px auto 20px;
-      padding: 10px 16px;
+      margin: 0 auto 20px;
+      padding: 12px 18px;
       font-size: 15px;
       border: none;
-      border-radius: 6px;
+      border-radius: 25px;
       background: #f9c74f;
-      color: black;
+      color: #000;
       cursor: pointer;
       width: 90%;
       max-width: 300px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      font-weight: bold;
     }
     .boton-filtro:hover {
       background: #ffd86a;
     }
 
+    /* Tarjetas estilo Material */
     .recordatorio {
-      background: #222;
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      font-size: 14px;
+      background: #1e1e1e;
+      padding: 16px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      font-size: 15px;
+      line-height: 1.4em;
     }
 
+    .recordatorio strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Botones de acciones estilo app */
     .acciones {
-      margin-top: 10px;
+      margin-top: 14px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .acciones button {
-      flex: 1;
-      min-width: 90px;
-      background-color: #444;
-      color: white;
+      width: 100%;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 8px;
       border: none;
-      padding: 8px;
       cursor: pointer;
-      border-radius: 4px;
-      font-size: 13px;
+      transition: transform 0.1s ease-in-out;
     }
 
-    .acciones button:hover {
-      background-color: #666;
+    .acciones button:active {
+      transform: scale(0.97);
     }
 
-    .acciones button:nth-child(3) {
+    .btn-reenviar {
+      background-color: #4caf50;
+      color: white;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    }
+    .btn-reenviar:hover {
+      background-color: #43a047;
+    }
+
+    .btn-eliminar {
+      background-color: #e53935;
+      color: white;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    }
+    .btn-eliminar:hover {
+      background-color: #c62828;
+    }
+
+    .btn-editar {
       background-color: #f9c74f;
       color: black;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
-
-    .acciones button:nth-child(3):hover {
+    .btn-editar:hover {
       background-color: #ffd86a;
     }
 
-    /* Animación de enviados */
+    /* Animación para enviados */
     .enviado-parpadeo {
       animation: parpadeo 1s infinite alternate;
       border: 2px solid #f9c74f;
     }
 
     @keyframes parpadeo {
-      from { background-color: #222; }
+      from { background-color: #1e1e1e; }
       to { background-color: #f9c74f; color: black; }
     }
   </style>
@@ -128,24 +162,25 @@
         const id = doc.id;
         const f = r.fecha.toDate();
 
-        if (mostrarSoloEnviados && !r.enviado) return; // solo enviados
-        if (!mostrarSoloEnviados && r.enviado) return; // solo no enviados
+        if (mostrarSoloEnviados && !r.enviado) return;
+        if (!mostrarSoloEnviados && r.enviado) return;
 
         const fechaStr = `${f.toLocaleDateString()} ${f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         const claseExtra = r.enviado ? 'enviado-parpadeo' : '';
 
         lista.innerHTML += `
           <div class="recordatorio ${claseExtra}" id="r-${id}">
-            <strong>${r.descripcion}</strong><br>
-            Fecha: ${fechaStr}<br>
-            Canal: ${r.canal}<br>
-            Tags: ${r.tags?.join(', ') || ''}<br>
-            Activo: ${r.activo ? '✅' : '❌'} | Recurrente: ${r.recurrente ? '♻️' : '—'}<br>
-            Enviado: ${r.enviado ? '✅' : '❌'}
+            <strong>${r.descripcion}</strong>
+            📅 Fecha: ${fechaStr}<br>
+            📡 Canal: ${r.canal}<br>
+            🏷️ Tags: ${r.tags?.join(', ') || ''}<br>
+            🔔 Activo: ${r.activo ? '✅' : '❌'} | 🔁 Recurrente: ${r.recurrente ? '♻️' : '—'}<br>
+            📤 Enviado: ${r.enviado ? '✅' : '❌'}
+
             <div class="acciones">
-              <button onclick="reenviar('${id}')">🔁 Reenviar</button>
-              <button onclick="eliminar('${id}')">🗑 Eliminar</button>
-              <button onclick="editar('${id}')">✏️ Editar</button>
+              <button class="btn-reenviar" onclick="reenviar('${id}')">🔁 Reenviar</button>
+              <button class="btn-eliminar" onclick="eliminar('${id}')">🗑 Eliminar</button>
+              <button class="btn-editar" onclick="editar('${id}')">✏️ Editar</button>
             </div>
           </div>`;
       });
