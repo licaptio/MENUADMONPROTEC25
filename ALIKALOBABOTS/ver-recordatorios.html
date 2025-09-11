@@ -32,15 +32,15 @@
     .boton-filtro {
       display: block;
       margin: 0 auto 20px;
-      padding: 12px 18px;
-      font-size: 15px;
+      padding: 14px 20px;
+      font-size: 16px;
       border: none;
       border-radius: 25px;
       background: #f9c74f;
       color: #000;
       cursor: pointer;
       width: 90%;
-      max-width: 300px;
+      max-width: 320px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       font-weight: bold;
     }
@@ -52,7 +52,7 @@
     .recordatorio {
       background: #1e1e1e;
       padding: 16px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       font-size: 15px;
@@ -61,39 +61,39 @@
 
     .recordatorio strong {
       display: block;
-      font-size: 16px;
+      font-size: 17px;
       margin-bottom: 8px;
       font-weight: 600;
       color: #fff;
     }
 
-    /* Botones de acciones estilo app */
+    /* Botones grandes tipo app */
     .acciones {
-      margin-top: 14px;
+      margin-top: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
     }
 
     .acciones button {
       width: 100%;
-      padding: 14px;
-      font-size: 15px;
+      min-height: 60px;       /* altura mínima tipo app */
+      padding: 16px;
+      font-size: 18px;        /* texto más grande */
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 30px;    /* más redondeados */
       border: none;
       cursor: pointer;
-      transition: transform 0.1s ease-in-out;
+      transition: transform 0.1s ease-in-out, background 0.2s;
     }
 
     .acciones button:active {
-      transform: scale(0.97);
+      transform: scale(0.95);
     }
 
     .btn-reenviar {
       background-color: #4caf50;
       color: white;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
     .btn-reenviar:hover {
       background-color: #43a047;
@@ -102,7 +102,6 @@
     .btn-eliminar {
       background-color: #e53935;
       color: white;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
     .btn-eliminar:hover {
       background-color: #c62828;
@@ -111,7 +110,6 @@
     .btn-editar {
       background-color: #f9c74f;
       color: black;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
     .btn-editar:hover {
       background-color: #ffd86a;
