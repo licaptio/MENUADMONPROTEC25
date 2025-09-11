@@ -218,10 +218,16 @@
           <b>${p.concepto || "SIN CONCEPTO"}</b><br>
           Código: ${p.codigoBarra || p.id}<br>
           <div class="precios">
-            <span class="precio-publico">Público: $${p.precioPublico || "—"}</span>
-            <span class="precio-medio">Medio Mayoreo: $${p.medioMayoreo || "—"}</span>
-            <span class="precio-mayoreo">Mayoreo: $${p.mayoreo || "—"}</span>
-          </div>`;
+<span class="precio-publico">
+  Público: $${p.precioPublico != null ? Number(p.precioPublico).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+</span>
+<span class="precio-medio">
+  Medio Mayoreo: $${p.medioMayoreo != null ? Number(p.medioMayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+</span>
+<span class="precio-mayoreo">
+  Mayoreo: $${p.mayoreo != null ? Number(p.mayoreo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+</span>
+</div>`;
 
         div.addEventListener("click", async () => {
           if (!navigator.onLine) {
