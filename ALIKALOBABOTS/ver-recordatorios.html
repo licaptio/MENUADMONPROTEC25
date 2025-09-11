@@ -11,32 +11,63 @@
       background: #111;
       color: white;
       padding: 20px;
+      margin: 0;
     }
 
     h2 {
       text-align: center;
+      margin: 10px 0;
+    }
+
+    #fechaHoraActual {
+      text-align: center;
+      font-size: 1.1em;
+      margin: 10px 0;
+      color: #f9c74f;
+    }
+
+    .boton-filtro {
+      display: block;
+      margin: 10px auto 20px;
+      padding: 10px 16px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      background: #f9c74f;
+      color: black;
+      cursor: pointer;
+      width: 90%;
+      max-width: 300px;
+    }
+    .boton-filtro:hover {
+      background: #ffd86a;
     }
 
     .recordatorio {
       background: #222;
       padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 5px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      font-size: 14px;
     }
 
     .acciones {
       margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .acciones button {
-      margin-right: 10px;
+      flex: 1;
+      min-width: 90px;
       background-color: #444;
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px;
       cursor: pointer;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .acciones button:hover {
@@ -51,30 +82,26 @@
     .acciones button:nth-child(3):hover {
       background-color: #ffd86a;
     }
- .enviado-parpadeo {
-  animation: parpadeo 1s infinite alternate;
-  border: 2px solid #f9c74f;
-}
 
-@keyframes parpadeo {
-  from {
-    background-color: #222;
-  }
-  to {
-    background-color: #f9c74f;
-    color: black;
-  }
-}
+    /* Animación de enviados */
+    .enviado-parpadeo {
+      animation: parpadeo 1s infinite alternate;
+      border: 2px solid #f9c74f;
+    }
 
+    @keyframes parpadeo {
+      from { background-color: #222; }
+      to { background-color: #f9c74f; color: black; }
+    }
   </style>
 </head>
 <body>
   <h2>🧠 Todos los recordatorios</h2>
-  <div id="fechaHoraActual" style="text-align: center; font-size: 1.2em; margin: 10px 0; color: #f9c74f;">Cargando...</div>
-  <label style="display: block; text-align: center; margin: 10px 0;">
-  <input type="checkbox" id="verEnviados" onchange="cargar()" />
-  Mostrar también los enviados ✅
-</label>
+  <div id="fechaHoraActual">Cargando...</div>
+
+  <button id="toggleFiltro" class="boton-filtro" onclick="toggleFiltro()">
+    📌 Mostrar SOLO enviados
+  </button>
 
   <div id="lista"></div>
 
@@ -88,28 +115,31 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    let mostrarSoloEnviados = false;
+
     async function cargar() {
       const lista = document.getElementById('lista');
-      const snapshot = await db.collection("recordatorios_alika").orderBy("fecha", "desc").get();
+      const snapshot = await db.collection("recordatorios_alika")
+                               .orderBy("fecha", "desc").get();
       lista.innerHTML = '';
-const verEnviados = document.getElementById("verEnviados")?.checked || false;
 
-      
       snapshot.forEach(doc => {
         const r = doc.data();
         const id = doc.id;
         const f = r.fecha.toDate();
-        if (!verEnviados && r.enviado) return;
+
+        if (mostrarSoloEnviados && !r.enviado) return; // solo enviados
+        if (!mostrarSoloEnviados && r.enviado) return; // solo no enviados
+
         const fechaStr = `${f.toLocaleDateString()} ${f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        const claseExtra = r.enviado ? 'enviado-parpadeo' : '';
 
-const claseExtra = r.enviado ? 'enviado-parpadeo' : '';
-
-lista.innerHTML += `
-  <div class="recordatorio ${claseExtra}" id="r-${id}">
+        lista.innerHTML += `
+          <div class="recordatorio ${claseExtra}" id="r-${id}">
             <strong>${r.descripcion}</strong><br>
             Fecha: ${fechaStr}<br>
             Canal: ${r.canal}<br>
-            Tags: ${r.tags?.join(', ')}<br>
+            Tags: ${r.tags?.join(', ') || ''}<br>
             Activo: ${r.activo ? '✅' : '❌'} | Recurrente: ${r.recurrente ? '♻️' : '—'}<br>
             Enviado: ${r.enviado ? '✅' : '❌'}
             <div class="acciones">
@@ -119,6 +149,13 @@ lista.innerHTML += `
             </div>
           </div>`;
       });
+    }
+
+    function toggleFiltro() {
+      mostrarSoloEnviados = !mostrarSoloEnviados;
+      document.getElementById("toggleFiltro").textContent = 
+        mostrarSoloEnviados ? "📌 Mostrar los PENDIENTES" : "📌 Mostrar SOLO enviados";
+      cargar();
     }
 
     function reenviar(id) {
@@ -141,21 +178,17 @@ lista.innerHTML += `
       window.location.href = `index.html?id=${id}#editar`;
     }
 
+    // Fecha y hora en tiempo real
+    function actualizarFechaHoraActual() {
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const hora = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      document.getElementById('fechaHoraActual').textContent = `📅 ${fecha} ⏰ ${hora}`;
+    }
+    setInterval(actualizarFechaHoraActual, 1000);
+    actualizarFechaHoraActual();
+
     cargar();
-function actualizarFechaHoraActual() {
-  const ahora = new Date();
-  const opcionesFecha = { day: '2-digit', month: '2-digit', year: 'numeric' };
-  const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-
-  const fecha = ahora.toLocaleDateString('es-MX', opcionesFecha);
-  const hora = ahora.toLocaleTimeString('es-MX', opcionesHora);
-
-  document.getElementById('fechaHoraActual').textContent = `📅 ${fecha} ⏰ ${hora}`;
-}
-
-setInterval(actualizarFechaHoraActual, 1000);
-actualizarFechaHoraActual(); // inicial
-
   </script>
 </body>
 </html>
