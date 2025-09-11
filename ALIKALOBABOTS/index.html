@@ -560,12 +560,19 @@ function closeSubpage(){
       function escHandler(e){
         if (e.key === 'Escape') closeSubpage();
       }
-      function confirmDate(){
-        if (dateModal.value) {
-          fechaTextoEl.value = isoToDDMMAA(dateModal.value);
-        }
-        closeSubpage();
-      }
+function confirmDate(){
+  if (dateModal.value) {
+    fechaTextoEl.value = isoToDDMMAA(dateModal.value);
+  }
+  closeSubpage();
+}
+
+// 🔧 Agrega este listener:
+dateModal.addEventListener("change", () => {
+  if (dateModal.value) {
+    fechaTextoEl.value = isoToDDMMAA(dateModal.value);
+  }
+});
 
       // Abrir SOLO con interacción táctil/ratón (no por teclado)
 let allowOpen = false;
@@ -712,4 +719,5 @@ btnCal.addEventListener('keydown', (e) => {
 </div>
   </body>
   </html>
+
 
