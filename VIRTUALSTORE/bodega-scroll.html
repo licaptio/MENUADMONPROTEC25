@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📱 Secciones por Bodega</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin:0; font-family:Arial, sans-serif;
+      background:#111; color:#eee;
+    }
+    header {
+      padding:12px; background:#222; color:white; text-align:center;
+      position:sticky; top:0; z-index:10;
+    }
+    select {
+      margin-top:8px; padding:8px;
+      border-radius:6px; font-size:16px;
+      background:#333; color:white; border:1px solid #555;
+      width:100%;
+    }
+    #seccionesList {
+      display:flex; flex-direction:column;
+      gap:14px; padding:12px;
+    }
+    .card {
+      background:#1f1f1f; border:1px solid #333;
+      border-radius:10px; overflow:hidden;
+    }
+    .card h3 {
+      margin:0; padding:8px; font-size:16px; background:#222; color:#fff;
+    }
+    .card img {
+      width:100%; height:auto;
+      object-fit:contain;
+      touch-action:pinch-zoom;   /* 🔹 Permite zoom con dedos */
+    }
+    .card p {
+      margin:6px; font-size:13px; color:#aaa;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>📱 Secciones por Bodega</h2>
+    <select id="bodegaSelect">
+      <option value="">-- Selecciona bodega --</option>
+      <option value="B1">Bodega Central</option>
+      <option value="B2">Bodega Líquido</option>
+      <option value="B3">Bodega Zapata</option>
+      <option value="B4">Bodega Cigarro</option>
+      <option value="B5">Bodega Tienda PDD</option>
+      <option value="B6">Bodega Extra</option>
+    </select>
+  </header>
+
+  <div id="seccionesList"></div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+    );
+
+    const seccionesList = document.getElementById("seccionesList");
+    const bodegaSelect = document.getElementById("bodegaSelect");
+
+    bodegaSelect.addEventListener("change", async () => {
+      const bodega = bodegaSelect.value;
+      seccionesList.innerHTML = "";
+      if (!bodega) return;
+
+      const { data, error } = await supabase
+        .from("secciones")
+        .select("*")
+        .eq("bodega_id", bodega)
+        .order("id", { ascending: true });
+
+      if (error) {
+        seccionesList.innerHTML = "<p>Error cargando secciones</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        seccionesList.innerHTML = "<p>No hay secciones en esta bodega.</p>";
+        return;
+      }
+
+      data.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${s.nombre || s.id}</h3>
+          <img src="${s.img_url}" alt="${s.nombre}">
+          <p><b>ID:</b> ${s.id}</p>
+        `;
+        seccionesList.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html>
