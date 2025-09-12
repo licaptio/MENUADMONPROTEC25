@@ -92,8 +92,9 @@
     <button type="submit">➕ Crear sección</button>
   </form>
 
-  <h2>📋 Lista de Secciones</h2>
-  <div id="gridSecciones" class="grid"></div>
+<h2>📋 Lista de Secciones</h2>
+<select id="listaNombres"></select>
+<div id="gridSecciones" class="grid"></div>
 
   <hr>
 
@@ -134,30 +135,48 @@
     const puntoPreview = document.getElementById("puntoPreview");
 
     // 🔹 Cargar secciones
-    async function cargarSecciones() {
-      const { data, error } = await supabase.from("secciones").select("*");
-      gridSecciones.innerHTML = "";
-      if (error) return console.error(error);
+async function cargarSecciones() {
+  const { data, error } = await supabase
+    .from("secciones")
+    .select("*")
+    .order("id", { ascending: false }); // 🔹 más reciente primero
 
-      data.forEach(sec => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${sec.img_url}" alt="${sec.nombre}">
-          <h3>${sec.nombre}</h3>
-          <p><b>ID:</b> ${sec.id}</p>
-          <p><b>Bodega:</b> ${sec.bodega_id}</p>
-          <div class="acciones">
-            <label>Modo:</label>
-            <select onchange="cambiarModo('${sec.id}', this.value)">
-              <option value="contain" ${sec.display_mode === "contain" ? "selected" : ""}>Centrada</option>
-              <option value="cover" ${sec.display_mode === "cover" ? "selected" : ""}>Pantalla completa</option>
-            </select>
-            <button onclick="abrirVisor('${sec.img_url}')">📍 Marcar</button>
-            <button onclick="eliminarSeccion('${sec.id}')">❌</button>
-          </div>
-        `;
-        gridSecciones.appendChild(card);
+  gridSecciones.innerHTML = "";
+  const listaNombres = document.getElementById("listaNombres");
+  listaNombres.innerHTML = "";
+
+  if (error) return console.error(error);
+
+  data.forEach(sec => {
+    // 🔸 Opción en el desplegable
+    const opt = document.createElement("option");
+    opt.value = sec.id;
+    opt.textContent = sec.nombre;
+    listaNombres.appendChild(opt);
+
+    // 🔸 Card visual
+    const card = document.createElement("div");
+    card.className = "card";
+    card.id = `card-${sec.id}`; // identificador para scroll
+    card.innerHTML = `
+      <img src="${sec.img_url}" alt="${sec.nombre}">
+      <h3>${sec.nombre}</h3>
+      <p><b>ID:</b> ${sec.id}</p>
+      <p><b>Bodega:</b> ${sec.bodega_id}</p>
+      <div class="acciones">
+        <label>Modo:</label>
+        <select onchange="cambiarModo('${sec.id}', this.value)">
+          <option value="contain" ${sec.display_mode === "contain" ? "selected" : ""}>Centrada</option>
+          <option value="cover" ${sec.display_mode === "cover" ? "selected" : ""}>Pantalla completa</option>
+        </select>
+        <button onclick="abrirVisor('${sec.img_url}')">📍 Marcar</button>
+        <button onclick="eliminarSeccion('${sec.id}')">❌</button>
+      </div>
+    `;
+    gridSecciones.appendChild(card);
+  });
+}
+
       });
       cargarSeccionesSelects();
     }
