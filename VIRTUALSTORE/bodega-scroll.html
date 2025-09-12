@@ -9,6 +9,8 @@
     body {
       margin:0; font-family:Arial, sans-serif;
       background:#111; color:#eee;
+      overflow-y: scroll;              /* 🔹 Fuerza scroll vertical visible */
+      -webkit-overflow-scrolling: touch;
     }
     header {
       padding:12px; background:#222; color:white; text-align:center;
@@ -34,7 +36,8 @@
     .card img {
       width:100%; height:auto;
       object-fit:contain;
-      touch-action:pinch-zoom;   /* 🔹 Permite zoom con dedos */
+      display:block;
+      transition: transform 0.3s ease;
     }
     .card p {
       margin:6px; font-size:13px; color:#aaa;
@@ -91,12 +94,21 @@
       data.forEach(s => {
         const card = document.createElement("div");
         card.className = "card";
+        const imgId = `img-${s.id}`;
         card.innerHTML = `
           <h3>${s.nombre || s.id}</h3>
-          <img src="${s.img_url}" alt="${s.nombre}">
+          <img id="${imgId}" src="${s.img_url}" alt="${s.nombre}">
           <p><b>ID:</b> ${s.id}</p>
         `;
         seccionesList.appendChild(card);
+
+        // 🔹 Doble click/tap para zoom
+        const img = card.querySelector("img");
+        let zoomed = false;
+        img.addEventListener("dblclick", () => {
+          zoomed = !zoomed;
+          img.style.transform = zoomed ? "scale(2)" : "scale(1)";
+        });
       });
     });
   </script>
