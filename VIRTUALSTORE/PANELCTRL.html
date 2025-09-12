@@ -2,85 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>📦 Panel de Control Secciones</title>
+  <title>⚙️ Administración de Secciones</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; margin:20px; background:#f8f9fa; }
-    h1, h2 { text-align:center; color:#333; }
-
-    /* Formulario */
-    form { margin:20px auto; text-align:center; }
-    input, select, button {
-      margin:5px; padding:8px; border-radius:5px;
-      border:1px solid #ccc; font-size:14px;
-    }
-    button { cursor:pointer; background:#007bff; color:white; border:none; }
+    body { margin:0; font-family:Arial, sans-serif; background:#f4f4f4; color:#333; }
+    header { background:#007bff; color:white; padding:14px; text-align:center; font-size:18px; }
+    h2 { font-size:16px; margin:14px 0 6px; text-align:center; }
+    form { margin:12px auto; padding:12px; background:#fff; border-radius:10px; max-width:95%; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+    input, select, button { width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #ccc; font-size:15px; }
+    button { background:#007bff; color:white; font-weight:bold; border:none; }
     button:hover { background:#0056b3; }
-
-    /* Grid de cards */
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:15px;
-      margin:20px;
-    }
-    .card {
-      background:white;
-      border-radius:8px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-      padding:15px;
-      text-align:center;
-    }
-    .card img {
-      width:100%; height:160px; object-fit:cover;
-      border-radius:6px; margin-bottom:10px;
-    }
-    .card h3 { margin:5px 0; }
-    .card p { margin:2px 0; color:#555; }
-    .acciones { margin-top:10px; }
-    .acciones select {
-      margin:5px;
-      padding:5px;
-      border-radius:5px;
-    }
-    .acciones button {
-      margin:5px;
-      background:#dc3545;
-      padding:6px 10px;
-      border-radius:5px;
-    }
-    .acciones button:hover { background:#a71d2a; }
-
-    /* Modal */
-    #modal {
-      display:none;
-      position:fixed;
-      top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.7);
-      justify-content:center; align-items:center;
-      z-index:1000;
-    }
-    #visorImg {
-      max-width: 90%; max-height: 90%;
-      border:3px solid #fff; cursor:crosshair;
-      position:relative;
-    }
-    #puntoPreview {
-      position:absolute; width:20px; height:20px;
-      background:red; border-radius:50%; border:2px solid white;
-      transform:translate(-50%,-50%);
-      display:none; pointer-events:none;
-    }
+    .grid { display:grid; grid-template-columns:1fr; gap:12px; padding:12px; }
+    @media (min-width:600px){ .grid{ grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); } }
+    .card { background:white; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.1); overflow:hidden; }
+    .card img { width:100%; height:160px; object-fit:cover; }
+    .card h3 { margin:10px; font-size:16px; }
+    .card p { margin:6px 10px; font-size:14px; color:#555; }
+    .acciones { display:flex; gap:6px; flex-wrap:wrap; padding:8px; }
+    .acciones button, .acciones select { flex:1; padding:8px; font-size:13px; border-radius:6px; }
+    .edit { background:#ffc107; color:#000; }
+    .edit:hover { background:#e0a800; }
+    .delete { background:#dc3545; }
+    .delete:hover { background:#a71d2a; }
   </style>
 </head>
 <body>
-  <h1>📦 Panel de Control</h1>
+  <header>⚙️ Administración de Secciones</header>
 
-  <!-- Crear secciones -->
+  <!-- Crear sección -->
   <form id="formSeccion">
-    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
-    <input type="text" id="nombreSeccion" placeholder="Nombre descriptivo" required>
-    <select id="bodegaId">
+    <h2>➕ Nueva Sección</h2>
+    <select id="bodegaId" required>
       <option value="B1">Bodega Central</option>
       <option value="B2">Bodega Líquido</option>
       <option value="B3">Bodega Zapata</option>
@@ -88,95 +41,48 @@
       <option value="B5">Bodega Tienda PDD</option>
       <option value="B6">Bodega Extra</option>
     </select>
+    <input type="text" id="idSeccion" placeholder="ID sección (ej: B1A1)" required>
+    <input type="text" id="nombreSeccion" placeholder="Nombre de la sección" required>
     <input type="file" id="foto" accept="image/*" required>
-    <button type="submit">➕ Crear sección</button>
+    <button type="submit">Crear Sección</button>
   </form>
 
-<h2>📋 Lista de Secciones</h2>
-<select id="listaNombres"></select>
-<div id="gridSecciones" class="grid"></div>
-
-  <hr>
-
-  <!-- Crear conexiones -->
-  <h2>🔗 Crear Conexión entre Secciones</h2>
-  <form id="formEnlace">
-    <select id="fromSeccion"></select>
-    → <select id="toSeccion"></select>
-    <input type="number" id="coordX" placeholder="X" required>
-    <input type="number" id="coordY" placeholder="Y" required>
-    <button type="submit">➕ Crear Enlace</button>
-  </form>
-
-  <h2>📋 Lista de Enlaces</h2>
-  <div id="gridEnlaces" class="grid"></div>
-
-  <!-- Modal -->
-  <div id="modal">
-    <div style="position:relative;">
-      <img id="visorImg" src="" alt="Imagen Sección">
-      <div id="puntoPreview"></div>
-    </div>
-  </div>
+  <h2>📋 Lista de Secciones</h2>
+  <div id="gridSecciones" class="grid"></div>
 
   <script>
-    // Configuración Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
 
-    const gridSecciones = document.getElementById("gridSecciones");
-    const gridEnlaces = document.getElementById("gridEnlaces");
     const form = document.getElementById("formSeccion");
-    const formEnlace = document.getElementById("formEnlace");
-    const modal = document.getElementById("modal");
-    const visorImg = document.getElementById("visorImg");
-    const puntoPreview = document.getElementById("puntoPreview");
+    const gridSecciones = document.getElementById("gridSecciones");
 
     // 🔹 Cargar secciones
-async function cargarSecciones() {
-  const { data, error } = await supabase
-    .from("secciones")
-    .select("*")
-    .order("id", { ascending: false }); // 🔹 más reciente primero
-
-  gridSecciones.innerHTML = "";
-  const listaNombres = document.getElementById("listaNombres");
-  listaNombres.innerHTML = "";
-
-  if (error) return console.error(error);
-
-  data.forEach(sec => {
-    // 🔸 Opción en el desplegable
-    const opt = document.createElement("option");
-    opt.value = sec.id;
-    opt.textContent = sec.id;  // mostrar el ID
-    opt.title = `${sec.nombre} (${sec.bodega_id})`;
-    listaNombres.appendChild(opt);
-
-    // 🔸 Card visual
-    const card = document.createElement("div");
-    card.className = "card";
-    card.id = `card-${sec.id}`; // identificador para scroll
-    card.innerHTML = `
-      <img src="${sec.img_url}" alt="${sec.nombre}">
-      <h3>${sec.nombre}</h3>
-      <p><b>ID:</b> ${sec.id}</p>
-      <p><b>Bodega:</b> ${sec.bodega_id}</p>
-      <div class="acciones">
-        <label>Modo:</label>
-        <select onchange="cambiarModo('${sec.id}', this.value)">
-          <option value="contain" ${sec.display_mode === "contain" ? "selected" : ""}>Centrada</option>
-          <option value="cover" ${sec.display_mode === "cover" ? "selected" : ""}>Pantalla completa</option>
-        </select>
-        <button onclick="abrirVisor('${sec.img_url}')">📍 Marcar</button>
-        <button onclick="eliminarSeccion('${sec.id}')">❌</button>
-      </div>
-    `;
-    gridSecciones.appendChild(card);
-  });
-      cargarSeccionesSelects();
+    async function cargarSecciones() {
+      const { data, error } = await supabase.from("secciones").select("*").order("created_at",{ascending:false});
+      if (error) return console.error(error);
+      gridSecciones.innerHTML = "";
+      data.forEach(sec => {
+        const card = document.createElement("div");
+        card.className="card";
+        card.innerHTML = `
+          <img src="${sec.img_url}" alt="${sec.nombre}">
+          <h3>${sec.nombre}</h3>
+          <p><b>ID:</b> ${sec.id}</p>
+          <p><b>Bodega:</b> ${sec.bodega_id}</p>
+          <div class="acciones">
+            <select onchange="cambiarModo('${sec.id}', this.value)">
+              <option value="contain" ${sec.display_mode === "contain" ? "selected" : ""}>Centrada</option>
+              <option value="cover" ${sec.display_mode === "cover" ? "selected" : ""}>Pantalla completa</option>
+            </select>
+            <button class="edit" onclick="editarSeccion('${sec.id}','${sec.nombre}')">✏️ Editar</button>
+            <button class="delete" onclick="eliminarSeccion('${sec.id}')">❌ Eliminar</button>
+          </div>
+        `;
+        gridSecciones.appendChild(card);
+      });
     }
 
     // 🔹 Crear sección
@@ -197,123 +103,36 @@ async function cargarSecciones() {
         .getPublicUrl(`bodega${bodega}/${id}.jpg`).data.publicUrl;
 
       const { error: err2 } = await supabase.from("secciones").insert([
-        { id, bodega_id: bodega, nombre, img_url: urlPublica, display_mode: "contain" }
+        { id, bodega_id: bodega, nombre, img_url: urlPublica, display_mode:"contain" }
       ]);
       if (err2) { console.error(err2); alert("Error al guardar en DB"); return; }
 
-      cargarSecciones();
       form.reset();
+      cargarSecciones();
     });
 
-    // 🔹 Cambiar modo de visualización
+    // 🔹 Cambiar modo visualización
     async function cambiarModo(id, modo) {
-      const { error } = await supabase
-        .from("secciones")
-        .update({ display_mode: modo })
-        .eq("id", id);
-      if (error) {
-        console.error(error);
-        alert("❌ Error al actualizar el modo de visualización");
-      }
+      const { error } = await supabase.from("secciones").update({ display_mode: modo }).eq("id", id);
+      if (error) alert("Error al actualizar modo");
+    }
+
+    // 🔹 Editar nombre sección
+    async function editarSeccion(id,nombreActual){
+      const nuevoNombre = prompt("Nuevo nombre de la sección:", nombreActual);
+      if (!nuevoNombre) return;
+      await supabase.from("secciones").update({nombre:nuevoNombre}).eq("id",id);
+      cargarSecciones();
     }
 
     // 🔹 Eliminar sección
-    async function eliminarSeccion(id) {
-      if (!confirm("¿Eliminar sección " + id + "?")) return;
-      await supabase.from("secciones").delete().eq("id", id);
+    async function eliminarSeccion(id){
+      if (!confirm("¿Eliminar sección "+id+"?")) return;
+      await supabase.from("secciones").delete().eq("id",id);
       cargarSecciones();
     }
 
-    // -------- Enlaces --------
-    async function cargarSeccionesSelects() {
-      const { data, error } = await supabase.from("secciones").select("id");
-      if (error) return console.error(error);
-      const from = document.getElementById("fromSeccion");
-      const to = document.getElementById("toSeccion");
-      from.innerHTML = ""; to.innerHTML = "";
-      data.forEach(s => {
-        from.innerHTML += `<option value="${s.id}">${s.id}</option>`;
-        to.innerHTML += `<option value="${s.id}">${s.id}</option>`;
-      });
-    }
-
-    formEnlace.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const from = document.getElementById("fromSeccion").value;
-      const to = document.getElementById("toSeccion").value;
-      const x = document.getElementById("coordX").value;
-      const y = document.getElementById("coordY").value;
-
-      const { error } = await supabase.from("enlaces").insert([
-        { from_seccion: from, to_seccion: to, x, y }
-      ]);
-      if (error) { console.error(error); alert("Error al guardar enlace"); return; }
-
-      cargarEnlaces();
-      formEnlace.reset();
-    });
-
-    async function cargarEnlaces() {
-      const { data, error } = await supabase.from("enlaces").select("*");
-      gridEnlaces.innerHTML = "";
-      if (error) return console.error(error);
-      data.forEach(e => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>${e.from_seccion} → ${e.to_seccion}</h3>
-          <p><b>X:</b> ${e.x}% | <b>Y:</b> ${e.y}%</p>
-          <div class="acciones">
-            <button onclick="eliminarEnlace('${e.from_seccion}','${e.to_seccion}')">❌</button>
-          </div>
-        `;
-        gridEnlaces.appendChild(card);
-      });
-    }
-
-    // 🔹 Eliminar enlace
-    async function eliminarEnlace(from, to) {
-      if (!confirm(`¿Eliminar enlace de ${from} a ${to}?`)) return;
-      await supabase.from("enlaces")
-        .delete()
-        .eq("from_seccion", from)
-        .eq("to_seccion", to);
-      cargarEnlaces();
-    }
-
-    // ------- Modal para marcar coordenadas -------
-    function abrirVisor(imgUrl) {
-      visorImg.src = imgUrl;
-      modal.style.display = "flex";
-    }
-    modal.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
-
-    visorImg.onclick = (e) => {
-      const rect = visorImg.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-      puntoPreview.style.left = x + "%";
-      puntoPreview.style.top = y + "%";
-      puntoPreview.style.display = "block";
-
-      document.getElementById("coordX").value = x.toFixed(1);
-      document.getElementById("coordY").value = y.toFixed(1);
-
-      alert(`📍 Coordenada marcada: X=${x.toFixed(1)}%, Y=${y.toFixed(1)}%`);
-      modal.style.display = "none";
-    };
-document.getElementById("listaNombres").addEventListener("change", (e) => {
-  const card = document.getElementById(`card-${e.target.value}`);
-  if (card) {
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
-    card.style.boxShadow = "0 0 15px 3px #007bff"; // resalte temporal
-    setTimeout(() => { card.style.boxShadow = ""; }, 2000);
-  }
-});
-
     cargarSecciones();
-    cargarEnlaces();
   </script>
 </body>
 </html>
