@@ -305,6 +305,14 @@ async function cargarSecciones() {
       alert(`📍 Coordenada marcada: X=${x.toFixed(1)}%, Y=${y.toFixed(1)}%`);
       modal.style.display = "none";
     };
+document.getElementById("listaNombres").addEventListener("change", (e) => {
+  const card = document.getElementById(`card-${e.target.value}`);
+  if (card) {
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.style.boxShadow = "0 0 15px 3px #007bff"; // resalte temporal
+    setTimeout(() => { card.style.boxShadow = ""; }, 2000);
+  }
+});
 
     cargarSecciones();
     cargarEnlaces();
