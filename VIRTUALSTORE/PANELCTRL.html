@@ -151,7 +151,8 @@ async function cargarSecciones() {
     // 🔸 Opción en el desplegable
     const opt = document.createElement("option");
     opt.value = sec.id;
-    opt.textContent = sec.nombre;
+    opt.textContent = sec.id;  // mostrar el ID
+    opt.title = `${sec.nombre} (${sec.bodega_id})`;
     listaNombres.appendChild(opt);
 
     // 🔸 Card visual
