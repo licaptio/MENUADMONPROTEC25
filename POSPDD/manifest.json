@@ -1,7 +1,7 @@
 {
   "name": "POS Ruta de Venta",
   "short_name": "POS",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#00416A",
   "theme_color": "#0c6cbd",
