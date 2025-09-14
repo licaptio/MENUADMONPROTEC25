@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>POS – Ruta de Venta</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0c6cbd">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --azul:#00416A; --resalte:#0c6cbd; --ok:#1e8e3e; --bg-grad:linear-gradient(to right,#00416A,#E4E5E6);
+      --card: rgba(255,255,255,.9); --muted:rgba(0,0,0,.55); --shadow:0 6px 18px rgba(0,0,0,.18);
+      --radius:14px; --radius-sm:10px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Poppins',system-ui,Arial; color:#111; background:var(--bg-grad);
+      display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+    }
+
+    header{
+      position:sticky; top:0; z-index:50;
+      background:rgba(0,0,0,.6);
+      color:#fff;
+      padding:10px 14px;
+      display:flex; justify-content:center; align-items:center; gap:8px;
+      font-weight:700; font-size:18px;
+      backdrop-filter:saturate(120%) blur(4px);
+      height:50px;
+    }
+    header img{ height:75px; object-fit:contain; }
+
+    .wrap{flex:1; padding:12px; display:flex; flex-direction:column; gap:12px; max-width:720px; margin:0 auto}
+
+    .controls{ display:flex; flex-direction:column; gap:10px; }
+    .field{
+      display:flex; gap:8px; background:rgba(255,255,255,.12); padding:10px; border-radius:var(--radius-sm);
+      align-items:center; backdrop-filter:blur(2px);
+    }
+    .field label{min-width:78px; color:#fff; font-size:13px}
+    .field input{ flex:1; padding:10px 12px; border:none; border-radius:8px; font-size:15px; background:#fff; outline:none; }
+
+    /* Buscador */
+    .searchbox{ position:relative; z-index:300; }
+    .search-results{
+      position:absolute; left:90px; right:10px; top:calc(100% + 6px);
+      background:#fff; border-radius:12px; box-shadow:var(--shadow);
+      max-height:260px; overflow:auto; display:none; z-index:310;
+    }
+    .result-item{ padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; gap:8px }
+    .result-item small{ color:var(--muted) }
+    .result-item:hover{ background:#f2f4f7 }
+
+    .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+
+    /* Tabla */
+    .table-wrap{ max-height:260px; overflow:auto; }
+    table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+    thead th{ background:var(--azul); color:#fff; padding:10px; font-size:13px; position:sticky; top:0; z-index:100; }
+    thead th:nth-child(1){ width:55%; text-align:left; }
+    thead th:nth-child(2){ width:15%; text-align:center; }
+    thead th:nth-child(3){ width:20%; text-align:right; }
+    thead th:nth-child(4){ width:10%; text-align:center; }
+    td.del-col{ text-align:center; }
+    td.del-col .del{
+      background:#e74c3c; color:#fff; border:none; border-radius:50%;
+      width:22px; height:22px; font-size:14px; line-height:20px; cursor:pointer;
+    }
+    td.del-col .del:hover{ background:#c0392b; }
+
+    .totals{ display:flex; flex-direction:column; gap:6px; padding:12px 14px; background:#fff; }
+    .row{ display:flex; justify-content:space-between; align-items:center; font-size:15px }
+    .row.muted{ color:var(--muted) }
+    .row.big{ font-weight:700; font-size:18px }
+
+    .actions{ padding:6px 0 12px }
+    .btn{
+      width:100%; border:none; padding:14px; border-radius:12px; font-size:18px; font-weight:700; color:#fff;
+      background:linear-gradient(180deg,var(--resalte),#094d85); box-shadow:var(--shadow); cursor:pointer;
+    }
+    .btn:active{ transform:translateY(1px) }
+    #btnCorte{ background:linear-gradient(180deg,#1e8e3e,#146329); margin-top:10px; }
+
+    /* Modal Cobro */
+    #modalCobro{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1200; align-items:center; justify-content:center; }
+    .modal-card{ width:min(520px,92vw); background:#fff; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); overflow:hidden; }
+    .modal-h{ padding:12px 16px; background:#0c6cbd; color:#fff; font-weight:700; }
+    .modal-b{ padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+    .modal-b input,.modal-b select{ padding:10px; border-radius:10px; border:1px solid #e1e5ea; }
+    body.modal-open{ overflow:hidden; }
+
+    /* ===== IMPRESIÓN DEL TICKET ===== */
+    #ticketArea{ display:none; }
+    @media print{
+      :root{ --ticket-mm:72; --ticket-pad-mm:1; --ticket-font:18px; --line-height:1.08; }
+      @page{ size: calc(var(--ticket-mm) * 1mm) auto; margin:0; }
+      html,body{ background:#fff!important; height:auto!important; width:calc(var(--ticket-mm) * 1mm); margin:0!important; padding:0!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      body *{ visibility:hidden!important; }
+      #ticketArea, #ticketArea *{ visibility:visible!important; }
+      #ticketArea{ position:fixed; inset:0; display:block!important; background:#fff!important; padding:0; margin:0; z-index:99999; }
+      #tTipoRow{ display:none !important; }
+      .ticket{ width:calc(var(--ticket-mm) * 1mm); margin:0 auto; padding:0 calc(var(--ticket-pad-mm) * 1mm); box-sizing:border-box; font:var(--ticket-font)/var(--line-height) 'Poppins',system-ui,sans-serif; color:#000; text-align:left; overflow:hidden; }
+      .ticket .t-header{ text-align:center; margin:2px 0; }
+      .ticket img{ display:inline-block; max-width:100%; height:auto; }
+      .ticket hr{ border:none; border-top:1px dashed #999; margin:6px 0; }
+      .ticket .t-row{ display:flex!important; justify-content:space-between; align-items:center; gap:6px; white-space:nowrap!important; margin:2px 0; }
+      .ticket .t-desc{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap!important; text-align:left; }
+      .ticket .t-imp{ flex:0 0 auto; text-align:right; margin-left:8px; white-space:nowrap!important; }
+      .ticket .t-totals{ text-align:right; }
+      .ticket .t-totals .row{ display:flex; justify-content:flex-end; gap:10px; }
+      .ticket .t-thanks{ text-align:center; margin-top:8px; }
+      .ticket .t-strong{ font-size: calc(var(--ticket-font) + 2px); }
+      .ticket .t-header img{ max-width:142px!important; }
+      .ticket .t-header.biz{ font-size: calc(var(--ticket-font) - 3px); }
+      .ticket .t-core,.ticket .t-core *{ font-size: calc(var(--ticket-font) - 3px); }
+    }
+    .searchbox{ position:relative; }
+.cam-btn{
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  border:none; padding:8px 10px; border-radius:10px; cursor:pointer;
+  background:#0c6cbd; color:#fff; font-size:16px;
+}
+.cam-btn:active{ transform:translateY(-49%); }
+
+    /* Asegura que todo lo interno ocupa exactamente el contenedor */
+#camReader,
+#camReader * { box-sizing: border-box; }
+
+#camReader {
+  width: min(92vw, 420px);
+  height: min(70vh, 420px);
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;           /* evita que algo "crezca" afuera */
+  background: #000;           /* ayuda a ver el encuadre real */
+  aspect-ratio: 16 / 9;       /* estabiliza el layout en móviles */
+  border-radius: 12px;
+}
+
+/* Contenedor interno que crea la lib */
+#camReader .html5-qrcode-container,
+#camReader .html5-qrcode-camera,
+#camReader .html5-qrcode-video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* El <video> y el <canvas> SIEMPRE al 100% del contenedor */
+/* iOS/Safari: evita el micro-gap del lado derecho */
+/* Por defecto (Android/desktop): llenar el contenedor exacto */
+#camReader video,
+#camReader canvas{
+  position:absolute!important;
+  top:-1px;                 /* sangrar 1px */
+  left:-1px;                /* sangrar 1px */
+  width:calc(100% + 2px)!important;   /* tapa cualquier hueco */
+  height:calc(100% + 2px)!important;
+  object-fit:cover!important;
+  object-position: 48% 50% !important; 
+  transform:translateZ(0)!important;  /* evita redondeos raros */
+  clip-path: inset(0 2% 0 0); 
+}
+
+/* Solo iOS: 1% extra para tapar el micro-gap derecho de Safari */
+body.is-ios #camReader video,
+body.is-ios #camReader canvas{
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  width:101%!important;
+}
+
+/* La “sombra”/overlay que dibuja las esquinas */
+#camReader .qr-shaded-region {
+  position: absolute !important;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+    /* Oculta el overlay/corners que trae la librería (causa el desfasado) */
+#camReader .qr-shaded-region{ display:none !important; }
+
+/* Nuestro marco y sombreado */
+#camReader .qr-frame{
+  position:absolute; left:50%; top:50%;
+  width:var(--qr-w, 260px); height:var(--qr-h, 160px);
+  transform:translate(-50%,-50%);
+  pointer-events:none; border-radius:10px;
+  /* sombreado fuera del recuadro */
+  box-shadow: 0 0 0 200vmax rgba(0,0,0,.45);
+}
+
+/* Esquinas del marco (8 “líneas” con backgrounds) */
+#camReader .qr-frame::before{
+  content:""; position:absolute; inset:0; border-radius:10px;
+  background:
+    linear-gradient(#fff,#fff) left   top    /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) left   top    /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) right  top    /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) right  top    /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) left   bottom /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) left   bottom /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) right  bottom /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) right  bottom /4px  28px no-repeat;
+}
+.field input, .field select{
+  flex:1; padding:10px 12px; border:none; border-radius:8px;
+  font-size:15px; background:#fff; outline:none;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <span>POS – Ruta de Venta</span>
+    <img src="logo_proveedora.webp" alt="Logo">
+  </header>
+
+  <main class="wrap">
+    <section class="controls">
+ <div class="field">
+  <label>Cliente</label>
+  <select id="cliente">
+    <option value="">Selecciona un cliente…</option>
+  </select>
+</div>
+<div class="field searchbox">
+  <label>Buscar</label>
+  <input id="buscador" type="text" placeholder="Escribe o escanea código…">
+  <button id="btnCam" class="cam-btn" type="button">📷</button>
+  <div id="resultados" class="search-results"></div>
+</div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input id="cantidadInput" type="number" step="0.01" min="0.01" value="1">
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cant.</th>
+              <th>Importe</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="totals">
+        <div class="row muted"><span>Subtotal</span><span id="lblSubtotal">$0.00</span></div>
+        <div class="row muted"><span>Impuestos</span><span id="lblImpuestos">$0.00</span></div>
+        <div class="row big"><span>Total</span><span id="lblTotal">$0.00</span></div>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button class="btn" id="btnCobrar">Cobrar</button>
+      <button class="btn" id="btnCorte">Corte del día</button>
+       <button class="btn" id="btnReimprimir" style="margin-top:10px; background:linear-gradient(180deg,#6b7280,#374151);">
+    🧾 Reimprimir ticket
+  </button>
+    </section>
+  </main>
+
+  <!-- Modal de Cobro -->
+  <div id="modalCobro">
+    <div class="modal-card">
+      <div class="modal-h">Cobro</div>
+      <div class="modal-b">
+        <div class="row big" style="justify-content:space-between">
+          <span>Total a pagar:</span>
+          <span id="cobroTotal">$0.00</span>
+        </div>
+
+        <label for="metodoPago">Método de pago</label>
+        <select id="metodoPago">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="mixto">Mixto</option>
+        </select>
+
+        <div id="bloqueEfectivo">
+          <label for="montoRecibido">Monto recibido</label>
+          <input id="montoRecibido" type="number" step="0.01" min="0">
+          <div class="row" style="justify-content:space-between">
+            <span>Cambio:</span>
+            <span id="montoCambio">$0.00</span>
+          </div>
+        </div>
+
+        <label for="notasCobro">Notas</label>
+        <textarea id="notasCobro" rows="2" style="resize:none"></textarea>
+
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button class="btn" id="btnCancelarCobro" style="background:#aaa;">Cancelar</button>
+          <button class="btn" id="btnConfirmarCobro">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Reimpresión de Tickets -->
+<div id="modalReimp" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1300; align-items:center; justify-content:center;">
+  <div class="modal-card" style="width:min(720px,96vw); background:#fff; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); overflow:hidden;">
+    <div class="modal-h" style="display:flex; align-items:center; justify-content:space-between;">
+      <span>Reimprimir tickets</span>
+      <button id="btnCerrarReimp" class="btn" style="background:#aaa; width:auto; padding:8px 12px; font-size:14px;">Cerrar</button>
+    </div>
+    <div class="modal-b" style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+      <!-- Filtros -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input id="filtroFolio" type="text" placeholder="Buscar por folio o cliente..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #e1e5ea;">
+        <input id="filtroFecha" type="date" style="padding:10px; border-radius:10px; border:1px solid #e1e5ea;">
+        <button id="btnBuscarTickets" class="btn" style="width:auto; padding:10px 12px; font-size:14px;">Buscar</button>
+      </div>
+
+      <!-- Lista -->
+      <div id="listaTickets" style="max-height:50vh; overflow:auto; border:1px solid #e5e7eb; border-radius:12px;">
+        <!-- items renderizados por JS -->
+      </div>
+
+      <!-- Paginación simple -->
+      <div style="display:flex; gap:8px; justify-content:flex-end; align-items:center;">
+        <button id="btnPrevTickets" class="btn" style="width:auto; padding:8px 10px; font-size:14px; background:#64748b;">◀</button>
+        <span id="lblPagina" style="min-width:70px; text-align:center;">1</span>
+        <button id="btnNextTickets" class="btn" style="width:auto; padding:8px 10px; font-size:14px; background:#64748b;">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- 👇 AQUI pega el modal de la cámara -->
+<div id="camModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1500; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:12px; padding:12px; width:min(420px,90vw)">
+    <div id="camReader"></div>
+    <button id="btnCerrarCam" class="btn" style="margin-top:8px; background:#aaa; width:100%;">Cerrar</button>
+  </div>
+</div>
+
+  <!-- Ticket imprimible -->
+  <div id="ticketArea">
+    <div id="ticket" class="ticket">
+      <div class="t-header"><img src="logo_proveedora.webp" alt="Logo"></div>
+      <div class="t-header t-strong">La Proveedora</div>
+      <div class="t-header t-strong">Ruta de Venta</div>
+      <hr>
+      <div class="t-header biz">MADERO 690 SUR, CENTRO</div>
+      <div class="t-header biz">LINARES, NUEVO LEÓN, 67700</div>
+      <div class="t-header biz">RFC: PDD-031204-KL5</div>
+      <div class="t-header biz">TEL: (821) 2121805</div>
+      <div class="t-header biz">RÉGIMEN GENERAL DE LEY</div>
+      <div class="t-header biz">PERSONAS MORALES</div>
+      <hr>
+      <div class="t-header t-core" id="tFolio"></div>
+      <div class="t-header t-core" id="tFecha"></div>
+      <div class="t-header t-core">Atendió: <span id="tAtendio"></span></div>
+      <hr>
+      <div class="t-core" id="tCliente"></div>
+      <div class="t-core" id="tTipoRow">Tipo precio: <span id="tTipo"></span></div>
+
+      <!-- NUEVO: Facturación en ticket -->
+      <div class="t-core" id="tFacturaRow">Factura: <span id="tFacturaVal"></span></div>
+      <div class="t-core" id="tRFCRow" style="display:none;">RFC: <span id="tRFC"></span></div>
+      <div class="t-core" id="tCFDIRow" style="display:none;">Uso CFDI: <span id="tCFDI"></span></div>
+
+      <hr>
+      <div class="t-core" id="tLineas"></div>
+      <hr>
+      <div class="t-totals t-core">
+        <div class="row"><span>Subtotal</span><span id="tSubtotal"></span></div>
+        <div class="row"><span>Impuestos</span><span id="tImpuestos"></span></div>
+        <div class="row" style="font-weight:700;"><span>Total</span><span id="tTotal"></span></div>
+      </div>
+      <hr>
+      <div class="t-core">Método: <span id="tMetodo"></span></div>
+      <div class="t-core" id="tRecibidoRow">Pago: <span id="tRecibido"></span> · Cambio: <span id="tCambio"></span></div>
+      <div id="tNotas"></div>
+      <div class="t-thanks">¡Gracias por su compra!</div>
+    </div>
+  </div>
+  
+ <script src="https://unpkg.com/html5-qrcode"></script>
+
+<script type="module">
+  // Detectar iOS y marcar el <body>
+const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+document.body.classList.toggle('is-ios', isIOS);
+
+  // Reimpresión: referencias a elementos y estado
+const modalReimp       = document.getElementById('modalReimp');
+const btnReimprimir    = document.getElementById('btnReimprimir');
+const btnCerrarReimp   = document.getElementById('btnCerrarReimp');
+const filtroFolio      = document.getElementById('filtroFolio');
+const filtroFecha      = document.getElementById('filtroFecha');
+const btnBuscarTickets = document.getElementById('btnBuscarTickets');
+const listaTickets     = document.getElementById('listaTickets');
+const btnPrevTickets   = document.getElementById('btnPrevTickets');
+const btnNextTickets   = document.getElementById('btnNextTickets');
+const lblPagina        = document.getElementById('lblPagina');
+
+let _tickets = [];
+let _pagina  = 1;
+const _porPag = 10;
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, setDoc, serverTimestamp, runTransaction, doc,
+    getDocs, getDoc, query, where, orderBy, Timestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
+// ===== IndexedDB helper =====
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("pos_ruta", 1);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains("ventas_pendientes")) {
+        db.createObjectStore("ventas_pendientes", { keyPath: "folio" });
+      }
+      if (!db.objectStoreNames.contains("cache_catalogo")) {
+        db.createObjectStore("cache_catalogo", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("cache_clientes")) {
+        db.createObjectStore("cache_clientes", { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// IndexedDB simple para colas offline
+function openLocalDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('posDB', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('ventasPendientes')) {
+        db.createObjectStore('ventasPendientes', { keyPath: 'folio' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror  = () => reject(request.error);
+  });
+}
+
+async function guardarVentaOffline(venta) {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventasPendientes', 'readwrite');
+    tx.objectStore('ventasPendientes').put(venta);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function getVentasPendientes() {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction('ventasPendientes', 'readonly');
+    const req = tx.objectStore('ventasPendientes').getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function borrarVentaPendiente(folio) {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventasPendientes', 'readwrite');
+    tx.objectStore('ventasPendientes').delete(folio);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+    authDomain: "inventariopv-643f1.firebaseapp.com",
+    projectId: "inventariopv-643f1",
+    storageBucket: "inventariopv-643f1.appspot.com",
+    messagingSenderId: "96242533231",
+    appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const $ = (s)=>document.querySelector(s);
+  const elCliente=$('#cliente'), elBuscador=$('#buscador'), elCant=$('#cantidadInput');
+  const elResultados=$('#resultados'), elTbody=$('#tbody');
+  const lblSubtotal=$('#lblSubtotal'), lblTotal=$('#lblTotal'), lblImp=$('#lblImpuestos');
+
+  const ATENDIO='Juan Serrato', rutaId='ruta_1';
+  const money=(n)=>'$'+(Number(n)||0).toFixed(2);
+  const pad2=n=>String(n).padStart(2,'0');
+  const toYYYYMMDD=(date)=>{const d=new Date(date); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
+
+  async function obtenerUbicacion(){
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        });
+      },
+      (err) => {
+        console.warn("No se pudo obtener ubicación:", err);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  });
+}
+ 
+  let carrito=[], prodSeleccionado=null, clienteSeleccionado=null;
+  let catalogo=[], clientes=[]; const codeIndex=new Map();
+  const normaliza=s=>(s||'').toString().trim().toLowerCase();
+
+// === Cámara / QR ===
+const btnCam       = document.getElementById('btnCam');
+const camModal     = document.getElementById('camModal');
+const camReaderDiv = document.getElementById('camReader');
+const btnCerrarCam = document.getElementById('btnCerrarCam');
+
+let lector = null;
+let camActiva = false;
+
+function onScanSuccess(decodedText /*, decodedResult */) {
+  camActiva = false;
+  try { lector?.stop(); } catch {}
+  try { lector?.clear(); } catch {}
+  lector = null;
+
+  camModal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+
+  // Reusar tu flujo de búsqueda
+  elBuscador.value = (decodedText || '').trim();
+  const hits = buscarLocal(elBuscador.value);
+  if (hits.length >= 1) {
+    prodSeleccionado = hits[0];
+    elResultados.style.display = "none";
+    elBuscador.value = hits[0].nombre;
+    elCant.focus(); elCant.select();
+  } else {
+    pintarResultados(buscarLocal(elBuscador.value));
+    elBuscador.focus();
+  }
+}
+
+function onScanError(_err) {
+  // Silencioso; si quieres mostrar algo, hazlo aquí
+}
+
+  const isLocalhost = /^localhost(:\d+)?$/.test(location.hostname) || location.hostname === '127.0.0.1';
+if (location.protocol !== 'https:' && !isLocalhost) {
+  alert('Para usar la cámara, abre esta página en HTTPS (o en http://localhost).');
+}
+
+async function abrirCam(){
+  document.body.classList.add('modal-open');
+  camModal.style.display = 'flex';
+
+  // Espera a que el modal se pinte y tenga tamaño real
+  await new Promise(r => requestAnimationFrame(r));
+  await new Promise(r => setTimeout(r, 0)); // 1 tick extra ayuda en Android
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    alert("Este navegador no soporta acceso a cámara.");
+    cerrarCam(); return;
+  }
+
+  // Permiso primero…
+  try {
+    const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
+    tmp.getTracks().forEach(t => t.stop());
+  } catch {
+    alert("No hay permiso de cámara. Actívalo en los permisos del navegador.");
+    cerrarCam(); return;
+  }
+
+  // Limpiar instancia previa
+  try { await lector?.stop(); } catch {}
+  try { await lector?.clear(); } catch {}
+  lector = new Html5Qrcode('camReader');
+
+  // IMPORTANTÍSIMO: medir DESPUÉS de pintar el modal
+  let w = camReaderDiv.clientWidth;
+  let h = camReaderDiv.clientHeight;
+  if (!w || !h) { w = 420; h = 236; } // fallback 16:9
+
+const boxPx = Math.floor(Math.min(w, h) * 0.85);
+const toEven = n => n - (n % 2);      // ← helper a número par
+
+const qrW = toEven(boxPx);
+const qrH = toEven(Math.floor(boxPx * 0.65));
+
+// Pasamos las medidas al CSS
+camReaderDiv.style.setProperty('--qr-w', qrW + 'px');
+camReaderDiv.style.setProperty('--qr-h', qrH + 'px');
+
+// Si ya había un marco, lo quitamos y creamos uno nuevo
+camReaderDiv.querySelector('.qr-frame')?.remove();
+const frame = document.createElement('div');
+frame.className = 'qr-frame';
+camReaderDiv.appendChild(frame);
+
+const F = window.Html5QrcodeSupportedFormats || { QR_CODE:0, EAN_13:1, CODE_128:2 };
+const formats = [F.EAN_13, F.CODE_128];
+
+const config = {
+  fps: 15,
+  qrbox: { width: qrW, height: qrH },   // 👈 usamos las mismas medidas
+  formatsToSupport: formats,
+  experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+  rememberLastUsedCamera: true,
+  disableFlip: true,
+  videoConstraints: {
+    facingMode: { ideal: "environment" },
+    focusMode: "continuous",
+    width: { ideal: 1280 },
+    aspectRatio: { ideal: 16/9 }
+  }
+};
+  try {
+    await lector.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+    camActiva = true;
+  } catch (e1) {
+    try {
+      const devs = await Html5Qrcode.getCameras();
+      if (!devs?.length) throw new Error("NO_CAMERAS");
+      const back = devs.find(d => /back|rear|environment/i.test(d.label));
+      const camId = (back?.id) || devs[0].id;
+      await lector.start({ deviceId: { exact: camId } }, config, onScanSuccess, onScanError);
+      camActiva = true;
+    } catch (e2) {
+      console.error("Error cámara:", e1, e2);
+      alert("No se pudo abrir la cámara");
+      cerrarCam();
+    }
+  }
+}
+
+function cerrarCam(){
+  if (lector) {
+    if (camActiva) { try { lector.stop(); } catch {} }
+    try { lector.clear(); } catch {}
+    lector = null;
+    camActiva = false;
+  }
+  camModal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+}
+
+// Eventos
+btnCam.addEventListener('click', abrirCam);
+btnCerrarCam.addEventListener('click', cerrarCam);
+camModal.addEventListener('click', (e)=>{ if(e.target === camModal) cerrarCam(); });
+window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && camModal.style.display === 'flex') cerrarCam(); });
+
+  // ===== Catálogo =====
+  async function cargarCatalogoDesdeFirestore(){
+    catalogo=[]; codeIndex.clear();
+    const prodSnap=await getDocs(collection(db,'productos'));
+    prodSnap.forEach(d=>{
+      const x=d.data(); if(x.activo===false)return;
+      const prod={id:d.id, nombre:x.concepto||'SIN NOMBRE',
+        codigo:(x.codigoBarra||'').toString(),
+        precioPublico:Number(x.precioPublico||0),
+        ivaTasa:Number(x.ivaTasa||0),
+        iepsTasa:Number(x.iepsTasa||0)};
+      catalogo.push(prod); if(prod.codigo)codeIndex.set(prod.codigo.trim(),prod.id);
+    });
+  }
+
+// ===== Clientes (llenar <select>) =====
+async function cargarClientes(){
+  try {
+    clientes = [];
+    const sel = document.getElementById("cliente");
+    sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
+
+    const snap = await getDocs(collection(db, "rutas_venta", rutaId, "clientes"));
+    snap.forEach(d => {
+      const c = d.data();
+      if (c.activo === false) return;
+
+      const cli = {
+        id: d.id,
+        nombre:  c.nombre  || "",
+        alias:   c.alias   || "",
+        telefono:c.telefono|| "",
+        ciudad:  c.ciudad  || "",
+        rfc:     c.rfc     || "",
+        ocupa_factura: !!c.ocupa_factura,
+        uso_cfdi: c.uso_cfdi || ""
+      };
+      clientes.push(cli);
+
+      const opt = document.createElement("option");
+      opt.value = cli.id; // guardamos el ID (no el nombre)
+      opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
+      sel.appendChild(opt);
+    });
+
+    console.log("[clientes] cargados:", clientes.length);
+  } catch (e) {
+    console.error("Error cargando clientes:", e);
+    alert("No pude cargar la lista de clientes (conexión/permiso Firestore).");
+  }
+}
+
+// al cambiar el select, fijamos el objeto seleccionado
+document.getElementById('cliente').addEventListener('change', () => {
+  const id = document.getElementById('cliente').value;
+  clienteSeleccionado = clientes.find(c => c.id === id) || null;
+  console.log("[cliente] seleccionado:", clienteSeleccionado);
+});
+ 
+  // ===== Totales =====
+  function calcularTotalesConImpuestosIncluidos(){
+    let total=0, impuestos=0;
+    carrito.forEach(it=>{
+      const imp=it.cantidad*it.precioUnit;
+      total+=imp;
+      if(it.ivaTasa>0)impuestos+=(imp*it.ivaTasa)/(1+it.ivaTasa);
+      if(it.iepsTasa>0)impuestos+=(imp*it.iepsTasa)/(1+it.iepsTasa);
+    });
+    const subtotal=total-impuestos;
+    return {subtotal:+subtotal.toFixed(2),impuestos:+impuestos.toFixed(2),total:+total.toFixed(2)};
+  }
+
+  // ===== Render =====
+  function render(){
+    elTbody.innerHTML="";
+    carrito.forEach(it=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${it.nombre}</td><td>${it.cantidad.toFixed(2)}</td><td>${money(it.importe)}</td>
+        <td class="del-col"><button class="del">✕</button></td>`;
+      tr.querySelector('.del').onclick=()=>delItem(it.id);
+      elTbody.appendChild(tr);
+    });
+    const {subtotal,impuestos,total}=calcularTotalesConImpuestosIncluidos();
+    lblSubtotal.textContent=money(subtotal);
+    lblImp.textContent=money(impuestos);
+    lblTotal.textContent=money(total);
+  }
+
+  function delItem(id){ carrito=carrito.filter(x=>x.id!==id); render(); }
+  function addProduct(prod,cantidad=1){
+    if(!prod)return;
+    const cant=Math.max(0.01,Number(cantidad)||1);
+    const precio=priceOf(prod);
+    const ex=carrito.find(x=>x.id===prod.id);
+    if(ex){ex.cantidad+=cant; ex.importe=ex.cantidad*precio;}
+    else{carrito.push({...prod,cantidad:cant,precioUnit:precio,importe:cant*precio});}
+    render();
+  }
+
+  // ===== Parche: Detectar códigos de balanza =====
+  function detectarCodigoPeso(codigoStr){
+    if(/^\d{13}$/.test(codigoStr) && codigoStr.startsWith("20")){
+      const base = codigoStr.substring(0,7);       // ej. 2000768
+      const pesoNum = parseInt(codigoStr.substring(7,12),10); // ej. 00100
+      const pesoKg = pesoNum/1000;                 // 0.100 kg
+      return {base, pesoKg};
+    }
+    return null;
+  }
+
+  // ===== Buscador =====
+  function buscarLocal(qraw){
+    const q=(qraw||"").trim(); if(!q)return[];
+
+    // 1) Intento balanza
+    const detectado = detectarCodigoPeso(q);
+    if(detectado){
+      const idByCode=codeIndex.get(detectado.base);
+      if(idByCode){
+        const prod=catalogo.find(x=>x.id===idByCode);
+        if(prod){
+          return [{...prod,cantidadBalanza:detectado.pesoKg}];
+        }
+      }
+    }
+
+    // 2) Normal
+    const idByCode=codeIndex.get(q);
+    if(idByCode){const p=catalogo.find(x=>x.id===idByCode); if(p)return[p];}
+    const nq=normaliza(q); return catalogo.filter(p=>normaliza(p.nombre).includes(nq));
+  }
+
+  function pintarResultados(hits){
+    elResultados.innerHTML=""; if(hits.length===0){elResultados.style.display="none";return;}
+    elResultados.style.display="block";
+    hits.forEach(p=>{
+      const div=document.createElement("div");
+      div.className="result-item"; div.innerHTML=`<span>${p.nombre}</span><span><small>${p.codigo}</small> ${money(priceOf(p))}</span>`;
+      div.onclick=()=>{prodSeleccionado=p; elBuscador.value=p.nombre; elResultados.style.display="none"; elCant.focus(); elCant.select();};
+      elResultados.appendChild(div);
+    });
+  }
+  elBuscador.addEventListener('input',()=>pintarResultados(buscarLocal(elBuscador.value)));
+  elBuscador.addEventListener('keydown',(ev)=>{
+    if(ev.key==='Enter'){
+      const hits=buscarLocal(elBuscador.value.trim());
+      if(hits.length>=1){
+        prodSeleccionado=hits[0];
+        elResultados.style.display="none";
+        elBuscador.value=hits[0].nombre;
+        elCant.focus(); elCant.select();
+      }
+    }
+  });
+
+  elCant.addEventListener('keydown',(ev)=>{
+    if(ev.key==='Enter'){
+      if(!clienteSeleccionado){alert('Selecciona un cliente primero.');elCliente.focus();return;}
+      if(!prodSeleccionado){alert('Selecciona un producto.');elBuscador.focus();return;}
+
+      let cant;
+      if(prodSeleccionado.cantidadBalanza){
+        cant=prodSeleccionado.cantidadBalanza;
+      }else{
+        cant=parseFloat(elCant.value||'');
+        if(isNaN(cant)||cant<=0){alert('Ingresa cantidad válida.');elCant.focus();return;}
+      }
+
+      addProduct(prodSeleccionado,cant);
+      prodSeleccionado=null; elBuscador.value=''; elCant.value='1'; elBuscador.focus();
+    }
+  });
+  
+  // ===== Cobro =====
+  const modalCobro=document.getElementById('modalCobro');
+  const cobroTotal=document.getElementById('cobroTotal');
+  const metodoPago=document.getElementById('metodoPago');
+  const bloqueEfectivo=document.getElementById('bloqueEfectivo');
+  const montoRecibido=document.getElementById('montoRecibido');
+  const montoCambio=document.getElementById('montoCambio');
+  const notasCobro=document.getElementById('notasCobro');
+
+ function abrirReimp(){
+  document.body.classList.add('modal-open');
+  modalReimp.style.display = 'flex';
+  _pagina = 1;
+  filtroFecha.value = toYYYYMMDD(new Date()); // ← opcional
+  buscarTickets();
+}
+function cerrarReimp(){
+  modalReimp.style.display = 'none';
+  document.body.classList.remove('modal-open');
+}
+
+btnReimprimir.addEventListener('click', abrirReimp);
+btnCerrarReimp.addEventListener('click', cerrarReimp);
+modalReimp.addEventListener('click', (e)=>{ if(e.target === modalReimp) cerrarReimp(); });
+btnBuscarTickets.addEventListener('click', ()=>{ _pagina=1; buscarTickets(); });
+
+function rellenarTicketDesdeVenta(venta){
+  // Encabezados
+  document.getElementById('tFolio').textContent = `Folio: ${venta.folio||'-'}`;
+  document.getElementById('tFecha').textContent = venta.fecha_txt || '';
+  document.getElementById('tAtendio').textContent = venta.atendio || ATENDIO || '';
+
+  // Cliente (texto simple del registro)
+  document.getElementById('tCliente').textContent = `Cliente: ${venta.cliente || 'Mostrador'}`;
+  document.getElementById('tTipo').textContent = "Público";
+
+  // RFC / CFDI visibles si ocupa factura
+  const tFacturaRow = document.getElementById('tFacturaRow');
+  const tRFCRow     = document.getElementById('tRFCRow');
+  const tCFDIRow    = document.getElementById('tCFDIRow');
+
+  const facturaSi   = !!venta.cliente_ocupa_factura;
+  tFacturaRow.style.display = 'block';
+  document.getElementById('tFacturaVal').textContent = facturaSi ? 'Sí' : 'No';
+
+  if (facturaSi){
+    tRFCRow.style.display  = 'block';
+    tCFDIRow.style.display = 'block';
+    document.getElementById('tRFC').textContent  = venta.cliente_rfc || '—';
+    document.getElementById('tCFDI').textContent = venta.cliente_uso_cfdi || '—';
+  } else {
+    tRFCRow.style.display  = 'none';
+    tCFDIRow.style.display = 'none';
+  }
+
+  // Detalle
+  const tLineas = document.getElementById('tLineas');
+  tLineas.innerHTML = '';
+  (venta.detalle||[]).forEach(it=>{
+    const fila=document.createElement('div');
+    fila.className='t-row';
+    const cant = Number(it.cantidad||0).toFixed(2);
+    const imp  = money(Number(it.importe||0));
+    fila.innerHTML = `<span class="t-desc">${cant} ${it.nombre||''}</span><span class="t-imp">${imp}</span>`;
+    tLineas.appendChild(fila);
+  });
+
+  // Totales
+  document.getElementById('tSubtotal').textContent  = money(Number(venta.subtotal||0));
+  document.getElementById('tImpuestos').textContent = money(Number(venta.impuestos||0));
+  document.getElementById('tTotal').textContent     = money(Number(venta.total||0));
+
+  // Método y recibido/cambio
+  document.getElementById('tMetodo').textContent = (venta.metodo_pago||'').toUpperCase();
+  const rRow = document.getElementById('tRecibidoRow');
+  if ((venta.metodo_pago||'').toLowerCase()==='efectivo' || (venta.metodo_pago||'').toLowerCase()==='mixto'){
+    rRow.style.display='block';
+    document.getElementById('tRecibido').textContent = money(Number(venta.recibido||0));
+    document.getElementById('tCambio').textContent   = money(Number(venta.cambio||0));
+  } else {
+    rRow.style.display='none';
+  }
+
+  document.getElementById('tNotas').textContent = (venta.notas||'');
+}
+
+async function reimprimirVentaPorId(docId, imprimir=true){
+  try{
+    const ref = doc(db, 'rutas_venta', rutaId, 'ventas', docId);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){ alert('No se encontró el ticket.'); return; }
+    const venta = snap.data();
+
+    venta.detalle   = venta.detalle || [];
+    venta.total     = Number(venta.total||0);
+    venta.subtotal  = Number(venta.subtotal||0);
+    venta.impuestos = Number(venta.impuestos||0);
+
+    rellenarTicketDesdeVenta(venta);
+    if (imprimir) window.print();
+  }catch(e){
+    console.error(e);
+    alert('No se pudo reimprimir este ticket.');
+  }
+}
+
+
+async function buscarTickets(){
+  listaTickets.innerHTML = '<div style="padding:10px; color:#64748b;">Buscando…</div>';
+  try{
+    const ventasRef = collection(db,'rutas_venta',rutaId,'ventas');
+    let qv;
+    const dateStr = (filtroFecha.value || '').trim();
+    if (dateStr) {
+      const [Y,M,D]=dateStr.split('-').map(Number);
+      const start=new Date(Y,M-1,D,0,0,0,0), end=new Date(Y,M-1,D,23,59,59,999);
+      const tsStart = Timestamp.fromDate(start), tsEnd = Timestamp.fromDate(end);
+      qv = query(ventasRef, where('fecha','>=',tsStart), where('fecha','<',tsEnd), orderBy('fecha','desc'));
+    } else {
+      qv = query(ventasRef, orderBy('fecha','desc'));
+    }
+
+    const snap = await getDocs(qv);
+    const todos = [];
+    snap.forEach(s=>{
+      const v=s.data();
+      todos.push({
+        id: s.id,
+        folio: v.folio || '',
+        cliente: v.cliente || '',
+        fecha_txt: v.fecha_txt || '',
+        total: Number(v.total||0),
+        metodo: v.metodo_pago || '',
+        detalle: v.detalle || [],
+        atendio: v.atendio || '',
+        subtotal: Number(v.subtotal||0),
+        impuestos: Number(v.impuestos||0),
+        recibido: Number(v.recibido||0),
+        cambio: Number(v.cambio||0),
+        notas: v.notas || '',
+        cliente_rfc: v.cliente_rfc || null,
+        cliente_uso_cfdi: v.cliente_uso_cfdi || null,
+        cliente_ocupa_factura: !!v.cliente_ocupa_factura
+      });
+    });
+
+    const f = (filtroFolio.value || '').trim().toLowerCase();
+    _tickets = f ? todos.filter(t =>
+      (t.folio||'').toLowerCase().includes(f) ||
+      (t.cliente||'').toLowerCase().includes(f)
+    ) : todos;
+
+    renderListaTickets();
+  }catch(e){
+    console.error(e);
+    listaTickets.innerHTML = '<div style="padding:10px; color:#b91c1c;">Error al consultar tickets. Revisa índices o conexión.</div>';
+  }
+}
+
+
+function renderListaTickets(){
+  // paginación en memoria
+  const total = _tickets.length;
+  const maxPag = Math.max(1, Math.ceil(total/_porPag));
+  _pagina = Math.min(_pagina, maxPag);
+  const ini = (_pagina-1)*_porPag, fin = ini + _porPag;
+  const page = _tickets.slice(ini, fin);
+
+  lblPagina.textContent = `${_pagina}/${maxPag}`;
+  btnPrevTickets.disabled = (_pagina<=1);
+  btnNextTickets.disabled = (_pagina>=maxPag);
+
+  if (page.length === 0) {
+    listaTickets.innerHTML = '<div style="padding:10px; color:#64748b;">Sin resultados.</div>';
+    return;
+    }
+
+  listaTickets.innerHTML = '';
+  page.forEach(t=>{
+    const row = document.createElement('div');
+    row.style.padding = '10px 12px';
+    row.style.borderBottom = '1px solid #e5e7eb';
+    row.innerHTML = `
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div style="min-width:220px;">
+          <div><b>Folio:</b> ${t.folio}</div>
+          <div><b>Cliente:</b> ${t.cliente}</div>
+          <div><small>${t.fecha_txt}</small></div>
+        </div>
+        <div style="text-align:right;">
+          <div><b>Total:</b> ${money(t.total)}</div>
+          <div><small>Método: ${t.metodo?.toUpperCase()}</small></div>
+        </div>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" data-id="${t.id}" data-action="print"  style="width:auto; padding:8px 12px; font-size:14px;">Imprimir</button>
+        <button class="btn" data-id="${t.id}" data-action="preview" style="width:auto; padding:8px 12px; font-size:14px; background:#6b7280;">Vista previa</button>
+      </div>
+    `;
+    listaTickets.appendChild(row);
+  });
+}
+
+btnPrevTickets.addEventListener('click', ()=>{ if(_pagina>1){ _pagina--; renderListaTickets(); }});
+btnNextTickets.addEventListener('click', ()=>{ const maxPag=Math.max(1,Math.ceil(_tickets.length/_porPag)); if(_pagina<maxPag){ _pagina++; renderListaTickets(); }});
+
+// Delegación de eventos para imprimir/preview
+listaTickets.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button[data-action][data-id]');
+  if(!btn) return;
+  const id = btn.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+  await reimprimirVentaPorId(id, action==='print');
+if (action === 'print') cerrarReimp(); // opcional
+});
+
+
+  function abrirCobro(){
+    if(carrito.length===0){alert('Agrega productos primero');return;}
+    document.body.classList.add('modal-open');
+    const {total}=calcularTotalesConImpuestosIncluidos();
+    cobroTotal.textContent=money(total);
+    montoRecibido.value=''; montoCambio.textContent=money(0);
+    notasCobro.value=''; metodoPago.value='efectivo'; bloqueEfectivo.style.display='block';
+    modalCobro.style.display='flex';
+  }
+  function cerrarCobro(){modalCobro.style.display='none'; document.body.classList.remove('modal-open');}
+  metodoPago.addEventListener('change',()=>{const isCash=metodoPago.value==='efectivo'||metodoPago.value==='mixto'; bloqueEfectivo.style.display=isCash?'block':'none';});
+  montoRecibido.addEventListener('input',()=>{const {total}=calcularTotalesConImpuestosIncluidos(); const recibidoX=parseFloat(montoRecibido.value||'0'); const cambio=Math.max(0,recibidoX-total); montoCambio.textContent=money(cambio);});
+
+  async function getNextFolio(db){
+    const ref=doc(db,'consecutivos',rutaId);
+    const folio=await runTransaction(db,async(tx)=>{const snap=await tx.get(ref); if(!snap.exists()){tx.set(ref,{valor:1,actualizado:serverTimestamp()}); return 1;} const actual=Number(snap.data().valor||0)+1; tx.update(ref,{valor:actual,actualizado:serverTimestamp()}); return actual;});
+    return `RV-${String(folio).padStart(6,'0')}`;
+  }
+  async function guardarVentaEnFirestore(payload){const col=collection(db,'rutas_venta',rutaId,'ventas'); const docRef=await addDoc(col,payload); return docRef.id;}
+
+  // ===== Ticket =====
+  function rellenarTicket({folio,fechaTxt,clienteTxt,metodo,recibido,cambio,notas}){
+    // Encabezados
+    document.getElementById('tFolio').textContent=`Folio: ${folio}`;
+    document.getElementById('tFecha').textContent=fechaTxt;
+    document.getElementById('tAtendio').textContent=ATENDIO;
+
+    // Cliente
+    const partes=[`Cliente: ${clienteTxt}`];
+    if(clienteSeleccionado){
+      if(clienteSeleccionado.telefono) partes.push(`Tel: ${clienteSeleccionado.telefono}`);
+      if(clienteSeleccionado.ciudad)   partes.push(clienteSeleccionado.ciudad);
+    }
+    document.getElementById('tCliente').textContent=partes.join(' · ');
+    document.getElementById('tTipo').textContent="Público";
+
+    // Detalle de líneas
+    const tLineas=document.getElementById('tLineas');
+    tLineas.innerHTML='';
+    carrito.forEach(it=>{
+      const fila=document.createElement('div');
+      fila.className='t-row';
+      fila.innerHTML=`<span class="t-desc">${it.cantidad.toFixed(2)} ${it.nombre}</span><span class="t-imp">${money(it.importe)}</span>`;
+      tLineas.appendChild(fila);
+    });
+
+    // Totales (impuestos incluidos)
+    const {subtotal,impuestos,total}=calcularTotalesConImpuestosIncluidos();
+    document.getElementById('tSubtotal').textContent=money(subtotal);
+    document.getElementById('tImpuestos').textContent=money(impuestos);
+    document.getElementById('tTotal').textContent=money(total);
+
+    // Método y recibido/cambio
+    document.getElementById('tMetodo').textContent=metodo.toUpperCase();
+    const rRow=document.getElementById('tRecibidoRow');
+    if(metodo==='efectivo'||metodo==='mixto'){
+      rRow.style.display='block';
+      document.getElementById('tRecibido').textContent=money(recibido);
+      document.getElementById('tCambio').textContent=money(cambio);
+    }else{
+      rRow.style.display='none';
+    }
+
+    // ===== Factura, RFC y Uso CFDI =====
+    const facturaSi = !!(clienteSeleccionado && clienteSeleccionado.ocupa_factura);
+    document.getElementById('tFacturaVal').textContent = facturaSi ? 'Sí' : 'No';
+    document.getElementById('tFacturaRow').style.display = 'block';
+
+    const rfcVal  = (clienteSeleccionado && clienteSeleccionado.rfc) ? clienteSeleccionado.rfc : '—';
+    const cfdiVal = (clienteSeleccionado && clienteSeleccionado.uso_cfdi) ? clienteSeleccionado.uso_cfdi : '—';
+
+    const rfcRow  = document.getElementById('tRFCRow');
+    const cfdiRow = document.getElementById('tCFDIRow');
+
+    if (facturaSi){
+      rfcRow.style.display  = 'block';
+      cfdiRow.style.display = 'block';
+      document.getElementById('tRFC').textContent  = rfcVal;
+      document.getElementById('tCFDI').textContent = cfdiVal;
+    }else{
+      rfcRow.style.display  = 'none';
+      cfdiRow.style.display = 'none';
+    }
+
+    // Notas (libres)
+    const notasExtra=[];
+    if(notas && notas.trim()) notasExtra.push(`Notas: ${notas.trim()}`);
+    document.getElementById('tNotas').textContent=notasExtra.join(' · ');
+  }
+
+async function confirmarCobro(){
+  try{
+    const {subtotal,impuestos,total}=calcularTotalesConImpuestosIncluidos();
+    const clienteTxt = clienteSeleccionado?.nombre || 'Mostrador';
+    const metodo=metodoPago.value;
+    const recibido=parseFloat(montoRecibido.value||'0');
+    if((metodo==='efectivo'||metodo==='mixto')&&recibido<total){
+      alert('Pago insuficiente'); return;
+    }
+    const cambio=Math.max(0,recibido-total);
+    const notas=(notasCobro.value||'').trim();
+
+    // Validación factura
+    const requiereFactura = !!(clienteSeleccionado && clienteSeleccionado.ocupa_factura);
+    if (requiereFactura && (!clienteSeleccionado.rfc || !clienteSeleccionado.uso_cfdi)) {
+      alert('Este cliente solicita factura. Falta RFC y/o Uso de CFDI en su registro.');
+      return;
+    }
+    
+    const folio=await getNextFolio(db);
+    const fecha=new Date();
+    const fechaTxt=fecha.toLocaleString();
+    const fecha_dia=toYYYYMMDD(fecha);
+    const ubicacion = await obtenerUbicacion();
+const venta={
+  folio,rutaId,fecha:serverTimestamp(),fecha_txt:fechaTxt,fecha_dia,
+  cliente:clienteTxt,cliente_info:clienteSeleccionado||null,
+  atendio:ATENDIO,tipo_precio:"publico",metodo_pago:metodo,
+  recibido:(metodo==='efectivo'||metodo==='mixto')?recibido:0,
+  cambio:(metodo==='efectivo'||metodo==='mixto')?cambio:0,
+  subtotal,impuestos,total,notas,
+  cliente_rfc: clienteSeleccionado?.rfc || null,
+  cliente_uso_cfdi: clienteSeleccionado?.uso_cfdi || null,
+  cliente_ocupa_factura: !!clienteSeleccionado?.ocupa_factura,
+  ubicacion: ubicacion || null,   // 👈 aquí sí va
+  detalle:carrito.map(it=>({
+    id:it.id,nombre:it.nombre,cantidad:it.cantidad,
+    precio_unit:it.precioUnit,importe:it.importe
+  }))
+};
+
+    const docId=await guardarVentaEnFirestore(venta);
+
+    // 👉 Telegram aquí
+    await enviarTelegramVenta(venta);
+
+    rellenarTicket({folio,fechaTxt,clienteTxt,metodo,recibido,cambio,notas});
+    window.print();
+
+    carrito=[]; render(); cerrarCobro();
+  }catch(err){
+    console.error(err);
+    alert('Error guardando venta');
+  }
+}
+// ===== SOLO impresión + guardado del corte: FACTURADO / NO FACTURADO =====
+async function generarCorteParaDia(dateStr){
+  // Resumen original (métodos de pago y conteo)
+  const { total: totalResumen, conteo, desg } = await calcularResumenDeDia(dateStr);
+  if (conteo === 0) { alert('No hay ventas en ' + dateStr); return; }
+
+  // Ventas del día para separar por facturación (solo para IMPRESIÓN/GUARDADO del corte)
+  const [Y, M, D] = dateStr.split('-').map(Number);
+  const start = new Date(Y, M - 1, D, 0, 0, 0, 0);
+  const end   = new Date(Y, M - 1, D, 23, 59, 59, 999);
+  const tsStart = Timestamp.fromDate(start), tsEnd = Timestamp.fromDate(end);
+
+  const ventasRef = collection(db, 'rutas_venta', rutaId, 'ventas');
+  const qv = query(ventasRef, where('fecha','>=',tsStart), where('fecha','<',tsEnd), orderBy('fecha','asc'));
+  const snap = await getDocs(qv);
+
+  let totFact = 0, impFact = 0, totNoFact = 0, impNoFact = 0;
+  snap.forEach(s=>{
+    const v   = s.data();
+    const t   = Number(v.total || 0);
+    const imp = Number(v.impuestos || 0);
+    const ocupa = (v.cliente_ocupa_factura !== undefined)
+      ? !!v.cliente_ocupa_factura
+      : !!(v.cliente_info && v.cliente_info.ocupa_factura);
+
+    if (ocupa) { totFact += t; impFact += imp; }
+    else       { totNoFact += t; impNoFact += imp; }
+  });
+
+  const subFact     = +(totFact    - impFact).toFixed(2);
+  const subNoFact   = +(totNoFact  - impNoFact).toFixed(2);
+  const subtotalDia = +(subFact + subNoFact).toFixed(2);
+  const impGlobal   = +(impFact + impNoFact).toFixed(2);
+  const totGlobal   = +(totFact + totNoFact).toFixed(2); // ~ totalResumen
+
+  // ===== Armar ticket para impresión =====
+  const folioCorte = `C-${dateStr.replaceAll('-','')}`;
+  const fechaTxt   = new Date().toLocaleString();
+
+  document.getElementById('tFolio').textContent   = `CORTE: ${folioCorte}`;
+  document.getElementById('tFecha').textContent   = fechaTxt;
+  document.getElementById('tAtendio').textContent = ATENDIO;
+  document.getElementById('tCliente').textContent = `Ruta: ${rutaId}`;
+  document.getElementById('tTipo').textContent    = `Corte del día ${dateStr}`;
+
+  const tLineas = document.getElementById('tLineas');
+  tLineas.innerHTML = '';
+
+  const mk  = (l,r)=>{const d=document.createElement('div'); d.className='t-row'; d.innerHTML=`<span class="t-desc">${l}</span><span class="t-imp">${money(r)}</span>`; return d;};
+  const sep = (t)=>{const d=document.createElement('div'); d.className='t-row'; d.style.fontWeight='700'; d.innerHTML=`<span class="t-desc">— ${t} —</span><span class="t-imp"></span>`; return d;};
+
+  // FACTURADO
+  tLineas.appendChild(sep('FACTURADO'));
+  tLineas.appendChild(mk('Subtotal',  subFact));
+  tLineas.appendChild(mk('Impuestos', impFact));
+  tLineas.appendChild(mk('Total',     totFact));
+
+  // NO FACTURADO
+  tLineas.appendChild(sep('NO FACTURADO'));
+  tLineas.appendChild(mk('Subtotal',  subNoFact));
+  tLineas.appendChild(mk('Impuestos', impNoFact));
+  tLineas.appendChild(mk('Total',     totNoFact));
+
+  // MÉTODOS DE PAGO (tu bloque original)
+  tLineas.appendChild(sep('MÉTODOS DE PAGO'));
+  tLineas.appendChild(mk('EFECTIVO',     desg.efectivo));
+  tLineas.appendChild(mk('TARJETA',      desg.tarjeta));
+  tLineas.appendChild(mk('TRANSFER',     desg.transferencia));
+  tLineas.appendChild(mk('MIXTO',        desg.mixto));
+
+  // Totales generales impresos
+  document.getElementById('tSubtotal').textContent  = money(subtotalDia);
+  document.getElementById('tImpuestos').textContent = money(impGlobal);
+  document.getElementById('tTotal').textContent     = money(totGlobal);
+
+  document.getElementById('tMetodo').textContent='—';
+  document.getElementById('tRecibidoRow').style.display='none';
+  document.getElementById('tNotas').textContent='Fin de día';
+
+  // Imprimir
+  window.print();
+
+  // ===== Guardar en el MISMO doc del corte =====
+  const corteRef = doc(db, 'rutas_venta', rutaId, 'cortes', dateStr);
+  await setDoc(corteRef, {
+    fecha_dia: dateStr,
+    total: totGlobal,                 // total del día
+    subtotal_dia: subtotalDia,        // nuevo
+    impuestos_dia: impGlobal,         // nuevo
+    tickets: conteo,
+    desglose: desg,                   // efectivo/tarjeta/transfer/mixto
+    facturado: {                      // nuevo
+      subtotal:  subFact,
+      impuestos: impFact,
+      total:     totFact
+    },
+    no_facturado: {                   // nuevo
+      subtotal:  subNoFact,
+      impuestos: impNoFact,
+      total:     totNoFact
+    },
+    atendio: ATENDIO,
+    creado: serverTimestamp()
+  }, { merge: true });
+}
+  async function corteDelDia(){const hoy=toYYYYMMDD(new Date()); await generarCorteParaDia(hoy);}
+
+// === Notificación a Telegram ===
+async function enviarTelegramVenta(venta) {
+  try {
+    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q"; // tu token
+    const CHAT_ID   = "6617988297"; // tu chat_id
+
+    // Encabezado
+    let msg = `
+🧾 *Nueva Venta*
+📌 Folio: ${venta.folio}
+👤 Cliente: ${venta.cliente || "Mostrador"}
+💳 Método: ${venta.metodo_pago}
+🙋‍♂️ Atendió: ${venta.atendio}
+    `;
+
+    // Ubicación
+    if (venta.ubicacion?.lat && venta.ubicacion?.lng) {
+      msg += `\n📍 [Ver ubicación](https://maps.google.com/?q=${venta.ubicacion.lat},${venta.ubicacion.lng})`;
+    }
+
+    // Detalle en formato ticket
+    if (venta.detalle && venta.detalle.length > 0) {
+      msg += `\n\n📦 *Detalle:*\n`;
+      venta.detalle.forEach(it => {
+        const nombre = (it.nombre || "").substring(0, 25); // cortar a 25 caracteres
+        const cant   = Number(it.cantidad).toFixed(2);
+        const pUnit  = Number(it.precio_unit || 0).toFixed(2);
+        const imp    = Number(it.importe || 0).toFixed(2);
+        msg += `${cant} x ${nombre} ($${pUnit}) = $${imp}\n`;
+      });
+    }
+
+    // Totales
+    msg += `
+━━━━━━━━━━━━━━
+💲 Subtotal: $${Number(venta.subtotal||0).toFixed(2)}
+📊 Impuestos: $${Number(venta.impuestos||0).toFixed(2)}
+🟢 *TOTAL: $${Number(venta.total||0).toFixed(2)}*
+━━━━━━━━━━━━━━
+    `;
+
+    // Enviar a Telegram
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: msg,
+        parse_mode: "Markdown"
+      })
+    });
+  } catch (err) {
+    console.error("Error enviando a Telegram:", err);
+  }
+}
+  // ===== Botones =====
+  document.getElementById('btnCobrar').onclick=abrirCobro;
+  document.getElementById('btnCancelarCobro').onclick=cerrarCobro;
+  document.getElementById('btnConfirmarCobro').onclick=confirmarCobro;
+  document.getElementById('btnCorte').onclick=corteDelDia;
+
+  await cargarCatalogoDesdeFirestore(); await cargarClientes(); render();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(() => {
+      console.log("Service Worker registrado");
+    });
+  }
+</script>
+
+</body>
+</html>
