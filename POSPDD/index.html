@@ -211,6 +211,13 @@ body.is-ios #camReader canvas{
   flex:1; padding:10px 12px; border:none; border-radius:8px;
   font-size:15px; background:#fff; outline:none;
 }
+/* Evita que el select de cliente se desborde en móviles */
+#cliente {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
   </style>
 </head>
