@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="icon" href="data:,">
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>POS – Ruta de Venta</title>
@@ -122,6 +123,93 @@
 }
 .cam-btn:active{ transform:translateY(-49%); }
 
+    /* Asegura que todo lo interno ocupa exactamente el contenedor */
+#camReader,
+#camReader * { box-sizing: border-box; }
+
+#camReader {
+  width: min(92vw, 420px);
+  height: min(70vh, 420px);
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;           /* evita que algo "crezca" afuera */
+  background: #000;           /* ayuda a ver el encuadre real */
+  aspect-ratio: 16 / 9;       /* estabiliza el layout en móviles */
+  border-radius: 12px;
+}
+
+/* Contenedor interno que crea la lib */
+#camReader .html5-qrcode-container,
+#camReader .html5-qrcode-camera,
+#camReader .html5-qrcode-video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* El <video> y el <canvas> SIEMPRE al 100% del contenedor */
+/* iOS/Safari: evita el micro-gap del lado derecho */
+/* Por defecto (Android/desktop): llenar el contenedor exacto */
+#camReader video,
+#camReader canvas{
+  position:absolute!important;
+  top:-1px;                 /* sangrar 1px */
+  left:-1px;                /* sangrar 1px */
+  width:calc(100% + 2px)!important;   /* tapa cualquier hueco */
+  height:calc(100% + 2px)!important;
+  object-fit:cover!important;
+  object-position: 48% 50% !important; 
+  transform:translateZ(0)!important;  /* evita redondeos raros */
+  clip-path: inset(0 2% 0 0); 
+}
+
+/* Solo iOS: 1% extra para tapar el micro-gap derecho de Safari */
+body.is-ios #camReader video,
+body.is-ios #camReader canvas{
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  width:101%!important;
+}
+
+/* La “sombra”/overlay que dibuja las esquinas */
+#camReader .qr-shaded-region {
+  position: absolute !important;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+    /* Oculta el overlay/corners que trae la librería (causa el desfasado) */
+#camReader .qr-shaded-region{ display:none !important; }
+
+/* Nuestro marco y sombreado */
+#camReader .qr-frame{
+  position:absolute; left:50%; top:50%;
+  width:var(--qr-w, 260px); height:var(--qr-h, 160px);
+  transform:translate(-50%,-50%);
+  pointer-events:none; border-radius:10px;
+  /* sombreado fuera del recuadro */
+  box-shadow: 0 0 0 200vmax rgba(0,0,0,.45);
+}
+
+/* Esquinas del marco (8 “líneas” con backgrounds) */
+#camReader .qr-frame::before{
+  content:""; position:absolute; inset:0; border-radius:10px;
+  background:
+    linear-gradient(#fff,#fff) left   top    /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) left   top    /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) right  top    /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) right  top    /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) left   bottom /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) left   bottom /4px  28px no-repeat,
+    linear-gradient(#fff,#fff) right  bottom /28px 4px  no-repeat,
+    linear-gradient(#fff,#fff) right  bottom /4px  28px no-repeat;
+}
+.field input, .field select{
+  flex:1; padding:10px 12px; border:none; border-radius:8px;
+  font-size:15px; background:#fff; outline:none;
+}
+
   </style>
 </head>
 <body>
@@ -132,11 +220,12 @@
 
   <main class="wrap">
     <section class="controls">
-      <div class="field">
-        <label>Cliente</label>
-        <input id="cliente" list="clientesList" type="text" placeholder="Nombre del cliente"/>
-        <datalist id="clientesList"></datalist>
-      </div>
+ <div class="field">
+  <label>Cliente</label>
+  <select id="cliente">
+    <option value="">Selecciona un cliente…</option>
+  </select>
+</div>
 <div class="field searchbox">
   <label>Buscar</label>
   <input id="buscador" type="text" placeholder="Escribe o escanea código…">
@@ -250,7 +339,7 @@
   <!-- 👇 AQUI pega el modal de la cámara -->
 <div id="camModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1500; align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:12px; padding:12px; width:min(420px,90vw)">
-    <div id="camReader" style="width:100%"></div>
+    <div id="camReader"></div>
     <button id="btnCerrarCam" class="btn" style="margin-top:8px; background:#aaa; width:100%;">Cerrar</button>
   </div>
 </div>
@@ -297,14 +386,101 @@
     </div>
   </div>
   
-  <script src="https://unpkg.com/html5-qrcode"></script>
+ <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script type="module">
+  // Detectar iOS y marcar el <body>
+const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+document.body.classList.toggle('is-ios', isIOS);
+
+  // Reimpresión: referencias a elementos y estado
+const modalReimp       = document.getElementById('modalReimp');
+const btnReimprimir    = document.getElementById('btnReimprimir');
+const btnCerrarReimp   = document.getElementById('btnCerrarReimp');
+const filtroFolio      = document.getElementById('filtroFolio');
+const filtroFecha      = document.getElementById('filtroFecha');
+const btnBuscarTickets = document.getElementById('btnBuscarTickets');
+const listaTickets     = document.getElementById('listaTickets');
+const btnPrevTickets   = document.getElementById('btnPrevTickets');
+const btnNextTickets   = document.getElementById('btnNextTickets');
+const lblPagina        = document.getElementById('lblPagina');
+
+let _tickets = [];
+let _pagina  = 1;
+const _porPag = 10;
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getFirestore, collection, addDoc, setDoc, serverTimestamp, runTransaction, doc,
     getDocs, getDoc, query, where, orderBy, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
+// ===== IndexedDB helper =====
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("pos_ruta", 1);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains("ventas_pendientes")) {
+        db.createObjectStore("ventas_pendientes", { keyPath: "folio" });
+      }
+      if (!db.objectStoreNames.contains("cache_catalogo")) {
+        db.createObjectStore("cache_catalogo", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("cache_clientes")) {
+        db.createObjectStore("cache_clientes", { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// IndexedDB simple para colas offline
+function openLocalDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('posDB', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('ventasPendientes')) {
+        db.createObjectStore('ventasPendientes', { keyPath: 'folio' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror  = () => reject(request.error);
+  });
+}
+
+async function guardarVentaOffline(venta) {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventasPendientes', 'readwrite');
+    tx.objectStore('ventasPendientes').put(venta);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function getVentasPendientes() {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction('ventasPendientes', 'readonly');
+    const req = tx.objectStore('ventasPendientes').getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function borrarVentaPendiente(folio) {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventasPendientes', 'readwrite');
+    tx.objectStore('ventasPendientes').delete(folio);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
 
   const firebaseConfig = {
     apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
@@ -327,98 +503,173 @@
   const pad2=n=>String(n).padStart(2,'0');
   const toYYYYMMDD=(date)=>{const d=new Date(date); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
 
+  async function obtenerUbicacion(){
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        });
+      },
+      (err) => {
+        console.warn("No se pudo obtener ubicación:", err);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  });
+}
+ 
   let carrito=[], prodSeleccionado=null, clienteSeleccionado=null;
   let catalogo=[], clientes=[]; const codeIndex=new Map();
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
 
-  // === Cámara / QR ===
+// === Cámara / QR ===
 const btnCam       = document.getElementById('btnCam');
 const camModal     = document.getElementById('camModal');
 const camReaderDiv = document.getElementById('camReader');
 const btnCerrarCam = document.getElementById('btnCerrarCam');
 
 let lector = null;
+let camActiva = false;
+
+function onScanSuccess(decodedText /*, decodedResult */) {
+  camActiva = false;
+  try { lector?.stop(); } catch {}
+  try { lector?.clear(); } catch {}
+  lector = null;
+
+  camModal.style.display = 'none';
+  document.body.classList.remove('modal-open');
+
+  // Reusar tu flujo de búsqueda
+  elBuscador.value = (decodedText || '').trim();
+  const hits = buscarLocal(elBuscador.value);
+  if (hits.length >= 1) {
+    prodSeleccionado = hits[0];
+    elResultados.style.display = "none";
+    elBuscador.value = hits[0].nombre;
+    elCant.focus(); elCant.select();
+  } else {
+    pintarResultados(buscarLocal(elBuscador.value));
+    elBuscador.focus();
+  }
+}
+
+function onScanError(_err) {
+  // Silencioso; si quieres mostrar algo, hazlo aquí
+}
+
+  const isLocalhost = /^localhost(:\d+)?$/.test(location.hostname) || location.hostname === '127.0.0.1';
+if (location.protocol !== 'https:' && !isLocalhost) {
+  alert('Para usar la cámara, abre esta página en HTTPS (o en http://localhost).');
+}
 
 async function abrirCam(){
   document.body.classList.add('modal-open');
   camModal.style.display = 'flex';
 
-  if (lector) { try{ await lector.stop(); }catch{} }
+  // Espera a que el modal se pinte y tenga tamaño real
+  await new Promise(r => requestAnimationFrame(r));
+  await new Promise(r => setTimeout(r, 0)); // 1 tick extra ayuda en Android
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    alert("Este navegador no soporta acceso a cámara.");
+    cerrarCam(); return;
+  }
+
+  // Permiso primero…
+  try {
+    const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
+    tmp.getTracks().forEach(t => t.stop());
+  } catch {
+    alert("No hay permiso de cámara. Actívalo en los permisos del navegador.");
+    cerrarCam(); return;
+  }
+
+  // Limpiar instancia previa
+  try { await lector?.stop(); } catch {}
+  try { await lector?.clear(); } catch {}
   lector = new Html5Qrcode('camReader');
 
-  // Handlers
-  const onScanSuccess = async (codigo) => {
-    try{ await lector.stop(); }catch{}
-    lector = null;
-    camModal.style.display = 'none';
-    document.body.classList.remove('modal-open');
+  // IMPORTANTÍSIMO: medir DESPUÉS de pintar el modal
+  let w = camReaderDiv.clientWidth;
+  let h = camReaderDiv.clientHeight;
+  if (!w || !h) { w = 420; h = 236; } // fallback 16:9
 
-    elBuscador.value = (codigo || '').trim();
+const boxPx = Math.floor(Math.min(w, h) * 0.85);
+const toEven = n => n - (n % 2);      // ← helper a número par
 
-    const hits = buscarLocal(elBuscador.value);
-    if (hits.length >= 1) {
-      prodSeleccionado = hits[0];
-      elResultados.style.display = "none";
-      elBuscador.value = hits[0].nombre;
-      elCant.focus(); elCant.select();
-    } else {
-      pintarResultados(buscarLocal(elBuscador.value));
-      elBuscador.focus();
+const qrW = toEven(boxPx);
+const qrH = toEven(Math.floor(boxPx * 0.65));
+
+// Pasamos las medidas al CSS
+camReaderDiv.style.setProperty('--qr-w', qrW + 'px');
+camReaderDiv.style.setProperty('--qr-h', qrH + 'px');
+
+// Si ya había un marco, lo quitamos y creamos uno nuevo
+camReaderDiv.querySelector('.qr-frame')?.remove();
+const frame = document.createElement('div');
+frame.className = 'qr-frame';
+camReaderDiv.appendChild(frame);
+
+const F = window.Html5QrcodeSupportedFormats || { QR_CODE:0, EAN_13:1, CODE_128:2 };
+const formats = [F.EAN_13, F.CODE_128];
+
+const config = {
+  fps: 15,
+  qrbox: { width: qrW, height: qrH },   // 👈 usamos las mismas medidas
+  formatsToSupport: formats,
+  experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+  rememberLastUsedCamera: true,
+  disableFlip: true,
+  videoConstraints: {
+    facingMode: { ideal: "environment" },
+    focusMode: "continuous",
+    width: { ideal: 1280 },
+    aspectRatio: { ideal: 16/9 }
+  }
+};
+  try {
+    await lector.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+    camActiva = true;
+  } catch (e1) {
+    try {
+      const devs = await Html5Qrcode.getCameras();
+      if (!devs?.length) throw new Error("NO_CAMERAS");
+      const back = devs.find(d => /back|rear|environment/i.test(d.label));
+      const camId = (back?.id) || devs[0].id;
+      await lector.start({ deviceId: { exact: camId } }, config, onScanSuccess, onScanError);
+      camActiva = true;
+    } catch (e2) {
+      console.error("Error cámara:", e1, e2);
+      alert("No se pudo abrir la cámara");
+      cerrarCam();
     }
-  };
-
-  const onScanError = (_err) => { /* opcional: loggear si quieres */ };
-
-  try{
-    const box = Math.floor(Math.min(window.innerWidth * 0.8, 320));
-    await lector.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: box,
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.CODE_128
-        ]
-      },
-      onScanSuccess,
-      onScanError
-    );
-  }catch(e){
-    console.error('Error cámara:', e);
-    alert('No se pudo abrir la cámara');
-    camModal.style.display = 'none';
-    document.body.classList.remove('modal-open');
   }
 }
 
 function cerrarCam(){
-  if (lector) { lector.stop().catch(()=>{}); lector = null; }
+  if (lector) {
+    if (camActiva) { try { lector.stop(); } catch {} }
+    try { lector.clear(); } catch {}
+    lector = null;
+    camActiva = false;
+  }
   camModal.style.display = 'none';
   document.body.classList.remove('modal-open');
 }
 
+// Eventos
 btnCam.addEventListener('click', abrirCam);
 btnCerrarCam.addEventListener('click', cerrarCam);
 camModal.addEventListener('click', (e)=>{ if(e.target === camModal) cerrarCam(); });
 window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && camModal.style.display === 'flex') cerrarCam(); });
-
-  // === Reimpresión ===
-const modalReimp       = document.getElementById('modalReimp');
-const btnReimprimir    = document.getElementById('btnReimprimir');
-const btnCerrarReimp   = document.getElementById('btnCerrarReimp');
-const btnBuscarTickets = document.getElementById('btnBuscarTickets');
-const filtroFolio      = document.getElementById('filtroFolio');
-const filtroFecha      = document.getElementById('filtroFecha');
-const listaTickets     = document.getElementById('listaTickets');
-const btnPrevTickets   = document.getElementById('btnPrevTickets');
-const btnNextTickets   = document.getElementById('btnNextTickets');
-const lblPagina        = document.getElementById('lblPagina');
-
-let _tickets = [];          // cache de la última búsqueda
-let _pagina  = 1;           // página actual
-const _porPag = 10;         // items por página
-let _ultimoDocPuntero = null; // para paginación “siguiente” con Firestore (opcional)
 
   // ===== Catálogo =====
   async function cargarCatalogoDesdeFirestore(){
@@ -435,7 +686,52 @@ let _ultimoDocPuntero = null; // para paginación “siguiente” con Firestore 
     });
   }
 
-  // ===== Clientes =====
+// ===== Clientes (llenar <select>) =====
+async function cargarClientes(){
+  try {
+    clientes = [];
+    const sel = document.getElementById("cliente");
+    sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
+
+    const snap = await getDocs(collection(db, "rutas_venta", rutaId, "clientes"));
+    snap.forEach(d => {
+      const c = d.data();
+      if (c.activo === false) return;
+
+      const cli = {
+        id: d.id,
+        nombre:  c.nombre  || "",
+        alias:   c.alias   || "",
+        telefono:c.telefono|| "",
+        ciudad:  c.ciudad  || "",
+        rfc:     c.rfc     || "",
+        ocupa_factura: !!c.ocupa_factura,
+        uso_cfdi: c.uso_cfdi || ""
+      };
+      clientes.push(cli);
+
+      const opt = document.createElement("option");
+      opt.value = cli.id; // guardamos el ID (no el nombre)
+      opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
+      sel.appendChild(opt);
+    });
+
+    console.log("[clientes] cargados:", clientes.length);
+  } catch (e) {
+    console.error("Error cargando clientes:", e);
+    alert("No pude cargar la lista de clientes (conexión/permiso Firestore).");
+  }
+}
+
+// al cambiar el select, fijamos el objeto seleccionado
+document.getElementById('cliente').addEventListener('change', () => {
+  const id = document.getElementById('cliente').value;
+  clienteSeleccionado = clientes.find(c => c.id === id) || null;
+  console.log("[cliente] seleccionado:", clienteSeleccionado);
+});
+
+  
+// ===== Clientes ===== 
   async function cargarClientes(){
     clientes=[]; const dl=document.getElementById("clientesList"); dl.innerHTML="";
     const snap=await getDocs(collection(db,"rutas_venta",rutaId,"clientes"));
@@ -876,57 +1172,61 @@ if (action === 'print') cerrarReimp(); // opcional
     document.getElementById('tNotas').textContent=notasExtra.join(' · ');
   }
 
-  async function confirmarCobro(){
-    try{
-      const {subtotal,impuestos,total}=calcularTotalesConImpuestosIncluidos();
-      const clienteTxt=elCliente.value||'Mostrador';
-      const metodo=metodoPago.value;
-      const recibido=parseFloat(montoRecibido.value||'0');
-      if((metodo==='efectivo'||metodo==='mixto')&&recibido<total){alert('Pago insuficiente'); return;}
-      const cambio=Math.max(0,recibido-total); const notas=(notasCobro.value||'').trim();
+async function confirmarCobro(){
+  try{
+    const {subtotal,impuestos,total}=calcularTotalesConImpuestosIncluidos();
+    const clienteTxt = clienteSeleccionado?.nombre || 'Mostrador';
+    const metodo=metodoPago.value;
+    const recibido=parseFloat(montoRecibido.value||'0');
+    if((metodo==='efectivo'||metodo==='mixto')&&recibido<total){
+      alert('Pago insuficiente'); return;
+    }
+    const cambio=Math.max(0,recibido-total);
+    const notas=(notasCobro.value||'').trim();
 
-      // Validación cuando el cliente sí factura
-      const requiereFactura = !!(clienteSeleccionado && clienteSeleccionado.ocupa_factura);
-      if (requiereFactura && (!clienteSeleccionado.rfc || !clienteSeleccionado.uso_cfdi)) {
-        alert('Este cliente solicita factura. Falta RFC y/o Uso de CFDI en su registro.');
-        return;
-      }
+    // Validación factura
+    const requiereFactura = !!(clienteSeleccionado && clienteSeleccionado.ocupa_factura);
+    if (requiereFactura && (!clienteSeleccionado.rfc || !clienteSeleccionado.uso_cfdi)) {
+      alert('Este cliente solicita factura. Falta RFC y/o Uso de CFDI en su registro.');
+      return;
+    }
+    
+    const folio=await getNextFolio(db);
+    const fecha=new Date();
+    const fechaTxt=fecha.toLocaleString();
+    const fecha_dia=toYYYYMMDD(fecha);
+    const ubicacion = await obtenerUbicacion();
+const venta={
+  folio,rutaId,fecha:serverTimestamp(),fecha_txt:fechaTxt,fecha_dia,
+  cliente:clienteTxt,cliente_info:clienteSeleccionado||null,
+  atendio:ATENDIO,tipo_precio:"publico",metodo_pago:metodo,
+  recibido:(metodo==='efectivo'||metodo==='mixto')?recibido:0,
+  cambio:(metodo==='efectivo'||metodo==='mixto')?cambio:0,
+  subtotal,impuestos,total,notas,
+  cliente_rfc: clienteSeleccionado?.rfc || null,
+  cliente_uso_cfdi: clienteSeleccionado?.uso_cfdi || null,
+  cliente_ocupa_factura: !!clienteSeleccionado?.ocupa_factura,
+  ubicacion: ubicacion || null,   // 👈 aquí sí va
+  detalle:carrito.map(it=>({
+    id:it.id,nombre:it.nombre,cantidad:it.cantidad,
+    precio_unit:it.precioUnit,importe:it.importe
+  }))
+};
 
-      const folio=await getNextFolio(db); const fecha=new Date(); const fechaTxt=fecha.toLocaleString(); const fecha_dia=toYYYYMMDD(fecha);
-      const venta={
-        folio,rutaId,fecha:serverTimestamp(),fecha_txt:fechaTxt,fecha_dia,
-        cliente:clienteTxt,cliente_info:clienteSeleccionado||null,
-        atendio:ATENDIO,tipo_precio:"publico",metodo_pago:metodo,
-        recibido:(metodo==='efectivo'||metodo==='mixto')?recibido:0,
-        cambio:(metodo==='efectivo'||metodo==='mixto')?cambio:0,
-        subtotal,impuestos,total,notas,
-        // Guardar datos de facturación
-        cliente_rfc: clienteSeleccionado?.rfc || null,
-        cliente_uso_cfdi: clienteSeleccionado?.uso_cfdi || null,
-        cliente_ocupa_factura: !!clienteSeleccionado?.ocupa_factura,
-        detalle:carrito.map(it=>({id:it.id,nombre:it.nombre,cantidad:it.cantidad,precio_unit:it.precioUnit,importe:it.importe}))
-      };
-      const docId=await guardarVentaEnFirestore(venta);
+    const docId=await guardarVentaEnFirestore(venta);
 
-      rellenarTicket({folio,fechaTxt,clienteTxt,metodo,recibido,cambio,notas});
-      window.print();
+    // 👉 Telegram aquí
+    await enviarTelegramVenta(venta);
 
-      carrito=[]; render(); cerrarCobro();
-    }catch(err){console.error(err); alert('Error guardando venta');}
+    rellenarTicket({folio,fechaTxt,clienteTxt,metodo,recibido,cambio,notas});
+    window.print();
+
+    carrito=[]; render(); cerrarCobro();
+  }catch(err){
+    console.error(err);
+    alert('Error guardando venta');
   }
-
-  // ===== Corte del día =====
-  async function calcularResumenDeDia(dateStr){
-    const [Y,M,D]=dateStr.split('-').map(Number);
-    const start=new Date(Y,M-1,D,0,0,0,0), end=new Date(Y,M-1,D,23,59,59,999);
-    const tsStart=Timestamp.fromDate(start), tsEnd=Timestamp.fromDate(end);
-    const ventasRef=collection(db,'rutas_venta',rutaId,'ventas');
-    const qv=query(ventasRef,where('fecha','>=',tsStart),where('fecha','<',tsEnd),orderBy('fecha','asc'));
-    const snap=await getDocs(qv);
-    let total=0,conteo=0; const desg={efectivo:0,tarjeta:0,transferencia:0,mixto:0};
-    snap.forEach(s=>{const v=s.data(),t=Number(v.total||0); total+=t; conteo++; const m=(v.metodo_pago||'').toLowerCase(); if(m==='efectivo')desg.efectivo+=t; else if(m==='tarjeta')desg.tarjeta+=t; else if(m==='transferencia')desg.transferencia+=t; else if(m==='mixto')desg.mixto+=t;});
-    return {total,conteo,desg};
-  }
+}
 // ===== SOLO impresión + guardado del corte: FACTURADO / NO FACTURADO =====
 async function generarCorteParaDia(dateStr){
   // Resumen original (métodos de pago y conteo)
@@ -1034,6 +1334,61 @@ async function generarCorteParaDia(dateStr){
 }
   async function corteDelDia(){const hoy=toYYYYMMDD(new Date()); await generarCorteParaDia(hoy);}
 
+// === Notificación a Telegram ===
+async function enviarTelegramVenta(venta) {
+  try {
+    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q"; // tu token
+    const CHAT_ID   = "6617988297"; // tu chat_id
+
+    // Encabezado
+    let msg = `
+🧾 *Nueva Venta*
+📌 Folio: ${venta.folio}
+👤 Cliente: ${venta.cliente || "Mostrador"}
+💳 Método: ${venta.metodo_pago}
+🙋‍♂️ Atendió: ${venta.atendio}
+    `;
+
+    // Ubicación
+    if (venta.ubicacion?.lat && venta.ubicacion?.lng) {
+      msg += `\n📍 [Ver ubicación](https://maps.google.com/?q=${venta.ubicacion.lat},${venta.ubicacion.lng})`;
+    }
+
+    // Detalle en formato ticket
+    if (venta.detalle && venta.detalle.length > 0) {
+      msg += `\n\n📦 *Detalle:*\n`;
+      venta.detalle.forEach(it => {
+        const nombre = (it.nombre || "").substring(0, 25); // cortar a 25 caracteres
+        const cant   = Number(it.cantidad).toFixed(2);
+        const pUnit  = Number(it.precio_unit || 0).toFixed(2);
+        const imp    = Number(it.importe || 0).toFixed(2);
+        msg += `${cant} x ${nombre} ($${pUnit}) = $${imp}\n`;
+      });
+    }
+
+    // Totales
+    msg += `
+━━━━━━━━━━━━━━
+💲 Subtotal: $${Number(venta.subtotal||0).toFixed(2)}
+📊 Impuestos: $${Number(venta.impuestos||0).toFixed(2)}
+🟢 *TOTAL: $${Number(venta.total||0).toFixed(2)}*
+━━━━━━━━━━━━━━
+    `;
+
+    // Enviar a Telegram
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: msg,
+        parse_mode: "Markdown"
+      })
+    });
+  } catch (err) {
+    console.error("Error enviando a Telegram:", err);
+  }
+}
   // ===== Botones =====
   document.getElementById('btnCobrar').onclick=abrirCobro;
   document.getElementById('btnCancelarCobro').onclick=cerrarCobro;
