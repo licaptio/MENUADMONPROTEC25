@@ -1,14 +1,16 @@
 const CACHE_NAME = "pos-v1"; // cambia a pos-v2 cuando actualices
 const ASSETS = [
-  "/",                // raíz
-  "/index.html",
-  "/POSV1PDDLLIS.html",
-  "/producto.html",
-  "/consulta.html",
-  "/buscacatacam.html",
-  "/manifest.json",
-  "/html5-qrcode.min.js",
-  "/logo_proveedora.webp"
+  "./",                
+  "./index.html",
+  "./POSV1PDDLLIS.html",
+  "./producto.html",
+  "./consulta.html",
+  "./buscacatacam.html",
+  "./manifest.json",
+  "./html5-qrcode.min.js",
+  "./logo_proveedora.webp",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 // ====== INSTALAR: precache de assets ======
@@ -34,7 +36,7 @@ self.addEventListener("activate", event => {
   );
 });
 
-// ====== FETCH: estrategia de red primero, fallback a caché ======
+// ====== FETCH: red primero, fallback a caché ======
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
