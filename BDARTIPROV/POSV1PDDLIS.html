@@ -731,28 +731,7 @@ document.getElementById('cliente').addEventListener('change', () => {
   clienteSeleccionado = clientes.find(c => c.id === id) || null;
   console.log("[cliente] seleccionado:", clienteSeleccionado);
 });
-
-  
-// ===== Clientes ===== 
-  async function cargarClientes(){
-    clientes=[]; const dl=document.getElementById("clientesList"); dl.innerHTML="";
-    const snap=await getDocs(collection(db,"rutas_venta",rutaId,"clientes"));
-    snap.forEach(d=>{
-      const c=d.data(); if(c.activo===false)return;
-      const cli={id:d.id,nombre:c.nombre||"",alias:c.alias||"",
-        telefono:c.telefono||"",ciudad:c.ciudad||"",rfc:c.rfc||"",
-        ocupa_factura:!!c.ocupa_factura,uso_cfdi:c.uso_cfdi||""};
-      clientes.push(cli);
-      const opt=document.createElement("option");
-      opt.value=cli.nombre;
-      opt.label=cli.alias?`${cli.nombre} (${cli.alias})`:cli.nombre;
-      dl.appendChild(opt);
-    });
-  }
-  elCliente.addEventListener("change",()=>{const v=normaliza(elCliente.value); clienteSeleccionado=clientes.find(c=>normaliza(c.nombre)===v)||null;});
-
-  const priceOf=p=>Number(p.precioPublico||0);
-
+ 
   // ===== Totales =====
   function calcularTotalesConImpuestosIncluidos(){
     let total=0, impuestos=0;
