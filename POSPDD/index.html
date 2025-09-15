@@ -493,55 +493,6 @@ async function cargarCatalogo() {
   }
 }
 
-// ===== Clientes =====
-async function cargarClientes() {
-  clientes = [];
-  const sel = document.getElementById("cliente");
-  sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
-
-  try {
-    if (navigator.onLine) {
-      // 🔵 Online → Firestore
-      const snap = await getDocs(collection(db, "rutas_venta", rutaId, "clientes"));
-      snap.forEach(d => {
-        const c = d.data();
-        if (c.activo === false) return;
-
-        const cli = {
-          id: d.id,
-          nombre: c.nombre || "",
-          alias: c.alias || "",
-          telefono: c.telefono || "",
-          ciudad: c.ciudad || "",
-          rfc: c.rfc || "",
-          ocupa_factura: !!c.ocupa_factura,
-          uso_cfdi: c.uso_cfdi || ""
-        };
-        clientes.push(cli);
-
-        const opt = document.createElement("option");
-        opt.value = cli.id;
-        opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
-        sel.appendChild(opt);
-      });
-      console.log("[clientes] cargados desde Firestore:", clientes.length);
-    } else {
-      // 🔴 Offline → IndexedDB
-      const cached = await getFromStore("cache_clientes");
-      cached.forEach(cli => {
-        clientes.push(cli);
-        const opt = document.createElement("option");
-        opt.value = cli.id;
-        opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
-        sel.appendChild(opt);
-      });
-      console.log("[clientes] cargados desde IndexedDB:", clientes.length);
-    }
-  } catch (e) {
-    console.error("Error cargando clientes:", e);
-  }
-}
-
   async function guardarVentaOffline(venta) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -619,52 +570,7 @@ async function borrarVentaPendiente(folio) {
   let carrito=[], prodSeleccionado=null, clienteSeleccionado=null;
   let catalogo=[], clientes=[]; const codeIndex=new Map();
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
-
-async function getFromStore(store) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(store, "readonly");
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function cargarCatalogo() {
-  catalogo = [];
-  codeIndex.clear();
-
-  try {
-    if (navigator.onLine) {
-      // 🔵 Online → Firestore
-      const prodSnap = await getDocs(collection(db, "productos"));
-      prodSnap.forEach(d => {
-        const x = d.data();
-        if (x.activo === false) return;
-        const prod = {
-          id: d.id,
-          nombre: x.concepto || "SIN NOMBRE",
-          codigo: (x.codigoBarra || "").toString(),
-          precioPublico: Number(x.precioPublico || 0),
-          ivaTasa: Number(x.ivaTasa || 0),
-          iepsTasa: Number(x.iepsTasa || 0)
-        };
-        catalogo.push(prod);
-        if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
-      });
-      console.log("[catálogo] cargado desde Firestore:", catalogo.length);
-    } else {
-      // 🔴 Offline → IndexedDB
-      const cached = await getFromStore("cache_catalogo");
-      cached.forEach(prod => {
-        catalogo.push(prod);
-        if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
-      });
-      console.log("[catálogo] cargado desde IndexedDB:", catalogo.length);
-    }
-  } catch (e) {
-    console.error("Error cargando catálogo:", e);
-  }
-}
+  const priceOf = p => Number(p.precioPublico || 0);
 async function cargarClientes() {
   clientes = [];
   const sel = document.getElementById("cliente");
