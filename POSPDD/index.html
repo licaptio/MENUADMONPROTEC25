@@ -545,8 +545,8 @@ async function cargarClientes() {
   async function guardarVentaOffline(venta) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction('ventasPendientes', 'readwrite');
-    tx.objectStore('ventasPendientes').put(venta);
+    const tx = db.transaction('ventas_pendientes', 'readwrite');
+    tx.objectStore('ventas_pendientes').put(venta);
     tx.oncomplete = () => resolve(true);
     tx.onerror    = () => reject(tx.error);
   });
@@ -555,8 +555,8 @@ async function cargarClientes() {
 async function getVentasPendientes() {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx  = db.transaction('ventasPendientes', 'readonly');
-    const req = tx.objectStore('ventasPendientes').getAll();
+    const tx  = db.transaction('ventas_pendientes', 'readonly');
+    const req = tx.objectStore('ventas_pendientes').getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror   = () => reject(req.error);
   });
@@ -565,8 +565,8 @@ async function getVentasPendientes() {
 async function borrarVentaPendiente(folio) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction('ventasPendientes', 'readwrite');
-    tx.objectStore('ventasPendientes').delete(folio);
+    const tx = db.transaction('ventas_pendientes', 'readwrite');
+    tx.objectStore('ventas_pendientes').delete(folio);
     tx.oncomplete = () => resolve(true);
     tx.onerror    = () => reject(tx.error);
   });
