@@ -435,6 +435,8 @@ body.is-ios #camReader canvas{
   </div>
   
  <script src="https://unpkg.com/html5-qrcode"></script>
+ <script src="https://cdn.jsdelivr.net/npm/idb@7/build/iife/index-min.js"></script>
+
 
 <script type="module">
   // Detectar iOS y marcar el <body>
@@ -608,6 +610,30 @@ async function borrarVentaPendiente(folio) {
   let catalogo=[], clientes=[]; const codeIndex=new Map();
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
   const priceOf = p => Number(p.precioPublico || 0);
+// Inicializar IndexedDB
+let idb;
+(async()=>{
+  idb = await window.idb.openDB("posdb", 1, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains("cache_clientes")) {
+        db.createObjectStore("cache_clientes");
+      }
+    }
+  });
+})();
+
+  // Inicializar IndexedDB
+let idb;
+(async()=>{
+  idb = await window.idb.openDB("posdb", 1, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains("cache_clientes")) {
+        db.createObjectStore("cache_clientes");
+      }
+    }
+  });
+})();
+
 async function cargarClientes() {
   clientes = [];
   const sel = document.getElementById("cliente");
@@ -617,6 +643,7 @@ async function cargarClientes() {
     if (navigator.onLine) {
       // 🔵 Online → Firestore
       const snap = await getDocs(collection(db, "clientes"));
+      let lista = [];
       snap.forEach(d => {
         const c = d.data();
         if (c.activo === false) return;
@@ -629,8 +656,10 @@ async function cargarClientes() {
           ciudad: c.ciudad || "",
           rfc: c.rfc || "",
           ocupa_factura: !!c.ocupa_factura,
-          uso_cfdi: c.uso_cfdi || ""
+          uso_cfdi: c.uso_cfdi || "",
+          catalogo: c.catalogo || "PUBLICO"
         };
+        lista.push(cli);
         clientes.push(cli);
 
         const opt = document.createElement("option");
@@ -638,10 +667,14 @@ async function cargarClientes() {
         opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
         sel.appendChild(opt);
       });
-      console.log("[clientes] cargados desde Firestore:", clientes.length);
+
+      // ✅ Guardar en cache
+      await saveClientesToCache(lista);
+      console.log("[clientes] cargados de Firestore y cacheados:", lista.length);
+
     } else {
       // 🔴 Offline → IndexedDB
-      const cached = await getFromStore("cache_clientes");
+      const cached = await getClientesFromCache();
       cached.forEach(cli => {
         clientes.push(cli);
         const opt = document.createElement("option");
@@ -649,7 +682,7 @@ async function cargarClientes() {
         opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
         sel.appendChild(opt);
       });
-      console.log("[clientes] cargados desde IndexedDB:", clientes.length);
+      console.log("[clientes] cargados de IndexedDB:", cached.length);
     }
   } catch (e) {
     console.error("Error cargando clientes:", e);
