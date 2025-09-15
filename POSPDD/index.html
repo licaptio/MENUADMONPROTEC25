@@ -616,7 +616,7 @@ async function cargarClientes() {
   try {
     if (navigator.onLine) {
       // 🔵 Online → Firestore
-      const snap = await getDocs(collection(db, "rutas_venta", rutaId, "clientes"));
+      const snap = await getDocs(collection(db, "clientes"));
       snap.forEach(d => {
         const c = d.data();
         if (c.activo === false) return;
