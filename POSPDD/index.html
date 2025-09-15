@@ -537,7 +537,7 @@ async function cargarCatalogo() {
       });
 
       // ✅ Guardar en cache
-      await saveCatalogoToCache(lista);
+      await saveToStore("cache_catalogo", lista);
       console.log("[catálogo] cargado desde Firestore y cacheado:", lista.length);
 
     } else {
@@ -630,17 +630,6 @@ async function borrarVentaPendiente(folio) {
   let catalogo=[], clientes=[]; const codeIndex=new Map();
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
   const priceOf = p => Number(p.precioPublico || 0);
-// Inicializar IndexedDB
-let idb;
-(async()=>{
-  idb = await window.idb.openDB("posdb", 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains("cache_clientes")) {
-        db.createObjectStore("cache_clientes");
-      }
-    }
-  });
-})();
 
 async function cargarClientes() {
   clientes = [];
@@ -1566,6 +1555,20 @@ async function initPOS(){
     rutaId  = u.rutaId;
     actualizarHeaderUsuario();
     document.getElementById("loginModal").style.display = "none";
+
+    // 1️⃣ Sincronizar ventas pendientes antes de cargar catálogo/clientes
+    const pendientes = await getVentasPendientes();
+    for (const v of pendientes) {
+      try {
+        await guardarVentaEnFirestore(v);
+        await borrarVentaPendiente(v.folio);
+        console.log("[sync] subida venta pendiente:", v.folio);
+      } catch(e) {
+        console.error("[sync] fallo al subir:", v.folio, e);
+      }
+    }
+
+    // 2️⃣ Ya que se sincronizó → cargar catálogo y clientes
     await cargarCatalogo();
     await cargarClientes();
     render();
