@@ -222,7 +222,7 @@ body.is-ios #camReader canvas{
   </style>
 </head>
 <body>
-<!-- Modal Login -->
+<!-- 🔑 Modal de Login -->
 <div id="loginModal" style="position:fixed; inset:0; background:#f9fafb; display:flex; align-items:center; justify-content:center; z-index:2000;">
   <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.2); width:320px;">
     <h2 style="margin-top:0; text-align:center;">Iniciar sesión</h2>
@@ -552,8 +552,6 @@ async function borrarVentaPendiente(folio) {
   const elCliente=$('#cliente'), elBuscador=$('#buscador'), elCant=$('#cantidadInput');
   const elResultados=$('#resultados'), elTbody=$('#tbody');
   const lblSubtotal=$('#lblSubtotal'), lblTotal=$('#lblTotal'), lblImp=$('#lblImpuestos');
-
-  const ATENDIO='Juan Serrato', rutaId='ruta_1';
   const money=(n)=>'$'+(Number(n)||0).toFixed(2);
   const pad2=n=>String(n).padStart(2,'0');
   const toYYYYMMDD=(date)=>{const d=new Date(date); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
