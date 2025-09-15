@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Admin Usuarios – POS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f9fafb; color:#111; }
+    h1 { text-align:center; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #0c6cbd; color:#fff; }
+    tr:nth-child(even) { background:#f2f2f2; }
+    button { margin: 2px; padding: 6px 10px; border:none; border-radius:6px; cursor:pointer; }
+    .btn-add { background:#1e8e3e; color:white; font-weight:bold; }
+    .btn-edit { background:#0c6cbd; color:white; }
+    .btn-del { background:#e74c3c; color:white; }
+    #formUsuario { display:none; background:white; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.2); max-width:400px; margin:20px auto; }
+    #formUsuario input, #formUsuario select { width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px; }
+    #formUsuario h2 { margin-top:0; }
+  </style>
+</head>
+<body>
+  <h1>Administrar Usuarios</h1>
+
+  <button class="btn-add" onclick="abrirNuevoUsuario()">➕ Nuevo Usuario</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Ruta</th>
+        <th>Rol</th>
+        <th>Activo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="usuariosTable"></tbody>
+  </table>
+
+  <!-- Formulario modal -->
+  <div id="formUsuario">
+    <h2 id="formTitulo">Nuevo Usuario</h2>
+    <input type="hidden" id="userId">
+    <label>Usuario</label>
+    <input type="text" id="usuario" required>
+    <label>Contraseña</label>
+    <input type="text" id="password" required>
+    <label>Nombre</label>
+    <input type="text" id="nombre" required>
+    <label>Ruta ID</label>
+    <input type="text" id="rutaId" required>
+    <label>Rol</label>
+    <select id="rol">
+      <option value="vendedor">Vendedor</option>
+      <option value="supervisor">Supervisor</option>
+      <option value="admin">Admin</option>
+    </select>
+    <label>Activo</label>
+    <select id="activo">
+      <option value="true">Sí</option>
+      <option value="false">No</option>
+    </select>
+    <button class="btn-add" onclick="guardarUsuario()">Guardar</button>
+    <button onclick="cerrarForm()">Cancelar</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.appspot.com",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const usuariosRef = collection(db,"usuarios_ruta");
+    const tbody = document.getElementById("usuariosTable");
+    const form = document.getElementById("formUsuario");
+
+    async function cargarUsuarios(){
+      tbody.innerHTML = "<tr><td colspan='6'>Cargando...</td></tr>";
+      const snap = await getDocs(usuariosRef);
+      tbody.innerHTML = "";
+      snap.forEach(d=>{
+        const u = d.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u.usuario}</td>
+          <td>${u.nombre}</td>
+          <td>${u.rutaId}</td>
+          <td>${u.rol}</td>
+          <td>${u.activo ? "🟢" : "🔴"}</td>
+          <td>
+            <button class="btn-edit" onclick="editarUsuario('${d.id}','${u.usuario}','${u.password}','${u.nombre}','${u.rutaId}','${u.rol}',${u.activo})">✏️</button>
+            <button class="btn-del" onclick="borrarUsuario('${d.id}')">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.abrirNuevoUsuario = function(){
+      document.getElementById("formTitulo").textContent = "Nuevo Usuario";
+      document.getElementById("userId").value = "";
+      form.style.display = "block";
+    }
+
+    window.editarUsuario = function(id, usuario, password, nombre, rutaId, rol, activo){
+      document.getElementById("formTitulo").textContent = "Editar Usuario";
+      document.getElementById("userId").value = id;
+      document.getElementById("usuario").value = usuario;
+      document.getElementById("password").value = password;
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("rutaId").value = rutaId;
+      document.getElementById("rol").value = rol;
+      document.getElementById("activo").value = activo;
+      form.style.display = "block";
+    }
+
+    window.cerrarForm = function(){
+      form.style.display = "none";
+    }
+
+    window.guardarUsuario = async function(){
+      const id = document.getElementById("userId").value;
+      const usuario = document.getElementById("usuario").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const nombre = document.getElementById("nombre").value.trim();
+      const rutaId = document.getElementById("rutaId").value.trim();
+      const rol = document.getElementById("rol").value;
+      const activo = document.getElementById("activo").value === "true";
+
+      const data = { usuario, password, nombre, rutaId, rol, activo };
+
+      if(id){
+        const ref = doc(db,"usuarios_ruta",id);
+        await updateDoc(ref,data);
+      }else{
+        await addDoc(usuariosRef,data);
+      }
+      form.style.display = "none";
+      cargarUsuarios();
+    }
+
+    window.borrarUsuario = async function(id){
+      if(confirm("¿Seguro de eliminar este usuario?")){
+        await deleteDoc(doc(db,"usuarios_ruta",id));
+        cargarUsuarios();
+      }
+    }
+
+    // Inicial
+    cargarUsuarios();
+  </script>
+</body>
+</html>
