@@ -516,41 +516,81 @@ async function cargarCatalogo() {
   codeIndex.clear();
 
   try {
-    if (navigator.onLine) {
-      // 🔵 Online → Firestore
-      const prodSnap = await getDocs(collection(db, "productos"));
-      const lista = [];
-      prodSnap.forEach(d => {
-        const x = d.data();
-        if (x.activo === false) return;
-        const prod = {
-          id: d.id,
-          nombre: x.concepto || "SIN NOMBRE",
-          codigo: (x.codigoBarra || "").toString(),
-          precioPublico: Number(x.precioPublico || 0),
-          ivaTasa: Number(x.ivaTasa || 0),
-          iepsTasa: Number(x.iepsTasa || 0)
-        };
-        lista.push(prod);
-        catalogo.push(prod);
-        if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
-      });
+    const prodSnap = await fetch("https://firestore.googleapis.com/v1/projects/YOUR_PROJECT_ID/databases/(default)/documents/productos");
+    const data = await prodSnap.json();
 
-      // ✅ Guardar en cache
-      await saveToStore("cache_catalogo", lista);
-      console.log("[catálogo] cargado desde Firestore y cacheado:", lista.length);
-
+    let lista;
+    if (data.offline) {
+      // 🔴 Offline: ya viene lista lista
+      lista = data.items;
+      console.log("[catálogo] usando IndexedDB:", lista.length);
     } else {
-      // 🔴 Offline → IndexedDB
-      const cached = await getFromStore("cache_catalogo");
-      cached.forEach(prod => {
-        catalogo.push(prod);
-        if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
+      // 🔵 Online: parsear Firestore normal
+      lista = (data.documents || []).map(d => {
+        const x = d.fields || {};
+        return {
+          id: d.name.split("/").pop(),
+          nombre: x.concepto?.stringValue || "SIN NOMBRE",
+          codigo: x.codigoBarra?.stringValue || "",
+          precioPublico: Number(x.precioPublico?.doubleValue || 0),
+          ivaTasa: Number(x.ivaTasa?.doubleValue || 0),
+          iepsTasa: Number(x.iepsTasa?.doubleValue || 0)
+        };
       });
-      console.log("[catálogo] cargado desde IndexedDB:", catalogo.length);
+      console.log("[catálogo] online:", lista.length);
     }
+
+    lista.forEach(prod => {
+      catalogo.push(prod);
+      if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
+    });
+
   } catch (e) {
-    console.error("Error cargando catálogo:", e);
+    console.error("Error cargar catálogo:", e);
+  }
+}
+
+async function cargarClientes() {
+  clientes = [];
+  const sel = document.getElementById("cliente");
+  sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
+
+  try {
+    const snap = await fetch("https://firestore.googleapis.com/v1/projects/YOUR_PROJECT_ID/databases/(default)/documents/clientes");
+    const data = await snap.json();
+
+    let lista;
+    if (data.offline) {
+      lista = data.items;
+      console.log("[clientes] usando IndexedDB:", lista.length);
+    } else {
+      lista = (data.documents || []).map(d => {
+        const x = d.fields || {};
+        return {
+          id: d.name.split("/").pop(),
+          nombre: x.nombre?.stringValue || "",
+          alias: x.alias?.stringValue || "",
+          telefono: x.telefono?.stringValue || "",
+          ciudad: x.ciudad?.stringValue || "",
+          rfc: x.rfc?.stringValue || "",
+          ocupa_factura: x.ocupa_factura?.booleanValue || false,
+          uso_cfdi: x.uso_cfdi?.stringValue || "",
+          catalogo: x.catalogo?.stringValue || "PUBLICO"
+        };
+      });
+      console.log("[clientes] online:", lista.length);
+    }
+
+    lista.forEach(cli => {
+      clientes.push(cli);
+      const opt = document.createElement("option");
+      opt.value = cli.id;
+      opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
+      sel.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error("Error cargar clientes:", e);
   }
 }
 
