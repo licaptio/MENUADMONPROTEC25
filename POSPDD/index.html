@@ -543,7 +543,7 @@ async function cargarClientes() {
 }
 
   async function guardarVentaOffline(venta) {
-  const db = await openLocalDB();
+  const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('ventasPendientes', 'readwrite');
     tx.objectStore('ventasPendientes').put(venta);
@@ -553,7 +553,7 @@ async function cargarClientes() {
 }
 
 async function getVentasPendientes() {
-  const db = await openLocalDB();
+  const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx  = db.transaction('ventasPendientes', 'readonly');
     const req = tx.objectStore('ventasPendientes').getAll();
@@ -563,7 +563,7 @@ async function getVentasPendientes() {
 }
 
 async function borrarVentaPendiente(folio) {
-  const db = await openLocalDB();
+  const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('ventasPendientes', 'readwrite');
     tx.objectStore('ventasPendientes').delete(folio);
@@ -619,24 +619,6 @@ async function borrarVentaPendiente(folio) {
   let carrito=[], prodSeleccionado=null, clienteSeleccionado=null;
   let catalogo=[], clientes=[]; const codeIndex=new Map();
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
-
-// ===== Helpers IndexedDB =====
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open("pos_ruta", 1);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains("cache_catalogo")) {
-        db.createObjectStore("cache_catalogo", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("cache_clientes")) {
-        db.createObjectStore("cache_clientes", { keyPath: "id" });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
 
 async function getFromStore(store) {
   const db = await openDB();
@@ -872,58 +854,6 @@ btnCam.addEventListener('click', abrirCam);
 btnCerrarCam.addEventListener('click', cerrarCam);
 camModal.addEventListener('click', (e)=>{ if(e.target === camModal) cerrarCam(); });
 window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && camModal.style.display === 'flex') cerrarCam(); });
-
-  // ===== Catálogo =====
-  async function cargarCatalogoDesdeFirestore(){
-    catalogo=[]; codeIndex.clear();
-    const prodSnap=await getDocs(collection(db,'productos'));
-    prodSnap.forEach(d=>{
-      const x=d.data(); if(x.activo===false)return;
-      const prod={id:d.id, nombre:x.concepto||'SIN NOMBRE',
-        codigo:(x.codigoBarra||'').toString(),
-        precioPublico:Number(x.precioPublico||0),
-        ivaTasa:Number(x.ivaTasa||0),
-        iepsTasa:Number(x.iepsTasa||0)};
-      catalogo.push(prod); if(prod.codigo)codeIndex.set(prod.codigo.trim(),prod.id);
-    });
-  }
-
-// ===== Clientes (llenar <select>) =====
-async function cargarClientes(){
-  try {
-    clientes = [];
-    const sel = document.getElementById("cliente");
-    sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
-
-    const snap = await getDocs(collection(db, "rutas_venta", rutaId, "clientes"));
-    snap.forEach(d => {
-      const c = d.data();
-      if (c.activo === false) return;
-
-      const cli = {
-        id: d.id,
-        nombre:  c.nombre  || "",
-        alias:   c.alias   || "",
-        telefono:c.telefono|| "",
-        ciudad:  c.ciudad  || "",
-        rfc:     c.rfc     || "",
-        ocupa_factura: !!c.ocupa_factura,
-        uso_cfdi: c.uso_cfdi || ""
-      };
-      clientes.push(cli);
-
-      const opt = document.createElement("option");
-      opt.value = cli.id; // guardamos el ID (no el nombre)
-      opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
-      sel.appendChild(opt);
-    });
-
-    console.log("[clientes] cargados:", clientes.length);
-  } catch (e) {
-    console.error("Error cargando clientes:", e);
-    alert("No pude cargar la lista de clientes (conexión/permiso Firestore).");
-  }
-}
 
 // al cambiar el select, fijamos el objeto seleccionado
 document.getElementById('cliente').addEventListener('change', () => {
