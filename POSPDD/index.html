@@ -510,19 +510,6 @@ async function getFromStore(store) {
   });
 }
 
-// ===== Guardar productos en IndexedDB =====
-async function saveCatalogoToCache(lista) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("cache_catalogo", "readwrite");
-    const store = tx.objectStore("cache_catalogo");
-    store.clear(); // limpiar antes
-    lista.forEach(prod => store.put(prod));
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
   
 async function cargarCatalogo() {
   catalogo = [];
@@ -644,18 +631,6 @@ async function borrarVentaPendiente(folio) {
   const normaliza=s=>(s||'').toString().trim().toLowerCase();
   const priceOf = p => Number(p.precioPublico || 0);
 // Inicializar IndexedDB
-let idb;
-(async()=>{
-  idb = await window.idb.openDB("posdb", 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains("cache_clientes")) {
-        db.createObjectStore("cache_clientes");
-      }
-    }
-  });
-})();
-
-  // Inicializar IndexedDB
 let idb;
 (async()=>{
   idb = await window.idb.openDB("posdb", 1, {
