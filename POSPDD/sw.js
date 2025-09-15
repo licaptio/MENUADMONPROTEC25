@@ -1,6 +1,6 @@
-const CACHE_NAME = "pos-v2";
+const CACHE_NAME = "pos-v3";
 const ASSETS = [
-  "./",                
+  "./",
   "./index.html",
   "./POSV1PDDLLIS.html",
   "./producto.html",
@@ -13,7 +13,7 @@ const ASSETS = [
   "./icon-512.png"
 ];
 
-// ===== IndexedDB helpers (desde el SW) =====
+// ===== IndexedDB helpers =====
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open("pos_ruta", 1);
@@ -36,30 +36,35 @@ async function saveToStore(store, items) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
+    os.clear();
     items.forEach(it => os.put(it));
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
   });
 }
 
-// ====== INSTALAR ======
+async function getFromStore(store) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readonly");
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ====== INSTALL ======
 self.addEventListener("install", event => {
   console.log("[SW] Instalando…");
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-// ====== ACTIVAR ======
+// ====== ACTIVATE ======
 self.addEventListener("activate", event => {
   console.log("[SW] Activado");
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
 });
@@ -70,7 +75,7 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(event.request.url);
 
-  // 1. Firestore: cachear dinámico en IndexedDB
+  // === 1. Firestore ===
   if (url.hostname.includes("firestore.googleapis.com")) {
     event.respondWith(
       fetch(event.request)
@@ -78,44 +83,66 @@ self.addEventListener("fetch", event => {
           const clone = res.clone();
           try {
             const json = await clone.json();
-            // Detecta colecciones
             if (url.pathname.includes("/documents/productos")) {
               const items = (json.documents || []).map(d => ({
                 id: d.name.split("/").pop(),
-                ...Object.fromEntries(Object.entries(d.fields || {}).map(([k,v]) => [k, Object.values(v)[0]]))
+                ...Object.fromEntries(
+                  Object.entries(d.fields || {})
+                    .map(([k,v]) => [k, Object.values(v)[0]])
+                )
               }));
               await saveToStore("cache_catalogo", items);
-              console.log("[SW] Guardado catálogo en IndexedDB:", items.length);
             }
-            if (url.pathname.includes("/documents/rutas_venta")) {
+            if (url.pathname.includes("/documents/clientes")) {
               const items = (json.documents || []).map(d => ({
                 id: d.name.split("/").pop(),
-                ...Object.fromEntries(Object.entries(d.fields || {}).map(([k,v]) => [k, Object.values(v)[0]]))
+                ...Object.fromEntries(
+                  Object.entries(d.fields || {})
+                    .map(([k,v]) => [k, Object.values(v)[0]])
+                )
               }));
               await saveToStore("cache_clientes", items);
-              console.log("[SW] Guardado clientes en IndexedDB:", items.length);
             }
-          } catch (e) {
-            console.warn("[SW] No pude parsear Firestore:", e);
+          } catch(e) {
+            console.warn("[SW] Parse Firestore falló:", e);
           }
           return res;
         })
-        .catch(() => {
-          // fallback: devolver de cache normal si existe
+        .catch(async () => {
+          if (url.pathname.includes("/documents/productos")) {
+            const items = await getFromStore("cache_catalogo");
+            return new Response(JSON.stringify({ offline:true, items }), {
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+          if (url.pathname.includes("/documents/clientes")) {
+            const items = await getFromStore("cache_clientes");
+            return new Response(JSON.stringify({ offline:true, items }), {
+              headers: { "Content-Type": "application/json" }
+            });
+          }
           return caches.match(event.request);
         })
     );
     return;
   }
 
-  // 2. Assets estáticos (red primero)
+  // === 2. Assets estáticos ===
   event.respondWith(
-    fetch(event.request)
-      .then(res => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then(c => c.put(event.request, resClone));
-        return res;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then(cached => {
+      if (cached) {
+        fetch(event.request).then(res => {
+          caches.open(CACHE_NAME).then(c => c.put(event.request, res));
+        }).catch(()=>{});
+        return cached;
+      }
+      return fetch(event.request)
+        .then(res => {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, resClone));
+          return res;
+        })
+        .catch(() => caches.match("./index.html"));
+    })
   );
 });
