@@ -222,6 +222,19 @@ body.is-ios #camReader canvas{
   </style>
 </head>
 <body>
+<!-- Modal Login -->
+<div id="loginModal" style="position:fixed; inset:0; background:#f9fafb; display:flex; align-items:center; justify-content:center; z-index:2000;">
+  <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.2); width:320px;">
+    <h2 style="margin-top:0; text-align:center;">Iniciar sesión</h2>
+    <label>Usuario</label>
+    <input id="loginUsuario" type="text" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label>Contraseña</label>
+    <input id="loginPassword" type="password" style="width:100%; padding:8px; margin-bottom:10px;">
+    <button id="btnLogin" style="width:100%; padding:10px; background:#0c6cbd; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Entrar</button>
+    <div id="loginError" style="color:red; font-size:13px; margin-top:8px; display:none;"></div>
+  </div>
+</div>
+
   <header>
     <span>POS – Ruta de Venta</span>
     <img src="logo_proveedora.webp" alt="Logo">
@@ -1411,6 +1424,73 @@ async function enviarTelegramVenta(venta) {
   document.getElementById('btnCancelarCobro').onclick=cerrarCobro;
   document.getElementById('btnConfirmarCobro').onclick=confirmarCobro;
   document.getElementById('btnCorte').onclick=corteDelDia;
+// 🔑 LOGIN
+import { query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+let ATENDIO = null;
+let rutaId  = null;
+
+async function loginPOS(usuario, password) {
+  try {
+    const usuariosRef = collection(db, "usuarios_ruta");
+    const q = query(usuariosRef, where("usuario", "==", usuario));
+    const snap = await getDocs(q);
+
+    if (snap.empty) return null;
+
+    let user = null;
+    snap.forEach(d => { user = { id:d.id, ...d.data() }; });
+
+    if (!user) return null;
+    if (user.password !== password) return null;   // simple match
+    if (!user.activo) return null;
+
+    return user;
+  } catch (e) {
+    console.error("Error login:", e);
+    return null;
+  }
+}
+
+document.getElementById("btnLogin").addEventListener("click", async ()=>{
+  const u = document.getElementById("loginUsuario").value.trim();
+  const p = document.getElementById("loginPassword").value.trim();
+  const errBox = document.getElementById("loginError");
+
+  const user = await loginPOS(u,p);
+  if (!user) {
+    errBox.textContent = "Usuario o contraseña incorrectos";
+    errBox.style.display = "block";
+    return;
+  }
+
+  // ✅ Usuario válido
+  ATENDIO = user.nombre;
+  rutaId  = user.rutaId;
+
+  // Guardar en localStorage para recordarlo
+  localStorage.setItem("usuarioPOS", JSON.stringify(user));
+
+  // Ocultar modal
+  document.getElementById("loginModal").style.display = "none";
+
+  // Ahora sí carga catálogo y clientes
+  await cargarCatalogo();
+  await cargarClientes();
+  render();
+});
+
+// 🔄 Si ya había sesión guardada
+const sesion = localStorage.getItem("usuarioPOS");
+if (sesion) {
+  const u = JSON.parse(sesion);
+  ATENDIO = u.nombre;
+  rutaId  = u.rutaId;
+  document.getElementById("loginModal").style.display = "none";
+  await cargarCatalogo();
+  await cargarClientes();
+  render();
+}
 
 await cargarCatalogo(); 
 await cargarClientes(); 
