@@ -57,8 +57,6 @@ header button#btnLogout:hover {
   background: rgba(255,255,255,.2);
 }
 
-    header img{ height:75px; object-fit:contain; }
-
     .wrap{flex:1; padding:12px; display:flex; flex-direction:column; gap:12px; max-width:720px; margin:0 auto}
 
     .controls{ display:flex; flex-direction:column; gap:10px; }
@@ -1456,6 +1454,19 @@ import { query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
 let ATENDIO = null;
 let rutaId  = null;
 
+function actualizarHeaderUsuario(){
+  const titulo = document.querySelector('header .titulo');
+
+  if (ATENDIO && rutaId){
+    // 🔹 Limitar nombre a 15 caracteres, agregar "…" si es más largo
+    const nombreCorto = ATENDIO.length > 15 ? ATENDIO.substring(0, 15) + "…" : ATENDIO;
+    titulo.textContent = `POS – ${nombreCorto} (${rutaId})`;
+  } else {
+    titulo.textContent = "POS – Ruta de Venta";
+  }
+}
+
+  
 async function loginPOS(usuario, password) {
   try {
     const usuariosRef = collection(db, "usuarios_ruta");
@@ -1493,6 +1504,7 @@ document.getElementById("btnLogin").addEventListener("click", async ()=>{
   // ✅ Usuario válido
   ATENDIO = user.nombre;
   rutaId  = user.rutaId;
+  actualizarHeaderUsuario();
 
   // Guardar en localStorage para recordarlo
   localStorage.setItem("usuarioPOS", JSON.stringify(user));
@@ -1513,6 +1525,7 @@ async function initPOS(){
     const u = JSON.parse(sesion);
     ATENDIO = u.nombre;
     rutaId  = u.rutaId;
+    actualizarHeaderUsuario();
     document.getElementById("loginModal").style.display = "none";
     await cargarCatalogo();
     await cargarClientes();
