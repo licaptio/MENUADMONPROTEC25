@@ -465,12 +465,14 @@ const _porPag = 10;
     getDocs, getDoc, query, where, orderBy, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   
-// ===== IndexedDB único =====
+// === IndexedDB único ===
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("pos_ruta", 1);
+    const request = indexedDB.open("pos_ruta", 1); // 🔹 nombre único
+
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
+
       if (!db.objectStoreNames.contains("ventas_pendientes")) {
         db.createObjectStore("ventas_pendientes", { keyPath: "folio" });
       }
@@ -481,8 +483,20 @@ function openDB() {
         db.createObjectStore("cache_clientes", { keyPath: "id" });
       }
     };
+
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+  });
+}
+async function saveToStore(store, lista) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    const st = tx.objectStore(store);
+    st.clear();
+    lista.forEach(item => st.put(item));
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
   });
 }
 
@@ -688,12 +702,12 @@ async function cargarClientes() {
       });
 
       // ✅ Guardar en cache
-      await saveClientesToCache(lista);
-      console.log("[clientes] cargados de Firestore y cacheados:", lista.length);
+await saveToStore("cache_clientes", lista);
+console.log("[clientes] cargados de Firestore y cacheados:", lista.length);
 
     } else {
       // 🔴 Offline → IndexedDB
-      const cached = await getClientesFromCache();
+      const cached = await getFromStore("cache_clientes");
       cached.forEach(cli => {
         clientes.push(cli);
         const opt = document.createElement("option");
