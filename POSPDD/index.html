@@ -496,7 +496,20 @@ async function getFromStore(store) {
   });
 }
 
-// ===== Catálogo =====
+// ===== Guardar productos en IndexedDB =====
+async function saveCatalogoToCache(lista) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cache_catalogo", "readwrite");
+    const store = tx.objectStore("cache_catalogo");
+    store.clear(); // limpiar antes
+    lista.forEach(prod => store.put(prod));
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+  
 async function cargarCatalogo() {
   catalogo = [];
   codeIndex.clear();
@@ -505,6 +518,7 @@ async function cargarCatalogo() {
     if (navigator.onLine) {
       // 🔵 Online → Firestore
       const prodSnap = await getDocs(collection(db, "productos"));
+      const lista = [];
       prodSnap.forEach(d => {
         const x = d.data();
         if (x.activo === false) return;
@@ -516,10 +530,15 @@ async function cargarCatalogo() {
           ivaTasa: Number(x.ivaTasa || 0),
           iepsTasa: Number(x.iepsTasa || 0)
         };
+        lista.push(prod);
         catalogo.push(prod);
         if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
       });
-      console.log("[catálogo] cargado desde Firestore:", catalogo.length);
+
+      // ✅ Guardar en cache
+      await saveCatalogoToCache(lista);
+      console.log("[catálogo] cargado desde Firestore y cacheado:", lista.length);
+
     } else {
       // 🔴 Offline → IndexedDB
       const cached = await getFromStore("cache_catalogo");
