@@ -483,6 +483,31 @@ const _porPag = 10;
     String(d.getDate()).padStart(2,"0");
 
   const money = n => "$" + (Number(n)||0).toFixed(2);
+// === GPS / Ubicación ===
+async function obtenerUbicacion() {
+  if (!navigator.geolocation) {
+    console.warn("Geolocalización no soportada en este navegador");
+    return null;
+  }
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({
+        lat: pos.coords.latitude,   // latitud
+        lng: pos.coords.longitude,  // longitud
+        acc: pos.coords.accuracy    // precisión en metros
+      }),
+      (err) => {
+        console.warn("Error al obtener ubicación:", err);
+        resolve(null); // devuelve null si falla
+      },
+      {
+        enableHighAccuracy: true, // GPS más preciso
+        timeout: 8000,            // 8 seg de espera
+        maximumAge: 0             // no usar cache viejo
+      }
+    );
+  });
+}
 
   // Referencias a elementos DOM
   const elBuscador   = document.getElementById("buscador");
