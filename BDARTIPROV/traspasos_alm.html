@@ -47,10 +47,9 @@
       return bloques;
     }
 
-// ---------------- BUSCADOR ----------------
 async function buscarProducto(autoSelect = false){
   const input = document.getElementById("buscador").value.trim().toLowerCase();
-  const lista = document.getElementById("listaResultados");
+  const lista = document.getElementById("listaResultados"); // ✅ Modal
   lista.innerHTML = "";
   if(input.length < 2) return;
 
@@ -84,9 +83,10 @@ async function buscarProducto(autoSelect = false){
     });
   }
 
-  // 🔹 Si hay más de una coincidencia → abre modal
+  // 🔹 Mostrar resultados en modal
   if(resultados.length === 0){
     lista.innerHTML = "<p>No se encontraron coincidencias</p>";
+    document.getElementById("modalResultados").style.display = "block";
   } else {
     resultados.forEach(data=>{
       const item = document.createElement("div");
@@ -98,7 +98,7 @@ async function buscarProducto(autoSelect = false){
       };
       lista.appendChild(item);
     });
-    document.getElementById("modalResultados").style.display = "block";
+    document.getElementById("modalResultados").style.display = "block"; // ✅ abrir modal
   }
 }
 
