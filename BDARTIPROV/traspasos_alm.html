@@ -302,27 +302,30 @@ function abrirComprobante(folio, ruta, vendedor, items) {
 }
 
     // ---------------- RUTA -> VENDEDOR ----------------
-    async function cargarVendedor() {
-      const ruta = document.getElementById("ruta").value;
-      console.log("🔎 Buscando vendedor para ruta:", ruta);
-      if (!ruta) return;
-      const q = query(
-        collection(db,"usuarios_ruta"),
-        where("rutaId","==",ruta),
-        where("activo","==",true)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty){
-        snap.forEach(doc=>{
-          const data = doc.data();
-          console.log("✅ Vendedor encontrado:", data);
-          document.getElementById("vendedor").value = data.nombre;
-        });
-      } else {
-        console.log("⚠️ No se encontró vendedor activo para esa ruta");
-        document.getElementById("vendedor").value = "No asignado";
-      }
-    }
+async function cargarVendedor() {
+  const ruta = document.getElementById("ruta").value;
+  console.log("🔎 Buscando vendedor para ruta:", ruta);
+  if (!ruta) return;
+
+  const q = query(
+    collection(db,"usuarios_ruta"),
+    where("rutaId","==",ruta),
+    where("activo","==",true)
+  );
+
+  const snap = await getDocs(q);
+
+  if (!snap.empty){
+    snap.forEach(doc=>{
+      const data = doc.data();
+      console.log("✅ Vendedor encontrado:", data);
+      document.getElementById("vendedor").value = data.nombre;
+    });
+  } else {
+    console.warn("⚠️ No se encontró vendedor para:", ruta);
+    document.getElementById("vendedor").value = "No asignado";
+  }
+}
 
     function cerrarModal(){
       document.getElementById("modalResultados").style.display = "none";
