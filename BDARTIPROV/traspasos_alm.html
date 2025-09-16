@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <title>📦 Traspaso de Almacenes</title>
+  <meta charset="UTF-8">
+  <title>Traspaso entre Almacenes</title>
   <script type="module">
-    // Importar Firebase modular
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // ---------------- FIREBASE CONFIG ----------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, query, where, orderBy, limit, getDocs, addDoc } 
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 🔹 Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -21,91 +21,309 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 🔹 Función principal
-    async function traspasar(){
-      const destino = document.getElementById("destino").value;
-      const codigo = document.getElementById("codigo").value.trim();
-      const cantidad = parseInt(document.getElementById("cantidad").value);
-      const log = document.getElementById("log");
+    // ---------------- VARIABLES ----------------
+    let carrito = [];
 
-      if(!codigo || !cantidad){ 
-        log.innerText = "⚠️ Ingresa código y cantidad";
+    // Telegram
+    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
+    const CHAT_ID   = "6617988297";
+
+    // ---------------- UTILS ----------------
+    function generarFolio(ruta){
+      const hoy = new Date();
+      const dd = String(hoy.getDate()).padStart(2,"0");
+      const mm = String(hoy.getMonth()+1).padStart(2,"0");
+      const yy = String(hoy.getFullYear()).slice(-2);
+      const fecha = `${dd}${mm}${yy}`;
+      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); // mejora: llevar contador real
+      return `${ruta}-${fecha}-${consecutivo}`;
+    }
+
+    // Cortar array en bloques
+    function dividirEnBloques(array, size) {
+      const bloques = [];
+      for (let i = 0; i < array.length; i += size) {
+        bloques.push(array.slice(i, i + size));
+      }
+      return bloques;
+    }
+
+    // ---------------- BUSCADOR ----------------
+    async function buscarProducto(autoSelect = false){
+      const input = document.getElementById("buscador").value.trim();
+      const lista = document.getElementById("resultados");
+      lista.innerHTML = "";
+      if(input.length < 3) return;
+
+      let resultados = [];
+
+      if(/^\d+$/.test(input)){ 
+        // Código principal
+        let q1 = query(collection(db,"productos"),
+                       where("activo","==",true),
+                       where("codigoBarra","==",input));
+        let snap1 = await getDocs(q1);
+        snap1.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
+
+        // Equivalentes
+        let q2 = query(collection(db,"productos"),
+                       where("activo","==",true),
+                       where("equivalentes","array-contains",input));
+        let snap2 = await getDocs(q2);
+        snap2.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
+
+      } else {
+        // Por concepto
+        let q3 = query(collection(db,"productos"),
+                       where("activo","==",true),
+                       orderBy("concepto"),
+                       limit(20));
+        let snap3 = await getDocs(q3);
+        snap3.forEach(docu=>{
+          const data = docu.data();
+          if(data.concepto.toLowerCase().includes(input.toLowerCase())){
+            resultados.push({id:docu.id, ...data});
+          }
+        });
+      }
+
+      // Evitar duplicados
+      resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+
+      if(autoSelect && resultados.length === 1){
+        seleccionarProducto(resultados[0]);
         return;
       }
 
-      try {
-        // Buscar producto en colección "productos"
-        const refProd = doc(db, "productos", codigo);
-        const snapProd = await getDoc(refProd);
+      resultados.forEach(data=>{
+        const item = document.createElement("div");
+        item.className = "item";
+        item.innerText = `${data.concepto} — $${data.precioPublico}`;
+        item.onclick = ()=>seleccionarProducto(data);
+        lista.appendChild(item);
+      });
+    }
 
-        if(!snapProd.exists()){
-          log.innerText = "❌ Producto no encontrado";
-          return;
+    function seleccionarProducto(data){
+      document.getElementById("codigoSel").value = data.codigoBarra;
+      document.getElementById("conceptoSel").value = data.concepto;
+      document.getElementById("precioSel").value = data.precioPublico;
+      document.getElementById("preview").innerText = `${data.concepto} — $${data.precioPublico}`;
+      document.getElementById("cantidad").focus();
+    }
+
+    // ---------------- CARRITO ----------------
+    function agregarItem(){
+      const codigo = document.getElementById("codigoSel").value;
+      const concepto = document.getElementById("conceptoSel").value;
+      const precio = parseFloat(document.getElementById("precioSel").value);
+      let cantidad = parseInt(document.getElementById("cantidad").value);
+
+      if(!codigo) return;
+      if(!cantidad || cantidad < 1) cantidad = 1;
+
+      carrito.push({codigo, concepto, precio, cantidad});
+      renderTabla();
+
+      // limpiar
+      document.getElementById("buscador").value="";
+      document.getElementById("cantidad").value="1"; 
+      document.getElementById("preview").innerText="";
+      document.getElementById("codigoSel").value="";
+      document.getElementById("conceptoSel").value="";
+      document.getElementById("precioSel").value="";
+      document.getElementById("buscador").focus();
+    }
+
+    function renderTabla(){
+      const tabla = document.getElementById("tabla");
+      tabla.innerHTML = "";
+      carrito.forEach((item,i)=>{
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.codigo}</td>
+          <td>${item.concepto}</td>
+          <td>${item.cantidad}</td>
+          <td>$${item.precio}</td>
+          <td><button onclick="eliminarItem(${i})">❌</button></td>
+        `;
+        tabla.appendChild(row);
+      });
+    }
+
+    window.eliminarItem = function(index){
+      carrito.splice(index,1);
+      renderTabla();
+    }
+
+    // ---------------- FINALIZAR ----------------
+    async function finalizarTraspaso(){
+      const ruta = document.getElementById("ruta").value;
+      const vendedor = document.getElementById("vendedor").value;
+      if(carrito.length===0 || !ruta) { alert("Faltan datos"); return; }
+
+      const folio = generarFolio(ruta);
+
+      // Guardar en Firestore (simplificado)
+      await addDoc(collection(db,`almacenes/${ruta}/entradas`), {folio, vendedor, items:carrito});
+      await addDoc(collection(db,`almacenes/ALMACENCENTRALPDD/salidas`), {folio, vendedor, items:carrito});
+
+      // Telegram
+      await enviarTelegram(folio, ruta, vendedor, carrito);
+
+      // Comprobante
+      abrirComprobante(folio, ruta, vendedor, carrito);
+
+      // Reset
+      carrito = [];
+      renderTabla();
+      document.getElementById("buscador").focus();
+    }
+
+    async function enviarTelegram(folio, destino, vendedor, items){
+      const total = items.length;
+      const bloques = dividirEnBloques(items, 20);
+
+      for (let i = 0; i < bloques.length; i++) {
+        let mensaje = `📦 *Nuevo Traspaso*\n`;
+        if(i === 0){ 
+          mensaje += `\nFolio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal de productos: ${total}\n`;
         }
-
-        const dataProd = snapProd.data();
-        const concepto = dataProd.concepto || (dataProd.codigosEquivalentes?.concepto) || "SIN NOMBRE";
-        const precioPublico = dataProd.precioPublico || (dataProd.codigosEquivalentes?.precioPublico) || 0;
-
-        // Guardar entrada en el destino
-        await addDoc(collection(db, "almacenes", destino, "entradas"), {
-          codigo: codigo,
-          cantidad: cantidad,
-          concepto: concepto,
-          precioPublico: precioPublico,
-          fecha: new Date()
+        mensaje += `\n📋 *Bloque ${i+1}/${bloques.length}:*\n`;
+        bloques[i].forEach(it=>{
+          mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
         });
 
-        // Guardar salida en central
-        await addDoc(collection(db, "almacenes", "ALMACENCENTRALPDD", "salidas"), {
-          codigo: codigo,
-          cantidad: cantidad,
-          concepto: concepto,
-          precioPublico: precioPublico,
-          destino: destino,
-          fecha: new Date()
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: mensaje,
+            parse_mode: "Markdown"
+          })
         });
-
-        log.innerText = `✅ ${cantidad} x ${concepto} (${codigo}) → ${destino} | Precio Público: $${precioPublico}`;
-        document.getElementById("codigo").value="";
-        document.getElementById("cantidad").value="";
-      } catch(e){
-        log.innerText = "❌ Error: " + e.message;
       }
     }
 
-    // Asignar función al botón
-    window.traspasar = traspasar;
+    function abrirComprobante(folio, ruta, vendedor, items){
+      const fecha = new Date().toLocaleDateString();
+      let tabla = "";
+      items.forEach(it=>{
+        tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
+      });
+
+      const win = window.open("","_blank");
+      win.document.write(`
+        <html><head><title>Comprobante ${folio}</title>
+        <style>
+          body{font-family:Arial;margin:20px;}
+          h1{text-align:center;color:#003366;}
+          .folio{font-size:24px;font-weight:bold;color:#b30000;text-align:center;border:2px dashed #b30000;margin:10px;padding:5px;}
+          table{width:100%;border-collapse:collapse;margin-top:15px;}
+          th,td{border:1px solid #ccc;padding:6px;}
+          th{background:#eee;}
+          .firmas{margin-top:40px;display:flex;justify-content:space-between;}
+          .firma{width:45%;text-align:center;}
+          .linea{margin-top:60px;border-top:1px solid #000;}
+        </style></head><body>
+        <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
+        <h2 style="text-align:center">Comprobante de Traspaso</h2>
+        <div class="folio">Folio: ${folio}</div>
+        <p><b>Fecha:</b> ${fecha}<br><b>Destino:</b> ${ruta}<br><b>Vendedor:</b> ${vendedor}<br><b>Total de productos:</b> ${items.length}</p>
+        <table><thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th></tr></thead><tbody>
+        ${tabla}
+        </tbody></table>
+        <div class="firmas">
+          <div class="firma"><div class="linea"></div>Entregó (Administrador)</div>
+          <div class="firma"><div class="linea"></div>Recibió (Vendedor)</div>
+        </div>
+        <button onclick="window.print()">🖨️ Imprimir</button>
+        </body></html>
+      `);
+      win.document.close();
+    }
+
+    // ---------------- RUTA -> VENDEDOR ----------------
+    async function cargarVendedor(){
+      const ruta = document.getElementById("ruta").value;
+      if(!ruta) return;
+      const q = query(collection(db,"usuarios_ruta"),
+                      where("rutaId","==",ruta),
+                      where("activo","==",true));
+      const snap = await getDocs(q);
+      if(!snap.empty){
+        snap.forEach(doc=>{
+          const data = doc.data();
+          document.getElementById("vendedor").value = data.nombre;
+        });
+      } else {
+        document.getElementById("vendedor").value = "No asignado";
+      }
+    }
+
+    // ---------------- INIT ----------------
+    document.addEventListener("DOMContentLoaded", ()=>{
+      document.getElementById("buscador").focus();
+      document.getElementById("buscador").addEventListener("keypress",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); buscarProducto(true); }
+      });
+      document.getElementById("cantidad").addEventListener("keypress",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
+      });
+    });
   </script>
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
-    h1 { text-align: center; color:#00416A; }
-    .panel { max-width: 500px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,.15);}
-    label { display:block; margin-top:10px; font-weight:bold; }
-    input, select, button { width:100%; padding:10px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
-    button { background:#0c6cbd; color:white; cursor:pointer; }
-    button:hover { background:#00416A; }
-    .log { margin-top:20px; font-size:14px; color:green; }
+    body{font-family:Arial,sans-serif;margin:20px;background:#f5f5f5;}
+    .panel{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
+    label{display:block;margin-top:10px;font-weight:bold;}
+    input,select{width:100%;padding:8px;margin:4px 0 10px;border:1px solid #ccc;border-radius:6px;}
+    #resultados .item{padding:6px;cursor:pointer;border-bottom:1px solid #eee;}
+    #resultados .item:hover{background:#f0f0f0;}
+    table{width:100%;border-collapse:collapse;margin-top:10px;}
+    th,td{border:1px solid #ccc;padding:6px;text-align:left;}
+    th{background:#eee;}
+    button{margin-top:10px;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
+    .btn{background:#007bff;color:white;}
+    .btn-danger{background:#dc3545;color:white;}
   </style>
 </head>
 <body>
-  <h1>Traspaso de Almacenes</h1>
   <div class="panel">
-    <label>Destino</label>
-    <select id="destino">
+    <h2>⬇️ Traspaso a Vendedores</h2>
+
+    <label>Ruta destino:</label>
+    <select id="ruta" onchange="cargarVendedor()">
+      <option value="">-- Seleccionar --</option>
       <option value="Almacen_Ruta_1">Ruta 1</option>
       <option value="Almacen_Ruta_2">Ruta 2</option>
     </select>
 
-    <label>Código del producto</label>
-    <input type="text" id="codigo" placeholder="Ej. 000000109291"/>
+    <label>Vendedor:</label>
+    <input type="text" id="vendedor" readonly />
 
-    <label>Cantidad</label>
-    <input type="number" id="cantidad" placeholder="Ej. 10"/>
+    <label>Buscar producto:</label>
+    <input type="text" id="buscador" placeholder="Escanea código o escribe nombre..." />
+    <div id="resultados"></div>
 
-    <button onclick="traspasar()">📤 Traspasar</button>
-    <div class="log" id="log"></div>
+    <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
+
+    <input type="hidden" id="codigoSel">
+    <input type="hidden" id="conceptoSel">
+    <input type="hidden" id="precioSel">
+
+    <label>Cantidad:</label>
+    <input type="number" id="cantidad" value="1" min="1"/>
+
+    <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
+
+    <table>
+      <thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th><th></th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table>
+
+    <button class="btn" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
   </div>
 </body>
 </html>
