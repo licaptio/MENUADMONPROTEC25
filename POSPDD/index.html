@@ -563,10 +563,6 @@ async function getFromStore(store) {
     req.onerror = () => reject(req.error);
   });
 }
-
-  
-import { getDocs, collection, query, where } from "firebase/firestore";
-
 async function cargarCatalogo() {
   catalogo = [];
   try {
