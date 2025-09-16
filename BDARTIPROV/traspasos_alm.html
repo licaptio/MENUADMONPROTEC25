@@ -273,17 +273,149 @@ function abrirComprobante(folio, ruta, vendedor, items) {
   const win = window.open("", "_blank");
   win.document.write(`
     <html><head><title>Comprobante ${folio}</title>
-    <style>
-      body{font-family:Arial;margin:20px;}
-      h1{text-align:center;color:#003366;}
-      .folio{font-size:24px;font-weight:bold;color:#b30000;text-align:center;border:2px dashed #b30000;margin:10px;padding:5px;}
-      table{width:100%;border-collapse:collapse;margin-top:15px;}
-      th,td{border:1px solid #ccc;padding:6px;}
-      th{background:#eee;}
-      .firmas{margin-top:40px;display:flex;justify-content:space-between;}
-      .firma{width:45%;text-align:center;}
-      .linea{margin-top:60px;border-top:1px solid #000;}
-    </style></head><body>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f0f2f5;
+}
+
+.panel {
+  max-width: 900px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+h2 {
+  text-align: center;
+  color: #003366;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: bold;
+  color: #333;
+}
+
+input, select, button {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+select, input[type="text"], input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.buscador-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+#buscador {
+  flex: 1;
+}
+
+.btn {
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  border: none;
+  transition: background .2s;
+}
+
+.btn:hover {
+  background: #0056b3;
+}
+
+#btnTraspaso {
+  background: linear-gradient(180deg,#f59e0b,#b45309);
+  width: 100%;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background: #f8f9fa;
+}
+
+td button {
+  background: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+td button:hover {
+  background: #a71d2a;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%; max-width: 600px;
+  max-height: 70%; overflow-y: auto;
+}
+
+.close {
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+#listaResultados .item {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+#listaResultados .item:hover {
+  background: #f0f0f0;
+}
+</head><body>
     <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
     <h2 style="text-align:center">Comprobante de Traspaso</h2>
     <div class="folio">Folio: ${folio}</div>
