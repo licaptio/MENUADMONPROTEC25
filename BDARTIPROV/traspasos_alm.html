@@ -6,7 +6,7 @@
   <script type="module">
     // ---------------- FIREBASE CONFIG ----------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, query, where, orderBy, limit, getDocs, addDoc } 
+    import { getFirestore, collection, query, where, limit, getDocs, addDoc } 
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -35,7 +35,7 @@
       const mm = String(hoy.getMonth()+1).padStart(2,"0");
       const yy = String(hoy.getFullYear()).slice(-2);
       const fecha = `${dd}${mm}${yy}`;
-      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); // mejora: contador real
+      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); 
       return `${ruta}-${fecha}-${consecutivo}`;
     }
 
@@ -72,20 +72,20 @@
         snap2.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
 
       } else {
-        // Por concepto
+        // Por concepto (texto libre)
         let q3 = query(collection(db,"productos"),
                        where("activo","==",true),
-                       orderBy("concepto"),
-                       limit(20));
+                       limit(100));   // 🔹 busca hasta 100 productos activos
         let snap3 = await getDocs(q3);
         snap3.forEach(docu=>{
           const data = docu.data();
-          if(data.concepto.toLowerCase().includes(input.toLowerCase())){
+          if(data.concepto && data.concepto.toLowerCase().includes(input.toLowerCase())){
             resultados.push({id:docu.id, ...data});
           }
         });
       }
 
+      // Evitar duplicados
       resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
 
       if(autoSelect && resultados.length === 1){
@@ -162,17 +162,13 @@
 
       const folio = generarFolio(ruta);
 
-      // Guardar en Firestore (simplificado)
       await addDoc(collection(db,`almacenes/${ruta}/entradas`), {folio, vendedor, items:carrito});
       await addDoc(collection(db,`almacenes/ALMACENCENTRALPDD/salidas`), {folio, vendedor, items:carrito});
 
-      // Telegram
       await enviarTelegram(folio, ruta, vendedor, carrito);
 
-      // Comprobante
       abrirComprobante(folio, ruta, vendedor, carrito);
 
-      // Reset
       carrito = [];
       renderTabla();
       document.getElementById("buscador").focus();
@@ -264,7 +260,6 @@
     document.addEventListener("DOMContentLoaded", ()=>{
       document.getElementById("buscador").focus();
 
-      // ✅ Se conecta aquí el cambio de ruta
       document.getElementById("ruta").addEventListener("change", cargarVendedor);
 
       document.getElementById("buscador").addEventListener("keypress",(e)=>{
