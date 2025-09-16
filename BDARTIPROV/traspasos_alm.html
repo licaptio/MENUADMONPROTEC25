@@ -76,74 +76,71 @@ const CHAT_ID   = "6617988297";
     }
 
     // ---------------- BÚSQUEDAS ----------------
-    async function buscarPorCodigo() {
-      const codigo = document.getElementById("buscador").value.trim();
-      if (!codigo) return;
+// ============================
+// 🔹 [BÚSQUEDA EN VIVO] Nombre
+// ============================
+async function buscarPorNombre() {
+  const termino = document.getElementById("busquedaNombre").value.trim().toLowerCase();
+  if (!termino) {
+    document.getElementById("listaResultados").innerHTML = "";
+    return;
+  }
 
-      console.log("🔎 Buscando código:", codigo);
-      const productos = await getAllProductos();
-      const encontrado = productos.find(p => p.codigoBarra === codigo);
+  const productos = await getAllProductos();
+  resultadosBusqueda = productos.filter(p =>
+    p.concepto && p.concepto.toLowerCase().includes(termino)
+  );
 
-      if (encontrado) {
-        console.log("✅ Producto encontrado:", encontrado);
-        seleccionarProducto(encontrado);
-      } else {
-        console.log("❌ Código no encontrado en catálogo");
-        document.getElementById("preview").innerText = "❌ No encontrado";
-        document.getElementById("codigoSel").value = "";
-        document.getElementById("conceptoSel").value = "";
-        document.getElementById("precioSel").value = "";
-      }
+  paginaActual = 0;
+  mostrarPagina();
+  document.getElementById("modalResultados").style.display = "block";
+}
 
-      document.getElementById("buscador").value = "";
-    }
+function mostrarPagina() {
+  const lista = document.getElementById("listaResultados");
+  lista.innerHTML = "";
+  const inicio = paginaActual * porPagina;
+  const fin = inicio + porPagina;
+  const pagina = resultadosBusqueda.slice(inicio, fin);
 
-    async function buscarPorNombre() {
-      const termino = document.getElementById("busquedaNombre").value.trim().toLowerCase();
-      if (!termino) return;
-      const productos = await getAllProductos();
-      resultadosBusqueda = productos.filter(p =>
-        p.concepto && p.concepto.toLowerCase().includes(termino)
-      );
-      paginaActual = 0;
-      mostrarPagina();
-      document.getElementById("modalResultados").style.display = "block";
-    }
+  pagina.forEach(data => {
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerText = `${data.concepto} — $${data.precioPublico}`;
+    item.onclick = () => {
+      seleccionarProducto(data);
+      cerrarModal();
+    };
+    lista.appendChild(item);
+  });
 
-    function mostrarPagina() {
-      const lista = document.getElementById("listaResultados");
-      lista.innerHTML = "";
-      const inicio = paginaActual * porPagina;
-      const fin = inicio + porPagina;
-      const pagina = resultadosBusqueda.slice(inicio, fin);
+  document.getElementById("paginacion").innerText =
+    `Página ${paginaActual+1} de ${Math.ceil(resultadosBusqueda.length/porPagina)}`;
+}
 
-      pagina.forEach(data => {
-        const item = document.createElement("div");
-        item.className = "item";
-        item.innerText = `${data.concepto} — $${data.precioPublico}`;
-        item.onclick = () => {
-          seleccionarProducto(data);
-          cerrarModal();
-        };
-        lista.appendChild(item);
-      });
+function siguientePagina() {
+  if ((paginaActual+1) * porPagina < resultadosBusqueda.length) {
+    paginaActual++;
+    mostrarPagina();
+  }
+}
+function anteriorPagina() {
+  if (paginaActual > 0) {
+    paginaActual--;
+    mostrarPagina();
+  }
+}
 
-      document.getElementById("paginacion").innerText =
-        `Página ${paginaActual+1} de ${Math.ceil(resultadosBusqueda.length/porPagina)}`;
-    }
+// ============================
+// 🔹 [EVENTOS DEL MODAL]
+// ============================
+document.getElementById("busquedaNombre").addEventListener("input", buscarPorNombre);
+document.getElementById("btnBuscarNombre").addEventListener("click", ()=>{
+  document.getElementById("modalResultados").style.display = "block";
+  document.getElementById("busquedaNombre").focus();
+});
+document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
 
-    function siguientePagina() {
-      if ((paginaActual+1) * porPagina < resultadosBusqueda.length) {
-        paginaActual++;
-        mostrarPagina();
-      }
-    }
-    function anteriorPagina() {
-      if (paginaActual > 0) {
-        paginaActual--;
-        mostrarPagina();
-      }
-    }
 
     // ---------------- PRODUCTO ----------------
 function seleccionarProducto(data) {
@@ -453,20 +450,20 @@ async function cargarVendedor() {
    
   </div>
 
-  <!-- 🔹 Modal resultados -->
-  <div id="modalResultados" class="modal">
-    <div class="modal-content">
-      <span id="cerrarModal" class="close">&times;</span>
-      <h3>Resultados de búsqueda</h3>
-      <input type="text" id="busquedaNombre" placeholder="Escribe nombre..." style="width:100%;margin-bottom:10px;">
-      <div id="listaResultados"></div>
-      <div style="margin-top:10px;text-align:center;">
-        <button id="btnAnterior">⬅️ Anterior</button>
-        <span id="paginacion"></span>
-        <button id="btnSiguiente">Siguiente ➡️</button>
-      </div>
+<!-- 🔹 Modal resultados -->
+<div id="modalResultados" class="modal">
+  <div class="modal-content">
+    <span id="cerrarModal" class="close">&times;</span>
+    <h3>Resultados de búsqueda</h3>
+    <input type="text" id="busquedaNombre" placeholder="Escribe nombre..." style="width:100%;margin-bottom:10px;">
+    <div id="listaResultados"></div>
+    <div style="margin-top:10px;text-align:center;">
+      <button id="btnAnterior">⬅️ Anterior</button>
+      <span id="paginacion"></span>
+      <button id="btnSiguiente">Siguiente ➡️</button>
     </div>
   </div>
+</div>
 
   <div class="footer">Powered by <b>PROVSOFT</b></div>
 </body>
