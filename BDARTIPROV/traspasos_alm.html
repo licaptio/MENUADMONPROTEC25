@@ -103,26 +103,9 @@ async function buscarProducto(autoSelect = false){
   });
 }
 
-      // ---------------- AQUI TERMINA FUNCION  ----------------
+   // ---------------- FUNCION seleccionarProducto  ----------------
 
-      
-      // Evitar duplicados
-      resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
-
-      if(autoSelect && resultados.length === 1){
-        seleccionarProducto(resultados[0]);
-        return;
-      }
-
-      resultados.forEach(data=>{
-        const item = document.createElement("div");
-        item.className = "item";
-        item.innerText = `${data.concepto} — $${data.precioPublico}`;
-        item.onclick = ()=>seleccionarProducto(data);
-        lista.appendChild(item);
-      });
-    }
-
+  
     function seleccionarProducto(data){
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
