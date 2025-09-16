@@ -35,11 +35,10 @@
       const mm = String(hoy.getMonth()+1).padStart(2,"0");
       const yy = String(hoy.getFullYear()).slice(-2);
       const fecha = `${dd}${mm}${yy}`;
-      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); // mejora: llevar contador real
+      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); // mejora: contador real
       return `${ruta}-${fecha}-${consecutivo}`;
     }
 
-    // Cortar array en bloques
     function dividirEnBloques(array, size) {
       const bloques = [];
       for (let i = 0; i < array.length; i += size) {
@@ -87,7 +86,6 @@
         });
       }
 
-      // Evitar duplicados
       resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
 
       if(autoSelect && resultados.length === 1){
@@ -265,6 +263,10 @@
     // ---------------- INIT ----------------
     document.addEventListener("DOMContentLoaded", ()=>{
       document.getElementById("buscador").focus();
+
+      // ✅ Se conecta aquí el cambio de ruta
+      document.getElementById("ruta").addEventListener("change", cargarVendedor);
+
       document.getElementById("buscador").addEventListener("keypress",(e)=>{
         if(e.key==="Enter"){ e.preventDefault(); buscarProducto(true); }
       });
@@ -294,7 +296,7 @@
     <h2>⬇️ Traspaso a Vendedores</h2>
 
     <label>Ruta destino:</label>
-    <select id="ruta" onchange="cargarVendedor()">
+    <select id="ruta">
       <option value="">-- Seleccionar --</option>
       <option value="Almacen_Ruta_1">Ruta 1</option>
       <option value="Almacen_Ruta_2">Ruta 2</option>
