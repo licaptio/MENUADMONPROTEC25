@@ -48,64 +48,44 @@
     }
 
     // ---------------- BUSCADOR ----------------
-// ---------------- BUSCADOR ----------------
-async function buscarProducto(autoSelect = false){
-  const input = document.getElementById("buscador").value.trim().toLowerCase();
-  const lista = document.getElementById("resultados");
-  lista.innerHTML = "";
-  if(input.length < 2) return; // 🔹 ahora con 2 letras ya busca
+    async function buscarProducto(autoSelect = false){
+      const input = document.getElementById("buscador").value.trim().toLowerCase();
+      const lista = document.getElementById("listaResultados");
+      lista.innerHTML = "";
+      if(input.length < 2) return;
 
-  let resultados = [];
+      let resultados = [];
 
-  if(/^\d+$/.test(input)){ 
-    // Código principal
-    let q1 = query(collection(db,"productos"),
-                   where("activo","==",true),
-                   where("codigoBarra","==",input));
-    let snap1 = await getDocs(q1);
-    snap1.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
+      let q = query(collection(db,"productos"),
+                    where("activo","==",true),
+                    limit(50));   // 🔹 trae hasta 50 productos
+      let snap = await getDocs(q);
+      snap.forEach(docu=>{
+        const data = docu.data();
+        if(data.concepto && data.concepto.toLowerCase().includes(input)){
+          resultados.push({id:docu.id, ...data});
+        }
+      });
 
-    // Equivalentes
-    let q2 = query(collection(db,"productos"),
-                   where("activo","==",true),
-                   where("equivalentes","array-contains",input));
-    let snap2 = await getDocs(q2);
-    snap2.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
-
-  } else {
-    // Por concepto (texto libre, case-insensitive y fragmentos)
-    let q3 = query(collection(db,"productos"),
-                   where("activo","==",true),
-                   limit(200));   // 🔹 subimos a 200 por más margen
-    let snap3 = await getDocs(q3);
-    snap3.forEach(docu=>{
-      const data = docu.data();
-      if(data.concepto && data.concepto.toLowerCase().includes(input)){
-        resultados.push({id:docu.id, ...data});
+      if(resultados.length === 0){
+        lista.innerHTML = "<p>No se encontraron coincidencias</p>";
+      } else {
+        resultados.forEach(data=>{
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerText = `${data.concepto} — $${data.precioPublico}`;
+          item.onclick = ()=>{
+            seleccionarProducto(data);
+            cerrarModal();
+          };
+          lista.appendChild(item);
+        });
       }
-    });
-  }
 
-  // Evitar duplicados
-  resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+      document.getElementById("modalResultados").style.display = "block";
+    }
 
-  if(autoSelect && resultados.length === 1){
-    seleccionarProducto(resultados[0]);
-    return;
-  }
-
-  resultados.forEach(data=>{
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerText = `${data.concepto} — $${data.precioPublico}`;
-    item.onclick = ()=>seleccionarProducto(data);
-    lista.appendChild(item);
-  });
-}
-
-   // ---------------- FUNCION seleccionarProducto  ----------------
-
-  
+    // ---------------- FUNCION seleccionarProducto ----------------
     function seleccionarProducto(data){
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
@@ -260,18 +240,25 @@ async function buscarProducto(autoSelect = false){
       }
     }
 
-    // ---------------- INIT ----------------
+    // ---------------- MODAL ----------------
+    function cerrarModal(){
+      document.getElementById("modalResultados").style.display = "none";
+    }
+
     document.addEventListener("DOMContentLoaded", ()=>{
       document.getElementById("buscador").focus();
-
       document.getElementById("ruta").addEventListener("change", cargarVendedor);
-
       document.getElementById("buscador").addEventListener("keypress",(e)=>{
         if(e.key==="Enter"){ e.preventDefault(); buscarProducto(true); }
       });
       document.getElementById("cantidad").addEventListener("keypress",(e)=>{
         if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
       });
+      document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
+      window.onclick = function(event){
+        const modal = document.getElementById("modalResultados");
+        if(event.target === modal) cerrarModal();
+      };
     });
   </script>
 
@@ -280,14 +267,20 @@ async function buscarProducto(autoSelect = false){
     .panel{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
     label{display:block;margin-top:10px;font-weight:bold;}
     input,select{width:100%;padding:8px;margin:4px 0 10px;border:1px solid #ccc;border-radius:6px;}
-    #resultados .item{padding:6px;cursor:pointer;border-bottom:1px solid #eee;}
-    #resultados .item:hover{background:#f0f0f0;}
     table{width:100%;border-collapse:collapse;margin-top:10px;}
     th,td{border:1px solid #ccc;padding:6px;text-align:left;}
     th{background:#eee;}
     button{margin-top:10px;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
     .btn{background:#007bff;color:white;}
     .btn-danger{background:#dc3545;color:white;}
+
+    /* 🔹 Modal */
+    .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);}
+    .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:80%;max-width:600px;max-height:70%;overflow-y:auto;}
+    .close{color:#aaa;float:right;font-size:28px;font-weight:bold;cursor:pointer;}
+    .close:hover{color:#000;}
+    #listaResultados .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
+    #listaResultados .item:hover{background:#f0f0f0;}
   </style>
 </head>
 <body>
@@ -306,7 +299,6 @@ async function buscarProducto(autoSelect = false){
 
     <label>Buscar producto:</label>
     <input type="text" id="buscador" placeholder="Escanea código o escribe nombre..." />
-    <div id="resultados"></div>
 
     <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
 
@@ -325,6 +317,15 @@ async function buscarProducto(autoSelect = false){
     </table>
 
     <button class="btn" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
+  </div>
+
+  <!-- 🔹 Modal resultados -->
+  <div id="modalResultados" class="modal">
+    <div class="modal-content">
+      <span id="cerrarModal" class="close">&times;</span>
+      <h3>Resultados de búsqueda</h3>
+      <div id="listaResultados"></div>
+    </div>
   </div>
 </body>
 </html>
