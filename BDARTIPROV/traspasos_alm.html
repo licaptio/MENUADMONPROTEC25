@@ -83,11 +83,16 @@
 
       const productos = await getAllProductos();
       const encontrado = productos.find(p => p.codigoBarra === codigo);
+
       if (encontrado) {
         seleccionarProducto(encontrado);
       } else {
-        alert("❌ Código no encontrado");
+        document.getElementById("preview").innerText = "❌ No encontrado";
+        document.getElementById("codigoSel").value = "";
+        document.getElementById("conceptoSel").value = "";
+        document.getElementById("precioSel").value = "";
       }
+
       document.getElementById("buscador").value = "";
     }
 
@@ -284,6 +289,24 @@
       win.document.close();
     }
 
+    // ---------------- RUTA -> VENDEDOR ----------------
+    async function cargarVendedor() {
+      const ruta = document.getElementById("ruta").value;
+      if (!ruta) return;
+      const q = query(collection(db,"usuarios_ruta"),
+                      where("rutaId","==",ruta),
+                      where("activo","==",true));
+      const snap = await getDocs(q);
+      if (!snap.empty){
+        snap.forEach(doc=>{
+          const data = doc.data();
+          document.getElementById("vendedor").value = data.nombre;
+        });
+      } else {
+        document.getElementById("vendedor").value = "No asignado";
+      }
+    }
+
     function cerrarModal(){
       document.getElementById("modalResultados").style.display = "none";
     }
@@ -293,6 +316,7 @@
       await syncProductos();
       document.getElementById("buscador").focus();
 
+      document.getElementById("ruta").addEventListener("change", cargarVendedor);
       document.getElementById("btnBuscarNombre").addEventListener("click", buscarPorNombre);
       document.getElementById("btnBuscarCodigo").addEventListener("click", buscarPorCodigo);
       document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
@@ -304,6 +328,7 @@
       });
     });
 
+    // 🔹 Exponer funciones
     window.agregarItem = agregarItem;
     window.eliminarItem = eliminarItem;
     window.finalizarTraspaso = finalizarTraspaso;
