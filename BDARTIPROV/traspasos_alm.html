@@ -5,10 +5,10 @@
   <title>Traspaso entre Almacenes</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, addDoc } 
+    import { getFirestore, collection, query, where, getDocs, addDoc }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ---------------- FIREBASE ----------------
+    // ---------------- FIREBASE CONFIG ----------------
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -26,7 +26,11 @@
     let paginaActual = 0;
     const porPagina = 10;
 
-    // ---------------- INDEXEDDB ----------------
+    // Telegram
+    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
+    const CHAT_ID   = "6617988297";
+
+    // ---------------- IndexedDB ----------------
     function openDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open("provsoftDB", 1);
@@ -34,9 +38,6 @@
           const db = e.target.result;
           if (!db.objectStoreNames.contains("productos")) {
             db.createObjectStore("productos", { keyPath: "codigoBarra" });
-          }
-          if (!db.objectStoreNames.contains("meta")) {
-            db.createObjectStore("meta", { keyPath: "clave" });
           }
         };
         request.onsuccess = e => resolve(e.target.result);
@@ -62,83 +63,49 @@
       });
     }
 
-    async function saveMeta(clave, valor) {
-      const db = await openDB();
-      const tx = db.transaction("meta", "readwrite");
-      tx.objectStore("meta").put({ clave, valor });
-    }
-
-    async function getMeta(clave) {
-      const db = await openDB();
-      return new Promise(resolve => {
-        const tx = db.transaction("meta", "readonly");
-        const store = tx.objectStore("meta");
-        const req = store.get(clave);
-        req.onsuccess = () => resolve(req.result ? req.result.valor : null);
-      });
-    }
-
-    // ---------------- SYNC ----------------
+    // ---------------- SINCRONIZACIÓN ----------------
     async function syncProductos() {
       try {
-        const lastSync = await getMeta("lastSync");
-        const ahora = Date.now();
-        const unDia = 24 * 60 * 60 * 1000;
-
-        if (lastSync && (ahora - lastSync) < unDia) {
-          console.log("📦 Usando catálogo local");
-          return;
-        }
-
-        console.log("⬇️ Descargando catálogo Firestore...");
         const q = query(collection(db, "productos"), where("activo", "==", true));
         const snap = await getDocs(q);
-
         const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         await saveProductos(lista);
-        await saveMeta("lastSync", ahora);
-
         console.log("✅ Catálogo sincronizado con IndexedDB");
       } catch (err) {
         console.warn("⚠️ Error al sincronizar:", err.message);
       }
     }
 
-    // ---------------- BUSCAR ----------------
+    // ---------------- BÚSQUEDAS ----------------
     async function buscarPorCodigo() {
-      const codigo = document.getElementById("buscadorCodigo").value.trim();
+      const codigo = document.getElementById("buscador").value.trim();
       if (!codigo) return;
 
       const productos = await getAllProductos();
-      const encontrado = productos.find(p => p.codigoBarra == codigo);
-
+      const encontrado = productos.find(p => p.codigoBarra === codigo);
       if (encontrado) {
         seleccionarProducto(encontrado);
       } else {
-        alert("⚠️ Producto no encontrado, prueba con la búsqueda por nombre 🔍");
+        alert("❌ Código no encontrado");
       }
+      document.getElementById("buscador").value = "";
     }
 
-    async function abrirBusquedaNombre() {
-      const termino = document.getElementById("buscadorCodigo").value.trim().toLowerCase();
-      if (termino.length < 2) {
-        alert("Escribe al menos 2 caracteres para buscar por nombre");
-        return;
-      }
-
+    async function buscarPorNombre() {
+      const termino = document.getElementById("busquedaNombre").value.trim().toLowerCase();
+      if (!termino) return;
       const productos = await getAllProductos();
       resultadosBusqueda = productos.filter(p =>
         p.concepto && p.concepto.toLowerCase().includes(termino)
       );
       paginaActual = 0;
-      mostrarResultadosPaginados();
+      mostrarPagina();
       document.getElementById("modalResultados").style.display = "block";
     }
 
-    function mostrarResultadosPaginados() {
+    function mostrarPagina() {
       const lista = document.getElementById("listaResultados");
       lista.innerHTML = "";
-
       const inicio = paginaActual * porPagina;
       const fin = inicio + porPagina;
       const pagina = resultadosBusqueda.slice(inicio, fin);
@@ -154,29 +121,24 @@
         lista.appendChild(item);
       });
 
-      document.getElementById("paginacion").innerHTML = `
-        <button ${paginaActual === 0 ? "disabled" : ""} onclick="anteriorPagina()">⬅️ Anterior</button>
-        Página ${paginaActual+1} de ${Math.ceil(resultadosBusqueda.length / porPagina)}
-        <button ${(fin >= resultadosBusqueda.length) ? "disabled" : ""} onclick="siguientePagina()">Siguiente ➡️</button>
-      `;
+      document.getElementById("paginacion").innerText =
+        `Página ${paginaActual+1} de ${Math.ceil(resultadosBusqueda.length/porPagina)}`;
     }
 
-    // ---------------- PAGINACIÓN ----------------
-    window.anteriorPagina = function() {
-      if (paginaActual > 0) {
-        paginaActual--;
-        mostrarResultadosPaginados();
-      }
-    };
-
-    window.siguientePagina = function() {
+    function siguientePagina() {
       if ((paginaActual+1) * porPagina < resultadosBusqueda.length) {
         paginaActual++;
-        mostrarResultadosPaginados();
+        mostrarPagina();
       }
-    };
+    }
+    function anteriorPagina() {
+      if (paginaActual > 0) {
+        paginaActual--;
+        mostrarPagina();
+      }
+    }
 
-    // ---------------- SELECCION ----------------
+    // ---------------- PRODUCTO ----------------
     function seleccionarProducto(data) {
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
@@ -185,7 +147,6 @@
       document.getElementById("cantidad").focus();
     }
 
-    // ---------------- CARRITO ----------------
     function agregarItem() {
       const codigo = document.getElementById("codigoSel").value;
       const concepto = document.getElementById("conceptoSel").value;
@@ -198,13 +159,12 @@
       carrito.push({ codigo, concepto, precio, cantidad });
       renderTabla();
 
-      document.getElementById("buscadorCodigo").value = "";
-      document.getElementById("cantidad").value = "1"; 
+      document.getElementById("cantidad").value = "1";
       document.getElementById("preview").innerText = "";
       document.getElementById("codigoSel").value = "";
       document.getElementById("conceptoSel").value = "";
       document.getElementById("precioSel").value = "";
-      document.getElementById("buscadorCodigo").focus();
+      document.getElementById("buscador").focus();
     }
 
     function renderTabla() {
@@ -223,12 +183,107 @@
       });
     }
 
-    window.eliminarItem = function(index) {
+    function eliminarItem(index) {
       carrito.splice(index, 1);
       renderTabla();
-    };
+    }
 
-    // ---------------- MODAL ----------------
+    // ---------------- FINALIZAR ----------------
+    async function finalizarTraspaso() {
+      const ruta = document.getElementById("ruta").value;
+      const vendedor = document.getElementById("vendedor").value;
+      if (carrito.length === 0 || !ruta) { alert("Faltan datos"); return; }
+
+      const folio = generarFolio(ruta);
+
+      await addDoc(collection(db, `almacenes/${ruta}/entradas`), { folio, vendedor, items: carrito });
+      await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), { folio, vendedor, items: carrito });
+
+      await enviarTelegram(folio, ruta, vendedor, carrito);
+      abrirComprobante(folio, ruta, vendedor, carrito);
+
+      carrito = [];
+      renderTabla();
+    }
+
+    function generarFolio(ruta) {
+      const hoy = new Date();
+      const dd = String(hoy.getDate()).padStart(2, "0");
+      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+      const yy = String(hoy.getFullYear()).slice(-2);
+      const fecha = `${dd}${mm}${yy}`;
+      const consecutivo = String(Math.floor(Math.random() * 999)).padStart(3, "0");
+      return `${ruta}-${fecha}-${consecutivo}`;
+    }
+
+    function dividirEnBloques(array, size) {
+      const bloques = [];
+      for (let i = 0; i < array.length; i += size) {
+        bloques.push(array.slice(i, i + size));
+      }
+      return bloques;
+    }
+
+    async function enviarTelegram(folio, destino, vendedor, items) {
+      const total = items.length;
+      const bloques = dividirEnBloques(items, 20);
+
+      for (let i = 0; i < bloques.length; i++) {
+        let mensaje = `📦 *Nuevo Traspaso*\n`;
+        if (i === 0){ 
+          mensaje += `Folio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal de productos: ${total}\n`;
+        }
+        mensaje += `📋 *Bloque ${i+1}/${bloques.length}:*\n`;
+        bloques[i].forEach(it=>{
+          mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
+        });
+
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: CHAT_ID, text: mensaje, parse_mode: "Markdown" })
+        });
+      }
+    }
+
+    function abrirComprobante(folio, ruta, vendedor, items) {
+      const fecha = new Date().toLocaleDateString();
+      let tabla = "";
+      items.forEach(it=>{
+        tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
+      });
+
+      const win = window.open("", "_blank");
+      win.document.write(`
+        <html><head><title>Comprobante ${folio}</title>
+        <style>
+          body{font-family:Arial;margin:20px;}
+          h1{text-align:center;color:#003366;}
+          .folio{font-size:24px;font-weight:bold;color:#b30000;text-align:center;border:2px dashed #b30000;margin:10px;padding:5px;}
+          table{width:100%;border-collapse:collapse;margin-top:15px;}
+          th,td{border:1px solid #ccc;padding:6px;}
+          th{background:#eee;}
+          .firmas{margin-top:40px;display:flex;justify-content:space-between;}
+          .firma{width:45%;text-align:center;}
+          .linea{margin-top:60px;border-top:1px solid #000;}
+        </style></head><body>
+        <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
+        <h2 style="text-align:center">Comprobante de Traspaso</h2>
+        <div class="folio">Folio: ${folio}</div>
+        <p><b>Fecha:</b> ${fecha}<br><b>Destino:</b> ${ruta}<br><b>Vendedor:</b> ${vendedor}<br><b>Total:</b> ${items.length}</p>
+        <table><thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th></tr></thead><tbody>
+        ${tabla}
+        </tbody></table>
+        <div class="firmas">
+          <div class="firma"><div class="linea"></div>Entregó (Administrador)</div>
+          <div class="firma"><div class="linea"></div>Recibió (Vendedor)</div>
+        </div>
+        <button onclick="window.print()">🖨️ Imprimir</button>
+        </body></html>
+      `);
+      win.document.close();
+    }
+
     function cerrarModal(){
       document.getElementById("modalResultados").style.display = "none";
     }
@@ -236,34 +291,42 @@
     // ---------------- INIT ----------------
     document.addEventListener("DOMContentLoaded", async ()=>{
       await syncProductos();
-      document.getElementById("buscadorCodigo").focus();
-      document.getElementById("buscadorCodigo").addEventListener("keypress",(e)=>{
-        if(e.key === "Enter"){ e.preventDefault(); buscarPorCodigo(); }
-      });
+      document.getElementById("buscador").focus();
+
+      document.getElementById("btnBuscarNombre").addEventListener("click", buscarPorNombre);
+      document.getElementById("btnBuscarCodigo").addEventListener("click", buscarPorCodigo);
       document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
+      document.getElementById("btnAnterior").addEventListener("click", anteriorPagina);
+      document.getElementById("btnSiguiente").addEventListener("click", siguientePagina);
+
+      document.getElementById("cantidad").addEventListener("keypress",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
+      });
     });
 
-    // Exponer
     window.agregarItem = agregarItem;
-    window.buscarPorCodigo = buscarPorCodigo;
-    window.abrirBusquedaNombre = abrirBusquedaNombre;
+    window.eliminarItem = eliminarItem;
+    window.finalizarTraspaso = finalizarTraspaso;
   </script>
 
   <style>
     body{font-family:Arial,sans-serif;margin:20px;background:#f5f5f5;}
     .panel{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
     label{display:block;margin-top:10px;font-weight:bold;}
-    input,select{padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px;}
+    input,select{padding:8px;border:1px solid #ccc;border-radius:6px;}
+    #buscador{width:70%;}
+    #btnBuscarCodigo,#btnBuscarNombre{padding:8px 12px;margin-left:6px;cursor:pointer;}
     table{width:100%;border-collapse:collapse;margin-top:10px;}
     th,td{border:1px solid #ccc;padding:6px;text-align:left;}
     th{background:#eee;}
-    button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;}
+    button{margin-top:10px;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
     .btn{background:#007bff;color:white;}
     .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);}
     .modal-content{background:#fff;margin:5% auto;padding:20px;border-radius:10px;width:80%;max-width:600px;max-height:70%;overflow-y:auto;}
-    .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
-    .item:hover{background:#f0f0f0;}
-    #paginacion{text-align:center;margin-top:10px;}
+    .close{float:right;font-size:28px;cursor:pointer;}
+    #listaResultados .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
+    #listaResultados .item:hover{background:#f0f0f0;}
+    .footer{text-align:center;margin-top:20px;font-size:14px;color:#555;}
   </style>
 </head>
 <body>
@@ -280,14 +343,12 @@
     <label>Vendedor:</label>
     <input type="text" id="vendedor" readonly />
 
-    <label>Ingresar código de barras:</label>
-    <div style="display:flex;gap:5px;align-items:center;">
-      <input type="number" id="buscadorCodigo" placeholder="Escanea código de barras..." style="flex:1;">
-      <button class="btn" onclick="abrirBusquedaNombre()">🔍</button>
-    </div>
+    <label>Captura producto:</label>
+    <input type="text" id="buscador" placeholder="Escanea código de barras..." />
+    <button id="btnBuscarCodigo">✔️ Capturar</button>
+    <button id="btnBuscarNombre">🔍 Buscar por nombre</button>
 
     <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
-
     <input type="hidden" id="codigoSel">
     <input type="hidden" id="conceptoSel">
     <input type="hidden" id="precioSel">
@@ -302,17 +363,24 @@
       <tbody id="tabla"></tbody>
     </table>
 
-    <button class="btn">📤 Finalizar Traspaso</button>
+    <button class="btn" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
   </div>
 
   <!-- 🔹 Modal resultados -->
   <div id="modalResultados" class="modal">
     <div class="modal-content">
-      <span id="cerrarModal" class="close" style="cursor:pointer;">&times;</span>
+      <span id="cerrarModal" class="close">&times;</span>
       <h3>Resultados de búsqueda</h3>
+      <input type="text" id="busquedaNombre" placeholder="Escribe nombre..." style="width:100%;margin-bottom:10px;">
       <div id="listaResultados"></div>
-      <div id="paginacion"></div>
+      <div style="margin-top:10px;text-align:center;">
+        <button id="btnAnterior">⬅️ Anterior</button>
+        <span id="paginacion"></span>
+        <button id="btnSiguiente">Siguiente ➡️</button>
+      </div>
     </div>
   </div>
+
+  <div class="footer">Powered by <b>PROVSOFT</b></div>
 </body>
 </html>
