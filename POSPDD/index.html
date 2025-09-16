@@ -565,10 +565,15 @@ async function getFromStore(store) {
 }
 
   
+import { getDocs, collection, query, where } from "firebase/firestore";
+
 async function cargarCatalogo() {
   catalogo = [];
   try {
-    const snap = await getDocs(collection(db, "productos"));
+    // 🔹 Solo productos activos
+    const q = query(collection(db, "productos"), where("activo", "==", true));
+    const snap = await getDocs(q);
+
     let lista = [];
     snap.forEach(d => {
       const x = d.data();
@@ -581,9 +586,10 @@ async function cargarCatalogo() {
         iepsTasa: Number(x.iepsTasa || 0)
       });
     });
+
     await saveToStore("cache_catalogo", lista);
     catalogo = lista;
-    console.log("[catálogo] cargados:", lista.length);
+    console.log("[catálogo] activos cargados:", lista.length);
   } catch (e) {
     console.error("Error cargar catálogo:", e);
     const cached = await getFromStore("cache_catalogo");
