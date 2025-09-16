@@ -62,18 +62,39 @@ const CHAT_ID   = "6617988297";
       });
     }
 
-    // ---------------- SINCRONIZACIÓN ----------------
-    async function syncProductos() {
-      try {
-        const q = query(collection(db, "productos"), where("activo", "==", true));
-        const snap = await getDocs(q);
-        const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        await saveProductos(lista);
-        console.log("✅ Catálogo sincronizado con IndexedDB");
-      } catch (err) {
-        console.warn("⚠️ Error al sincronizar:", err.message);
-      }
+// ---------------- SINCRONIZACIÓN INCREMENTAL ----------------
+async function syncProductos() {
+  try {
+    // 1. Última fecha guardada en localStorage (si no existe, fecha muy antigua)
+    const ultimaSync = localStorage.getItem("ultimaSync") || "2000-01-01T00:00:00.000Z";
+    console.log("⏱ Última sincronización:", ultimaSync);
+
+    // 2. Consulta solo productos activos con cambios después de esa fecha
+    const q = query(
+      collection(db, "productos"),
+      where("activo", "==", true),
+      where("updatedAt", ">", ultimaSync)   // 🔹 necesitas este campo en Firestore
+    );
+
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+      const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // 3. Guardar cambios en IndexedDB
+      await saveProductos(lista);
+
+      // 4. Actualizar fecha de última sync
+      localStorage.setItem("ultimaSync", new Date().toISOString());
+
+      console.log(`✅ Catálogo actualizado (${lista.length} productos nuevos/actualizados)`);
+    } else {
+      console.log("✅ No hay cambios desde la última sincronización");
     }
+  } catch (err) {
+    console.warn("⚠️ Error al sincronizar:", err.message);
+  }
+}
 
     // ---------------- BÚSQUEDAS ----------------
 // ============================
