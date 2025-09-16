@@ -5,9 +5,9 @@
   <title>Traspaso entre Almacenes</title>
   <script type="module">
     // ---------------- FIREBASE CONFIG ----------------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, query, where, limit, getDocs, addDoc } 
-      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
@@ -28,82 +28,133 @@
     const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
     const CHAT_ID   = "6617988297";
 
-    // ---------------- UTILS ----------------
-    function generarFolio(ruta){
-      const hoy = new Date();
-      const dd = String(hoy.getDate()).padStart(2,"0");
-      const mm = String(hoy.getMonth()+1).padStart(2,"0");
-      const yy = String(hoy.getFullYear()).slice(-2);
-      const fecha = `${dd}${mm}${yy}`;
-      const consecutivo = String(Math.floor(Math.random()*999)).padStart(3,"0"); 
-      return `${ruta}-${fecha}-${consecutivo}`;
+    // ===============================
+    // 🗄️ IndexedDB Helpers
+    // ===============================
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("provsoftDB", 1);
+        request.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("productos")) {
+            db.createObjectStore("productos", { keyPath: "codigoBarra" });
+          }
+          if (!db.objectStoreNames.contains("meta")) {
+            db.createObjectStore("meta", { keyPath: "clave" });
+          }
+        };
+        request.onsuccess = e => resolve(e.target.result);
+        request.onerror = e => reject(e);
+      });
     }
 
-    function dividirEnBloques(array, size) {
-      const bloques = [];
-      for (let i = 0; i < array.length; i += size) {
-        bloques.push(array.slice(i, i + size));
+    async function saveProductos(lista) {
+      const db = await openDB();
+      const tx = db.transaction("productos", "readwrite");
+      const store = tx.objectStore("productos");
+      lista.forEach(p => store.put(p));
+      return tx.done || new Promise(resolve => tx.oncomplete = resolve);
+    }
+
+    async function getAllProductos() {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("productos", "readonly");
+        const store = tx.objectStore("productos");
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+      });
+    }
+
+    async function saveMeta(clave, valor) {
+      const db = await openDB();
+      const tx = db.transaction("meta", "readwrite");
+      tx.objectStore("meta").put({ clave, valor });
+    }
+
+    async function getMeta(clave) {
+      const db = await openDB();
+      return new Promise(resolve => {
+        const tx = db.transaction("meta", "readonly");
+        const store = tx.objectStore("meta");
+        const req = store.get(clave);
+        req.onsuccess = () => resolve(req.result ? req.result.valor : null);
+      });
+    }
+
+    // ===============================
+    // 🔄 Sincronización catálogo
+    // ===============================
+    async function syncProductos() {
+      try {
+        const lastSync = await getMeta("lastSync");
+        const ahora = Date.now();
+        const unDia = 24 * 60 * 60 * 1000;
+
+        if (lastSync && (ahora - lastSync) < unDia) {
+          console.log("📦 Usando catálogo local");
+          return;
+        }
+
+        console.log("⬇️ Descargando catálogo Firestore...");
+        const q = query(collection(db, "productos"), where("activo", "==", true));
+        const snap = await getDocs(q);
+
+        const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        await saveProductos(lista);
+        await saveMeta("lastSync", ahora);
+
+        console.log("✅ Catálogo sincronizado con IndexedDB");
+      } catch (err) {
+        console.warn("⚠️ Error al sincronizar:", err.message);
       }
-      return bloques;
     }
 
-// ---------------- BUSCADOR ----------------
-async function buscarProducto(){
-  const input = document.getElementById("buscador").value.trim().toLowerCase();
-  const lista = document.getElementById("listaResultados");
-  lista.innerHTML = "";
-  if(input.length < 2) return;
-
-  let resultados = [];
-
-  if(/^\d+$/.test(input)){  
-    // 🔹 Código de barras → búsqueda exacta
-    let q = query(collection(db,"productos"),
-                  where("activo","==",true),
-                  where("codigoBarra","==",input));
-    let snap = await getDocs(q);
-    snap.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
-
-    if(resultados.length === 1){
-      // ✅ Auto-selección directa
-      seleccionarProducto(resultados[0]);
-      return;
+    // ===============================
+    // 🔎 Buscar en local
+    // ===============================
+    async function buscarLocal(termino) {
+      const productos = await getAllProductos();
+      termino = termino.toLowerCase();
+      return productos.filter(p =>
+        (p.codigoBarra && p.codigoBarra.includes(termino)) ||
+        (p.concepto && p.concepto.toLowerCase().includes(termino))
+      ).slice(0, 10); // max 10 resultados
     }
-  } else {
-    // 🔹 Texto → búsqueda parcial
-    let q = query(collection(db,"productos"),
-                  where("activo","==",true),
-                  limit(50));
-    let snap = await getDocs(q);
-    snap.forEach(docu=>{
-      const data = docu.data();
-      if(data.concepto && data.concepto.toLowerCase().includes(input)){
-        resultados.push({id:docu.id, ...data});
+
+    async function buscarProducto() {
+      const input = document.getElementById("buscador").value.trim().toLowerCase();
+      const lista = document.getElementById("listaResultados");
+      lista.innerHTML = "";
+      if (input.length < 2) return;
+
+      let resultados = await buscarLocal(input);
+
+      if (resultados.length === 1 && /^\d+$/.test(input)) {
+        // 🔹 código de barras con coincidencia única
+        seleccionarProducto(resultados[0]);
+        return;
       }
-    });
-  }
 
-  // 🔹 Mostrar resultados en modal
-  if(resultados.length === 0){
-    lista.innerHTML = "<p>No se encontraron coincidencias</p>";
-    document.getElementById("modalResultados").style.display = "block";
-  } else {
-    resultados.forEach(data=>{
-      const item = document.createElement("div");
-      item.className = "item";
-      item.innerText = `${data.concepto} — $${data.precioPublico}`;
-      item.onclick = ()=>{
-        seleccionarProducto(data);
-        cerrarModal();
-      };
-      lista.appendChild(item);
-    });
-    document.getElementById("modalResultados").style.display = "block";
-  }
-}
+      if (resultados.length === 0) {
+        lista.innerHTML = "<p>No se encontraron coincidencias</p>";
+      } else {
+        resultados.forEach(data => {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerText = `${data.concepto} — $${data.precioPublico}`;
+          item.onclick = () => {
+            seleccionarProducto(data);
+            cerrarModal();
+          };
+          lista.appendChild(item);
+        });
+      }
+      document.getElementById("modalResultados").style.display = "block";
+    }
 
     // ---------------- FUNCION seleccionarProducto ----------------
-    function seleccionarProducto(data){
+    function seleccionarProducto(data) {
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
       document.getElementById("precioSel").value = data.precioPublico;
@@ -112,32 +163,32 @@ async function buscarProducto(){
     }
 
     // ---------------- CARRITO ----------------
-    function agregarItem(){
+    function agregarItem() {
       const codigo = document.getElementById("codigoSel").value;
       const concepto = document.getElementById("conceptoSel").value;
       const precio = parseFloat(document.getElementById("precioSel").value);
       let cantidad = parseInt(document.getElementById("cantidad").value);
 
-      if(!codigo) return;
-      if(!cantidad || cantidad < 1) cantidad = 1;
+      if (!codigo) return;
+      if (!cantidad || cantidad < 1) cantidad = 1;
 
-      carrito.push({codigo, concepto, precio, cantidad});
+      carrito.push({ codigo, concepto, precio, cantidad });
       renderTabla();
 
       // limpiar
-      document.getElementById("buscador").value="";
-      document.getElementById("cantidad").value="1"; 
-      document.getElementById("preview").innerText="";
-      document.getElementById("codigoSel").value="";
-      document.getElementById("conceptoSel").value="";
-      document.getElementById("precioSel").value="";
+      document.getElementById("buscador").value = "";
+      document.getElementById("cantidad").value = "1"; 
+      document.getElementById("preview").innerText = "";
+      document.getElementById("codigoSel").value = "";
+      document.getElementById("conceptoSel").value = "";
+      document.getElementById("precioSel").value = "";
       document.getElementById("buscador").focus();
     }
 
-    function renderTabla(){
+    function renderTabla() {
       const tabla = document.getElementById("tabla");
       tabla.innerHTML = "";
-      carrito.forEach((item,i)=>{
+      carrito.forEach((item, i) => {
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${item.codigo}</td>
@@ -150,21 +201,21 @@ async function buscarProducto(){
       });
     }
 
-    window.eliminarItem = function(index){
-      carrito.splice(index,1);
+    window.eliminarItem = function(index) {
+      carrito.splice(index, 1);
       renderTabla();
     }
 
     // ---------------- FINALIZAR ----------------
-    async function finalizarTraspaso(){
+    async function finalizarTraspaso() {
       const ruta = document.getElementById("ruta").value;
       const vendedor = document.getElementById("vendedor").value;
-      if(carrito.length===0 || !ruta) { alert("Faltan datos"); return; }
+      if (carrito.length === 0 || !ruta) { alert("Faltan datos"); return; }
 
       const folio = generarFolio(ruta);
 
-      await addDoc(collection(db,`almacenes/${ruta}/entradas`), {folio, vendedor, items:carrito});
-      await addDoc(collection(db,`almacenes/ALMACENCENTRALPDD/salidas`), {folio, vendedor, items:carrito});
+      await addDoc(collection(db, `almacenes/${ruta}/entradas`), { folio, vendedor, items: carrito });
+      await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), { folio, vendedor, items: carrito });
 
       await enviarTelegram(folio, ruta, vendedor, carrito);
 
@@ -175,13 +226,32 @@ async function buscarProducto(){
       document.getElementById("buscador").focus();
     }
 
-    async function enviarTelegram(folio, destino, vendedor, items){
+    // ---------------- UTILS ----------------
+    function generarFolio(ruta) {
+      const hoy = new Date();
+      const dd = String(hoy.getDate()).padStart(2, "0");
+      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+      const yy = String(hoy.getFullYear()).slice(-2);
+      const fecha = `${dd}${mm}${yy}`;
+      const consecutivo = String(Math.floor(Math.random() * 999)).padStart(3, "0"); 
+      return `${ruta}-${fecha}-${consecutivo}`;
+    }
+
+    function dividirEnBloques(array, size) {
+      const bloques = [];
+      for (let i = 0; i < array.length; i += size) {
+        bloques.push(array.slice(i, i + size));
+      }
+      return bloques;
+    }
+
+    async function enviarTelegram(folio, destino, vendedor, items) {
       const total = items.length;
       const bloques = dividirEnBloques(items, 20);
 
       for (let i = 0; i < bloques.length; i++) {
         let mensaje = `📦 *Nuevo Traspaso*\n`;
-        if(i === 0){ 
+        if (i === 0){ 
           mensaje += `\nFolio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal de productos: ${total}\n`;
         }
         mensaje += `\n📋 *Bloque ${i+1}/${bloques.length}:*\n`;
@@ -201,14 +271,14 @@ async function buscarProducto(){
       }
     }
 
-    function abrirComprobante(folio, ruta, vendedor, items){
+    function abrirComprobante(folio, ruta, vendedor, items) {
       const fecha = new Date().toLocaleDateString();
       let tabla = "";
       items.forEach(it=>{
         tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
       });
 
-      const win = window.open("","_blank");
+      const win = window.open("", "_blank");
       win.document.write(`
         <html><head><title>Comprobante ${folio}</title>
         <style>
@@ -240,14 +310,14 @@ async function buscarProducto(){
     }
 
     // ---------------- RUTA -> VENDEDOR ----------------
-    async function cargarVendedor(){
+    async function cargarVendedor() {
       const ruta = document.getElementById("ruta").value;
-      if(!ruta) return;
+      if (!ruta) return;
       const q = query(collection(db,"usuarios_ruta"),
                       where("rutaId","==",ruta),
                       where("activo","==",true));
       const snap = await getDocs(q);
-      if(!snap.empty){
+      if (!snap.empty){
         snap.forEach(doc=>{
           const data = doc.data();
           document.getElementById("vendedor").value = data.nombre;
@@ -262,24 +332,21 @@ async function buscarProducto(){
       document.getElementById("modalResultados").style.display = "none";
     }
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  document.getElementById("buscador").focus();
-  document.getElementById("ruta").addEventListener("change", cargarVendedor);
-
-  // 🔹 Buscar al escribir, no solo con Enter
-  document.getElementById("buscador").addEventListener("input", buscarProducto);
-
-  document.getElementById("cantidad").addEventListener("keypress",(e)=>{
-    if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
-  });
-
-  document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
-  window.onclick = function(event){
-    const modal = document.getElementById("modalResultados");
-    if(event.target === modal) cerrarModal();
-  };
-});
-
+    // ---------------- INIT ----------------
+    document.addEventListener("DOMContentLoaded", async ()=>{
+      await syncProductos(); // sincroniza al abrir
+      document.getElementById("buscador").focus();
+      document.getElementById("ruta").addEventListener("change", cargarVendedor);
+      document.getElementById("buscador").addEventListener("input", buscarProducto);
+      document.getElementById("cantidad").addEventListener("keypress",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
+      });
+      document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
+      window.onclick = function(event){
+        const modal = document.getElementById("modalResultados");
+        if(event.target === modal) cerrarModal();
+      };
+    });
   </script>
 
   <style>
