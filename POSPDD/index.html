@@ -476,6 +476,23 @@ const _porPag = 10;
   };
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
+  // ===== Helpers globales =====
+  const toYYYYMMDD = d =>
+    d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+
+  const money = n => "$" + (Number(n)||0).toFixed(2);
+
+  // Referencias a elementos DOM
+  const elBuscador   = document.getElementById("buscador");
+  const elCant       = document.getElementById("cantidadInput");
+  const elResultados = document.getElementById("resultados");
+  const elTbody      = document.getElementById("tbody");
+  const lblSubtotal  = document.getElementById("lblSubtotal");
+  const lblImp       = document.getElementById("lblImpuestos");
+  const lblTotal     = document.getElementById("lblTotal");
+
   
 // === IndexedDB único ===
 function openDB() {
