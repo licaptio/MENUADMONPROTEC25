@@ -48,43 +48,64 @@
     }
 
     // ---------------- BUSCADOR ----------------
-    async function buscarProducto(autoSelect = false){
-      const input = document.getElementById("buscador").value.trim();
-      const lista = document.getElementById("resultados");
-      lista.innerHTML = "";
-      if(input.length < 3) return;
+// ---------------- BUSCADOR ----------------
+async function buscarProducto(autoSelect = false){
+  const input = document.getElementById("buscador").value.trim().toLowerCase();
+  const lista = document.getElementById("resultados");
+  lista.innerHTML = "";
+  if(input.length < 2) return; // 🔹 ahora con 2 letras ya busca
 
-      let resultados = [];
+  let resultados = [];
 
-      if(/^\d+$/.test(input)){ 
-        // Código principal
-        let q1 = query(collection(db,"productos"),
-                       where("activo","==",true),
-                       where("codigoBarra","==",input));
-        let snap1 = await getDocs(q1);
-        snap1.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
+  if(/^\d+$/.test(input)){ 
+    // Código principal
+    let q1 = query(collection(db,"productos"),
+                   where("activo","==",true),
+                   where("codigoBarra","==",input));
+    let snap1 = await getDocs(q1);
+    snap1.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
 
-        // Equivalentes
-        let q2 = query(collection(db,"productos"),
-                       where("activo","==",true),
-                       where("equivalentes","array-contains",input));
-        let snap2 = await getDocs(q2);
-        snap2.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
+    // Equivalentes
+    let q2 = query(collection(db,"productos"),
+                   where("activo","==",true),
+                   where("equivalentes","array-contains",input));
+    let snap2 = await getDocs(q2);
+    snap2.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
 
-      } else {
-        // Por concepto (texto libre)
-        let q3 = query(collection(db,"productos"),
-                       where("activo","==",true),
-                       limit(100));   // 🔹 busca hasta 100 productos activos
-        let snap3 = await getDocs(q3);
-        snap3.forEach(docu=>{
-          const data = docu.data();
-          if(data.concepto && data.concepto.toLowerCase().includes(input.toLowerCase())){
-            resultados.push({id:docu.id, ...data});
-          }
-        });
+  } else {
+    // Por concepto (texto libre, case-insensitive y fragmentos)
+    let q3 = query(collection(db,"productos"),
+                   where("activo","==",true),
+                   limit(200));   // 🔹 subimos a 200 por más margen
+    let snap3 = await getDocs(q3);
+    snap3.forEach(docu=>{
+      const data = docu.data();
+      if(data.concepto && data.concepto.toLowerCase().includes(input)){
+        resultados.push({id:docu.id, ...data});
       }
+    });
+  }
 
+  // Evitar duplicados
+  resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+
+  if(autoSelect && resultados.length === 1){
+    seleccionarProducto(resultados[0]);
+    return;
+  }
+
+  resultados.forEach(data=>{
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerText = `${data.concepto} — $${data.precioPublico}`;
+    item.onclick = ()=>seleccionarProducto(data);
+    lista.appendChild(item);
+  });
+}
+
+      // ---------------- AQUI TERMINA FUNCION  ----------------
+
+      
       // Evitar duplicados
       resultados = resultados.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
 
