@@ -513,32 +513,30 @@ async function getFromStore(store) {
   
 async function cargarCatalogo() {
   catalogo = [];
-  codeIndex.clear();
-
   try {
-    const prodSnap = await fetch("https://firestore.googleapis.com/v1/projects/YOUR_PROJECT_ID/databases/(default)/documents/productos");
-    const data = await prodSnap.json();
-
-    let lista;
-    if (data.offline) {
-      // 🔴 Offline: ya viene lista lista
-      lista = data.items;
-      console.log("[catálogo] usando IndexedDB:", lista.length);
-    } else {
-      // 🔵 Online: parsear Firestore normal
-      lista = (data.documents || []).map(d => {
-        const x = d.fields || {};
-        return {
-          id: d.name.split("/").pop(),
-          nombre: x.concepto?.stringValue || "SIN NOMBRE",
-          codigo: x.codigoBarra?.stringValue || "",
-          precioPublico: Number(x.precioPublico?.doubleValue || 0),
-          ivaTasa: Number(x.ivaTasa?.doubleValue || 0),
-          iepsTasa: Number(x.iepsTasa?.doubleValue || 0)
-        };
+    const snap = await getDocs(collection(db, "productos"));
+    let lista = [];
+    snap.forEach(d => {
+      const x = d.data();
+      lista.push({
+        id: d.id,
+        nombre: x.concepto || "SIN NOMBRE",
+        codigo: x.codigoBarra || "",
+        precioPublico: Number(x.precioPublico || 0),
+        ivaTasa: Number(x.ivaTasa || 0),
+        iepsTasa: Number(x.iepsTasa || 0)
       });
-      console.log("[catálogo] online:", lista.length);
-    }
+    });
+    await saveToStore("cache_catalogo", lista);
+    catalogo = lista;
+    console.log("[catálogo] cargados:", lista.length);
+  } catch (e) {
+    console.error("Error cargar catálogo:", e);
+    const cached = await getFromStore("cache_catalogo");
+    catalogo = cached;
+    console.log("[catálogo] usando IndexedDB:", catalogo.length);
+  }
+}
 
     lista.forEach(prod => {
       catalogo.push(prod);
@@ -552,34 +550,34 @@ async function cargarCatalogo() {
 
 async function cargarClientes() {
   clientes = [];
-  const sel = document.getElementById("cliente");
-  sel.innerHTML = '<option value="">Selecciona un cliente…</option>';
-
   try {
-    const snap = await fetch("https://firestore.googleapis.com/v1/projects/YOUR_PROJECT_ID/databases/(default)/documents/clientes");
-    const data = await snap.json();
-
-    let lista;
-    if (data.offline) {
-      lista = data.items;
-      console.log("[clientes] usando IndexedDB:", lista.length);
-    } else {
-      lista = (data.documents || []).map(d => {
-        const x = d.fields || {};
-        return {
-          id: d.name.split("/").pop(),
-          nombre: x.nombre?.stringValue || "",
-          alias: x.alias?.stringValue || "",
-          telefono: x.telefono?.stringValue || "",
-          ciudad: x.ciudad?.stringValue || "",
-          rfc: x.rfc?.stringValue || "",
-          ocupa_factura: x.ocupa_factura?.booleanValue || false,
-          uso_cfdi: x.uso_cfdi?.stringValue || "",
-          catalogo: x.catalogo?.stringValue || "PUBLICO"
-        };
+    const snap = await getDocs(collection(db, "clientes"));
+    let lista = [];
+    snap.forEach(d => {
+      const c = d.data();
+      lista.push({
+        id: d.id,
+        nombre: c.nombre || "",
+        alias: c.alias || "",
+        telefono: c.telefono || "",
+        ciudad: c.ciudad || "",
+        rfc: c.rfc || "",
+        ocupa_factura: !!c.ocupa_factura,
+        uso_cfdi: c.uso_cfdi || "",
+        catalogo: c.catalogo || "PUBLICO"
       });
-      console.log("[clientes] online:", lista.length);
-    }
+    });
+    await saveToStore("cache_clientes", lista);
+    clientes = lista;
+    console.log("[clientes] cargados:", lista.length);
+  } catch (e) {
+    console.error("Error cargar clientes:", e);
+    const cached = await getFromStore("cache_clientes");
+    clientes = cached;
+    console.log("[clientes] usando IndexedDB:", clientes.length);
+  }
+}
+
 
     lista.forEach(cli => {
       clientes.push(cli);
