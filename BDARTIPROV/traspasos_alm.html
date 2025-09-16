@@ -201,7 +201,7 @@
       });
     }
 
-    window.eliminarItem = function(index) {
+    function eliminarItem(index) {
       carrito.splice(index, 1);
       renderTabla();
     }
@@ -347,6 +347,12 @@
         if(event.target === modal) cerrarModal();
       };
     });
+
+    // 🔹 Exponer funciones al global
+    window.agregarItem = agregarItem;
+    window.eliminarItem = eliminarItem;
+    window.finalizarTraspaso = finalizarTraspaso;
+
   </script>
 
   <style>
