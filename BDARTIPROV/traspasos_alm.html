@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>📦 Traspaso de Almacenes</title>
+  <script type="module">
+    // Importar Firebase modular
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // 🔹 Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔹 Función principal
+    async function traspasar(){
+      const destino = document.getElementById("destino").value;
+      const codigo = document.getElementById("codigo").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad").value);
+      const log = document.getElementById("log");
+
+      if(!codigo || !cantidad){ 
+        log.innerText = "⚠️ Ingresa código y cantidad";
+        return;
+      }
+
+      try {
+        // Buscar producto en colección "productos"
+        const refProd = doc(db, "productos", codigo);
+        const snapProd = await getDoc(refProd);
+
+        if(!snapProd.exists()){
+          log.innerText = "❌ Producto no encontrado";
+          return;
+        }
+
+        const dataProd = snapProd.data();
+        const concepto = dataProd.concepto || (dataProd.codigosEquivalentes?.concepto) || "SIN NOMBRE";
+        const precioPublico = dataProd.precioPublico || (dataProd.codigosEquivalentes?.precioPublico) || 0;
+
+        // Guardar entrada en el destino
+        await addDoc(collection(db, "almacenes", destino, "entradas"), {
+          codigo: codigo,
+          cantidad: cantidad,
+          concepto: concepto,
+          precioPublico: precioPublico,
+          fecha: new Date()
+        });
+
+        // Guardar salida en central
+        await addDoc(collection(db, "almacenes", "ALMACENCENTRALPDD", "salidas"), {
+          codigo: codigo,
+          cantidad: cantidad,
+          concepto: concepto,
+          precioPublico: precioPublico,
+          destino: destino,
+          fecha: new Date()
+        });
+
+        log.innerText = `✅ ${cantidad} x ${concepto} (${codigo}) → ${destino} | Precio Público: $${precioPublico}`;
+        document.getElementById("codigo").value="";
+        document.getElementById("cantidad").value="";
+      } catch(e){
+        log.innerText = "❌ Error: " + e.message;
+      }
+    }
+
+    // Asignar función al botón
+    window.traspasar = traspasar;
+  </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    h1 { text-align: center; color:#00416A; }
+    .panel { max-width: 500px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,.15);}
+    label { display:block; margin-top:10px; font-weight:bold; }
+    input, select, button { width:100%; padding:10px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
+    button { background:#0c6cbd; color:white; cursor:pointer; }
+    button:hover { background:#00416A; }
+    .log { margin-top:20px; font-size:14px; color:green; }
+  </style>
+</head>
+<body>
+  <h1>Traspaso de Almacenes</h1>
+  <div class="panel">
+    <label>Destino</label>
+    <select id="destino">
+      <option value="Almacen_Ruta_1">Ruta 1</option>
+      <option value="Almacen_Ruta_2">Ruta 2</option>
+    </select>
+
+    <label>Código del producto</label>
+    <input type="text" id="codigo" placeholder="Ej. 000000109291"/>
+
+    <label>Cantidad</label>
+    <input type="number" id="cantidad" placeholder="Ej. 10"/>
+
+    <button onclick="traspasar()">📤 Traspasar</button>
+    <div class="log" id="log"></div>
+  </div>
+</body>
+</html>
