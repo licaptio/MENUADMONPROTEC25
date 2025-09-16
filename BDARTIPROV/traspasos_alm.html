@@ -374,36 +374,64 @@ function abrirComprobante(folio, ruta, vendedor, items) {
     #listaResultados .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
     #listaResultados .item:hover{background:#f0f0f0;}
     .footer{text-align:center;margin-top:20px;font-size:14px;color:#555;}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 30px;
+}
+
+.buscador-group, .cantidad-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.buscador-group input {
+  flex: 1;
+}
+
+.cantidad-group input {
+  width: 80px;
+}
+
   </style>
 </head>
 <body>
   <div class="panel">
     <h2>⬇️ Traspaso a Vendedores</h2>
 
+<div class="form-grid">
+  <div>
     <label>Ruta destino:</label>
     <select id="ruta">
       <option value="">-- Seleccionar --</option>
       <option value="Almacen_Ruta_1">Ruta 1</option>
       <option value="Almacen_Ruta_2">Ruta 2</option>
     </select>
+  </div>
 
+  <div>
     <label>Vendedor:</label>
     <input type="text" id="vendedor" readonly />
+  </div>
 
+  <div>
     <label>Captura producto:</label>
-    <input type="text" id="buscador" placeholder="Escanea código de barras..." />
-    <button id="btnBuscarCodigo">✔️ Capturar</button>
-    <button id="btnBuscarNombre">🔍 Buscar por nombre</button>
+    <div class="buscador-group">
+      <input type="text" id="buscador" placeholder="Escanea código de barras..." />
+      <button id="btnBuscarCodigo">✔️ Capturar</button>
+      <button id="btnBuscarNombre">🔍 Buscar</button>
+    </div>
+  </div>
 
-    <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
-    <input type="hidden" id="codigoSel">
-    <input type="hidden" id="conceptoSel">
-    <input type="hidden" id="precioSel">
-
+  <div>
     <label>Cantidad:</label>
-    <input type="number" id="cantidad" value="1" min="1"/>
-
-    <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
+    <div class="cantidad-group">
+      <input type="number" id="cantidad" value="1" min="1"/>
+      <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
+    </div>
+  </div>
+</div>
 
     <table>
       <thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th><th></th></tr></thead>
