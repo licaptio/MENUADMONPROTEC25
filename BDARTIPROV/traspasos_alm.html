@@ -26,10 +26,6 @@
     let paginaActual = 0;
     const porPagina = 10;
 
-    // Telegram
-    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
-    const CHAT_ID   = "6617988297";
-
     // ---------------- IndexedDB ----------------
     function openDB() {
       return new Promise((resolve, reject) => {
@@ -81,12 +77,15 @@
       const codigo = document.getElementById("buscador").value.trim();
       if (!codigo) return;
 
+      console.log("🔎 Buscando código:", codigo);
       const productos = await getAllProductos();
       const encontrado = productos.find(p => p.codigoBarra === codigo);
 
       if (encontrado) {
+        console.log("✅ Producto encontrado:", encontrado);
         seleccionarProducto(encontrado);
       } else {
+        console.log("❌ Código no encontrado en catálogo");
         document.getElementById("preview").innerText = "❌ No encontrado";
         document.getElementById("codigoSel").value = "";
         document.getElementById("conceptoSel").value = "";
@@ -193,116 +192,25 @@
       renderTabla();
     }
 
-    // ---------------- FINALIZAR ----------------
-    async function finalizarTraspaso() {
-      const ruta = document.getElementById("ruta").value;
-      const vendedor = document.getElementById("vendedor").value;
-      if (carrito.length === 0 || !ruta) { alert("Faltan datos"); return; }
-
-      const folio = generarFolio(ruta);
-
-      await addDoc(collection(db, `almacenes/${ruta}/entradas`), { folio, vendedor, items: carrito });
-      await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), { folio, vendedor, items: carrito });
-
-      await enviarTelegram(folio, ruta, vendedor, carrito);
-      abrirComprobante(folio, ruta, vendedor, carrito);
-
-      carrito = [];
-      renderTabla();
-    }
-
-    function generarFolio(ruta) {
-      const hoy = new Date();
-      const dd = String(hoy.getDate()).padStart(2, "0");
-      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
-      const yy = String(hoy.getFullYear()).slice(-2);
-      const fecha = `${dd}${mm}${yy}`;
-      const consecutivo = String(Math.floor(Math.random() * 999)).padStart(3, "0");
-      return `${ruta}-${fecha}-${consecutivo}`;
-    }
-
-    function dividirEnBloques(array, size) {
-      const bloques = [];
-      for (let i = 0; i < array.length; i += size) {
-        bloques.push(array.slice(i, i + size));
-      }
-      return bloques;
-    }
-
-    async function enviarTelegram(folio, destino, vendedor, items) {
-      const total = items.length;
-      const bloques = dividirEnBloques(items, 20);
-
-      for (let i = 0; i < bloques.length; i++) {
-        let mensaje = `📦 *Nuevo Traspaso*\n`;
-        if (i === 0){ 
-          mensaje += `Folio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal de productos: ${total}\n`;
-        }
-        mensaje += `📋 *Bloque ${i+1}/${bloques.length}:*\n`;
-        bloques[i].forEach(it=>{
-          mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
-        });
-
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: CHAT_ID, text: mensaje, parse_mode: "Markdown" })
-        });
-      }
-    }
-
-    function abrirComprobante(folio, ruta, vendedor, items) {
-      const fecha = new Date().toLocaleDateString();
-      let tabla = "";
-      items.forEach(it=>{
-        tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
-      });
-
-      const win = window.open("", "_blank");
-      win.document.write(`
-        <html><head><title>Comprobante ${folio}</title>
-        <style>
-          body{font-family:Arial;margin:20px;}
-          h1{text-align:center;color:#003366;}
-          .folio{font-size:24px;font-weight:bold;color:#b30000;text-align:center;border:2px dashed #b30000;margin:10px;padding:5px;}
-          table{width:100%;border-collapse:collapse;margin-top:15px;}
-          th,td{border:1px solid #ccc;padding:6px;}
-          th{background:#eee;}
-          .firmas{margin-top:40px;display:flex;justify-content:space-between;}
-          .firma{width:45%;text-align:center;}
-          .linea{margin-top:60px;border-top:1px solid #000;}
-        </style></head><body>
-        <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
-        <h2 style="text-align:center">Comprobante de Traspaso</h2>
-        <div class="folio">Folio: ${folio}</div>
-        <p><b>Fecha:</b> ${fecha}<br><b>Destino:</b> ${ruta}<br><b>Vendedor:</b> ${vendedor}<br><b>Total:</b> ${items.length}</p>
-        <table><thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th></tr></thead><tbody>
-        ${tabla}
-        </tbody></table>
-        <div class="firmas">
-          <div class="firma"><div class="linea"></div>Entregó (Administrador)</div>
-          <div class="firma"><div class="linea"></div>Recibió (Vendedor)</div>
-        </div>
-        <button onclick="window.print()">🖨️ Imprimir</button>
-        </body></html>
-      `);
-      win.document.close();
-    }
-
     // ---------------- RUTA -> VENDEDOR ----------------
     async function cargarVendedor() {
       const ruta = document.getElementById("ruta").value;
+      console.log("🔎 Buscando vendedor para ruta:", ruta);
       if (!ruta) return;
-      const q = query(collection(db,"usuarios_ruta"),
-                      where("rutaId","==",ruta),
-                      where("activo","==",true));
+      const q = query(
+        collection(db,"usuarios_ruta"),
+        where("rutaId","==",ruta),
+        where("activo","==",true)
+      );
       const snap = await getDocs(q);
       if (!snap.empty){
         snap.forEach(doc=>{
           const data = doc.data();
+          console.log("✅ Vendedor encontrado:", data);
           document.getElementById("vendedor").value = data.nombre;
         });
       } else {
+        console.log("⚠️ No se encontró vendedor activo para esa ruta");
         document.getElementById("vendedor").value = "No asignado";
       }
     }
@@ -323,6 +231,12 @@
       document.getElementById("btnAnterior").addEventListener("click", anteriorPagina);
       document.getElementById("btnSiguiente").addEventListener("click", siguientePagina);
 
+      // Enter en buscador de código
+      document.getElementById("buscador").addEventListener("keypress",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); buscarPorCodigo(); }
+      });
+
+      // Enter en cantidad para agregar item
       document.getElementById("cantidad").addEventListener("keypress",(e)=>{
         if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
       });
@@ -331,7 +245,6 @@
     // 🔹 Exponer funciones
     window.agregarItem = agregarItem;
     window.eliminarItem = eliminarItem;
-    window.finalizarTraspaso = finalizarTraspaso;
   </script>
 
   <style>
@@ -387,8 +300,6 @@
       <thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th><th></th></tr></thead>
       <tbody id="tabla"></tbody>
     </table>
-
-    <button class="btn" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
   </div>
 
   <!-- 🔹 Modal resultados -->
