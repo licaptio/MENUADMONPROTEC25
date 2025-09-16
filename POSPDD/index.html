@@ -537,12 +537,7 @@ async function cargarCatalogo() {
     console.log("[catálogo] usando IndexedDB:", catalogo.length);
   }
 }
-
-    lista.forEach(prod => {
-      catalogo.push(prod);
-      if (prod.codigo) codeIndex.set(prod.codigo.trim(), prod.id);
-    });
-
+ 
   } catch (e) {
     console.error("Error cargar catálogo:", e);
   }
@@ -577,15 +572,6 @@ async function cargarClientes() {
     console.log("[clientes] usando IndexedDB:", clientes.length);
   }
 }
-
-
-    lista.forEach(cli => {
-      clientes.push(cli);
-      const opt = document.createElement("option");
-      opt.value = cli.id;
-      opt.textContent = cli.alias ? `${cli.nombre} (${cli.alias})` : cli.nombre;
-      sel.appendChild(opt);
-    });
 
   } catch (e) {
     console.error("Error cargar clientes:", e);
