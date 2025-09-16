@@ -464,6 +464,18 @@ const _porPag = 10;
     getFirestore, collection, addDoc, setDoc, serverTimestamp, runTransaction, doc,
     getDocs, getDoc, query, where, orderBy, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // 🔹 Configuración de Firebase (debe ir aquí, al inicio del script)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+    authDomain: "inventariopv-643f1.firebaseapp.com",
+    projectId: "inventariopv-643f1",
+    storageBucket: "inventariopv-643f1.appspot.com",
+    messagingSenderId: "96242533231",
+    appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
   
 // === IndexedDB único ===
 function openDB() {
@@ -538,78 +550,6 @@ async function cargarCatalogo() {
   }
 }
 
-async function cargarClientes() {
-  async function guardarVentaOffline(venta) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('ventas_pendientes', 'readwrite');
-    tx.objectStore('ventas_pendientes').put(venta);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror    = () => reject(tx.error);
-  });
-}
-
-async function getVentasPendientes() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction('ventas_pendientes', 'readonly');
-    const req = tx.objectStore('ventas_pendientes').getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror   = () => reject(req.error);
-  });
-}
-
-async function borrarVentaPendiente(folio) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('ventas_pendientes', 'readwrite');
-    tx.objectStore('ventas_pendientes').delete(folio);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror    = () => reject(tx.error);
-  });
-}
-
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
-    authDomain: "inventariopv-643f1.firebaseapp.com",
-    projectId: "inventariopv-643f1",
-    storageBucket: "inventariopv-643f1.appspot.com",
-    messagingSenderId: "96242533231",
-    appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-
-  const $ = (s)=>document.querySelector(s);
-  const elCliente=$('#cliente'), elBuscador=$('#buscador'), elCant=$('#cantidadInput');
-  const elResultados=$('#resultados'), elTbody=$('#tbody');
-  const lblSubtotal=$('#lblSubtotal'), lblTotal=$('#lblTotal'), lblImp=$('#lblImpuestos');
-  const money=(n)=>'$'+(Number(n)||0).toFixed(2);
-  const pad2=n=>String(n).padStart(2,'0');
-  const toYYYYMMDD=(date)=>{const d=new Date(date); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;};
-
-  async function obtenerUbicacion(){
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve(null);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        });
-      },
-      (err) => {
-        console.warn("No se pudo obtener ubicación:", err);
-        resolve(null);
-      },
-      { enableHighAccuracy: true, timeout: 5000 }
-    );
-  });
-}
  
   let carrito=[], prodSeleccionado=null, clienteSeleccionado=null;
   let catalogo=[], clientes=[]; const codeIndex=new Map();
@@ -1240,6 +1180,36 @@ if (action === 'print') cerrarReimp(); // opcional
     if(notas && notas.trim()) notasExtra.push(`Notas: ${notas.trim()}`);
     document.getElementById('tNotas').textContent=notasExtra.join(' · ');
   }
+
+async function guardarVentaOffline(venta) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventas_pendientes', 'readwrite');
+    tx.objectStore('ventas_pendientes').put(venta);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function getVentasPendientes() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction('ventas_pendientes', 'readonly');
+    const req = tx.objectStore('ventas_pendientes').getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function borrarVentaPendiente(folio) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('ventas_pendientes', 'readwrite');
+    tx.objectStore('ventas_pendientes').delete(folio);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
 
 async function confirmarCobro(){
   try{
