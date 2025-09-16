@@ -47,43 +47,60 @@
       return bloques;
     }
 
-    // ---------------- BUSCADOR ----------------
-    async function buscarProducto(autoSelect = false){
-      const input = document.getElementById("buscador").value.trim().toLowerCase();
-      const lista = document.getElementById("listaResultados");
-      lista.innerHTML = "";
-      if(input.length < 2) return;
+// ---------------- BUSCADOR ----------------
+async function buscarProducto(autoSelect = false){
+  const input = document.getElementById("buscador").value.trim().toLowerCase();
+  const lista = document.getElementById("listaResultados");
+  lista.innerHTML = "";
+  if(input.length < 2) return;
 
-      let resultados = [];
+  let resultados = [];
 
-      let q = query(collection(db,"productos"),
-                    where("activo","==",true),
-                    limit(50));   // 🔹 trae hasta 50 productos
-      let snap = await getDocs(q);
-      snap.forEach(docu=>{
-        const data = docu.data();
-        if(data.concepto && data.concepto.toLowerCase().includes(input)){
-          resultados.push({id:docu.id, ...data});
-        }
-      });
+  if(/^\d+$/.test(input)){  
+    // 🔹 Código de barras → búsqueda exacta
+    let q = query(collection(db,"productos"),
+                  where("activo","==",true),
+                  where("codigoBarra","==",input));
+    let snap = await getDocs(q);
+    snap.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
 
-      if(resultados.length === 0){
-        lista.innerHTML = "<p>No se encontraron coincidencias</p>";
-      } else {
-        resultados.forEach(data=>{
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerText = `${data.concepto} — $${data.precioPublico}`;
-          item.onclick = ()=>{
-            seleccionarProducto(data);
-            cerrarModal();
-          };
-          lista.appendChild(item);
-        });
-      }
-
-      document.getElementById("modalResultados").style.display = "block";
+    if(resultados.length === 1){
+      // ✅ Auto-selección directa si hay solo 1
+      seleccionarProducto(resultados[0]);
+      return;
     }
+
+  } else {
+    // 🔹 Texto → búsqueda parcial
+    let q = query(collection(db,"productos"),
+                  where("activo","==",true),
+                  limit(50));
+    let snap = await getDocs(q);
+    snap.forEach(docu=>{
+      const data = docu.data();
+      if(data.concepto && data.concepto.toLowerCase().includes(input)){
+        resultados.push({id:docu.id, ...data});
+      }
+    });
+  }
+
+  // 🔹 Si hay más de una coincidencia → abre modal
+  if(resultados.length === 0){
+    lista.innerHTML = "<p>No se encontraron coincidencias</p>";
+  } else {
+    resultados.forEach(data=>{
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerText = `${data.concepto} — $${data.precioPublico}`;
+      item.onclick = ()=>{
+        seleccionarProducto(data);
+        cerrarModal();
+      };
+      lista.appendChild(item);
+    });
+    document.getElementById("modalResultados").style.display = "block";
+  }
+}
 
     // ---------------- FUNCION seleccionarProducto ----------------
     function seleccionarProducto(data){
