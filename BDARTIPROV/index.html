@@ -15,59 +15,60 @@
     header {
       background: #003366;
       color: white;
-      padding: 25px 10px;
+      padding: 15px 8px;
       text-align: center;
     }
     header h1 {
       margin: 0;
-      font-size: 26px;
-      letter-spacing: 1px;
+      font-size: 20px;
+      letter-spacing: 0.5px;
     }
     .contenedor {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 25px;
-      margin: 40px auto;
-      max-width: 1000px;
+      gap: 15px;
+      margin: 20px auto;
+      max-width: 900px;
     }
     .card {
       background: white;
-      border-radius: 14px;
-      padding: 30px 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 260px;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 180px;
+      text-align: center;
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
       text-decoration: none;
       color: inherit;
     }
     .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
     .icono {
-      font-size: 55px;
-      margin-bottom: 15px;
+      font-size: 32px;
+      margin-bottom: 8px;
     }
     .titulo {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       color: #003366;
     }
     .descripcion {
-      font-size: 14px;
+      font-size: 13px;
       color: #555;
-      line-height: 1.4em;
+      line-height: 1.3em;
     }
     footer {
-      margin-top: 60px;
+      margin-top: 25px;
       background: #222;
       color: #ccc;
       text-align: center;
-      padding: 15px;
-      font-size: 14px;
+      padding: 10px;
+      font-size: 13px;
     }
     footer span {
       color: #4caf50;
@@ -77,68 +78,67 @@
 </head>
 <body>
   <header>
-    <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
+    <h1>📦 PROVEEDORA DE DULCES</h1>
   </header>
 
   <div class="contenedor">
     <a href="buscacatacam.html" class="card">
       <div class="icono">📷</div>
       <div class="titulo">Buscador Cámara</div>
-      <div class="descripcion">Escanea códigos de barras usando la cámara del celular.</div>
+      <div class="descripcion">Escanea códigos de barras.</div>
     </a>
 
     <a href="ARTECNOPRO.html" class="card">
       <div class="icono">⚙️</div>
-      <div class="titulo">Actualizar BD TecnoPro</div>
-      <div class="descripcion">Carga y sincroniza la base de datos de TecnoPro.</div>
+      <div class="titulo">Actualizar BD</div>
+      <div class="descripcion">Carga y sincroniza TecnoPro.</div>
     </a>
 
     <a href="consulta.html" class="card">
       <div class="icono">📑</div>
-      <div class="titulo">Consulta BD Proveedora</div>
-      <div class="descripcion">Busca y revisa artículos de toda la base de datos.</div>
+      <div class="titulo">Consulta BD</div>
+      <div class="descripcion">Busca artículos de la base.</div>
     </a>
 
     <a href="producto.html" class="card">
       <div class="icono">🔍</div>
       <div class="titulo">Detalle Producto</div>
-      <div class="descripcion">Consulta la ficha detallada de un producto.</div>
+      <div class="descripcion">Ficha de producto.</div>
     </a>
 
     <a href="admin_usuarios.html" class="card">
-      <div class="icono">📑</div>
-      <div class="titulo">Administracion Usuarios POS</div>
-      <div class="descripcion">Administracion Usuarios POS</div>
+      <div class="icono">👥</div>
+      <div class="titulo">Usuarios POS</div>
+      <div class="descripcion">Administrar usuarios.</div>
     </a>
 
     <a href="traspasos_alm.html" class="card">
-      <div class="icono">⬇️</div>
-      <div class="titulo">Traspaso entre Almacenes</div>
-      <div class="descripcion">Traspaso a Vendedores</div>
+      <div class="icono">🔄</div>
+      <div class="titulo">Traspasos</div>
+      <div class="descripcion">Mover inventario a rutas.</div>
     </a>
 
     <a href="DescargaCata.html" class="card">
       <div class="icono">⬇️</div>
-      <div class="titulo">Descargar Catálogo</div>
-      <div class="descripcion">Exporta la lista completa de productos a Excel.</div>
+      <div class="titulo">Catálogo</div>
+      <div class="descripcion">Exportar productos a Excel.</div>
     </a>
 
     <a href="editarclientes.html" class="card">
-      <div class="icono">⬇️</div>
-      <div class="titulo">Ver y Editar Clientes</div>
-      <div class="descripcion">Ver y Editar Clientes</div>
+      <div class="icono">📝</div>
+      <div class="titulo">Editar Clientes</div>
+      <div class="descripcion">Ver y editar clientes.</div>
     </a>
 
     <a href="clientes_admin.html" class="card">
-      <div class="icono">⬇️</div>
-      <div class="titulo">Administrar Clientes Catálogo</div>
-      <div class="descripcion">Administracion de Clientes POS</div>
+      <div class="icono">📋</div>
+      <div class="titulo">Admin Clientes</div>
+      <div class="descripcion">Administrar catálogo POS.</div>
     </a>
-    
   </div>
   
   <footer>
-    Powered with <span>PROVSOFT Technology</span>
+    Powered with <span>PROVSOFT</span>
   </footer>
 </body>
 </html>
