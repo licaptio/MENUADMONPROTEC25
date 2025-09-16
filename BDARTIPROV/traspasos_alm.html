@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Traspaso entre Almacenes</title>
   <script type="module">
-    // ---------------- FIREBASE CONFIG ----------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs, addDoc } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -21,16 +20,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ---------------- VARIABLES ----------------
     let carrito = [];
-
-    // Telegram
     const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
     const CHAT_ID   = "6617988297";
 
-    // ===============================
-    // 🗄️ IndexedDB Helpers
-    // ===============================
+    // ---------- IndexedDB ----------
     function openDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open("provsoftDB", 1);
@@ -82,44 +76,36 @@
       });
     }
 
-    // ===============================
-    // 🔄 Sincronización catálogo
-    // ===============================
+    // ---------- Sync catálogo ----------
     async function syncProductos() {
       try {
         const lastSync = await getMeta("lastSync");
         const ahora = Date.now();
         const unDia = 24 * 60 * 60 * 1000;
-
         if (lastSync && (ahora - lastSync) < unDia) {
           console.log("📦 Usando catálogo local");
           return;
         }
-
         console.log("⬇️ Descargando catálogo Firestore...");
         const q = query(collection(db, "productos"), where("activo", "==", true));
         const snap = await getDocs(q);
-
         const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         await saveProductos(lista);
         await saveMeta("lastSync", ahora);
-
         console.log("✅ Catálogo sincronizado con IndexedDB");
       } catch (err) {
         console.warn("⚠️ Error al sincronizar:", err.message);
       }
     }
 
-    // ===============================
-    // 🔎 Buscar en local
-    // ===============================
+    // ---------- Buscar ----------
     async function buscarLocal(termino) {
       const productos = await getAllProductos();
       termino = termino.toLowerCase();
       return productos.filter(p =>
         (p.codigoBarra && p.codigoBarra.includes(termino)) ||
         (p.concepto && p.concepto.toLowerCase().includes(termino))
-      ).slice(0, 10); // max 10 resultados
+      ).slice(0, 10);
     }
 
     async function buscarProducto() {
@@ -131,7 +117,6 @@
       let resultados = await buscarLocal(input);
 
       if (resultados.length === 1 && /^\d+$/.test(input)) {
-        // 🔹 código de barras con coincidencia única
         seleccionarProducto(resultados[0]);
         return;
       }
@@ -153,7 +138,6 @@
       document.getElementById("modalResultados").style.display = "block";
     }
 
-    // ---------------- FUNCION seleccionarProducto ----------------
     function seleccionarProducto(data) {
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
@@ -162,7 +146,7 @@
       document.getElementById("cantidad").focus();
     }
 
-    // ---------------- CARRITO ----------------
+    // ---------- Carrito ----------
     function agregarItem() {
       const codigo = document.getElementById("codigoSel").value;
       const concepto = document.getElementById("conceptoSel").value;
@@ -175,7 +159,6 @@
       carrito.push({ codigo, concepto, precio, cantidad });
       renderTabla();
 
-      // limpiar
       document.getElementById("buscador").value = "";
       document.getElementById("cantidad").value = "1"; 
       document.getElementById("preview").innerText = "";
@@ -206,7 +189,7 @@
       renderTabla();
     }
 
-    // ---------------- FINALIZAR ----------------
+    // ---------- Finalizar ----------
     async function finalizarTraspaso() {
       const ruta = document.getElementById("ruta").value;
       const vendedor = document.getElementById("vendedor").value;
@@ -218,7 +201,6 @@
       await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), { folio, vendedor, items: carrito });
 
       await enviarTelegram(folio, ruta, vendedor, carrito);
-
       abrirComprobante(folio, ruta, vendedor, carrito);
 
       carrito = [];
@@ -226,7 +208,6 @@
       document.getElementById("buscador").focus();
     }
 
-    // ---------------- UTILS ----------------
     function generarFolio(ruta) {
       const hoy = new Date();
       const dd = String(hoy.getDate()).padStart(2, "0");
@@ -248,7 +229,6 @@
     async function enviarTelegram(folio, destino, vendedor, items) {
       const total = items.length;
       const bloques = dividirEnBloques(items, 20);
-
       for (let i = 0; i < bloques.length; i++) {
         let mensaje = `📦 *Nuevo Traspaso*\n`;
         if (i === 0){ 
@@ -258,7 +238,6 @@
         bloques[i].forEach(it=>{
           mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
         });
-
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -277,7 +256,6 @@
       items.forEach(it=>{
         tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
       });
-
       const win = window.open("", "_blank");
       win.document.write(`
         <html><head><title>Comprobante ${folio}</title>
@@ -309,7 +287,6 @@
       win.document.close();
     }
 
-    // ---------------- RUTA -> VENDEDOR ----------------
     async function cargarVendedor() {
       const ruta = document.getElementById("ruta").value;
       if (!ruta) return;
@@ -327,14 +304,12 @@
       }
     }
 
-    // ---------------- MODAL ----------------
     function cerrarModal(){
       document.getElementById("modalResultados").style.display = "none";
     }
 
-    // ---------------- INIT ----------------
     document.addEventListener("DOMContentLoaded", async ()=>{
-      await syncProductos(); // sincroniza al abrir
+      await syncProductos();
       document.getElementById("buscador").focus();
       document.getElementById("ruta").addEventListener("change", cargarVendedor);
       document.getElementById("buscador").addEventListener("input", buscarProducto);
@@ -348,50 +323,88 @@
       };
     });
 
-    // 🔹 Exponer funciones al global
+    // Exponer
     window.agregarItem = agregarItem;
     window.eliminarItem = eliminarItem;
     window.finalizarTraspaso = finalizarTraspaso;
-
   </script>
 
   <style>
     body{font-family:Arial,sans-serif;margin:20px;background:#f5f5f5;}
-    .panel{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
-    label{display:block;margin-top:10px;font-weight:bold;}
-    input,select{width:100%;padding:8px;margin:4px 0 10px;border:1px solid #ccc;border-radius:6px;}
-    table{width:100%;border-collapse:collapse;margin-top:10px;}
+    .panel{max-width:900px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
+    h2{margin-top:0;}
+
+    /* 🔹 Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: end;
+    }
+    .form-grid label {
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .acciones {
+      grid-column: span 2;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;}
+    table{width:100%;border-collapse:collapse;margin-top:15px;}
     th,td{border:1px solid #ccc;padding:6px;text-align:left;}
     th{background:#eee;}
-    button{margin-top:10px;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
+    button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
     .btn{background:#007bff;color:white;}
     .btn-danger{background:#dc3545;color:white;}
 
-    /* 🔹 Modal */
+    /* Modal */
     .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);}
     .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:80%;max-width:600px;max-height:70%;overflow-y:auto;}
     .close{color:#aaa;float:right;font-size:28px;font-weight:bold;cursor:pointer;}
     .close:hover{color:#000;}
     #listaResultados .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
     #listaResultados .item:hover{background:#f0f0f0;}
+
+    footer{text-align:center;margin-top:20px;font-size:12px;color:#555;}
   </style>
 </head>
 <body>
   <div class="panel">
     <h2>⬇️ Traspaso a Vendedores</h2>
 
-    <label>Ruta destino:</label>
-    <select id="ruta">
-      <option value="">-- Seleccionar --</option>
-      <option value="Almacen_Ruta_1">Ruta 1</option>
-      <option value="Almacen_Ruta_2">Ruta 2</option>
-    </select>
+    <div class="form-grid">
+      <div>
+        <label>Ruta destino:</label>
+        <select id="ruta">
+          <option value="">-- Seleccionar --</option>
+          <option value="Almacen_Ruta_1">Ruta 1</option>
+          <option value="Almacen_Ruta_2">Ruta 2</option>
+        </select>
+      </div>
 
-    <label>Vendedor:</label>
-    <input type="text" id="vendedor" readonly />
+      <div>
+        <label>Vendedor:</label>
+        <input type="text" id="vendedor" readonly />
+      </div>
 
-    <label>Buscar producto:</label>
-    <input type="text" id="buscador" placeholder="Escanea código o escribe nombre..." />
+      <div>
+        <label>Buscar producto:</label>
+        <input type="text" id="buscador" placeholder="Escanea código o escribe nombre..." />
+      </div>
+
+      <div>
+        <label>Cantidad:</label>
+        <input type="number" id="cantidad" value="1" min="1"/>
+      </div>
+
+      <div class="acciones">
+        <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
+      </div>
+    </div>
 
     <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
 
@@ -399,20 +412,15 @@
     <input type="hidden" id="conceptoSel">
     <input type="hidden" id="precioSel">
 
-    <label>Cantidad:</label>
-    <input type="number" id="cantidad" value="1" min="1"/>
-
-    <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
-
     <table>
       <thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th><th></th></tr></thead>
       <tbody id="tabla"></tbody>
     </table>
 
-    <button class="btn" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
+    <button class="btn" style="margin-top:15px;" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
   </div>
 
-  <!-- 🔹 Modal resultados -->
+  <!-- Modal -->
   <div id="modalResultados" class="modal">
     <div class="modal-content">
       <span id="cerrarModal" class="close">&times;</span>
@@ -420,5 +428,7 @@
       <div id="listaResultados"></div>
     </div>
   </div>
+
+  <footer>Powered by <b>PROVSOFT</b></footer>
 </body>
 </html>
