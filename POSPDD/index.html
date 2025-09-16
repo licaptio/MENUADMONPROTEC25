@@ -537,11 +537,6 @@ async function cargarCatalogo() {
     console.log("[catálogo] usando IndexedDB:", catalogo.length);
   }
 }
- 
-  } catch (e) {
-    console.error("Error cargar catálogo:", e);
-  }
-}
 
 async function cargarClientes() {
   clientes = [];
@@ -570,11 +565,6 @@ async function cargarClientes() {
     const cached = await getFromStore("cache_clientes");
     clientes = cached;
     console.log("[clientes] usando IndexedDB:", clientes.length);
-  }
-}
-
-  } catch (e) {
-    console.error("Error cargar clientes:", e);
   }
 }
 
