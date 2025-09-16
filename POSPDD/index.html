@@ -539,35 +539,6 @@ async function cargarCatalogo() {
 }
 
 async function cargarClientes() {
-  clientes = [];
-  try {
-    const snap = await getDocs(collection(db, "clientes"));
-    let lista = [];
-    snap.forEach(d => {
-      const c = d.data();
-      lista.push({
-        id: d.id,
-        nombre: c.nombre || "",
-        alias: c.alias || "",
-        telefono: c.telefono || "",
-        ciudad: c.ciudad || "",
-        rfc: c.rfc || "",
-        ocupa_factura: !!c.ocupa_factura,
-        uso_cfdi: c.uso_cfdi || "",
-        catalogo: c.catalogo || "PUBLICO"
-      });
-    });
-    await saveToStore("cache_clientes", lista);
-    clientes = lista;
-    console.log("[clientes] cargados:", lista.length);
-  } catch (e) {
-    console.error("Error cargar clientes:", e);
-    const cached = await getFromStore("cache_clientes");
-    clientes = cached;
-    console.log("[clientes] usando IndexedDB:", clientes.length);
-  }
-}
-
   async function guardarVentaOffline(venta) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
