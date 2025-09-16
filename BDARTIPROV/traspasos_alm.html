@@ -47,9 +47,10 @@
       return bloques;
     }
 
-async function buscarProducto(autoSelect = false){
+// ---------------- BUSCADOR ----------------
+async function buscarProducto(){
   const input = document.getElementById("buscador").value.trim().toLowerCase();
-  const lista = document.getElementById("listaResultados"); // ✅ Modal
+  const lista = document.getElementById("listaResultados");
   lista.innerHTML = "";
   if(input.length < 2) return;
 
@@ -64,11 +65,10 @@ async function buscarProducto(autoSelect = false){
     snap.forEach(docu=>resultados.push({id:docu.id, ...docu.data()}));
 
     if(resultados.length === 1){
-      // ✅ Auto-selección directa si hay solo 1
+      // ✅ Auto-selección directa
       seleccionarProducto(resultados[0]);
       return;
     }
-
   } else {
     // 🔹 Texto → búsqueda parcial
     let q = query(collection(db,"productos"),
@@ -98,7 +98,7 @@ async function buscarProducto(autoSelect = false){
       };
       lista.appendChild(item);
     });
-    document.getElementById("modalResultados").style.display = "block"; // ✅ abrir modal
+    document.getElementById("modalResultados").style.display = "block";
   }
 }
 
@@ -262,21 +262,24 @@ async function buscarProducto(autoSelect = false){
       document.getElementById("modalResultados").style.display = "none";
     }
 
-    document.addEventListener("DOMContentLoaded", ()=>{
-      document.getElementById("buscador").focus();
-      document.getElementById("ruta").addEventListener("change", cargarVendedor);
-      document.getElementById("buscador").addEventListener("keypress",(e)=>{
-        if(e.key==="Enter"){ e.preventDefault(); buscarProducto(true); }
-      });
-      document.getElementById("cantidad").addEventListener("keypress",(e)=>{
-        if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
-      });
-      document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
-      window.onclick = function(event){
-        const modal = document.getElementById("modalResultados");
-        if(event.target === modal) cerrarModal();
-      };
-    });
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("buscador").focus();
+  document.getElementById("ruta").addEventListener("change", cargarVendedor);
+
+  // 🔹 Buscar al escribir, no solo con Enter
+  document.getElementById("buscador").addEventListener("input", buscarProducto);
+
+  document.getElementById("cantidad").addEventListener("keypress",(e)=>{
+    if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
+  });
+
+  document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
+  window.onclick = function(event){
+    const modal = document.getElementById("modalResultados");
+    if(event.target === modal) cerrarModal();
+  };
+});
+
   </script>
 
   <style>
