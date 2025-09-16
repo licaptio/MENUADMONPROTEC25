@@ -146,13 +146,16 @@ const CHAT_ID   = "6617988297";
     }
 
     // ---------------- PRODUCTO ----------------
-    function seleccionarProducto(data) {
-      document.getElementById("codigoSel").value = data.codigoBarra;
-      document.getElementById("conceptoSel").value = data.concepto;
-      document.getElementById("precioSel").value = data.precioPublico;
-      document.getElementById("preview").innerText = `${data.concepto} — $${data.precioPublico}`;
-      document.getElementById("cantidad").focus();
-    }
+function seleccionarProducto(data) {
+  document.getElementById("codigoSel").value = data.codigoBarra;
+  document.getElementById("conceptoSel").value = data.concepto;
+  document.getElementById("precioSel").value = data.precioPublico;
+  document.getElementById("preview").innerText = `${data.concepto} — $${data.precioPublico}`;
+
+  const cantidadInput = document.getElementById("cantidad");
+  cantidadInput.focus();
+  cantidadInput.select();   // 🔹 Selecciona el "1" automáticamente
+}
 
     function agregarItem() {
       const codigo = document.getElementById("codigoSel").value;
