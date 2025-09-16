@@ -143,7 +143,33 @@ document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
 
 
     // ---------------- PRODUCTO ----------------
-function seleccionarProducto(data) {
+// ============================
+// 🔹 [BUSCAR POR CÓDIGO DE BARRAS]
+// ============================
+async function buscarPorCodigo() {
+  const codigo = document.getElementById("buscador").value.trim();
+  if (!codigo) return;
+
+  console.log("🔎 Buscando código:", codigo);
+  const productos = await getAllProductos();
+  const encontrado = productos.find(p => p.codigoBarra === codigo);
+
+  if (encontrado) {
+    console.log("✅ Producto encontrado:", encontrado);
+    seleccionarProducto(encontrado);  // 🔹 Reutiliza la misma función
+  } else {
+    console.log("❌ Código no encontrado en catálogo");
+    document.getElementById("preview").innerText = "❌ No encontrado";
+    document.getElementById("codigoSel").value = "";
+    document.getElementById("conceptoSel").value = "";
+    document.getElementById("precioSel").value = "";
+  }
+
+  document.getElementById("buscador").value = "";
+}
+
+    
+  function seleccionarProducto(data) {
   document.getElementById("codigoSel").value = data.codigoBarra;
   document.getElementById("conceptoSel").value = data.concepto;
   document.getElementById("precioSel").value = data.precioPublico;
