@@ -8,6 +8,7 @@
     import { getFirestore, collection, query, where, getDocs, addDoc } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // ---------------- FIREBASE ----------------
     const firebaseConfig = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -16,15 +17,16 @@
       messagingSenderId: "96242533231",
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // ---------------- VARIABLES ----------------
     let carrito = [];
-    const BOT_TOKEN = "8272633411:AAE6uKTpEtPW--IPk6ufix_CDGJ0dH6ru4Q";
-    const CHAT_ID   = "6617988297";
+    let resultadosBusqueda = [];
+    let paginaActual = 0;
+    const porPagina = 10;
 
-    // ---------- IndexedDB ----------
+    // ---------------- INDEXEDDB ----------------
     function openDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open("provsoftDB", 1);
@@ -76,68 +78,105 @@
       });
     }
 
-    // ---------- Sync catálogo ----------
+    // ---------------- SYNC ----------------
     async function syncProductos() {
       try {
         const lastSync = await getMeta("lastSync");
         const ahora = Date.now();
         const unDia = 24 * 60 * 60 * 1000;
+
         if (lastSync && (ahora - lastSync) < unDia) {
           console.log("📦 Usando catálogo local");
           return;
         }
+
         console.log("⬇️ Descargando catálogo Firestore...");
         const q = query(collection(db, "productos"), where("activo", "==", true));
         const snap = await getDocs(q);
+
         const lista = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         await saveProductos(lista);
         await saveMeta("lastSync", ahora);
+
         console.log("✅ Catálogo sincronizado con IndexedDB");
       } catch (err) {
         console.warn("⚠️ Error al sincronizar:", err.message);
       }
     }
 
-    // ---------- Buscar ----------
-    async function buscarLocal(termino) {
+    // ---------------- BUSCAR ----------------
+    async function buscarPorCodigo() {
+      const codigo = document.getElementById("buscadorCodigo").value.trim();
+      if (!codigo) return;
+
       const productos = await getAllProductos();
-      termino = termino.toLowerCase();
-      return productos.filter(p =>
-        (p.codigoBarra && p.codigoBarra.includes(termino)) ||
-        (p.concepto && p.concepto.toLowerCase().includes(termino))
-      ).slice(0, 10);
+      const encontrado = productos.find(p => p.codigoBarra == codigo);
+
+      if (encontrado) {
+        seleccionarProducto(encontrado);
+      } else {
+        alert("⚠️ Producto no encontrado, prueba con la búsqueda por nombre 🔍");
+      }
     }
 
-    async function buscarProducto() {
-      const input = document.getElementById("buscador").value.trim().toLowerCase();
-      const lista = document.getElementById("listaResultados");
-      lista.innerHTML = "";
-      if (input.length < 2) return;
-
-      let resultados = await buscarLocal(input);
-
-      if (resultados.length === 1 && /^\d+$/.test(input)) {
-        seleccionarProducto(resultados[0]);
+    async function abrirBusquedaNombre() {
+      const termino = document.getElementById("buscadorCodigo").value.trim().toLowerCase();
+      if (termino.length < 2) {
+        alert("Escribe al menos 2 caracteres para buscar por nombre");
         return;
       }
 
-      if (resultados.length === 0) {
-        lista.innerHTML = "<p>No se encontraron coincidencias</p>";
-      } else {
-        resultados.forEach(data => {
-          const item = document.createElement("div");
-          item.className = "item";
-          item.innerText = `${data.concepto} — $${data.precioPublico}`;
-          item.onclick = () => {
-            seleccionarProducto(data);
-            cerrarModal();
-          };
-          lista.appendChild(item);
-        });
-      }
+      const productos = await getAllProductos();
+      resultadosBusqueda = productos.filter(p =>
+        p.concepto && p.concepto.toLowerCase().includes(termino)
+      );
+      paginaActual = 0;
+      mostrarResultadosPaginados();
       document.getElementById("modalResultados").style.display = "block";
     }
 
+    function mostrarResultadosPaginados() {
+      const lista = document.getElementById("listaResultados");
+      lista.innerHTML = "";
+
+      const inicio = paginaActual * porPagina;
+      const fin = inicio + porPagina;
+      const pagina = resultadosBusqueda.slice(inicio, fin);
+
+      pagina.forEach(data => {
+        const item = document.createElement("div");
+        item.className = "item";
+        item.innerText = `${data.concepto} — $${data.precioPublico}`;
+        item.onclick = () => {
+          seleccionarProducto(data);
+          cerrarModal();
+        };
+        lista.appendChild(item);
+      });
+
+      document.getElementById("paginacion").innerHTML = `
+        <button ${paginaActual === 0 ? "disabled" : ""} onclick="anteriorPagina()">⬅️ Anterior</button>
+        Página ${paginaActual+1} de ${Math.ceil(resultadosBusqueda.length / porPagina)}
+        <button ${(fin >= resultadosBusqueda.length) ? "disabled" : ""} onclick="siguientePagina()">Siguiente ➡️</button>
+      `;
+    }
+
+    // ---------------- PAGINACIÓN ----------------
+    window.anteriorPagina = function() {
+      if (paginaActual > 0) {
+        paginaActual--;
+        mostrarResultadosPaginados();
+      }
+    };
+
+    window.siguientePagina = function() {
+      if ((paginaActual+1) * porPagina < resultadosBusqueda.length) {
+        paginaActual++;
+        mostrarResultadosPaginados();
+      }
+    };
+
+    // ---------------- SELECCION ----------------
     function seleccionarProducto(data) {
       document.getElementById("codigoSel").value = data.codigoBarra;
       document.getElementById("conceptoSel").value = data.concepto;
@@ -146,7 +185,7 @@
       document.getElementById("cantidad").focus();
     }
 
-    // ---------- Carrito ----------
+    // ---------------- CARRITO ----------------
     function agregarItem() {
       const codigo = document.getElementById("codigoSel").value;
       const concepto = document.getElementById("conceptoSel").value;
@@ -159,13 +198,13 @@
       carrito.push({ codigo, concepto, precio, cantidad });
       renderTabla();
 
-      document.getElementById("buscador").value = "";
+      document.getElementById("buscadorCodigo").value = "";
       document.getElementById("cantidad").value = "1"; 
       document.getElementById("preview").innerText = "";
       document.getElementById("codigoSel").value = "";
       document.getElementById("conceptoSel").value = "";
       document.getElementById("precioSel").value = "";
-      document.getElementById("buscador").focus();
+      document.getElementById("buscadorCodigo").focus();
     }
 
     function renderTabla() {
@@ -184,226 +223,67 @@
       });
     }
 
-    function eliminarItem(index) {
+    window.eliminarItem = function(index) {
       carrito.splice(index, 1);
       renderTabla();
-    }
+    };
 
-    // ---------- Finalizar ----------
-    async function finalizarTraspaso() {
-      const ruta = document.getElementById("ruta").value;
-      const vendedor = document.getElementById("vendedor").value;
-      if (carrito.length === 0 || !ruta) { alert("Faltan datos"); return; }
-
-      const folio = generarFolio(ruta);
-
-      await addDoc(collection(db, `almacenes/${ruta}/entradas`), { folio, vendedor, items: carrito });
-      await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), { folio, vendedor, items: carrito });
-
-      await enviarTelegram(folio, ruta, vendedor, carrito);
-      abrirComprobante(folio, ruta, vendedor, carrito);
-
-      carrito = [];
-      renderTabla();
-      document.getElementById("buscador").focus();
-    }
-
-    function generarFolio(ruta) {
-      const hoy = new Date();
-      const dd = String(hoy.getDate()).padStart(2, "0");
-      const mm = String(hoy.getMonth() + 1).padStart(2, "0");
-      const yy = String(hoy.getFullYear()).slice(-2);
-      const fecha = `${dd}${mm}${yy}`;
-      const consecutivo = String(Math.floor(Math.random() * 999)).padStart(3, "0"); 
-      return `${ruta}-${fecha}-${consecutivo}`;
-    }
-
-    function dividirEnBloques(array, size) {
-      const bloques = [];
-      for (let i = 0; i < array.length; i += size) {
-        bloques.push(array.slice(i, i + size));
-      }
-      return bloques;
-    }
-
-    async function enviarTelegram(folio, destino, vendedor, items) {
-      const total = items.length;
-      const bloques = dividirEnBloques(items, 20);
-      for (let i = 0; i < bloques.length; i++) {
-        let mensaje = `📦 *Nuevo Traspaso*\n`;
-        if (i === 0){ 
-          mensaje += `\nFolio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal de productos: ${total}\n`;
-        }
-        mensaje += `\n📋 *Bloque ${i+1}/${bloques.length}:*\n`;
-        bloques[i].forEach(it=>{
-          mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
-        });
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: mensaje,
-            parse_mode: "Markdown"
-          })
-        });
-      }
-    }
-
-    function abrirComprobante(folio, ruta, vendedor, items) {
-      const fecha = new Date().toLocaleDateString();
-      let tabla = "";
-      items.forEach(it=>{
-        tabla += `<tr><td>${it.codigo}</td><td>${it.concepto}</td><td>${it.cantidad}</td><td>$${it.precio}</td></tr>`;
-      });
-      const win = window.open("", "_blank");
-      win.document.write(`
-        <html><head><title>Comprobante ${folio}</title>
-        <style>
-          body{font-family:Arial;margin:20px;}
-          h1{text-align:center;color:#003366;}
-          .folio{font-size:24px;font-weight:bold;color:#b30000;text-align:center;border:2px dashed #b30000;margin:10px;padding:5px;}
-          table{width:100%;border-collapse:collapse;margin-top:15px;}
-          th,td{border:1px solid #ccc;padding:6px;}
-          th{background:#eee;}
-          .firmas{margin-top:40px;display:flex;justify-content:space-between;}
-          .firma{width:45%;text-align:center;}
-          .linea{margin-top:60px;border-top:1px solid #000;}
-        </style></head><body>
-        <h1>📦 PROVEEDORA DE DULCES Y DESECHABLES</h1>
-        <h2 style="text-align:center">Comprobante de Traspaso</h2>
-        <div class="folio">Folio: ${folio}</div>
-        <p><b>Fecha:</b> ${fecha}<br><b>Destino:</b> ${ruta}<br><b>Vendedor:</b> ${vendedor}<br><b>Total de productos:</b> ${items.length}</p>
-        <table><thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th></tr></thead><tbody>
-        ${tabla}
-        </tbody></table>
-        <div class="firmas">
-          <div class="firma"><div class="linea"></div>Entregó (Administrador)</div>
-          <div class="firma"><div class="linea"></div>Recibió (Vendedor)</div>
-        </div>
-        <button onclick="window.print()">🖨️ Imprimir</button>
-        </body></html>
-      `);
-      win.document.close();
-    }
-
-    async function cargarVendedor() {
-      const ruta = document.getElementById("ruta").value;
-      if (!ruta) return;
-      const q = query(collection(db,"usuarios_ruta"),
-                      where("rutaId","==",ruta),
-                      where("activo","==",true));
-      const snap = await getDocs(q);
-      if (!snap.empty){
-        snap.forEach(doc=>{
-          const data = doc.data();
-          document.getElementById("vendedor").value = data.nombre;
-        });
-      } else {
-        document.getElementById("vendedor").value = "No asignado";
-      }
-    }
-
+    // ---------------- MODAL ----------------
     function cerrarModal(){
       document.getElementById("modalResultados").style.display = "none";
     }
 
+    // ---------------- INIT ----------------
     document.addEventListener("DOMContentLoaded", async ()=>{
       await syncProductos();
-      document.getElementById("buscador").focus();
-      document.getElementById("ruta").addEventListener("change", cargarVendedor);
-      document.getElementById("buscador").addEventListener("input", buscarProducto);
-      document.getElementById("cantidad").addEventListener("keypress",(e)=>{
-        if(e.key==="Enter"){ e.preventDefault(); agregarItem(); }
+      document.getElementById("buscadorCodigo").focus();
+      document.getElementById("buscadorCodigo").addEventListener("keypress",(e)=>{
+        if(e.key === "Enter"){ e.preventDefault(); buscarPorCodigo(); }
       });
       document.getElementById("cerrarModal").addEventListener("click", cerrarModal);
-      window.onclick = function(event){
-        const modal = document.getElementById("modalResultados");
-        if(event.target === modal) cerrarModal();
-      };
     });
 
     // Exponer
     window.agregarItem = agregarItem;
-    window.eliminarItem = eliminarItem;
-    window.finalizarTraspaso = finalizarTraspaso;
+    window.buscarPorCodigo = buscarPorCodigo;
+    window.abrirBusquedaNombre = abrirBusquedaNombre;
   </script>
 
   <style>
     body{font-family:Arial,sans-serif;margin:20px;background:#f5f5f5;}
-    .panel{max-width:900px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
-    h2{margin-top:0;}
-
-    /* 🔹 Grid */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      align-items: end;
-    }
-    .form-grid label {
-      font-weight: bold;
-      margin-bottom: 4px;
-      display: block;
-    }
-    .acciones {
-      grid-column: span 2;
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
-
-    input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;}
-    table{width:100%;border-collapse:collapse;margin-top:15px;}
+    .panel{max-width:800px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.15);}
+    label{display:block;margin-top:10px;font-weight:bold;}
+    input,select{padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px;}
+    table{width:100%;border-collapse:collapse;margin-top:10px;}
     th,td{border:1px solid #ccc;padding:6px;text-align:left;}
     th{background:#eee;}
-    button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer;}
+    button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;}
     .btn{background:#007bff;color:white;}
-    .btn-danger{background:#dc3545;color:white;}
-
-    /* Modal */
     .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);}
-    .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:80%;max-width:600px;max-height:70%;overflow-y:auto;}
-    .close{color:#aaa;float:right;font-size:28px;font-weight:bold;cursor:pointer;}
-    .close:hover{color:#000;}
-    #listaResultados .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
-    #listaResultados .item:hover{background:#f0f0f0;}
-
-    footer{text-align:center;margin-top:20px;font-size:12px;color:#555;}
+    .modal-content{background:#fff;margin:5% auto;padding:20px;border-radius:10px;width:80%;max-width:600px;max-height:70%;overflow-y:auto;}
+    .item{padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
+    .item:hover{background:#f0f0f0;}
+    #paginacion{text-align:center;margin-top:10px;}
   </style>
 </head>
 <body>
   <div class="panel">
     <h2>⬇️ Traspaso a Vendedores</h2>
 
-    <div class="form-grid">
-      <div>
-        <label>Ruta destino:</label>
-        <select id="ruta">
-          <option value="">-- Seleccionar --</option>
-          <option value="Almacen_Ruta_1">Ruta 1</option>
-          <option value="Almacen_Ruta_2">Ruta 2</option>
-        </select>
-      </div>
+    <label>Ruta destino:</label>
+    <select id="ruta">
+      <option value="">-- Seleccionar --</option>
+      <option value="Almacen_Ruta_1">Ruta 1</option>
+      <option value="Almacen_Ruta_2">Ruta 2</option>
+    </select>
 
-      <div>
-        <label>Vendedor:</label>
-        <input type="text" id="vendedor" readonly />
-      </div>
+    <label>Vendedor:</label>
+    <input type="text" id="vendedor" readonly />
 
-      <div>
-        <label>Buscar producto:</label>
-        <input type="text" id="buscador" placeholder="Escanea código o escribe nombre..." />
-      </div>
-
-      <div>
-        <label>Cantidad:</label>
-        <input type="number" id="cantidad" value="1" min="1"/>
-      </div>
-
-      <div class="acciones">
-        <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
-      </div>
+    <label>Ingresar código de barras:</label>
+    <div style="display:flex;gap:5px;align-items:center;">
+      <input type="number" id="buscadorCodigo" placeholder="Escanea código de barras..." style="flex:1;">
+      <button class="btn" onclick="abrirBusquedaNombre()">🔍</button>
     </div>
 
     <div id="preview" style="margin:10px 0;font-weight:bold;color:#003366;"></div>
@@ -412,23 +292,27 @@
     <input type="hidden" id="conceptoSel">
     <input type="hidden" id="precioSel">
 
+    <label>Cantidad:</label>
+    <input type="number" id="cantidad" value="1" min="1"/>
+
+    <button class="btn" onclick="agregarItem()">➕ Agregar a Lista</button>
+
     <table>
       <thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio Público</th><th></th></tr></thead>
       <tbody id="tabla"></tbody>
     </table>
 
-    <button class="btn" style="margin-top:15px;" onclick="finalizarTraspaso()">📤 Finalizar Traspaso</button>
+    <button class="btn">📤 Finalizar Traspaso</button>
   </div>
 
-  <!-- Modal -->
+  <!-- 🔹 Modal resultados -->
   <div id="modalResultados" class="modal">
     <div class="modal-content">
-      <span id="cerrarModal" class="close">&times;</span>
+      <span id="cerrarModal" class="close" style="cursor:pointer;">&times;</span>
       <h3>Resultados de búsqueda</h3>
       <div id="listaResultados"></div>
+      <div id="paginacion"></div>
     </div>
   </div>
-
-  <footer>Powered by <b>PROVSOFT</b></footer>
 </body>
 </html>
