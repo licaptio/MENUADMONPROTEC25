@@ -1581,7 +1581,88 @@ function logoutPOS(){
   location.reload();
 }
 document.getElementById("btnLogout").addEventListener("click", logoutPOS);
+// ---------------- FINALIZAR ----------------
+async function finalizarTraspaso() {
+  const ruta = document.getElementById("ruta").value;
+  const vendedor = document.getElementById("vendedor").value;
+  if (carrito.length === 0 || !ruta) { 
+    alert("Faltan datos"); 
+    return; 
+  }
 
+  const folio = generarFolio(ruta);
+  const fecha = new Date().toISOString();
+
+  const payload = { folio, fecha, ruta, vendedor, items: carrito };
+
+  try {
+    // Guardar en Firestore
+    await addDoc(collection(db, `almacenes/${ruta}/entradas`), payload);
+    await addDoc(collection(db, `almacenes/ALMACENCENTRALPDD/salidas`), payload);
+    console.log("✅ Traspaso grabado en Firestore");
+
+    // Enviar a Telegram
+    await enviarTelegram(folio, ruta, vendedor, carrito);
+
+    // Abrir comprobante en nueva ventana
+    abrirComprobante(folio, ruta, vendedor, carrito);
+
+    // Limpiar carrito
+    carrito = [];
+    renderTabla();
+    document.getElementById("buscador").focus();
+  } catch (err) {
+    console.error("❌ Error al guardar traspaso:", err.message);
+    alert("Error al guardar traspaso: " + err.message);
+  }
+}
+
+// ---------------- UTILS ----------------
+function generarFolio(ruta) {
+  const hoy = new Date();
+  const dd = String(hoy.getDate()).padStart(2, "0");
+  const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+  const yy = String(hoy.getFullYear()).slice(-2);
+  const fecha = `${dd}${mm}${yy}`;
+  const consecutivo = String(Math.floor(Math.random() * 999)).padStart(3, "0"); 
+  return `${ruta}-${fecha}-${consecutivo}`;
+}
+
+function dividirEnBloques(array, size) {
+  const bloques = [];
+  for (let i = 0; i < array.length; i += size) {
+    bloques.push(array.slice(i, i + size));
+  }
+  return bloques;
+}
+
+async function enviarTelegram(folio, destino, vendedor, items) {
+  const total = items.length;
+  const bloques = dividirEnBloques(items, 20);
+
+  for (let i = 0; i < bloques.length; i++) {
+    let mensaje = `📦 *Nuevo Traspaso*\n`;
+    if (i === 0){ 
+      mensaje += `\nFolio: ${folio}\nDestino: ${destino}\nVendedor: ${vendedor}\nTotal productos: ${total}\n`;
+    }
+    mensaje += `\n📋 *Bloque ${i+1}/${bloques.length}:*\n`;
+    bloques[i].forEach(it=>{
+      mensaje += `- ${it.cantidad} x ${it.concepto}\n`;
+    });
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: mensaje,
+        parse_mode: "Markdown"
+      })
+    });
+  }
+}
+
+  
 </script>
 
   <script>
