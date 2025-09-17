@@ -320,17 +320,21 @@ texto = texto.replace(/\\\*(.+?)\\\*/g, '*$1*');
   const partes = splitByUtf8Bytes(texto, 4000); // margen bajo 4096
 
   try {
-    for (const parte of partes) {
-      const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: parte,
-          parse_mode: "MarkdownV2",
-          disable_web_page_preview: true
-        })
-      });
+for (let parte of partes) {
+  // Balancear negritas antes de enviar
+  parte = balanceMarkdownBold(parte);
+
+  const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: parte,
+      parse_mode: "MarkdownV2",
+      disable_web_page_preview: true
+    })
+  });
+
       const body = await res.json();
       if (!body.ok) {
         console.error("❌ Telegram error:", body);
@@ -374,6 +378,17 @@ function splitByUtf8Bytes(str, maxBytes) {
   if (actual) partes.push(actual);
   return partes;
 }
+
+    // Balancea negritas en MarkdownV2
+function balanceMarkdownBold(str) {
+  const count = (str.match(/\*/g) || []).length;
+  if (count % 2 !== 0) {
+    // Si hay un número impar de asteriscos, cerramos con uno más
+    str += "*";
+  }
+  return str;
+}
+
     document.addEventListener("DOMContentLoaded", cargar);
   </script>
 </body>
