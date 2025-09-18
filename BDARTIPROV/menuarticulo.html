@@ -5,7 +5,7 @@
   <title>Gestión de Productos</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs }
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // 🔹 CONFIGURACIÓN FIREBASE
@@ -19,6 +19,8 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    let productoExistente = false;
 
     // 🔹 LIMPIAR FORMULARIO
     function limpiarCampos() {
@@ -39,22 +41,21 @@
       }
     }
 
-    // 🔹 CARGAR PRODUCTO
-    async function cargarProducto() {
+    // 🔹 BUSCAR PRODUCTO
+    async function buscarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
       if (!codigo) return alert("Escribe un código o equivalente");
 
-      // Buscar por ID (documento)
       const ref = doc(db, "productos", codigo);
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
         rellenarCampos(snap.data());
+        productoExistente = true;
         alert("Producto encontrado por código ✅");
         return;
       }
 
-      // Buscar por campo codigosEquivalentes
       const productosRef = collection(db, "productos");
       const q = query(productosRef, where("codigosEquivalentes", "==", codigo));
       const querySnap = await getDocs(q);
@@ -62,22 +63,40 @@
       if (!querySnap.empty) {
         querySnap.forEach(docSnap => {
           rellenarCampos(docSnap.data());
-          document.getElementById("codigo").value = docSnap.id; // mostrar ID real
+          document.getElementById("codigo").value = docSnap.id;
         });
-        alert("Producto encontrado por código equivalente ✅");
+        productoExistente = true;
+        alert("Producto encontrado por equivalente ✅");
       } else {
-        alert("No existe ni por código ni por equivalente, puedes crearlo nuevo");
         limpiarCampos();
+        productoExistente = false;
+        document.getElementById("codigo").value = codigo;
+        alert("No existe, puedes capturarlo y luego GUARDAR.");
       }
     }
 
-    // 🔹 GUARDAR O ACTUALIZAR
+    // 🔹 GUARDAR (crea o actualiza según el caso)
     async function guardarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
-      if (!codigo) return alert("Escribe un código");
+      if (!codigo) return alert("Escribe un código para guardar");
 
       const ref = doc(db, "productos", codigo);
+      let data = recolectarDatos();
+      data.updatedAt = serverTimestamp();
 
+      if (productoExistente) {
+        await updateDoc(ref, data);
+        alert("Cambios guardados correctamente ✅");
+      } else {
+        data.createdAt = serverTimestamp();
+        await setDoc(ref, data);
+        productoExistente = true;
+        alert("Producto creado correctamente 🆕");
+      }
+    }
+
+    // 🔹 RECOLECTAR DATOS
+    function recolectarDatos() {
       const campos = [
         "concepto","costoSinImpuesto","departamento","ivaTasa","mayoreo",
         "marca","codigoBarra","claveSat","cantidadPorCaja","iepsTasa","codigosEquivalentes","activo"
@@ -95,19 +114,18 @@
           if (val !== "" && val !== null) data[c] = val;
         }
       });
-
-      await setDoc(ref, data, { merge: true });
-      alert("Guardado correctamente ✅ (nuevo o actualizado)");
+      return data;
     }
 
-    window.cargarProducto = cargarProducto;
+    window.buscarProducto = buscarProducto;
     window.guardarProducto = guardarProducto;
   </script>
 </head>
 <body>
   <h2>Gestión de Productos</h2>
   <input type="text" id="codigo" placeholder="Código o equivalente">
-  <button onclick="cargarProducto()">Buscar</button>
+  <button onclick="buscarProducto()">Buscar</button>
+  <button onclick="guardarProducto()">Guardar</button>
   <hr>
 
   <label>Concepto: <input type="text" id="concepto"></label><br>
@@ -122,7 +140,5 @@
   <label>IEPS Tasa: <input type="number" id="iepsTasa" step="0.01"></label><br>
   <label>Código Equivalente: <input type="text" id="codigosEquivalentes"></label><br>
   <label>Activo: <input type="checkbox" id="activo"></label><br><br>
-
-  <button onclick="guardarProducto()">Guardar / Actualizar</button>
 </body>
 </html>
