@@ -20,12 +20,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 🔹 FUNCIONES
+    // 🔹 LIMPIAR FORMULARIO
     function limpiarCampos() {
       document.querySelectorAll("input[type=text], input[type=number]").forEach(el => el.value = "");
       document.getElementById("activo").checked = false;
     }
 
+    // 🔹 RELLENAR FORMULARIO
     function rellenarCampos(data) {
       for (const key in data) {
         if (document.getElementById(key)) {
@@ -38,18 +39,22 @@
       }
     }
 
+    // 🔹 CARGAR PRODUCTO
     async function cargarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
       if (!codigo) return alert("Escribe un código o equivalente");
 
+      // Buscar por ID
       const ref = doc(db, "productos", codigo);
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
         rellenarCampos(snap.data());
-        return alert("✅ Producto encontrado por código");
+        alert("Producto encontrado por código ✅");
+        return;
       }
 
+      // Buscar por equivalente
       const productosRef = collection(db, "productos");
       const q = query(productosRef, where("codigosEquivalentes", "==", codigo));
       const querySnap = await getDocs(q);
@@ -59,16 +64,17 @@
           rellenarCampos(docSnap.data());
           document.getElementById("codigo").value = docSnap.id;
         });
-        return alert("✅ Producto encontrado por equivalente");
+        alert("Producto encontrado por equivalente ✅");
       } else {
+        alert("No existe ni por código ni por equivalente, puedes crearlo nuevo");
         limpiarCampos();
-        return alert("⚠️ No existe, usa NUEVO para capturarlo");
       }
     }
 
+    // 🔹 GUARDAR / CREAR PRODUCTO
     async function guardarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
-      if (!codigo) return alert("Escribe un código");
+      if (!codigo) return alert("Escribe un código para crear el producto");
 
       const ref = doc(db, "productos", codigo);
 
@@ -91,72 +97,41 @@
       });
 
       await setDoc(ref, data, { merge: true });
-      alert("💾 Guardado correctamente");
+      alert("Guardado correctamente ✅ (nuevo o actualizado)");
     }
 
+    // 🔹 CREAR NUEVO (limpia y pide código nuevo)
     function nuevoProducto() {
       limpiarCampos();
       document.getElementById("codigo").value = "";
+      alert("Formulario listo para crear un producto nuevo 🆕");
     }
 
     window.cargarProducto = cargarProducto;
     window.guardarProducto = guardarProducto;
     window.nuevoProducto = nuevoProducto;
   </script>
-
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
-    h2 { text-align:center; color:#333; }
-    .container { max-width:650px; margin:auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,.1); }
-    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-    label { font-size:14px; color:#444; display:flex; flex-direction:column; }
-    input[type=text], input[type=number] { padding:8px; border:1px solid #ccc; border-radius:6px; }
-    input[type=checkbox] { margin-top:8px; }
-    .actions { text-align:center; margin-top:15px; }
-    button { background:#007bff; border:none; color:white; padding:10px 16px; margin:4px; border-radius:6px; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    .secondary { background:#6c757d; }
-    .secondary:hover { background:#565e64; }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📦 Gestión de Productos</h2>
-    <div class="row">
-      <label>Código o equivalente
-        <input type="text" id="codigo" placeholder="Ej. 000123">
-      </label>
-    </div>
-    <div class="actions">
-      <button onclick="cargarProducto()">🔍 Buscar</button>
-      <button class="secondary" onclick="nuevoProducto()">🆕 Nuevo</button>
-      <button onclick="guardarProducto()">💾 Guardar</button>
-    </div>
-    <hr>
-    <div class="row">
-      <label>Concepto<input type="text" id="concepto"></label>
-      <label>Departamento<input type="text" id="departamento"></label>
-    </div>
-    <div class="row">
-      <label>Marca<input type="text" id="marca"></label>
-      <label>Código Barras<input type="text" id="codigoBarra"></label>
-    </div>
-    <div class="row">
-      <label>Clave SAT<input type="text" id="claveSat"></label>
-      <label>Código Equivalente<input type="text" id="codigosEquivalentes"></label>
-    </div>
-    <div class="row">
-      <label>Costo s/ Impuesto<input type="number" id="costoSinImpuesto" step="0.01"></label>
-      <label>IVA Tasa<input type="number" id="ivaTasa" step="0.01"></label>
-    </div>
-    <div class="row">
-      <label>Mayoreo<input type="number" id="mayoreo" step="0.01"></label>
-      <label>Cant. por Caja<input type="number" id="cantidadPorCaja"></label>
-    </div>
-    <div class="row">
-      <label>IEPS Tasa<input type="number" id="iepsTasa" step="0.01"></label>
-      <label>Activo <input type="checkbox" id="activo"></label>
-    </div>
-  </div>
+  <h2>Gestión de Productos</h2>
+  <input type="text" id="codigo" placeholder="Código o equivalente">
+  <button onclick="cargarProducto()">Buscar</button>
+  <button onclick="nuevoProducto()">Nuevo</button>
+  <hr>
+
+  <label>Concepto: <input type="text" id="concepto"></label><br>
+  <label>Costo sin Impuesto: <input type="number" id="costoSinImpuesto" step="0.01"></label><br>
+  <label>Departamento: <input type="text" id="departamento"></label><br>
+  <label>IVA Tasa: <input type="number" id="ivaTasa" step="0.01"></label><br>
+  <label>Mayoreo: <input type="number" id="mayoreo" step="0.01"></label><br>
+  <label>Marca: <input type="text" id="marca"></label><br>
+  <label>Código de Barras: <input type="text" id="codigoBarra"></label><br>
+  <label>Clave SAT: <input type="text" id="claveSat"></label><br>
+  <label>Cantidad por Caja: <input type="number" id="cantidadPorCaja"></label><br>
+  <label>IEPS Tasa: <input type="number" id="iepsTasa" step="0.01"></label><br>
+  <label>Código Equivalente: <input type="text" id="codigosEquivalentes"></label><br>
+  <label>Activo: <input type="checkbox" id="activo"></label><br><br>
+
+  <button onclick="guardarProducto()">Guardar / Actualizar</button>
 </body>
 </html>
