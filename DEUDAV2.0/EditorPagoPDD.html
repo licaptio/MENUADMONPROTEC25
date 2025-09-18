@@ -236,7 +236,37 @@
       const rfc = document.getElementById("rfcFiltro").value || document.getElementById("nombreFiltro").value;
       document.getElementById("btnTodas").disabled = !rfc;
     }
+async function togglePagada(id, celda) {
+  const actual = celda.textContent.trim().toUpperCase();
+  const nuevo = actual === "SI" ? "NO" : "SI";
+
+  // Confirmación opcional
+  if (!confirm(`¿Seguro que deseas marcar esta factura como "${nuevo}"?`)) return;
+
+  const { error } = await supabase
+    .from(tabla)
+    .update({ factura_pagada: nuevo })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Error al actualizar en Supabase");
+    console.error(error);
+    return;
+  }
+
+  // 🔹 Refrescar visual
+  celda.textContent = nuevo;
+  celda.style.color = (nuevo === "SI") ? "green" : "red";
+
+  // 🔹 Si el check "Mostrar pagadas" está apagado y la factura se marcó como SI → ocultarla
+  if (!document.getElementById("togglePagadas").checked && nuevo === "SI") {
+    celda.parentElement.remove();
+  }
+}
+
+  
   </script>
 </body>
 </html>
+
 
