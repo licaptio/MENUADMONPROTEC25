@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 🔹 Responsive -->
   <title>Administrar Proveedores</title>
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -26,10 +27,10 @@
       data.forEach(prov => {
         const row = `
           <tr>
-            <td><input type="text" value="${prov.rfc}" id="rfc-${prov.id}"></td>
-            <td><input type="text" value="${prov.banco}" id="banco-${prov.id}"></td>
-            <td><input type="text" value="${prov.cuenta}" id="cuenta-${prov.id}"></td>
-            <td>
+            <td data-label="RFC"><input type="text" value="${prov.rfc}" id="rfc-${prov.id}"></td>
+            <td data-label="Banco"><input type="text" value="${prov.banco}" id="banco-${prov.id}"></td>
+            <td data-label="Cuenta"><input type="text" value="${prov.cuenta}" id="cuenta-${prov.id}"></td>
+            <td data-label="Acciones">
               <button onclick="updateProveedor(${prov.id})">💾 Guardar</button>
               <button onclick="deleteProveedor(${prov.id})">🗑️ Eliminar</button>
             </td>
@@ -71,7 +72,7 @@
       }
     };
 
-    // Cargar al inicio
+    // Cargar proveedores al inicio
     window.onload = loadProveedores;
   </script>
 
@@ -79,45 +80,86 @@
     body {
       font-family: Arial, sans-serif;
       background: #f4f6fa;
-      padding: 20px;
-      max-width: 900px;
+      padding: 10px;
+      max-width: 100%;
       margin: auto;
     }
     h2 {
       text-align: center;
       color: #003366;
+      font-size: 20px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      margin-top: 20px;
+      margin-top: 10px;
     }
     th, td {
-      padding: 10px;
+      padding: 8px;
       border: 1px solid #ddd;
       text-align: center;
+      font-size: 14px;
     }
     th {
       background: #003366;
       color: white;
     }
     input {
-      width: 95%;
+      width: 100%;
       padding: 6px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      text-align: center;
+      font-size: 14px;
     }
     button {
       margin: 2px;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 14px;
     }
+    button:hover { opacity: 0.9; }
     button:nth-child(1) { background: #28a745; color: white; }
     button:nth-child(2) { background: #dc3545; color: white; }
+
+    /* 🔹 Mobile responsive */
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+      thead tr {
+        display: none; /* ocultar cabecera */
+      }
+      tr {
+        margin-bottom: 12px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #003366;
+      }
+      input {
+        flex: 1;
+        margin-left: 8px;
+      }
+      button {
+        width: 48%;
+        margin-top: 6px;
+      }
+    }
   </style>
 </head>
 <body>
