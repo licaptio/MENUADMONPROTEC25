@@ -182,14 +182,14 @@
     // ===============================
     // 🔎 Buscar en IndexedDB
     // ===============================
-    async function buscarLocal(termino) {
-      const productos = await getAllProductos();
-      termino = termino.toLowerCase();
-      return productos.filter(p =>
-        (p.codigoBarra && p.codigoBarra.includes(termino)) ||
-        (p.concepto && p.concepto.toLowerCase().includes(termino))
-      );
-    }
+async function buscarLocal(termino) {
+  const productos = await getAllProductos();
+  termino = termino.toLowerCase();
+  return productos.filter(p =>
+    (p.codigoBarra && String(p.codigoBarra).includes(termino)) ||
+    (p.concepto && p.concepto.toLowerCase().includes(termino))
+  );
+}
 
     // ===============================
     // 📌 Eventos de la UI
