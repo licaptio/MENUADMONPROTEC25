@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Productos</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 🔹 CONFIGURACIÓN FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "inventariopv-643f1.firebaseapp.com",
+      projectId: "inventariopv-643f1",
+      storageBucket: "inventariopv-643f1.firebasestorage.app",
+      messagingSenderId: "96242533231",
+      appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔹 LIMPIAR FORMULARIO
+    function limpiarCampos() {
+      document.querySelectorAll("input[type=text], input[type=number]").forEach(el => el.value = "");
+      document.getElementById("activo").checked = false;
+    }
+
+    // 🔹 RELLENAR FORMULARIO
+    function rellenarCampos(data) {
+      for (const key in data) {
+        if (document.getElementById(key)) {
+          if (key === "activo") {
+            document.getElementById(key).checked = data[key];
+          } else {
+            document.getElementById(key).value = data[key];
+          }
+        }
+      }
+    }
+
+    // 🔹 CARGAR PRODUCTO
+    async function cargarProducto() {
+      const codigo = document.getElementById("codigo").value.trim();
+      if (!codigo) return alert("Escribe un código o equivalente");
+
+      // Buscar por ID (documento)
+      const ref = doc(db, "productos", codigo);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        rellenarCampos(snap.data());
+        alert("Producto encontrado por código ✅");
+        return;
+      }
+
+      // Buscar por campo codigosEquivalentes
+      const productosRef = collection(db, "productos");
+      const q = query(productosRef, where("codigosEquivalentes", "==", codigo));
+      const querySnap = await getDocs(q);
+
+      if (!querySnap.empty) {
+        querySnap.forEach(docSnap => {
+          rellenarCampos(docSnap.data());
+          document.getElementById("codigo").value = docSnap.id; // mostrar ID real
+        });
+        alert("Producto encontrado por código equivalente ✅");
+      } else {
+        alert("No existe ni por código ni por equivalente, puedes crearlo nuevo");
+        limpiarCampos();
+      }
+    }
+
+    // 🔹 GUARDAR O ACTUALIZAR
+    async function guardarProducto() {
+      const codigo = document.getElementById("codigo").value.trim();
+      if (!codigo) return alert("Escribe un código");
+
+      const ref = doc(db, "productos", codigo);
+
+      const campos = [
+        "concepto","costoSinImpuesto","departamento","ivaTasa","mayoreo",
+        "marca","codigoBarra","claveSat","cantidadPorCaja","iepsTasa","codigosEquivalentes","activo"
+      ];
+      let data = {};
+      campos.forEach(c => {
+        const input = document.getElementById(c);
+        if (input) {
+          let val = input.value;
+          if (c === "activo") {
+            val = input.checked;
+          } else if (!isNaN(val) && val !== "") {
+            val = Number(val);
+          }
+          if (val !== "" && val !== null) data[c] = val;
+        }
+      });
+
+      await setDoc(ref, data, { merge: true });
+      alert("Guardado correctamente ✅ (nuevo o actualizado)");
+    }
+
+    window.cargarProducto = cargarProducto;
+    window.guardarProducto = guardarProducto;
+  </script>
+</head>
+<body>
+  <h2>Gestión de Productos</h2>
+  <input type="text" id="codigo" placeholder="Código o equivalente">
+  <button onclick="cargarProducto()">Buscar</button>
+  <hr>
+
+  <label>Concepto: <input type="text" id="concepto"></label><br>
+  <label>Costo sin Impuesto: <input type="number" id="costoSinImpuesto" step="0.01"></label><br>
+  <label>Departamento: <input type="text" id="departamento"></label><br>
+  <label>IVA Tasa: <input type="number" id="ivaTasa" step="0.01"></label><br>
+  <label>Mayoreo: <input type="number" id="mayoreo" step="0.01"></label><br>
+  <label>Marca: <input type="text" id="marca"></label><br>
+  <label>Código de Barras: <input type="text" id="codigoBarra"></label><br>
+  <label>Clave SAT: <input type="text" id="claveSat"></label><br>
+  <label>Cantidad por Caja: <input type="number" id="cantidadPorCaja"></label><br>
+  <label>IEPS Tasa: <input type="number" id="iepsTasa" step="0.01"></label><br>
+  <label>Código Equivalente: <input type="text" id="codigosEquivalentes"></label><br>
+  <label>Activo: <input type="checkbox" id="activo"></label><br><br>
+
+  <button onclick="guardarProducto()">Guardar / Actualizar</button>
+</body>
+</html>
