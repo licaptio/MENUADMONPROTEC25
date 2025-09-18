@@ -22,13 +22,12 @@
 
     let productoExistente = false;
 
-    // 🔹 LIMPIAR FORMULARIO
+    // 🔹 FUNCIONES
     function limpiarCampos() {
       document.querySelectorAll("input[type=text], input[type=number]").forEach(el => el.value = "");
       document.getElementById("activo").checked = false;
     }
 
-    // 🔹 RELLENAR FORMULARIO
     function rellenarCampos(data) {
       for (const key in data) {
         if (document.getElementById(key)) {
@@ -41,10 +40,9 @@
       }
     }
 
-    // 🔹 BUSCAR PRODUCTO
     async function buscarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
-      if (!codigo) return alert("Escribe un código o equivalente");
+      if (!codigo) return mostrarMensaje("⚠️ Escribe un código o equivalente", "error");
 
       const ref = doc(db, "productos", codigo);
       const snap = await getDoc(ref);
@@ -52,8 +50,7 @@
       if (snap.exists()) {
         rellenarCampos(snap.data());
         productoExistente = true;
-        alert("Producto encontrado por código ✅");
-        return;
+        return mostrarMensaje("✅ Producto encontrado por código", "ok");
       }
 
       const productosRef = collection(db, "productos");
@@ -66,19 +63,18 @@
           document.getElementById("codigo").value = docSnap.id;
         });
         productoExistente = true;
-        alert("Producto encontrado por equivalente ✅");
+        return mostrarMensaje("✅ Producto encontrado por equivalente", "ok");
       } else {
         limpiarCampos();
         productoExistente = false;
         document.getElementById("codigo").value = codigo;
-        alert("No existe, puedes capturarlo y luego GUARDAR.");
+        return mostrarMensaje("⚠️ No existe, puedes capturarlo y luego GUARDAR", "error");
       }
     }
 
-    // 🔹 GUARDAR (crea o actualiza según el caso)
     async function guardarProducto() {
       const codigo = document.getElementById("codigo").value.trim();
-      if (!codigo) return alert("Escribe un código para guardar");
+      if (!codigo) return mostrarMensaje("⚠️ Escribe un código para guardar", "error");
 
       const ref = doc(db, "productos", codigo);
       let data = recolectarDatos();
@@ -86,16 +82,15 @@
 
       if (productoExistente) {
         await updateDoc(ref, data);
-        alert("Cambios guardados correctamente ✅");
+        mostrarMensaje("✅ Cambios guardados correctamente", "ok");
       } else {
         data.createdAt = serverTimestamp();
         await setDoc(ref, data);
         productoExistente = true;
-        alert("Producto creado correctamente 🆕");
+        mostrarMensaje("🆕 Producto creado correctamente", "ok");
       }
     }
 
-    // 🔹 RECOLECTAR DATOS
     function recolectarDatos() {
       const campos = [
         "concepto","costoSinImpuesto","departamento","ivaTasa","mayoreo",
@@ -117,28 +112,126 @@
       return data;
     }
 
+    function mostrarMensaje(msg, tipo="ok") {
+      const box = document.getElementById("mensaje");
+      box.innerText = msg;
+      box.className = tipo;
+      setTimeout(() => box.innerText = "", 3000);
+    }
+
     window.buscarProducto = buscarProducto;
     window.guardarProducto = guardarProducto;
   </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    label {
+      font-size: 14px;
+      color: #444;
+      display: flex;
+      flex-direction: column;
+    }
+    input[type=text], input[type=number] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+    input[type=checkbox] {
+      margin-top: 10px;
+    }
+    .actions {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #mensaje {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 12px;
+      height: 20px;
+    }
+    #mensaje.ok { color: green; }
+    #mensaje.error { color: red; }
+  </style>
 </head>
 <body>
-  <h2>Gestión de Productos</h2>
-  <input type="text" id="codigo" placeholder="Código o equivalente">
-  <button onclick="buscarProducto()">Buscar</button>
-  <button onclick="guardarProducto()">Guardar</button>
-  <hr>
+  <div class="container">
+    <h2>📦 Gestión de Productos</h2>
 
-  <label>Concepto: <input type="text" id="concepto"></label><br>
-  <label>Costo sin Impuesto: <input type="number" id="costoSinImpuesto" step="0.01"></label><br>
-  <label>Departamento: <input type="text" id="departamento"></label><br>
-  <label>IVA Tasa: <input type="number" id="ivaTasa" step="0.01"></label><br>
-  <label>Mayoreo: <input type="number" id="mayoreo" step="0.01"></label><br>
-  <label>Marca: <input type="text" id="marca"></label><br>
-  <label>Código de Barras: <input type="text" id="codigoBarra"></label><br>
-  <label>Clave SAT: <input type="text" id="claveSat"></label><br>
-  <label>Cantidad por Caja: <input type="number" id="cantidadPorCaja"></label><br>
-  <label>IEPS Tasa: <input type="number" id="iepsTasa" step="0.01"></label><br>
-  <label>Código Equivalente: <input type="text" id="codigosEquivalentes"></label><br>
-  <label>Activo: <input type="checkbox" id="activo"></label><br><br>
+    <div id="mensaje"></div>
+
+    <div class="row">
+      <label>Código o equivalente
+        <input type="text" id="codigo" placeholder="Ej. 000123">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button onclick="buscarProducto()">🔍 Buscar</button>
+      <button onclick="guardarProducto()">💾 Guardar</button>
+    </div>
+
+    <div class="row">
+      <label>Concepto<input type="text" id="concepto"></label>
+      <label>Departamento<input type="text" id="departamento"></label>
+    </div>
+    <div class="row">
+      <label>Marca<input type="text" id="marca"></label>
+      <label>Código de Barras<input type="text" id="codigoBarra"></label>
+    </div>
+    <div class="row">
+      <label>Clave SAT<input type="text" id="claveSat"></label>
+      <label>Código Equivalente<input type="text" id="codigosEquivalentes"></label>
+    </div>
+    <div class="row">
+      <label>Costo s/ Impuesto<input type="number" id="costoSinImpuesto" step="0.01"></label>
+      <label>IVA Tasa<input type="number" id="ivaTasa" step="0.01"></label>
+    </div>
+    <div class="row">
+      <label>Mayoreo<input type="number" id="mayoreo" step="0.01"></label>
+      <label>Cant. por Caja<input type="number" id="cantidadPorCaja"></label>
+    </div>
+    <div class="row">
+      <label>IEPS Tasa<input type="number" id="iepsTasa" step="0.01"></label>
+      <label>Activo <input type="checkbox" id="activo"></label>
+    </div>
+  </div>
 </body>
 </html>
