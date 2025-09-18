@@ -179,7 +179,9 @@
           <td data-label="Razón Social">${f.razon_social_emisor || "-"}</td>
           <td data-label="Serie/Factura">${formatSerieFactura(f.serie,f.factura)}</td>
           <td data-label="Total" style="text-align:right;">${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-          <td data-label="¿Pagada?">${(f.factura_pagada||'NO').toUpperCase()}</td>
+          <td data-label="¿Pagada?" style="text-align:center; cursor:pointer;" onclick="togglePagada('${f.id}', this)">
+  ${(f.factura_pagada || 'NO').toUpperCase()}
+</td>
           <td data-label="¿Física?">${(f.factura_fisicamente||'NO').toUpperCase()}</td>
           <td data-label="Fotos">—</td>
         </tr>`;
@@ -237,3 +239,4 @@
   </script>
 </body>
 </html>
+
