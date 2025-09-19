@@ -227,13 +227,12 @@ async function consultarPorRFC() {
   }
 
   // 🔹 Traer facturas con banco/cuenta incluidos
-  const { data: facturas, error } = await supabase
-    .from("v_deuda_proveedores")
-    .select("*")
-    .eq("rfc_emisor", rfc)
-    .gte("fecha", limiteISO)
-    .order("fecha", { ascending: true })
-    .range(0, 9999);
+const { data: facturas, error } = await supabase
+  .from("v_deuda_proveedores")
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO)
+  .order("fecha", { ascending: true });
 
   if (error) {
     console.error("❌ Error al traer datos:", error);
