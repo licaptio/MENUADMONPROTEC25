@@ -213,21 +213,22 @@ async function consultarPorRFC() {
   limite.setDate(hoy.getDate() - 60); // 60 días atrás
   const limiteISO = limite.toISOString().split("T")[0]; // yyyy-mm-dd
 
+  // 🔹 Contar facturas (solo para mostrar conteo)
   const { count, error: errorConteo } = await supabase
-    .from(tabla)
+    .from("v_deuda_proveedores")
     .select("*", { count: "exact", head: true })
     .eq("rfc_emisor", rfc)
-    .gte("fecha", limiteISO);  // 👈 filtro de 60 días
+    .gte("fecha", limiteISO);
 
-      if (errorConteo) {
-        console.error("❌ Error al contar registros:", errorConteo);
-        alert("Error al contar registros");
-        return;
-      }
+  if (errorConteo) {
+    console.error("❌ Error al contar registros:", errorConteo);
+    alert("Error al contar registros");
+    return;
+  }
 
-  // 2. Traer facturas
+  // 🔹 Traer facturas con banco/cuenta incluidos
   const { data: facturas, error } = await supabase
-    .from(tabla)
+    .from("v_deuda_proveedores")
     .select("*")
     .eq("rfc_emisor", rfc)
     .gte("fecha", limiteISO)
@@ -240,30 +241,21 @@ async function consultarPorRFC() {
     return;
   }
 
-  // 3. Traer proveedor
-const { data: facturas, error } = await supabase
-  .from("v_deuda_proveedores")
-  .select("*")
-  .eq("rfc_emisor", rfc)
-  .gte("fecha", limiteISO)
-  .order("fecha", { ascending: true });
+  // Guardamos crudo para aplicar filtro después
+  datosCrudos = facturas;
 
-  // 4. Enriquecer facturas
-  datosCrudos = facturas.map(f => ({
-    ...f,
-    banco: proveedor?.banco || "—",
-    cuenta: proveedor?.cuenta || "—"
-  }));
-
-  // 5. Mostrar mensaje + aplicar filtro inicial
+  // Mensaje de resumen
   let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${facturas.length}`;
   if (facturas.length < count) {
     mensaje += `\n⚠️ Solo se muestran los primeros ${facturas.length} registros (de ${count})`;
   }
   document.getElementById("resumenConteo").innerText = mensaje;
 
+  // Aplicar filtro inicial (ocultar pagadas si el check está desmarcado)
   filtrarPagadas();
 }
+
+
   //------DESDE AQUI ------
 function mostrarTabla(data) {
   const esMovil = window.innerWidth <= 768;
