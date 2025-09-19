@@ -242,10 +242,10 @@ async function consultarPorRFC() {
 
   // 3. Traer proveedor
   const { data: proveedor } = await supabase
-    .from("proveedores")
-    .select("banco, cuenta")
-    .eq("rfc", rfc)
-    .single();
+  .from("proveedores")
+  .select("banco, cuenta")
+  .eq("rfc", rfc.trim().toUpperCase())
+  .maybeSingle();
 
   // 4. Enriquecer facturas
   datosCrudos = facturas.map(f => ({
@@ -364,8 +364,8 @@ function mostrarTabla(data) {
   </button>
 </div>
           <div><strong>📷 Fotos:</strong> ${fotosHtml}</div>
-          <div><strong>🏦 Banco:</strong> ${f.banco}</div>
-          <div><strong>💳 Cuenta:</strong> ${f.cuenta}</div>
+          <div><strong>🏦 Banco:</strong> ${f.banco || "—"}</div>
+          <div><strong>💳 Cuenta:</strong> ${f.cuenta || "—"}</div>
         </div>
       `;
     }
