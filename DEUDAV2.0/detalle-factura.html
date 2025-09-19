@@ -138,9 +138,10 @@ const url = uuid
         <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor ?? '-'}</div>
         <div class="campo"><span>Fecha:</span> ${f.fecha ? new Date(f.fecha).toLocaleDateString('es-MX') : '-'}</div>
         <div class="campo"><span>Total:</span> ${formatoPesos.format(Number(f.total||0))}</div>
-        ${Array.isArray(f.fotos) && f.fotos[0]
-          ? <div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank" rel="noopener">Ver imagen</a></div>
-          : ``}
+${Array.isArray(f.fotos) && f.fotos[0]
+  ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank" rel="noopener">Ver imagen</a></div>`
+  : ``}
+
         <div class="campo"><span>Conceptos:</span></div>
         <div class="tabla-wrapper">
           <table>
@@ -273,4 +274,5 @@ const ruta = `${CARPETA}/${nombreArchivo}`;
   </script>
 </body>
 </html>
+
 
