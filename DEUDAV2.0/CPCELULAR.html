@@ -263,14 +263,6 @@ async function consultarPorRFC() {
 
   filtrarPagadas();
 }
-      let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
-      if (data.length < count) {
-        mensaje += `\n⚠️ Solo se muestran los primeros ${data.length} registros (de ${count})`;
-      }
-
-      document.getElementById("resumenConteo").innerText = mensaje;
-      filtrarPagadas();  // aplica el filtro según el estado del checkbox
-    }
   //------DESDE AQUI ------
 function mostrarTabla(data) {
   const esMovil = window.innerWidth <= 768;
