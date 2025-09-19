@@ -124,9 +124,14 @@
 }
 .card div {
   margin-bottom: 6px;
+  line-height: 1.3;
 }
 .card strong {
-  color: #0056b3;
+  display: inline-block;
+  min-width: 100px; /* columnas más alineadas */
+}
+.card span {
+  font-weight: bold;
 }
 
   </style>
@@ -337,9 +342,11 @@ function mostrarTabla(data) {
             </span>
           </div>
           <div><strong>📦 Física:</strong> 
-            <span onclick="toggleFisica('${f.id}', this)" style="cursor:pointer; color:green;">
-              ${(f.factura_fisicamente || 'NO').toUpperCase()}
-            </span>
+<button onclick="togglePago('${f.id}', this)" 
+        style="padding:4px 8px; border-radius:6px; 
+               background:${(f.factura_pagada||'NO')==='SI'?'#d4edda':'#f8d7da'};">
+  ${(f.factura_pagada || 'NO').toUpperCase()}
+</button>
           </div>
           <div><strong>📷 Fotos:</strong> ${fotosHtml}</div>
         </div>
