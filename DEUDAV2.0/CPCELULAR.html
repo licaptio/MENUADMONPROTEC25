@@ -113,6 +113,21 @@
     color: #cc0000;
   }
 }
+.card {
+  background: #fff;
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  border: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+.card div {
+  margin-bottom: 6px;
+}
+.card strong {
+  color: #0056b3;
+}
 
   </style>
 </head>
@@ -228,66 +243,117 @@ async function consultarPorRFC() {
       document.getElementById("resumenConteo").innerText = mensaje;
       mostrarTabla(data);
     }
+  //------DESDE AQUI ------
+function mostrarTabla(data) {
+  const esMovil = window.innerWidth <= 768;
 
-    function mostrarTabla(data) {
-      let html = `<table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Día</th>
-            <th>UUID</th>
-            <th>RFC Emisor</th>
-            <th>Razón Social</th>
-            <th>Serie/Factura</th>
-            <th>Total</th>
-            <th>¿Pagada?</th>
-            <th>¿Física?</th>
-            <th>Fotos</th>
-          </tr>
-        </thead>
-        <tbody>`;
+  if (!esMovil) {
+    // ----------- VISTA TABLA (Escritorio) -----------
+    let html = `<table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Día</th>
+          <th>UUID</th>
+          <th>RFC Emisor</th>
+          <th>Razón Social</th>
+          <th>Serie/Factura</th>
+          <th>Total</th>
+          <th>¿Pagada?</th>
+          <th>¿Física?</th>
+          <th>Fotos</th>
+        </tr>
+      </thead>
+      <tbody>`;
 
-      for (const f of data) {
-        const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
-        const fotosArr = normalizaFotos(f.fotos);
-
-        let fotosHtml = "—";
-        if (fotosArr.length > 0) {
-          const primeros = fotosArr.slice(0, 3)
-            .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
-            .join(' ');
-          const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
-          fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
-        }
-
-        html += `<tr>
-          <td data-label="Fecha">${f.fecha || "-"}</td>
-          <td data-label="Día" style="text-align:center;">${dias}</td>
-          <td data-label="UUID">${
-            f.uuid_cfdi
-              ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
-                   target="_blank" rel="noopener noreferrer"
-                   title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
-              : "-"
-          }</td>
-          <td data-label="RFC Emisor">${f.rfc_emisor || "-"}</td>
-          <td data-label="Razón Social">${f.razon_social_emisor || "-"}</td>
-          <td data-label="Serie/Factura">${formatSerieFactura(f.serie, f.factura)}</td>
-          <td data-label="Total" style="text-align:right;">${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-          <td data-label="¿Pagada?" style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
-            ${(f.factura_pagada || 'NO').toUpperCase()}
-          </td>
-          <td data-label="¿Física?" style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
-            ${(f.factura_fisicamente || 'NO').toUpperCase()}
-          </td>
-          <td data-label="Fotos" style="text-align:center;">${fotosHtml}</td>
-        </tr>`;
+    for (const f of data) {
+      const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
+      const fotosArr = normalizaFotos(f.fotos);
+      let fotosHtml = "—";
+      if (fotosArr.length > 0) {
+        const primeros = fotosArr.slice(0, 3)
+          .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
+          .join(' ');
+        const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
+        fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
       }
 
-      html += `</tbody></table>`;
-      document.getElementById("tablaResultados").innerHTML = html;
+      html += `<tr>
+        <td>${f.fecha || "-"}</td>
+        <td style="text-align:center;">${dias}</td>
+        <td>${
+          f.uuid_cfdi
+            ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
+                 target="_blank" rel="noopener noreferrer">${f.uuid_cfdi}</a>`
+            : "-"
+        }</td>
+        <td>${f.rfc_emisor || "-"}</td>
+        <td>${f.razon_social_emisor || "-"}</td>
+        <td>${formatSerieFactura(f.serie, f.factura)}</td>
+        <td style="text-align:right;">${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+        <td style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
+          ${(f.factura_pagada || 'NO').toUpperCase()}
+        </td>
+        <td style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
+          ${(f.factura_fisicamente || 'NO').toUpperCase()}
+        </td>
+        <td style="text-align:center;">${fotosHtml}</td>
+      </tr>`;
     }
 
+    html += `</tbody></table>`;
+    document.getElementById("tablaResultados").innerHTML = html;
+  } else {
+    // ----------- VISTA TARJETAS (Móvil) -----------
+    let html = "";
+    for (const f of data) {
+      const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
+      const fotosArr = normalizaFotos(f.fotos);
+      let fotosHtml = "—";
+      if (fotosArr.length > 0) {
+        const primeros = fotosArr.slice(0, 3)
+          .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer">📷</a>`)
+          .join(' ');
+        const extra = fotosArr.length > 3 ? ` <span>+${fotosArr.length - 3}</span>` : "";
+        fotosHtml = `<div>${primeros}${extra}</div>`;
+      }
+
+      html += `
+        <div class="card">
+          <div><strong>📅 Fecha:</strong> ${f.fecha || "-"}</div>
+          <div><strong>📌 Días:</strong> ${dias}</div>
+          <div><strong>🔑 UUID:</strong> ${
+            f.uuid_cfdi
+              ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
+                   target="_blank" rel="noopener noreferrer">${f.uuid_cfdi}</a>`
+              : "-"
+          }</div>
+          <div><strong>🏢 Emisor:</strong> ${f.rfc_emisor || "-"} - ${f.razon_social_emisor || "-"}</div>
+          <div><strong>🧾 Factura:</strong> ${formatSerieFactura(f.serie, f.factura)}</div>
+          <div><strong>💲 Total:</strong> ${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+          <div><strong>✅ Pagada:</strong> 
+            <span onclick="togglePago('${f.id}', this)" style="cursor:pointer; color:${(f.factura_pagada||'NO')==='SI'?'green':'red'};">
+              ${(f.factura_pagada || 'NO').toUpperCase()}
+            </span>
+          </div>
+          <div><strong>📦 Física:</strong> 
+            <span onclick="toggleFisica('${f.id}', this)" style="cursor:pointer; color:green;">
+              ${(f.factura_fisicamente || 'NO').toUpperCase()}
+            </span>
+          </div>
+          <div><strong>📷 Fotos:</strong> ${fotosHtml}</div>
+        </div>
+      `;
+    }
+    document.getElementById("tablaResultados").innerHTML = html;
+  }
+}
+
+
+    // ----------- HASTA AQUI --- --- - ----
+    
+    
+    
     function formatSerieFactura(serie, factura) {
       const s = (serie ?? "").toString().trim();
       const f = (factura ?? "").toString().trim();
