@@ -341,13 +341,13 @@ function mostrarTabla(data) {
               ${(f.factura_pagada || 'NO').toUpperCase()}
             </span>
           </div>
-          <div><strong>📦 Física:</strong> 
-<button onclick="togglePago('${f.id}', this)" 
-        style="padding:4px 8px; border-radius:6px; 
-               background:${(f.factura_pagada||'NO')==='SI'?'#d4edda':'#f8d7da'};">
-  ${(f.factura_pagada || 'NO').toUpperCase()}
-</button>
-          </div>
+<div><strong>📦 Física:</strong> 
+  <button onclick="toggleFisica('${f.id}', this)" 
+          style="padding:4px 8px; border-radius:6px; 
+                 background:${(f.factura_fisicamente||'NO')==='SI'?'#d4edda':'#f8d7da'};">
+    ${(f.factura_fisicamente || 'NO').toUpperCase()}
+  </button>
+</div>
           <div><strong>📷 Fotos:</strong> ${fotosHtml}</div>
         </div>
       `;
