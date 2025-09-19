@@ -238,9 +238,29 @@ async function consultarPorRFC() {
         alert("Error al traer datos");
         return;
       }
+  // 3. Traer proveedor
+  const { data: proveedor } = await supabase
+    .from("proveedores")
+    .select("banco, cuenta")
+    .eq("rfc", rfc)
+    .single();
 
-      datosCrudos = data;
+  // 4. Enriquecer facturas
+  datosCrudos = facturas.map(f => ({
+    ...f,
+    banco: proveedor?.banco || "—",
+    cuenta: proveedor?.cuenta || "—"
+  }));
 
+  // 5. Mostrar mensaje + aplicar filtro inicial
+  let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${facturas.length}`;
+  if (facturas.length < count) {
+    mensaje += `\n⚠️ Solo se muestran los primeros ${facturas.length} registros (de ${count})`;
+  }
+  document.getElementById("resumenConteo").innerText = mensaje;
+
+  filtrarPagadas();  // aplica el filtro según el checkbox
+}
       let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
       if (data.length < count) {
         mensaje += `\n⚠️ Solo se muestran los primeros ${data.length} registros (de ${count})`;
@@ -350,6 +370,8 @@ function mostrarTabla(data) {
   </button>
 </div>
           <div><strong>📷 Fotos:</strong> ${fotosHtml}</div>
+          <div><strong>🏦 Banco:</strong> ${f.banco}</div>
+          <div><strong>💳 Cuenta:</strong> ${f.cuenta}</div>
         </div>
       `;
     }
