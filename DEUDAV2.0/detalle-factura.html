@@ -208,8 +208,8 @@ ${Array.isArray(f.fotos) && f.fotos[0]
       }
 
       $folioBtn.addEventListener('click', async ()=>{
-        const val = $folioInput.value.trim();
-        if (!/^\d{1,7}$/.test(val)) { showToast('Ingresa 1–7 dígitos'); $folioInput.focus(); return; }
+const val = $folioInput.value.trim();
+const padded = val.padStart(7, "0");  // asegura 7 dígitos
         $folioBtn.disabled = true; $folioBtn.textContent = 'Guardando…';
         try{
           const { error: upErr } = await supabaseClient
@@ -274,5 +274,6 @@ const ruta = `${CARPETA}/${nombreArchivo}`;
   </script>
 </body>
 </html>
+
 
 
