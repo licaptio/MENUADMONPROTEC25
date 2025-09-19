@@ -262,21 +262,23 @@ function mostrarTabla(data) {
   if (!esMovil) {
     // ----------- VISTA TABLA (Escritorio) -----------
     let html = `<table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Día</th>
-          <th>UUID</th>
-          <th>RFC Emisor</th>
-          <th>Razón Social</th>
-          <th>Serie/Factura</th>
-          <th>Total</th>
-          <th>¿Pagada?</th>
-          <th>¿Física?</th>
-          <th>Fotos</th>
-        </tr>
-      </thead>
-      <tbody>`;
+<thead>
+  <tr>
+    <th>Fecha</th>
+    <th>Día</th>
+    <th>UUID</th>
+    <th>RFC Emisor</th>
+    <th>Razón Social</th>
+    <th>Serie/Factura</th>
+    <th>Total</th>
+    <th>¿Pagada?</th>
+    <th>¿Física?</th>
+    <th>Fotos</th>
+    <th>Banco</th>
+    <th>Cuenta</th>
+  </tr>
+</thead>
+<tbody>`;
 
     for (const f of data) {
       const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
@@ -310,6 +312,8 @@ function mostrarTabla(data) {
           ${(f.factura_fisicamente || 'NO').toUpperCase()}
         </td>
         <td style="text-align:center;">${fotosHtml}</td>
+        <td>${f.banco || "—"}</td>
+        <td>${f.cuenta || "—"}</td>
       </tr>`;
     }
 
