@@ -151,10 +151,11 @@
 
   <button onclick="consultarPorRFC()">🔎 Consultar</button>
 
-  <label style="margin-left:1rem;">
-    <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()" checked>
-    Mostrar pagadas
-  </label>
+<label style="margin-left:1rem;">
+  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
+  Mostrar pagadas
+</label>
+
 
   <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
   <div id="tablaResultados"></div>
@@ -246,7 +247,7 @@ async function consultarPorRFC() {
       }
 
       document.getElementById("resumenConteo").innerText = mensaje;
-      mostrarTabla(data);
+      filtrarPagadas();  // aplica el filtro según el estado del checkbox
     }
   //------DESDE AQUI ------
 function mostrarTabla(data) {
