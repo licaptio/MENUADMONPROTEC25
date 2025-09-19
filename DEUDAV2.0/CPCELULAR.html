@@ -225,19 +225,21 @@ async function consultarPorRFC() {
         return;
       }
 
-  const { data, error } = await supabase
+  // 2. Traer facturas
+  const { data: facturas, error } = await supabase
     .from(tabla)
     .select("*")
     .eq("rfc_emisor", rfc)
-    .gte("fecha", limiteISO)   // 👈 aquí también
+    .gte("fecha", limiteISO)
     .order("fecha", { ascending: true })
     .range(0, 9999);
 
-      if (error) {
-        console.error("❌ Error al traer datos:", error);
-        alert("Error al traer datos");
-        return;
-      }
+  if (error) {
+    console.error("❌ Error al traer datos:", error);
+    alert("Error al traer datos");
+    return;
+  }
+
   // 3. Traer proveedor
   const { data: proveedor } = await supabase
     .from("proveedores")
@@ -259,7 +261,7 @@ async function consultarPorRFC() {
   }
   document.getElementById("resumenConteo").innerText = mensaje;
 
-  filtrarPagadas();  // aplica el filtro según el checkbox
+  filtrarPagadas();
 }
       let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
       if (data.length < count) {
