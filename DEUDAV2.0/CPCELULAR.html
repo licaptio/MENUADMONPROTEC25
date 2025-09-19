@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta de Facturas por RFC</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    button {
+      margin: 1rem 0;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.9em;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    td {
+      background-color: #fff;
+    }
+    .uuid-link { color:#0b6efd; text-decoration:underline; }
+    .uuid-link:hover { text-decoration:none; }
+
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead { display: none; }
+
+  tr {
+    margin-bottom: 18px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+  }
+
+  td {
+    border: none;
+    border-bottom: 1px dashed #ddd;
+    padding: 10px 6px;
+    font-size: 0.95rem;
+  }
+  td:last-child {
+    border-bottom: none;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+    color: #0056b3;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* 💲 Total resaltado */
+  td[data-label="Total"] {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #28a745;
+    text-align: right;
+  }
+
+  /* Estado Pagada/Física con chips */
+  td[data-label="¿Pagada?"], td[data-label="¿Física?"] {
+    text-align: center;
+  }
+  td[data-label="¿Pagada?"]::before, td[data-label="¿Física?"]::before {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  td[data-label="¿Pagada?"], td[data-label="¿Física?"] {
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  td[data-label="¿Pagada?"]:contains("SI"),
+  td[data-label="¿Física?"]:contains("SI") {
+    background: #e6ffed;
+    color: #1e7e34;
+  }
+  td[data-label="¿Pagada?"]:contains("NO"),
+  td[data-label="¿Física?"]:contains("NO") {
+    background: #fff3f3;
+    color: #cc0000;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <h2>🔍 Consulta de Facturas por RFC</h2>
+
+  <label for="rfcFiltro"><strong>RFC:</strong></label>
+  <select id="rfcFiltro" onchange="sincronizarNombre()">
+    <option value="">-- Selecciona uno --</option>
+  </select>
+
+  <label for="nombreFiltro" style="margin-left: 1rem;"><strong>Nombre:</strong></label>
+  <select id="nombreFiltro" onchange="sincronizarRFC()">
+    <option value="">-- Selecciona uno --</option>
+  </select>
+
+  <button onclick="consultarPorRFC()">🔎 Consultar</button>
+
+  <label style="margin-left:1rem;">
+    <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()" checked>
+    Mostrar pagadas
+  </label>
+
+  <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
+  <div id="tablaResultados"></div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://cvpbtjlupswbyxenugpz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+    );
+
+    const tabla = "deuda_limpia_pdd";
+    let datosCrudos = [];
+
+    cargarRFCs();
+
+    async function cargarRFCs() {
+      const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
+      if (error) {
+        console.error("❌ Error al obtener RFCs:", error);
+        alert("Error al obtener datos únicos");
+        return;
+      }
+
+      const selectRFC = document.getElementById("rfcFiltro");
+      const selectNombre = document.getElementById("nombreFiltro");
+
+      for (const fila of data) {
+        const opt1 = document.createElement("option");
+        opt1.value = fila.rfc;
+        opt1.textContent = fila.rfc;
+        selectRFC.appendChild(opt1);
+      }
+
+      const ordenadoPorNombre = [...data].sort((a, b) => a.nombre.localeCompare(b.nombre));
+      for (const fila of ordenadoPorNombre) {
+        const opt2 = document.createElement("option");
+        opt2.value = fila.rfc;
+        opt2.textContent = fila.nombre;
+        selectNombre.appendChild(opt2);
+      }
+    }
+
+async function consultarPorRFC() {
+  const rfc = document.getElementById("rfcFiltro").value;
+  if (!rfc) {
+    alert("Selecciona un RFC válido");
+    return;
+  }
+
+  document.getElementById("resumenConteo").innerText = "";
+  document.getElementById("tablaResultados").innerHTML = "";
+
+  const hoy = new Date();
+  const limite = new Date();
+  limite.setDate(hoy.getDate() - 60); // 60 días atrás
+  const limiteISO = limite.toISOString().split("T")[0]; // yyyy-mm-dd
+
+  const { count, error: errorConteo } = await supabase
+    .from(tabla)
+    .select("*", { count: "exact", head: true })
+    .eq("rfc_emisor", rfc)
+    .gte("fecha", limiteISO);  // 👈 filtro de 60 días
+
+      if (errorConteo) {
+        console.error("❌ Error al contar registros:", errorConteo);
+        alert("Error al contar registros");
+        return;
+      }
+
+  const { data, error } = await supabase
+    .from(tabla)
+    .select("*")
+    .eq("rfc_emisor", rfc)
+    .gte("fecha", limiteISO)   // 👈 aquí también
+    .order("fecha", { ascending: true })
+    .range(0, 9999);
+
+      if (error) {
+        console.error("❌ Error al traer datos:", error);
+        alert("Error al traer datos");
+        return;
+      }
+
+      datosCrudos = data;
+
+      let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
+      if (data.length < count) {
+        mensaje += `\n⚠️ Solo se muestran los primeros ${data.length} registros (de ${count})`;
+      }
+
+      document.getElementById("resumenConteo").innerText = mensaje;
+      mostrarTabla(data);
+    }
+
+    function mostrarTabla(data) {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Día</th>
+            <th>UUID</th>
+            <th>RFC Emisor</th>
+            <th>Razón Social</th>
+            <th>Serie/Factura</th>
+            <th>Total</th>
+            <th>¿Pagada?</th>
+            <th>¿Física?</th>
+            <th>Fotos</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      for (const f of data) {
+        const dias = f.fecha ? calcDiasDesdeHoy(f.fecha) : "—";
+        const fotosArr = normalizaFotos(f.fotos);
+
+        let fotosHtml = "—";
+        if (fotosArr.length > 0) {
+          const primeros = fotosArr.slice(0, 3)
+            .map((url, i) => `<a href="${url}" target="_blank" rel="noopener noreferrer" title="Foto ${i+1}">📷</a>`)
+            .join(' ');
+          const extra = fotosArr.length > 3 ? ` <span title="Más fotos">+${fotosArr.length - 3}</span>` : "";
+          fotosHtml = `<span class="fotos-icos">${primeros}${extra}</span>`;
+        }
+
+        html += `<tr>
+          <td data-label="Fecha">${f.fecha || "-"}</td>
+          <td data-label="Día" style="text-align:center;">${dias}</td>
+          <td data-label="UUID">${
+            f.uuid_cfdi
+              ? `<a class="uuid-link" href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}"
+                   target="_blank" rel="noopener noreferrer"
+                   title="Ver detalle de la factura">${f.uuid_cfdi}</a>`
+              : "-"
+          }</td>
+          <td data-label="RFC Emisor">${f.rfc_emisor || "-"}</td>
+          <td data-label="Razón Social">${f.razon_social_emisor || "-"}</td>
+          <td data-label="Serie/Factura">${formatSerieFactura(f.serie, f.factura)}</td>
+          <td data-label="Total" style="text-align:right;">${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+          <td data-label="¿Pagada?" style="text-align:center; cursor:pointer; color:blue;" onclick="togglePago('${f.id}', this)">
+            ${(f.factura_pagada || 'NO').toUpperCase()}
+          </td>
+          <td data-label="¿Física?" style="text-align:center; cursor:pointer; color:green;" onclick="toggleFisica('${f.id}', this)">
+            ${(f.factura_fisicamente || 'NO').toUpperCase()}
+          </td>
+          <td data-label="Fotos" style="text-align:center;">${fotosHtml}</td>
+        </tr>`;
+      }
+
+      html += `</tbody></table>`;
+      document.getElementById("tablaResultados").innerHTML = html;
+    }
+
+    function formatSerieFactura(serie, factura) {
+      const s = (serie ?? "").toString().trim();
+      const f = (factura ?? "").toString().trim();
+      if (s && f) return `${s}\u2011${f}`;
+      if (f) return f;
+      if (s) return s;
+      return "—";
+    }
+
+    function calcDiasDesdeHoy(fechaISO) {
+      const f = new Date(fechaISO);
+      const hoy = new Date();
+      const utcF = Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate());
+      const utcHoy = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+      const diff = Math.floor((utcHoy - utcF) / (1000 * 60 * 60 * 24));
+      return diff >= 0 ? diff : "—";
+    }
+
+    function normalizaFotos(fotos) {
+      if (!fotos) return [];
+      if (Array.isArray(fotos)) return fotos.filter(Boolean);
+      if (typeof fotos === "string") {
+        try {
+          const arr = JSON.parse(fotos);
+          if (Array.isArray(arr)) return arr.filter(Boolean);
+        } catch {}
+        return fotos.split(",").map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
+
+    async function togglePago(id, celda) {
+      const actual = celda.textContent.trim().toUpperCase();
+      const nuevo = actual === "SI" ? "NO" : "SI";
+      const { error } = await supabase
+        .from(tabla)
+        .update({ factura_pagada: nuevo })
+        .eq("id", id);
+      if (error) {
+        alert("❌ Error al actualizar en Supabase");
+        console.error(error);
+        return;
+      }
+      celda.textContent = nuevo;
+      celda.style.color = (nuevo === "SI") ? "green" : "red";
+    }
+
+    async function toggleFisica(id, celda) {
+      const actual = celda.textContent.trim().toUpperCase();
+      const nuevo = actual === "SI" ? "NO" : "SI";
+      const { error } = await supabase
+        .from(tabla)
+        .update({ factura_fisicamente: nuevo })
+        .eq("id", id);
+      if (error) {
+        alert("❌ Error al actualizar en Supabase");
+        console.error(error);
+        return;
+      }
+      celda.textContent = nuevo;
+    }
+
+    function sincronizarNombre() {
+      const rfc = document.getElementById("rfcFiltro").value;
+      const selectNombre = document.getElementById("nombreFiltro");
+      for (const opt of selectNombre.options) {
+        if (opt.value === rfc) {
+          selectNombre.value = rfc;
+          return;
+        }
+      }
+      selectNombre.value = "";
+    }
+
+    function sincronizarRFC() {
+      const rfc = document.getElementById("nombreFiltro").value;
+      const selectRFC = document.getElementById("rfcFiltro");
+      for (const opt of selectRFC.options) {
+        if (opt.value === rfc) {
+          selectRFC.value = rfc;
+          return;
+        }
+      }
+      selectRFC.value = "";
+    }
+
+    function filtrarPagadas() {
+      const mostrar = document.getElementById("togglePagadas").checked;
+      let filtrados = datosCrudos;
+      if (!mostrar) {
+        filtrados = datosCrudos.filter(f => (f.factura_pagada || "NO").toUpperCase() !== "SI");
+      }
+      mostrarTabla(filtrados);
+    }
+  </script>
+</body>
+</html>
