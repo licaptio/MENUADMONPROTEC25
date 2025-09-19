@@ -87,9 +87,9 @@
       }
 
       // usa REST con backticks bien puestos
-      const url = uuid
-        ? ${supabaseUrl}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}
-        : ${supabaseUrl}/rest/v1/${TABLA}?factura=eq.${encodeURIComponent(folio)};
+const url = uuid
+  ? `${supabaseUrl}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}`
+  : `${supabaseUrl}/rest/v1/${TABLA}?factura=eq.${encodeURIComponent(folio)}`;
 
       const res = await fetch(url, { headers: { apikey: apiKey } });
       const json = await res.json();
@@ -131,7 +131,7 @@
         <div class="campo campo-inline">
           <span>UUID:</span>
           <span id="uuidText">${f.uuid_cfdi ?? '-'}</span>
-          ${f.uuid_cfdi ? <button type="button" class="mini-btn" onclick="copiarUUID('${f.uuid_cfdi}')">📋 Copiar</button> : ''}
+          ${f.uuid_cfdi ? `<button type="button" class="mini-btn" onclick="copiarUUID('${f.uuid_cfdi}')">📋 Copiar</button>` : ''}
         </div>
         <div class="campo"><span>Factura:</span> ${f.factura ?? '-'}</div>
         <div class="campo"><span>Razón Social Emisor:</span> ${f.razon_social_emisor ?? '-'}</div>
@@ -151,7 +151,7 @@
               </tr>
             </thead>
             <tbody>
-              ${conceptosHTML || <tr><td colspan="6">No hay conceptos registrados.</td></tr>}
+              ${conceptosHTML || `<tr><td colspan="6">No hay conceptos registrados.</td></tr>`}
             </tbody>
             <tfoot>
               <tr><td colspan="5" style="text-align:right;font-weight:bold;">SUBTOTAL</td><td>${formatoPesos.format(subtotal)}</td></tr>
@@ -223,7 +223,7 @@
       });
 
       function pintarFolioHint(){
-        $folioHint.textContent = $folioInput.value ? Actual: ${$folioInput.value} : 'Sin folio capturado';
+        $folioHint.textContent = $folioInput.value ? `Actual: ${$folioInput.value}` : 'Sin folio capturado';
       }
     }
 
@@ -234,8 +234,8 @@
       if (!file) return alert("Selecciona o toma una foto 📷");
       if (!uuid)  return alert("Se requiere ?uuid= para asociar la foto.");
 
-      const nombreArchivo = ${crypto.randomUUID()}.jpg;
-      const ruta = ${CARPETA}/${nombreArchivo};
+const nombreArchivo = `${crypto.randomUUID()}.jpg`;
+const ruta = `${CARPETA}/${nombreArchivo}`;
 
       const { error: upErr } = await supabaseClient.storage
         .from(BUCKET)
@@ -273,3 +273,4 @@
   </script>
 </body>
 </html>
+
