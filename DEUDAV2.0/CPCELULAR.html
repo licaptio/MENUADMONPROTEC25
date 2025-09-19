@@ -241,11 +241,12 @@ async function consultarPorRFC() {
   }
 
   // 3. Traer proveedor
-  const { data: proveedor } = await supabase
-  .from("proveedores")
-  .select("banco, cuenta")
-  .eq("rfc", rfc.trim().toUpperCase())
-  .maybeSingle();
+const { data: facturas, error } = await supabase
+  .from("v_deuda_proveedores")
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO)
+  .order("fecha", { ascending: true });
 
   // 4. Enriquecer facturas
   datosCrudos = facturas.map(f => ({
