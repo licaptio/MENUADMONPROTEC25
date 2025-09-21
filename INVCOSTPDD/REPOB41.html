@@ -37,12 +37,18 @@
     // -------- MAPA DE PRODUCTOS --------
     let productosMap = {};
 
+    function normalizarCodigo(cod) {
+      if (!cod) return "";
+      return String(cod).replace(/^0+/, ""); // quita ceros a la izquierda
+    }
+
     async function cargarProductos() {
       const snap = await getDocs(collection(dbProd, "productos"));
       snap.forEach(doc => {
         const d = doc.data();
         if (d.codigoBarra) {
-          productosMap[d.codigoBarra] = {
+          const codNorm = normalizarCodigo(d.codigoBarra);
+          productosMap[codNorm] = {
             descripcion: d.concepto,
             costo: d.costoSinImpuesto
           };
@@ -66,7 +72,8 @@
         const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos"));
         escaneosSnap.forEach(it => {
           const d = it.data();
-          const prod = productosMap[d.codigo] || { descripcion: d.descripcion || "N/D", costo: 0 };
+          const codNorm = normalizarCodigo(d.codigo);
+          const prod = productosMap[codNorm] || { descripcion: d.descripcion || "N/D", costo: 0 };
 
           registros.push({
             usuario,
