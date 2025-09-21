@@ -54,14 +54,14 @@
       await cargarProductos();
 
       let registros = [];
-      const usuariosSnap = await getDocs(collection(dbInv, "usuarios"));
+      const usuariosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios"));
       console.log("Usuarios encontrados:", usuariosSnap.size);
 
       for (let usuarioDoc of usuariosSnap.docs) {
         const usuario = usuarioDoc.id;
         console.log("Leyendo usuario:", usuario);
 
-        const escaneosSnap = await getDocs(collection(dbInv, "usuarios", usuario, "escaneos"));
+        const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos"));
         escaneosSnap.forEach(it => {
           const d = it.data();
           const prod = productosMap[d.codigo] || { descripcion: d.descripcion || "N/D", costo: 0 };
@@ -161,4 +161,3 @@
   <div id="tabla">Cargando...</div>
 </body>
 </html>
-
