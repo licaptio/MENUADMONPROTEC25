@@ -17,6 +17,7 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
+    // Inicializar app
     const appInv = initializeApp(configInv, "appInv");
     const dbInv = getFirestore(appInv);
 
@@ -72,7 +73,8 @@
       const subset = datosGlobal.slice(inicio, fin);
 
       let html = `
-        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <table border="1" cellspacing="0" cellpadding="4" 
+               style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
             <tr style="background:#eee;">
               <th>Usuario</th>
