@@ -2,17 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Migrar Inventarios – Lizandro</title>
-  <style>
-    #progress-container {width:100%; background:#eee; border:1px solid #aaa; height:20px; margin-top:10px;}
-    #progress-bar {height:100%; width:0%; background:#2196f3; text-align:center; color:white; font-size:12px;}
-  </style>
+  <title>Reporte Crudo – Bodega 41</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, setDoc, doc } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // --- CONFIG FIREBASE ---
+    // -------- CONFIG FIREBASE --------
     const configInv = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -25,61 +20,101 @@
     const app = initializeApp(configInv);
     const db = getFirestore(app);
 
-    async function migrar() {
-      const logs = document.getElementById("logs");
-      logs.innerHTML = "Iniciando migración de Lizandro...<br>";
+    // -------- CARGA INVENTARIOS CRUDO --------
+    async function cargarInventarios() {
+      let registros = [];
 
-      let totalDocs = 0;
-      let procesados = 0;
-
-      // 1. Referencia directa a los escaneos de Lizandro
-      const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", "Lizandro", "escaneos");
+      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
       const escaneosSnap = await getDocs(escaneosRef);
 
-      if (escaneosSnap.empty) {
-        logs.innerHTML += "⚠️ No se encontraron escaneos en Lizandro<br>";
-        return;
-      }
+      escaneosSnap.forEach(it => {
+        const d = it.data();
+        registros.push({
+          usuario: d.usuario,
+          codigo: d.codigo,
+          descripcion: d.descripcion,
+          cantidad: d.cantidad,
+          fecha: d.fecha,
+          sucursal: d.sucursal,
+          folioRegistro: d.folioRegistro,
+          folioSesion: d.folioSesion,
+          epochMs: d.epochMs
+        });
+      });
 
-      const totalEscaneos = escaneosSnap.size;
-      logs.innerHTML += `Escaneos encontrados en Lizandro: ${totalEscaneos}<br>`;
-
-      // 2. Copiar cada documento a la colección plana
-      for (let escaneoDoc of escaneosSnap.docs) {
-        const data = escaneoDoc.data();
-        data.usuario = "Lizandro"; // aseguramos que quede el usuario
-
-        const destinoRef = doc(db, "inventarios", "Bodega 41 reportes", "escaneosPlano", escaneoDoc.id);
-        await setDoc(destinoRef, data);
-
-        totalDocs++;
-        procesados++;
-        actualizarBarra(procesados, totalEscaneos);
-      }
-
-      logs.innerHTML += `<br><b>✅ Migración completada de Lizandro. Total documentos copiados: ${totalDocs}</b>`;
+      console.log("Registros capturados:", registros.length);
+      renderTabla(registros);
     }
 
-    function actualizarBarra(actual, total) {
-      const bar = document.getElementById("progress-bar");
-      const pct = Math.round((actual / total) * 100);
-      bar.style.width = pct + "%";
-      bar.innerText = pct + "%";
+    // -------- PAGINACIÓN --------
+    let datosGlobal = [];
+    let pagina = 1;
+    const porPagina = 50;
+
+    function renderTabla(datos) {
+      datosGlobal = datos;
+      mostrarPagina(1);
     }
 
-    window.migrar = migrar;
+    function mostrarPagina(num) {
+      pagina = num;
+      const inicio = (pagina - 1) * porPagina;
+      const fin = inicio + porPagina;
+      const subset = datosGlobal.slice(inicio, fin);
+
+      let totalCantidad = subset.reduce((acc, r) => acc + (Number(r.cantidad) || 0), 0);
+
+      let html = `
+        <h3 style="margin-bottom:5px;">Total Cantidad en esta página: ${totalCantidad}</h3>
+        <table border="1" cellspacing="0" cellpadding="4" 
+               style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:#eee;">
+              <th>Usuario</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Fecha</th>
+              <th>Sucursal</th>
+              <th>Folio Registro</th>
+              <th>Folio Sesión</th>
+              <th>EpochMs</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      subset.forEach(r => {
+        html += `<tr>
+          <td>${r.usuario}</td>
+          <td>${r.codigo}</td>
+          <td>${r.descripcion}</td>
+          <td style="text-align:right;">${r.cantidad}</td>
+          <td>${r.fecha}</td>
+          <td>${r.sucursal}</td>
+          <td>${r.folioRegistro}</td>
+          <td>${r.folioSesion}</td>
+          <td>${r.epochMs}</td>
+        </tr>`;
+      });
+
+      html += `</tbody></table>`;
+
+      const totalPaginas = Math.ceil(datosGlobal.length / porPagina) || 1;
+      html += `<div style="margin-top:10px; text-align:center;">
+        Página ${pagina} de ${totalPaginas} 
+        <button onclick="mostrarPagina(${pagina-1})" ${pagina==1?"disabled":""}>Anterior</button>
+        <button onclick="mostrarPagina(${pagina+1})" ${pagina==totalPaginas?"disabled":""}>Siguiente</button>
+      </div>`;
+
+      document.getElementById("tabla").innerHTML = html;
+    }
+
+    cargarInventarios();
   </script>
 </head>
 <body>
-  <h2>Migración de Inventarios – Lizandro → Reportes</h2>
-  <button onclick="migrar()">Migrar Ahora</button>
-  
-  <div id="progress-container">
-    <div id="progress-bar">0%</div>
-  </div>
-  
-  <div id="logs" style="margin-top:20px; font-family: monospace; font-size: 13px; background:#f7f7f7; padding:10px; border:1px solid #ccc; max-height:300px; overflow:auto;">
-    Listo para migrar solo Lizandro...
-  </div>
+  <h2>Reporte Crudo – Bodega 41 (escaneosPlano)</h2>
+  <div id="tabla">Cargando...</div>
 </body>
 </html>
