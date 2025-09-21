@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Reporte Costeado – Bodega 41</title>
+  <title>Reporte Crudo – Bodega 41</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
@@ -22,70 +22,103 @@
     const app = initializeApp(configInv);
     const db = getFirestore(app);
 
-    // -------- VARIABLES DE PAGINACIÓN --------
-    let ultimoDoc = null;
-    let paginaActual = 1;
+    // -------- VARIABLES --------
     const porPagina = 50;
+    let ultimaDoc = null;
+    let primeraDoc = null;
     let cachePaginas = [];
+    let pagina = 0;
 
-    async function cargarPagina(direccion = "inicio") {
+    let totalGlobalCantidad = 0;
+    let totalGlobalImporte = 0;
+
+    // -------- CARGAR TOTALES GLOBALES --------
+    async function calcularTotalesGlobales() {
+      totalGlobalCantidad = 0;
+      totalGlobalImporte = 0;
+
       const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
-      let q;
+      const q = query(escaneosRef);
+      const snap = await getDocs(q);
 
-      if (direccion === "inicio") {
-        q = query(
-          escaneosRef,
-          orderBy("usuario"),      // primero usuario alfabético
-          orderBy("epochMs"),      // después fecha
-          limit(porPagina)
-        );
-        paginaActual = 1;
-        cachePaginas = [];
-      } 
-      else if (direccion === "siguiente" && ultimoDoc) {
-        q = query(
-          escaneosRef,
+      snap.forEach(doc => {
+        const d = doc.data();
+        const cantidad = Number(d.cantidad) || 0;
+        const costo = Number(d.costo) || 0;
+        totalGlobalCantidad += cantidad;
+        totalGlobalImporte += cantidad * costo;
+      });
+
+      document.getElementById("totalesGlobales").innerHTML =
+        `<b>Totales Globales → Cantidad: ${totalGlobalCantidad} | Importe: $${totalGlobalImporte.toFixed(2)}</b>`;
+    }
+
+    // -------- CARGAR UNA PÁGINA --------
+    async function cargarPagina(next = true) {
+      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
+      let q = query(escaneosRef,
+        orderBy("usuario"),
+        orderBy("fecha"),
+        limit(porPagina)
+      );
+
+      if (next && ultimaDoc) {
+        q = query(escaneosRef,
           orderBy("usuario"),
-          orderBy("epochMs"),
-          startAfter(ultimoDoc),
+          orderBy("fecha"),
+          startAfter(ultimaDoc),
           limit(porPagina)
         );
-        paginaActual++;
-      } 
-      else if (direccion === "anterior" && cachePaginas[paginaActual - 2]) {
-        renderTabla(cachePaginas[paginaActual - 2], paginaActual - 1);
-        paginaActual--;
-        return;
-      } 
-      else {
+      } else if (!next && pagina > 1) {
+        // recuperar del cache
+        pagina--;
+        renderTabla(cachePaginas[pagina - 1]);
         return;
       }
 
       const snap = await getDocs(q);
+
+      if (snap.empty) return;
+
+      pagina++;
+      ultimaDoc = snap.docs[snap.docs.length - 1];
+      if (pagina === 1) primeraDoc = snap.docs[0];
+
       let registros = [];
-      snap.forEach(doc => registros.push(doc.data()));
+      snap.forEach(it => {
+        const d = it.data();
+        registros.push({
+          usuario: d.usuario,
+          codigo: d.codigo,
+          descripcion: d.descripcion,
+          cantidad: Number(d.cantidad) || 0,
+          costo: Number(d.costo) || 0,
+          fecha: d.fecha,
+          sucursal: d.sucursal,
+          folioRegistro: d.folioRegistro,
+          folioSesion: d.folioSesion,
+          epochMs: d.epochMs
+        });
+      });
 
-      if (!snap.empty) {
-        ultimoDoc = snap.docs[snap.docs.length - 1];
-      }
-
-      if (direccion !== "anterior") {
-        cachePaginas[paginaActual - 1] = registros;
-      }
-
-      renderTabla(registros, paginaActual);
+      cachePaginas[pagina - 1] = registros;
+      renderTabla(registros);
     }
 
-    // -------- RENDER --------
-    function renderTabla(datos, pagina) {
-      let totalCantidad = datos.reduce((acc, r) => acc + (Number(r.cantidad) || 0), 0);
-      let totalCosto = datos.reduce((acc, r) => acc + ((Number(r.cantidad) || 0) * (Number(r.costo) || 0)), 0);
+    // -------- RENDER TABLA --------
+    function renderTabla(registros) {
+      let totalCantidad = 0;
+      let totalImporte = 0;
+      registros.forEach(r => {
+        totalCantidad += r.cantidad;
+        totalImporte += r.cantidad * r.costo;
+      });
 
       let html = `
-        <h3 style="margin-bottom:5px;">
-          Página ${pagina} – Total Cantidad: ${totalCantidad} | Total Costo: $${totalCosto.toFixed(2)}
-        </h3>
-        <table border="1" cellspacing="0" cellpadding="4" 
+        <div style="margin-bottom:10px;">
+          <b>Totales Página → Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}</b>
+        </div>
+        <table border="1" cellspacing="0" cellpadding="4"
                style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
             <tr style="background:#eee;">
@@ -93,8 +126,8 @@
               <th>Código</th>
               <th>Descripción</th>
               <th>Cantidad</th>
-              <th>Costo Unitario</th>
-              <th>Subtotal</th>
+              <th>Costo</th>
+              <th>Importe</th>
               <th>Fecha</th>
               <th>Sucursal</th>
               <th>Folio Registro</th>
@@ -104,41 +137,42 @@
           <tbody>
       `;
 
-      datos.forEach(r => {
-        const cantidad = Number(r.cantidad) || 0;
-        const costo = Number(r.costo) || 0;
-        const subtotal = cantidad * costo;
+      registros.forEach(r => {
         html += `<tr>
-          <td>${r.usuario || ""}</td>
-          <td>${r.codigo || ""}</td>
-          <td>${r.descripcion || ""}</td>
-          <td style="text-align:right;">${cantidad}</td>
-          <td style="text-align:right;">$${costo.toFixed(2)}</td>
-          <td style="text-align:right;">$${subtotal.toFixed(2)}</td>
-          <td>${r.fecha || ""}</td>
-          <td>${r.sucursal || ""}</td>
-          <td>${r.folioRegistro || ""}</td>
-          <td>${r.folioSesion || ""}</td>
+          <td>${r.usuario}</td>
+          <td>${r.codigo}</td>
+          <td>${r.descripcion}</td>
+          <td style="text-align:right;">${r.cantidad}</td>
+          <td style="text-align:right;">${r.costo.toFixed(2)}</td>
+          <td style="text-align:right;">${(r.cantidad * r.costo).toFixed(2)}</td>
+          <td>${r.fecha}</td>
+          <td>${r.sucursal}</td>
+          <td>${r.folioRegistro}</td>
+          <td>${r.folioSesion}</td>
         </tr>`;
       });
 
-      html += `</tbody></table>
-        <div style="margin-top:10px; text-align:center;">
-          <button onclick="cargarPagina('anterior')" ${pagina===1 ? "disabled":""}>Anterior</button>
-          <button onclick="cargarPagina('siguiente')" ${datos.length < porPagina ? "disabled":""}>Siguiente</button>
-        </div>
-      `;
+      html += `</tbody></table>`;
+
+      html += `<div style="margin-top:10px; text-align:center;">
+        Página ${pagina}
+        <button onclick="cargarPagina(false)" ${pagina==1?"disabled":""}>Anterior</button>
+        <button onclick="cargarPagina(true)">Siguiente</button>
+      </div>`;
 
       document.getElementById("tabla").innerHTML = html;
     }
 
-    // iniciar
-    cargarPagina("inicio");
-    window.cargarPagina = cargarPagina;
+    // -------- INICIO --------
+    calcularTotalesGlobales(); // calcula solo una vez
+    cargarPagina(true);        // carga primera página
   </script>
 </head>
 <body>
-  <h2>Reporte Costeado – Bodega 41</h2>
+  <h2>Reporte Crudo – Bodega 41 (escaneosPlano)</h2>
+  <div id="totalesGlobales" style="margin:10px 0; font-size:14px; color:#00416A;">
+    Calculando totales globales...
+  </div>
   <div id="tabla">Cargando...</div>
 </body>
 </html>
