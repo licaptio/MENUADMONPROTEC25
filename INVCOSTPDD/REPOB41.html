@@ -24,8 +24,8 @@
     async function cargarInventarios() {
       let registros = [];
 
-      // usuarios está dentro del documento "Bodega 41"
-      const usuariosRef = collection(dbInv, "inventarios", "Bodega 41", "usuarios");
+      // referencia a los usuarios bajo "Bodega 41"
+      const usuariosRef = collection(dbInv, "inventarios/Bodega 41/usuarios");
       const usuariosSnap = await getDocs(usuariosRef);
       console.log("Usuarios encontrados:", usuariosSnap.size);
 
@@ -33,22 +33,22 @@
         const usuario = usuarioDoc.id;
         console.log("Leyendo usuario:", usuario);
 
-        // ahora bajo "escaneos" de cada usuario
-        const escaneosRef = collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos");
+        // escaneos bajo cada usuario
+        const escaneosRef = collection(dbInv, `inventarios/Bodega 41/usuarios/${usuario}/escaneos`);
         const escaneosSnap = await getDocs(escaneosRef);
 
         escaneosSnap.forEach(it => {
           const d = it.data();
           registros.push({
             usuario,
-            codigo: d.codigo,
-            descripcion: d.descripcion,
-            cantidad: d.cantidad,
-            fecha: d.fecha,
-            sucursal: d.sucursal,
-            folioRegistro: d.folioRegistro,
-            folioSesion: d.folioSesion,
-            epochMs: d.epochMs
+            codigo: d.codigo || "",
+            descripcion: d.descripcion || "",
+            cantidad: d.cantidad || 0,
+            fecha: d.fecha || "",
+            sucursal: d.sucursal || "",
+            folioRegistro: d.folioRegistro || "",
+            folioSesion: d.folioSesion || "",
+            epochMs: d.epochMs || ""
           });
         });
       }
@@ -123,7 +123,6 @@
 </head>
 <body>
   <h2>Reporte Crudo – Bodega 41</h2>
-  <!-- 🔑 Este div es donde se inyecta la tabla -->
   <div id="tabla">Cargando...</div>
 </body>
 </html>
