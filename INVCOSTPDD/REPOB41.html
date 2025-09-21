@@ -49,38 +49,37 @@
       console.log("Productos cargados:", Object.keys(productosMap).length);
     }
 
-// -------- CARGA INVENTARIOS --------
-async function cargarInventarios() {
-  await cargarProductos();
+    // -------- CARGA INVENTARIOS --------
+    async function cargarInventarios() {
+      await cargarProductos();
 
-  let registros = [];
-  const usuariosSnap = await getDocs(collection(dbInv, "inventarios/Bodega 41/usuarios"));
-  console.log("Usuarios encontrados:", usuariosSnap.size);
+      let registros = [];
+      const usuariosSnap = await getDocs(collection(dbInv, "usuarios"));
+      console.log("Usuarios encontrados:", usuariosSnap.size);
 
-  for (let usuarioDoc of usuariosSnap.docs) {
-    const usuario = usuarioDoc.id;
-    console.log("Leyendo usuario:", usuario);
+      for (let usuarioDoc of usuariosSnap.docs) {
+        const usuario = usuarioDoc.id;
+        console.log("Leyendo usuario:", usuario);
 
-    const escaneosSnap = await getDocs(collection(dbInv, `inventarios/Bodega 41/usuarios/${usuario}/escaneos`));
-    escaneosSnap.forEach(it => {
-      const d = it.data();
-      const prod = productosMap[d.codigo] || { descripcion: d.descripcion || "N/D", costo: 0 };
+        const escaneosSnap = await getDocs(collection(dbInv, "usuarios", usuario, "escaneos"));
+        escaneosSnap.forEach(it => {
+          const d = it.data();
+          const prod = productosMap[d.codigo] || { descripcion: d.descripcion || "N/D", costo: 0 };
 
-      registros.push({
-        usuario,
-        codigo: d.codigo,
-        descripcion: prod.descripcion || d.descripcion,
-        cantidad: d.cantidad,
-        costo: prod.costo,
-        total: d.cantidad * prod.costo
-      });
-    });
-  }
+          registros.push({
+            usuario,
+            codigo: d.codigo,
+            descripcion: prod.descripcion || d.descripcion,
+            cantidad: d.cantidad,
+            costo: prod.costo,
+            total: d.cantidad * prod.costo
+          });
+        });
+      }
 
-  console.log("Registros capturados:", registros.length);
-  renderTabla(registros);
-}
-
+      console.log("Registros capturados:", registros.length);
+      renderTabla(registros);
+    }
 
     // -------- PAGINACIÓN --------
     let datosGlobal = [];
@@ -162,4 +161,3 @@ async function cargarInventarios() {
   <div id="tabla">Cargando...</div>
 </body>
 </html>
-
