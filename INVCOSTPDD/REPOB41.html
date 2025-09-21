@@ -41,10 +41,12 @@
       const snap = await getDocs(collection(dbProd, "productos"));
       snap.forEach(doc => {
         const d = doc.data();
-        productosMap[d.codigoBarra] = {
-          descripcion: d.concepto,
-          costo: d.costoSinImpuesto
-        };
+        if (d.codigoBarra) {
+          productosMap[d.codigoBarra] = {
+            descripcion: d.concepto,
+            costo: d.costoSinImpuesto
+          };
+        }
       });
       console.log("Productos cargados:", Object.keys(productosMap).length);
     }
