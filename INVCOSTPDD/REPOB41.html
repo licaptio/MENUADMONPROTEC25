@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Migrar Inventarios Bodega 41</title>
+  <title>Migrar Inventarios – Blanca</title>
   <style>
     #progress-container {width:100%; background:#eee; border:1px solid #aaa; height:20px; margin-top:10px;}
     #progress-bar {height:100%; width:0%; background:#4caf50; text-align:center; color:white; font-size:12px;}
@@ -27,54 +27,37 @@
 
     async function migrar() {
       const logs = document.getElementById("logs");
-      logs.innerHTML = "Iniciando migración...<br>";
+      logs.innerHTML = "Iniciando migración de Blanca...<br>";
 
       let totalDocs = 0;
       let procesados = 0;
 
-      // 1. Leer usuarios
-      const usuariosRef = collection(db, "inventarios", "Bodega 41", "usuarios");
-      const usuariosSnap = await getDocs(usuariosRef);
+      // 1. Referencia directa a los escaneos de Blanca
+      const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", "Blanca", "escaneos");
+      const escaneosSnap = await getDocs(escaneosRef);
 
-      if (usuariosSnap.empty) {
-        logs.innerHTML += "⚠️ No se encontraron usuarios en /inventarios/Bodega 41/usuarios<br>";
+      if (escaneosSnap.empty) {
+        logs.innerHTML += "⚠️ No se encontraron escaneos en Blanca<br>";
         return;
       }
 
-      // Contar primero cuántos docs en total hay
-      let totalEscaneos = 0;
-      for (let usuarioDoc of usuariosSnap.docs) {
-        const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", usuarioDoc.id, "escaneos");
-        const escaneosSnap = await getDocs(escaneosRef);
-        totalEscaneos += escaneosSnap.size;
+      const totalEscaneos = escaneosSnap.size;
+      logs.innerHTML += `Escaneos encontrados en Blanca: ${totalEscaneos}<br>`;
+
+      // 2. Copiar cada documento a la colección plana
+      for (let escaneoDoc of escaneosSnap.docs) {
+        const data = escaneoDoc.data();
+        data.usuario = "Blanca"; // aseguramos que quede el usuario
+
+        const destinoRef = doc(db, "inventarios", "Bodega 41 reportes", "escaneosPlano", escaneoDoc.id);
+        await setDoc(destinoRef, data);
+
+        totalDocs++;
+        procesados++;
+        actualizarBarra(procesados, totalEscaneos);
       }
 
-      logs.innerHTML += `Usuarios encontrados: ${usuariosSnap.size}<br>`;
-      logs.innerHTML += `Escaneos totales a migrar: ${totalEscaneos}<br>`;
-
-      // 2. Procesar usuario por usuario
-      for (let usuarioDoc of usuariosSnap.docs) {
-        const usuario = usuarioDoc.id;
-        logs.innerHTML += `<br>👤 Usuario: ${usuario}<br>`;
-
-        const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos");
-        const escaneosSnap = await getDocs(escaneosRef);
-
-        for (let escaneoDoc of escaneosSnap.docs) {
-          const data = escaneoDoc.data();
-          data.usuario = usuario;
-
-          const destinoRef = doc(db, "inventarios", "Bodega 41 reportes", "escaneosPlano", escaneoDoc.id);
-          await setDoc(destinoRef, data);
-
-          totalDocs++;
-          procesados++;
-
-          actualizarBarra(procesados, totalEscaneos);
-        }
-      }
-
-      logs.innerHTML += `<br><b>✅ Migración completada. Total documentos copiados: ${totalDocs}</b>`;
+      logs.innerHTML += `<br><b>✅ Migración completada de Blanca. Total documentos copiados: ${totalDocs}</b>`;
     }
 
     function actualizarBarra(actual, total) {
@@ -88,7 +71,7 @@
   </script>
 </head>
 <body>
-  <h2>Migración de Inventarios – Bodega 41 → Reportes</h2>
+  <h2>Migración de Inventarios – Blanca → Reportes</h2>
   <button onclick="migrar()">Migrar Ahora</button>
   
   <div id="progress-container">
@@ -96,7 +79,7 @@
   </div>
   
   <div id="logs" style="margin-top:20px; font-family: monospace; font-size: 13px; background:#f7f7f7; padding:10px; border:1px solid #ccc; max-height:300px; overflow:auto;">
-    Listo para migrar...
+    Listo para migrar solo Blanca...
   </div>
 </body>
 </html>
