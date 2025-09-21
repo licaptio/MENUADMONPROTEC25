@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Reporte Crudo – Bodega 41</title>
+  <title>Reporte Costeado – Bodega 41</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // -------- CONFIG FIREBASE --------
     const configInv = {
@@ -17,18 +18,42 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
-    const app = initializeApp(configInv);
-    const db = getFirestore(app);
+    const configProd = {
+      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+      authDomain: "bd-bodega41.firebaseapp.com",
+      projectId: "bd-bodega41",
+      storageBucket: "bd-bodega41.appspot.com",
+      messagingSenderId: "96242533231",
+      appId: "1:63153834263:web:32f306d4dea573bee74f52",
+    };
 
-    // -------- CARGA INVENTARIOS CRUDO --------
+    const appInv = initializeApp(configInv, "appInv");
+    const appProd = initializeApp(configProd, "appProd");
+
+    const dbInv = getFirestore(appInv);
+    const dbProd = getFirestore(appProd);
+
+    // -------- CARGA Y COSTEO --------
     async function cargarInventarios() {
       let registros = [];
 
-      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
+      const escaneosRef = collection(dbInv, "inventarios", "Bodega 41 reportes", "escaneosPlano");
       const escaneosSnap = await getDocs(escaneosRef);
 
-      escaneosSnap.forEach(it => {
+      for (let it of escaneosSnap.docs) {
         const d = it.data();
+        let costoUnit = 0;
+
+        // Buscar producto en BD BODEGA41
+        if (d.codigo) {
+          const prodRef = doc(dbProd, "productos", d.codigo);
+          const prodSnap = await getDoc(prodRef);
+          if (prodSnap.exists()) {
+            const prod = prodSnap.data();
+            costoUnit = prod.costoSinImpuesto || 0;
+          }
+        }
+
         registros.push({
           usuario: d.usuario,
           codigo: d.codigo,
@@ -38,11 +63,12 @@
           sucursal: d.sucursal,
           folioRegistro: d.folioRegistro,
           folioSesion: d.folioSesion,
-          epochMs: d.epochMs
+          costoUnit,
+          subtotal: (Number(d.cantidad) || 0) * costoUnit
         });
-      });
+      }
 
-      console.log("Registros capturados:", registros.length);
+      console.log("Registros costeados:", registros.length);
       renderTabla(registros);
     }
 
@@ -63,9 +89,10 @@
       const subset = datosGlobal.slice(inicio, fin);
 
       let totalCantidad = subset.reduce((acc, r) => acc + (Number(r.cantidad) || 0), 0);
+      let totalCosto = subset.reduce((acc, r) => acc + (Number(r.subtotal) || 0), 0);
 
       let html = `
-        <h3 style="margin-bottom:5px;">Total Cantidad en esta página: ${totalCantidad}</h3>
+        <h3>Total Cantidad: ${totalCantidad} | Total Costo: $${totalCosto.toFixed(2)}</h3>
         <table border="1" cellspacing="0" cellpadding="4" 
                style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
@@ -74,11 +101,12 @@
               <th>Código</th>
               <th>Descripción</th>
               <th>Cantidad</th>
+              <th>Costo Unitario</th>
+              <th>Subtotal</th>
               <th>Fecha</th>
               <th>Sucursal</th>
               <th>Folio Registro</th>
               <th>Folio Sesión</th>
-              <th>EpochMs</th>
             </tr>
           </thead>
           <tbody>
@@ -90,11 +118,12 @@
           <td>${r.codigo}</td>
           <td>${r.descripcion}</td>
           <td style="text-align:right;">${r.cantidad}</td>
+          <td style="text-align:right;">$${r.costoUnit.toFixed(2)}</td>
+          <td style="text-align:right;">$${r.subtotal.toFixed(2)}</td>
           <td>${r.fecha}</td>
           <td>${r.sucursal}</td>
           <td>${r.folioRegistro}</td>
           <td>${r.folioSesion}</td>
-          <td>${r.epochMs}</td>
         </tr>`;
       });
 
@@ -114,7 +143,7 @@
   </script>
 </head>
 <body>
-  <h2>Reporte Crudo – Bodega 41 (escaneosPlano)</h2>
+  <h2>Reporte Costeado – Bodega 41</h2>
   <div id="tabla">Cargando...</div>
 </body>
 </html>
