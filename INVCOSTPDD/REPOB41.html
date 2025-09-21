@@ -25,10 +25,7 @@
     // -------- VARIABLES --------
     const porPagina = 50;
     let ultimaDoc = null;
-    let primeraDoc = null;
-    let cachePaginas = [];
     let pagina = 0;
-
     let totalGlobalCantidad = 0;
     let totalGlobalImporte = 0;
 
@@ -37,9 +34,8 @@
       totalGlobalCantidad = 0;
       totalGlobalImporte = 0;
 
-      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
-      const q = query(escaneosRef);
-      const snap = await getDocs(q);
+      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
+      const snap = await getDocs(escaneosRef);
 
       snap.forEach(doc => {
         const d = doc.data();
@@ -53,36 +49,31 @@
         `<b>Totales Globales → Cantidad: ${totalGlobalCantidad} | Importe: $${totalGlobalImporte.toFixed(2)}</b>`;
     }
 
-    // -------- CARGAR UNA PÁGINA --------
+    // -------- CARGAR PÁGINA DESDE FIREBASE --------
     async function cargarPagina(next = true) {
-      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
-      let q = query(escaneosRef,
+      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
+      let q = query(
+        escaneosRef,
         orderBy("usuario"),
         orderBy("fecha"),
         limit(porPagina)
       );
 
       if (next && ultimaDoc) {
-        q = query(escaneosRef,
+        q = query(
+          escaneosRef,
           orderBy("usuario"),
           orderBy("fecha"),
           startAfter(ultimaDoc),
           limit(porPagina)
         );
-      } else if (!next && pagina > 1) {
-        // recuperar del cache
-        pagina--;
-        renderTabla(cachePaginas[pagina - 1]);
-        return;
       }
 
       const snap = await getDocs(q);
-
       if (snap.empty) return;
 
       pagina++;
       ultimaDoc = snap.docs[snap.docs.length - 1];
-      if (pagina === 1) primeraDoc = snap.docs[0];
 
       let registros = [];
       snap.forEach(it => {
@@ -96,12 +87,10 @@
           fecha: d.fecha,
           sucursal: d.sucursal,
           folioRegistro: d.folioRegistro,
-          folioSesion: d.folioSesion,
-          epochMs: d.epochMs
+          folioSesion: d.folioSesion
         });
       });
 
-      cachePaginas[pagina - 1] = registros;
       renderTabla(registros);
     }
 
@@ -109,6 +98,7 @@
     function renderTabla(registros) {
       let totalCantidad = 0;
       let totalImporte = 0;
+
       registros.forEach(r => {
         totalCantidad += r.cantidad;
         totalImporte += r.cantidad * r.costo;
@@ -156,7 +146,6 @@
 
       html += `<div style="margin-top:10px; text-align:center;">
         Página ${pagina}
-        <button onclick="cargarPagina(false)" ${pagina==1?"disabled":""}>Anterior</button>
         <button onclick="cargarPagina(true)">Siguiente</button>
       </div>`;
 
@@ -164,7 +153,7 @@
     }
 
     // -------- INICIO --------
-    calcularTotalesGlobales(); // calcula solo una vez
+    calcularTotalesGlobales(); // calcula totales globales una vez
     cargarPagina(true);        // carga primera página
   </script>
 </head>
