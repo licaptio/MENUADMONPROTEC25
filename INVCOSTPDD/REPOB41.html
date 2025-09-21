@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Migrar Inventarios – Blanca</title>
+  <title>Migrar Inventarios – Caleb</title>
   <style>
     #progress-container {width:100%; background:#eee; border:1px solid #aaa; height:20px; margin-top:10px;}
-    #progress-bar {height:100%; width:0%; background:#4caf50; text-align:center; color:white; font-size:12px;}
+    #progress-bar {height:100%; width:0%; background:#2196f3; text-align:center; color:white; font-size:12px;}
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -27,27 +27,27 @@
 
     async function migrar() {
       const logs = document.getElementById("logs");
-      logs.innerHTML = "Iniciando migración de Blanca...<br>";
+      logs.innerHTML = "Iniciando migración de Caleb...<br>";
 
       let totalDocs = 0;
       let procesados = 0;
 
-      // 1. Referencia directa a los escaneos de Blanca
-      const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", "Blanca", "escaneos");
+      // 1. Referencia directa a los escaneos de Caleb
+      const escaneosRef = collection(db, "inventarios", "Bodega 41", "usuarios", "Caleb", "escaneos");
       const escaneosSnap = await getDocs(escaneosRef);
 
       if (escaneosSnap.empty) {
-        logs.innerHTML += "⚠️ No se encontraron escaneos en Blanca<br>";
+        logs.innerHTML += "⚠️ No se encontraron escaneos en Caleb<br>";
         return;
       }
 
       const totalEscaneos = escaneosSnap.size;
-      logs.innerHTML += `Escaneos encontrados en Blanca: ${totalEscaneos}<br>`;
+      logs.innerHTML += `Escaneos encontrados en Caleb: ${totalEscaneos}<br>`;
 
       // 2. Copiar cada documento a la colección plana
       for (let escaneoDoc of escaneosSnap.docs) {
         const data = escaneoDoc.data();
-        data.usuario = "Blanca"; // aseguramos que quede el usuario
+        data.usuario = "Caleb"; // aseguramos que quede el usuario
 
         const destinoRef = doc(db, "inventarios", "Bodega 41 reportes", "escaneosPlano", escaneoDoc.id);
         await setDoc(destinoRef, data);
@@ -57,7 +57,7 @@
         actualizarBarra(procesados, totalEscaneos);
       }
 
-      logs.innerHTML += `<br><b>✅ Migración completada de Blanca. Total documentos copiados: ${totalDocs}</b>`;
+      logs.innerHTML += `<br><b>✅ Migración completada de Caleb. Total documentos copiados: ${totalDocs}</b>`;
     }
 
     function actualizarBarra(actual, total) {
@@ -71,7 +71,7 @@
   </script>
 </head>
 <body>
-  <h2>Migración de Inventarios – Blanca → Reportes</h2>
+  <h2>Migración de Inventarios – Caleb → Reportes</h2>
   <button onclick="migrar()">Migrar Ahora</button>
   
   <div id="progress-container">
@@ -79,7 +79,7 @@
   </div>
   
   <div id="logs" style="margin-top:20px; font-family: monospace; font-size: 13px; background:#f7f7f7; padding:10px; border:1px solid #ccc; max-height:300px; overflow:auto;">
-    Listo para migrar solo Blanca...
+    Listo para migrar solo Caleb...
   </div>
 </body>
 </html>
