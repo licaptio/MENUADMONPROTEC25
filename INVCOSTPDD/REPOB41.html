@@ -55,22 +55,32 @@
 
       let registros = [];
       const usuariosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios"));
+      console.log("Usuarios encontrados:", usuariosSnap.size);
+
       for (let usuarioDoc of usuariosSnap.docs) {
         const usuario = usuarioDoc.id;
-        const itemsSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "items"));
-        itemsSnap.forEach(it => {
+        console.log("Leyendo usuario:", usuario);
+
+        // 🔧 Aquí es donde cambia: subcolección "escaneos"
+        const escaneosSnap = await getDocs(
+          collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos")
+        );
+
+        escaneosSnap.forEach(it => {
           const d = it.data();
-          const prod = productosMap[d.codigoBarra] || { descripcion: "N/D", costo: 0 };
+          const prod = productosMap[d.codigo] || { descripcion: d.descripcion || "N/D", costo: 0 };
+
           registros.push({
             usuario,
-            codigo: d.codigoBarra,
-            descripcion: prod.descripcion,
+            codigo: d.codigo,
+            descripcion: prod.descripcion || d.descripcion,
             cantidad: d.cantidad,
             costo: prod.costo,
             total: d.cantidad * prod.costo
           });
         });
       }
+      console.log("Registros capturados:", registros.length);
       renderTabla(registros);
     }
 
@@ -138,7 +148,7 @@
       html += `</tbody></table>`;
 
       // Controles
-      const totalPaginas = Math.ceil(datosGlobal.length / porPagina);
+      const totalPaginas = Math.ceil(datosGlobal.length / porPagina) || 1;
       html += `<div style="margin-top:10px; text-align:center;">
         Página ${pagina} de ${totalPaginas} 
         <button onclick="mostrarPagina(${pagina-1})" ${pagina==1?"disabled":""}>Anterior</button>
