@@ -46,6 +46,7 @@
           costo: d.costoSinImpuesto
         };
       });
+      console.log("Productos cargados:", Object.keys(productosMap).length);
     }
 
     // -------- CARGA INVENTARIOS --------
@@ -53,10 +54,10 @@
       await cargarProductos();
 
       let registros = [];
-      const usuariosSnap = await getDocs(collection(dbInv, "inventarios/Bodega 41/usuarios"));
+      const usuariosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios"));
       for (let usuarioDoc of usuariosSnap.docs) {
         const usuario = usuarioDoc.id;
-        const itemsSnap = await getDocs(collection(dbInv, `inventarios/Bodega 41/usuarios/${usuario}/items`));
+        const itemsSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "items"));
         itemsSnap.forEach(it => {
           const d = it.data();
           const prod = productosMap[d.codigoBarra] || { descripcion: "N/D", costo: 0 };
