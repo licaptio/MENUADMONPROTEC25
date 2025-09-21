@@ -17,71 +17,33 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
-    const configProd = {
-      apiKey: "AIzaSyA0JYm16CaVXr86ZGbKP8tpe47rl0LdBaw",
-      authDomain: "bd-bodega41.firebaseapp.com",
-      projectId: "bd-bodega41",
-      storageBucket: "bd-bodega41.firebasestorage.app",
-      messagingSenderId: "63153834263",
-      appId: "1:63153834263:web:32f306d4dea573bee74f52",
-      measurementId: "G-YCCWZCHCEV"
-    };
-
-    // Inicializar dos apps
+    // Inicializar app
     const appInv = initializeApp(configInv, "appInv");
-    const appProd = initializeApp(configProd, "appProd");
-
     const dbInv = getFirestore(appInv);
-    const dbProd = getFirestore(appProd);
 
-    // -------- MAPA DE PRODUCTOS --------
-    let productosMap = {};
-
-    function normalizarCodigo(cod) {
-      if (!cod) return "";
-      return String(cod).replace(/^0+/, ""); // quita ceros a la izquierda
-    }
-
-    async function cargarProductos() {
-      const snap = await getDocs(collection(dbProd, "productos"));
-      snap.forEach(doc => {
-        const d = doc.data();
-        if (d.codigoBarra) {
-          const codNorm = normalizarCodigo(d.codigoBarra);
-          productosMap[codNorm] = {
-            descripcion: d.concepto,
-            costo: d.costoSinImpuesto
-          };
-        }
-      });
-      console.log("Productos cargados:", Object.keys(productosMap).length);
-    }
-
-    // -------- CARGA INVENTARIOS --------
+    // -------- CARGA INVENTARIOS CRUDO --------
     async function cargarInventarios() {
-      await cargarProductos();
-
       let registros = [];
+
       const usuariosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios"));
       console.log("Usuarios encontrados:", usuariosSnap.size);
 
       for (let usuarioDoc of usuariosSnap.docs) {
         const usuario = usuarioDoc.id;
-        console.log("Leyendo usuario:", usuario);
-
         const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos"));
+
         escaneosSnap.forEach(it => {
           const d = it.data();
-          const codNorm = normalizarCodigo(d.codigo);
-          const prod = productosMap[codNorm] || { descripcion: d.descripcion || "N/D", costo: 0 };
-
           registros.push({
             usuario,
             codigo: d.codigo,
-            descripcion: prod.descripcion || d.descripcion,
+            descripcion: d.descripcion,
             cantidad: d.cantidad,
-            costo: prod.costo,
-            total: d.cantidad * prod.costo
+            fecha: d.fecha,
+            sucursal: d.sucursal,
+            folioRegistro: d.folioRegistro,
+            folioSesion: d.folioSesion,
+            epochMs: d.epochMs
           });
         });
       }
@@ -106,34 +68,19 @@
       const fin = inicio + porPagina;
       const subset = datosGlobal.slice(inicio, fin);
 
-      let totalCantidad = 0;
-      let totalImporte = 0;
-      subset.forEach(r => {
-        totalCantidad += r.cantidad;
-        totalImporte += r.total;
-      });
-
-      let totalCantidadGlobal = 0;
-      let totalImporteGlobal = 0;
-      datosGlobal.forEach(r => {
-        totalCantidadGlobal += r.cantidad;
-        totalImporteGlobal += r.total;
-      });
-
       let html = `
-        <div style="margin-bottom:10px; font-weight:bold;">
-          Totales Página → Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)} <br>
-          Totales Globales → Cantidad: ${totalCantidadGlobal} | Importe: $${totalImporteGlobal.toFixed(2)}
-        </div>
-        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse;">
+        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
             <tr style="background:#eee;">
               <th>Usuario</th>
               <th>Código</th>
               <th>Descripción</th>
               <th>Cantidad</th>
-              <th>Costo</th>
-              <th>Total</th>
+              <th>Fecha</th>
+              <th>Sucursal</th>
+              <th>Folio Registro</th>
+              <th>Folio Sesión</th>
+              <th>EpochMs</th>
             </tr>
           </thead>
           <tbody>
@@ -145,8 +92,11 @@
           <td>${r.codigo}</td>
           <td>${r.descripcion}</td>
           <td style="text-align:right;">${r.cantidad}</td>
-          <td style="text-align:right;">${r.costo.toFixed(2)}</td>
-          <td style="text-align:right;">${r.total.toFixed(2)}</td>
+          <td>${r.fecha}</td>
+          <td>${r.sucursal}</td>
+          <td>${r.folioRegistro}</td>
+          <td>${r.folioSesion}</td>
+          <td>${r.epochMs}</td>
         </tr>`;
       });
 
