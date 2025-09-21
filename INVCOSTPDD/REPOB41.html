@@ -5,8 +5,9 @@
   <title>Reporte Costeado – Bodega 41</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { 
+      getFirestore, collection, getDocs, query, orderBy, limit, startAfter 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // -------- CONFIG FIREBASE --------
     const configInv = {
@@ -18,81 +19,72 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
-    const configProd = {
-      apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
-      authDomain: "bd-bodega41.firebaseapp.com",
-      projectId: "bd-bodega41",
-      storageBucket: "bd-bodega41.appspot.com",
-      messagingSenderId: "96242533231",
-      appId: "1:63153834263:web:32f306d4dea573bee74f52",
-    };
+    const app = initializeApp(configInv);
+    const db = getFirestore(app);
 
-    const appInv = initializeApp(configInv, "appInv");
-    const appProd = initializeApp(configProd, "appProd");
+    // -------- VARIABLES DE PAGINACIÓN --------
+    let ultimoDoc = null;
+    let paginaActual = 1;
+    const porPagina = 50;
+    let cachePaginas = [];
 
-    const dbInv = getFirestore(appInv);
-    const dbProd = getFirestore(appProd);
+    async function cargarPagina(direccion = "inicio") {
+      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
+      let q;
 
-    // -------- CARGA Y COSTEO --------
-    async function cargarInventarios() {
-      let registros = [];
-
-      const escaneosRef = collection(dbInv, "inventarios", "Bodega 41 reportes", "escaneosPlano");
-      const escaneosSnap = await getDocs(escaneosRef);
-
-      for (let it of escaneosSnap.docs) {
-        const d = it.data();
-        let costoUnit = 0;
-
-        // Buscar producto en BD BODEGA41
-        if (d.codigo) {
-          const prodRef = doc(dbProd, "productos", d.codigo);
-          const prodSnap = await getDoc(prodRef);
-          if (prodSnap.exists()) {
-            const prod = prodSnap.data();
-            costoUnit = prod.costoSinImpuesto || 0;
-          }
-        }
-
-        registros.push({
-          usuario: d.usuario,
-          codigo: d.codigo,
-          descripcion: d.descripcion,
-          cantidad: d.cantidad,
-          fecha: d.fecha,
-          sucursal: d.sucursal,
-          folioRegistro: d.folioRegistro,
-          folioSesion: d.folioSesion,
-          costoUnit,
-          subtotal: (Number(d.cantidad) || 0) * costoUnit
-        });
+      if (direccion === "inicio") {
+        q = query(
+          escaneosRef,
+          orderBy("usuario"),      // primero usuario alfabético
+          orderBy("epochMs"),      // después fecha
+          limit(porPagina)
+        );
+        paginaActual = 1;
+        cachePaginas = [];
+      } 
+      else if (direccion === "siguiente" && ultimoDoc) {
+        q = query(
+          escaneosRef,
+          orderBy("usuario"),
+          orderBy("epochMs"),
+          startAfter(ultimoDoc),
+          limit(porPagina)
+        );
+        paginaActual++;
+      } 
+      else if (direccion === "anterior" && cachePaginas[paginaActual - 2]) {
+        renderTabla(cachePaginas[paginaActual - 2], paginaActual - 1);
+        paginaActual--;
+        return;
+      } 
+      else {
+        return;
       }
 
-      console.log("Registros costeados:", registros.length);
-      renderTabla(registros);
+      const snap = await getDocs(q);
+      let registros = [];
+      snap.forEach(doc => registros.push(doc.data()));
+
+      if (!snap.empty) {
+        ultimoDoc = snap.docs[snap.docs.length - 1];
+      }
+
+      if (direccion !== "anterior") {
+        cachePaginas[paginaActual - 1] = registros;
+      }
+
+      renderTabla(registros, paginaActual);
     }
 
-    // -------- PAGINACIÓN --------
-    let datosGlobal = [];
-    let pagina = 1;
-    const porPagina = 50;
-
-    function renderTabla(datos) {
-      datosGlobal = datos;
-      mostrarPagina(1);
-    }
-
-    function mostrarPagina(num) {
-      pagina = num;
-      const inicio = (pagina - 1) * porPagina;
-      const fin = inicio + porPagina;
-      const subset = datosGlobal.slice(inicio, fin);
-
-      let totalCantidad = subset.reduce((acc, r) => acc + (Number(r.cantidad) || 0), 0);
-      let totalCosto = subset.reduce((acc, r) => acc + (Number(r.subtotal) || 0), 0);
+    // -------- RENDER --------
+    function renderTabla(datos, pagina) {
+      let totalCantidad = datos.reduce((acc, r) => acc + (Number(r.cantidad) || 0), 0);
+      let totalCosto = datos.reduce((acc, r) => acc + ((Number(r.cantidad) || 0) * (Number(r.costo) || 0)), 0);
 
       let html = `
-        <h3>Total Cantidad: ${totalCantidad} | Total Costo: $${totalCosto.toFixed(2)}</h3>
+        <h3 style="margin-bottom:5px;">
+          Página ${pagina} – Total Cantidad: ${totalCantidad} | Total Costo: $${totalCosto.toFixed(2)}
+        </h3>
         <table border="1" cellspacing="0" cellpadding="4" 
                style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
@@ -112,34 +104,37 @@
           <tbody>
       `;
 
-      subset.forEach(r => {
+      datos.forEach(r => {
+        const cantidad = Number(r.cantidad) || 0;
+        const costo = Number(r.costo) || 0;
+        const subtotal = cantidad * costo;
         html += `<tr>
-          <td>${r.usuario}</td>
-          <td>${r.codigo}</td>
-          <td>${r.descripcion}</td>
-          <td style="text-align:right;">${r.cantidad}</td>
-          <td style="text-align:right;">$${r.costoUnit.toFixed(2)}</td>
-          <td style="text-align:right;">$${r.subtotal.toFixed(2)}</td>
-          <td>${r.fecha}</td>
-          <td>${r.sucursal}</td>
-          <td>${r.folioRegistro}</td>
-          <td>${r.folioSesion}</td>
+          <td>${r.usuario || ""}</td>
+          <td>${r.codigo || ""}</td>
+          <td>${r.descripcion || ""}</td>
+          <td style="text-align:right;">${cantidad}</td>
+          <td style="text-align:right;">$${costo.toFixed(2)}</td>
+          <td style="text-align:right;">$${subtotal.toFixed(2)}</td>
+          <td>${r.fecha || ""}</td>
+          <td>${r.sucursal || ""}</td>
+          <td>${r.folioRegistro || ""}</td>
+          <td>${r.folioSesion || ""}</td>
         </tr>`;
       });
 
-      html += `</tbody></table>`;
-
-      const totalPaginas = Math.ceil(datosGlobal.length / porPagina) || 1;
-      html += `<div style="margin-top:10px; text-align:center;">
-        Página ${pagina} de ${totalPaginas} 
-        <button onclick="mostrarPagina(${pagina-1})" ${pagina==1?"disabled":""}>Anterior</button>
-        <button onclick="mostrarPagina(${pagina+1})" ${pagina==totalPaginas?"disabled":""}>Siguiente</button>
-      </div>`;
+      html += `</tbody></table>
+        <div style="margin-top:10px; text-align:center;">
+          <button onclick="cargarPagina('anterior')" ${pagina===1 ? "disabled":""}>Anterior</button>
+          <button onclick="cargarPagina('siguiente')" ${datos.length < porPagina ? "disabled":""}>Siguiente</button>
+        </div>
+      `;
 
       document.getElementById("tabla").innerHTML = html;
     }
 
-    cargarInventarios();
+    // iniciar
+    cargarPagina("inicio");
+    window.cargarPagina = cargarPagina;
   </script>
 </head>
 <body>
