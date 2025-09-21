@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Reporte Crudo – Bodega 41</title>
+  <title>Reporte Costeado – Bodega 41</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
-      getFirestore, collection, getDocs, query, orderBy, limit, startAfter 
+      getFirestore, collection, getDocs, query, orderBy, limit, startAfter, startAt 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // -------- CONFIG FIREBASE --------
@@ -24,17 +24,19 @@
 
     // -------- VARIABLES --------
     const porPagina = 50;
-    let ultimaDoc = null;
     let pagina = 0;
+    let docsPorPagina = []; // guardamos los snapshots de cada página
+    let cursors = [];       // para manejar startAfter de cada página
+
     let totalGlobalCantidad = 0;
     let totalGlobalImporte = 0;
 
-    // -------- CARGAR TOTALES GLOBALES --------
+    // -------- CALCULAR TOTALES GLOBALES --------
     async function calcularTotalesGlobales() {
       totalGlobalCantidad = 0;
       totalGlobalImporte = 0;
 
-      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
+      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
       const snap = await getDocs(escaneosRef);
 
       snap.forEach(doc => {
@@ -49,31 +51,25 @@
         `<b>Totales Globales → Cantidad: ${totalGlobalCantidad} | Importe: $${totalGlobalImporte.toFixed(2)}</b>`;
     }
 
-    // -------- CARGAR PÁGINA DESDE FIREBASE --------
-    async function cargarPagina(next = true) {
-      const escaneosRef = collection(db, "inventarios", "Bodega 41 reportes", "escaneosPlano");
-      let q = query(
-        escaneosRef,
-        orderBy("usuario"),
-        orderBy("fecha"),
-        limit(porPagina)
-      );
+    // -------- CARGAR PÁGINA --------
+    async function cargarPagina(num) {
+      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
+      let q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), limit(porPagina));
 
-      if (next && ultimaDoc) {
-        q = query(
-          escaneosRef,
-          orderBy("usuario"),
-          orderBy("fecha"),
-          startAfter(ultimaDoc),
-          limit(porPagina)
-        );
+      if (num > 0 && cursors[num - 1]) {
+        // Si ya tenemos cursor, continuar desde ahí
+        q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), startAfter(cursors[num - 1]), limit(porPagina));
       }
 
       const snap = await getDocs(q);
-      if (snap.empty) return;
 
-      pagina++;
-      ultimaDoc = snap.docs[snap.docs.length - 1];
+      if (snap.empty && num > pagina) {
+        return; // no hay más páginas
+      }
+
+      pagina = num;
+      docsPorPagina[pagina] = snap.docs;
+      cursors[pagina] = snap.docs[snap.docs.length - 1]; // último doc de esta página
 
       let registros = [];
       snap.forEach(it => {
@@ -98,7 +94,6 @@
     function renderTabla(registros) {
       let totalCantidad = 0;
       let totalImporte = 0;
-
       registros.forEach(r => {
         totalCantidad += r.cantidad;
         totalImporte += r.cantidad * r.costo;
@@ -145,20 +140,21 @@
       html += `</tbody></table>`;
 
       html += `<div style="margin-top:10px; text-align:center;">
-        Página ${pagina}
-        <button onclick="cargarPagina(true)">Siguiente</button>
+        Página ${pagina + 1}
+        <button onclick="cargarPagina(${pagina - 1})" ${pagina == 0 ? "disabled" : ""}>Anterior</button>
+        <button onclick="cargarPagina(${pagina + 1})">Siguiente</button>
       </div>`;
 
       document.getElementById("tabla").innerHTML = html;
     }
 
     // -------- INICIO --------
-    calcularTotalesGlobales(); // calcula totales globales una vez
-    cargarPagina(true);        // carga primera página
+    calcularTotalesGlobales();
+    cargarPagina(0); // primera página
   </script>
 </head>
 <body>
-  <h2>Reporte Crudo – Bodega 41 (escaneosPlano)</h2>
+  <h2>Reporte Costeado – Bodega 41</h2>
   <div id="totalesGlobales" style="margin:10px 0; font-size:14px; color:#00416A;">
     Calculando totales globales...
   </div>
