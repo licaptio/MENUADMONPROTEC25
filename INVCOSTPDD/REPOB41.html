@@ -5,7 +5,7 @@
   <title>Reporte Crudo Inventario</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // -------- CONFIG FIREBASE --------
     const configInv = {
@@ -17,7 +17,6 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
-    // Inicializar app
     const appInv = initializeApp(configInv, "appInv");
     const dbInv = getFirestore(appInv);
 
@@ -25,6 +24,7 @@
     async function cargarInventarios() {
       let registros = [];
 
+      // 📌 Paso 1: obtener los usuarios dentro de /inventarios/Bodega 41/usuarios
       const usuariosRef = collection(dbInv, "inventarios", "Bodega 41", "usuarios");
       const usuariosSnap = await getDocs(usuariosRef);
       console.log("Usuarios encontrados:", usuariosSnap.size);
@@ -33,6 +33,7 @@
         const usuario = usuarioDoc.id;
         console.log("Leyendo usuario:", usuario);
 
+        // 📌 Paso 2: leer la colección de escaneos de cada usuario
         const escaneosRef = collection(dbInv, "inventarios", "Bodega 41", "usuarios", usuario, "escaneos");
         const escaneosSnap = await getDocs(escaneosRef);
 
