@@ -1,121 +1,49 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📊 Estadística de Pagos</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f8; }
-    h2 { color: #333; }
-    textarea { width: 100%; margin: 10px 0; }
-    button { margin-top: 5px; padding: 8px 14px; cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background: #eee; }
-  </style>
-</head>
-<body>
-  <h2>📥 Insertar pagos</h2>
-  <label>Proveedor: <input id="proveedor"></label><br>
-  <textarea id="datos" rows="6" placeholder="Pega filas: FECHA    CARGO"></textarea><br>
-  <button onclick="guardar()">Guardar</button>
+window.cargarDatos = async function () {
+  const prov = document.getElementById("selProveedor").value;
+  if (!prov) return;
 
-  <h2>📊 Consultar pagos</h2>
-  <label>Proveedor:
-    <select id="selProveedor" onchange="cargarDatos()"></select>
-  </label>
+  let { data, error } = await supabaseClient
+    .from("estadisticapagos")
+    .select("fecha,cargo")
+    .eq("proveedor", prov)
+    .order("fecha");
 
-  <canvas id="grafico" height="100"></canvas>
+  if (error) return console.error(error);
 
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  // 📌 Agrupar por mes (ej: 2025-09)
+  const agrupado = {};
+  data.forEach(r => {
+    const d = new Date(r.fecha);
+    const clave = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    agrupado[clave] = (agrupado[clave] || 0) + r.cargo;
+  });
 
-  // 🔹 CONFIGURACIÓN
-  const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"; // 👈 pega aquí tu anon key
-  const supabaseClient = createClient(supabaseUrl, supabaseKey);
-  
-  let chart; // para controlar la gráfica
+  // Convertir a arrays ordenados
+  const labels = Object.keys(agrupado).sort();
+  const valores = labels.map(k => agrupado[k]);
 
-  // 🔹 Meses abreviados en español
-  const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
-                  jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
+  // Tabla detallada (se sigue mostrando todo)
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+  data.forEach(r=>{
+    const f = new Date(r.fecha).toLocaleDateString("es-MX",
+      {weekday:"short", day:"2-digit", month:"short", year:"2-digit"});
+    tbody.innerHTML += `<tr><td>${f}</td>
+      <td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td></tr>`;
+  });
 
-  // 📌 Convierte texto → YYYY-MM-DD
-  function parseFecha(fechaTexto) {
-    const partes = fechaTexto.split("-");
-    if (partes.length < 4) return null;
-    const dia = partes[1].padStart(2,"0");
-    const mes = meses[partes[2].toLowerCase()];
-    const anio = "20" + partes[3];
-    return `${anio}-${mes}-${dia}`;
-  }
-
-  // 📌 Convierte número con comas → float
-  function parseNumero(txt) {
-    return parseFloat(txt.trim().replace(/,/g,""));
-  }
-
-  // 📌 Insertar pagos
-  window.guardar = async function () {
-    const proveedor = document.getElementById("proveedor").value.trim();
-    const lineas = document.getElementById("datos").value.trim().split("\n");
-    const registros = lineas.map(l => {
-      const partes = l.split(/\t|,/);
-      return {
-        proveedor,
-        fecha: parseFecha(partes[0]),
-        cargo: parseNumero(partes[1])
-      };
-    });
-
-    let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
-    if (error) alert("❌ Error: " + error.message);
-    else { 
-      alert("✅ Guardado correctamente"); 
-      document.getElementById("datos").value=""; 
-      cargarProveedores(); 
+  // 📊 Gráfico agrupado por mes
+  const ctx = document.getElementById("grafico");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels, // ej: ["2025-07","2025-08","2025-09"]
+      datasets: [{
+        label: "Pagos " + prov,
+        data: valores,
+        borderColor: "blue",
+        fill: false
+      }]
     }
-  }
-
-  // 📌 Cargar proveedores únicos
-  async function cargarProveedores() {
-    let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
-    if (error) return console.error(error);
-    const unicos = [...new Set(data.map(r=>r.proveedor))];
-    const sel = document.getElementById("selProveedor");
-    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
-    unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
-  }
-
-  // 📌 Consultar datos + graficar
-  window.cargarDatos = async function () {
-    const prov = document.getElementById("selProveedor").value;
-    if (!prov) return;
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("fecha,cargo")
-      .eq("proveedor", prov)
-      .order("fecha");
-    if (error) return console.error(error);
-
-    // Destruir gráfica previa
-    if (chart) chart.destroy();
-
-    // Crear nueva gráfica
-    const ctx=document.getElementById("grafico");
-    chart = new Chart(ctx,{
-      type:"line",
-      data:{
-        labels:data.map(r=>new Date(r.fecha).toLocaleDateString("es-MX")),
-        datasets:[{label:"Pagos "+prov,data:data.map(r=>r.cargo),borderColor:"blue",tension:0.2,fill:false}]
-      }
-    });
-  }
-
-  // Inicial
-  cargarProveedores();
-</script>
-</body>
-</html>
+  });
+}
