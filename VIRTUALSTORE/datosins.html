@@ -21,8 +21,9 @@
 
   <h2>📊 Estadística de pagos</h2>
   <label>Proveedor:
-    <select id="selProveedor" onchange="cargarDatos()"></select>
+    <select id="selProveedor"></select>
   </label>
+  <button onclick="cargarDatos()">Consultar</button>
 
   <div id="total"></div>
   <canvas id="grafico" height="120"></canvas>
@@ -57,7 +58,7 @@
     const lineas = document.getElementById("datos").value.trim().split("\n");
 
     const registros = lineas.map(l => {
-      const partes = l.split("\t");  // ✅ solo separa por tab
+      const partes = l.split("\t");  
       return {
         proveedor,
         fecha: parseFecha(partes[0]),
@@ -70,7 +71,7 @@
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // Cargar proveedores
+  // Cargar proveedores al iniciar
   async function cargarProveedores() {
     let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
     if (error) return console.error(error);
@@ -83,7 +84,7 @@
   // 📊 Cargar datos y agrupar por mes
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
-    if (!prov) return;
+    if (!prov) return alert("⚠️ Selecciona un proveedor primero");
 
     let { data, error } = await supabaseClient
       .from("estadisticapagos")
@@ -129,6 +130,7 @@
     });
   }
 
+  // Inicializar
   cargarProveedores();
 </script>
 </body>
