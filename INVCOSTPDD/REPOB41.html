@@ -6,7 +6,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
-      getFirestore, collection, getDocs, query, orderBy, limit, startAfter, startAt 
+      getFirestore, collection, getDocs, query, orderBy, limit, startAfter 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // -------- CONFIG FIREBASE --------
@@ -23,32 +23,44 @@
     const db = getFirestore(app);
 
     // -------- VARIABLES --------
-    const porPagina = 50;
+    const porPagina = 50;     // lo que ves en la tabla
+    const batchTotales = 500; // tamaño de lote para calcular totales globales
     let pagina = 0;
-    let docsPorPagina = []; // guardamos los snapshots de cada página
-    let cursors = [];       // para manejar startAfter de cada página
+    let cursors = [];
 
-    let totalGlobalCantidad = 0;
-    let totalGlobalImporte = 0;
-
-    // -------- CALCULAR TOTALES GLOBALES --------
+    // -------- CALCULAR TOTALES GLOBALES (paginado) --------
     async function calcularTotalesGlobales() {
-      totalGlobalCantidad = 0;
-      totalGlobalImporte = 0;
-
+      let totalCantidad = 0;
+      let totalImporte = 0;
+      let lastDoc = null;
       const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
-      const snap = await getDocs(escaneosRef);
 
-      snap.forEach(doc => {
-        const d = doc.data();
-        const cantidad = Number(d.cantidad) || 0;
-        const costo = Number(d.costo) || 0;
-        totalGlobalCantidad += cantidad;
-        totalGlobalImporte += cantidad * costo;
-      });
+      while (true) {
+        let q = query(escaneosRef, limit(batchTotales));
+        if (lastDoc) {
+          q = query(escaneosRef, startAfter(lastDoc), limit(batchTotales));
+        }
+        const snap = await getDocs(q);
+        if (snap.empty) break;
 
+        snap.forEach(doc => {
+          const d = doc.data();
+          const cantidad = Number(d.cantidad) || 0;
+          const costo = Number(d.costo) || 0;
+          totalCantidad += cantidad;
+          totalImporte += cantidad * costo;
+        });
+
+        lastDoc = snap.docs[snap.docs.length - 1];
+
+        // Mostrar progreso parcial
+        document.getElementById("totalesGlobales").innerHTML =
+          `Calculando... Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}`;
+      }
+
+      // Totales finales
       document.getElementById("totalesGlobales").innerHTML =
-        `<b>Totales Globales → Cantidad: ${totalGlobalCantidad} | Importe: $${totalGlobalImporte.toFixed(2)}</b>`;
+        `<b>Totales Globales → Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}</b>`;
     }
 
     // -------- CARGAR PÁGINA --------
@@ -57,19 +69,14 @@
       let q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), limit(porPagina));
 
       if (num > 0 && cursors[num - 1]) {
-        // Si ya tenemos cursor, continuar desde ahí
         q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), startAfter(cursors[num - 1]), limit(porPagina));
       }
 
       const snap = await getDocs(q);
-
-      if (snap.empty && num > pagina) {
-        return; // no hay más páginas
-      }
+      if (snap.empty && num > pagina) return;
 
       pagina = num;
-      docsPorPagina[pagina] = snap.docs;
-      cursors[pagina] = snap.docs[snap.docs.length - 1]; // último doc de esta página
+      cursors[pagina] = snap.docs[snap.docs.length - 1];
 
       let registros = [];
       snap.forEach(it => {
@@ -149,8 +156,8 @@
     }
 
     // -------- INICIO --------
-    calcularTotalesGlobales();
-    cargarPagina(0); // primera página
+    calcularTotalesGlobales(); // se calcula en segundo plano
+    cargarPagina(0); // carga primera página
   </script>
 </head>
 <body>
