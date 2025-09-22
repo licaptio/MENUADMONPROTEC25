@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 Detalle de Pagos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9fafb; }
+    h2 { color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #eee; }
+    .btn { padding: 4px 8px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; }
+    .btn-edit { background: #ffc107; }
+    .btn-del { background: #dc3545; color: white; }
+  </style>
+</head>
+<body>
+  <h2>📋 Detalle de pagos (editar/borrar)</h2>
+  <label>Proveedor:
+    <select id="selProveedor" onchange="cargarDatos()"></select>
+  </label>
+
+  <table id="tabla">
+    <thead>
+      <tr><th>Fecha</th><th>Cargo</th><th>Acciones</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
+  const supabaseKey = "TU_KEY_AQUI"; 
+  const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+  async function cargarProveedores() {
+    let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
+    if (error) return console.error(error);
+    const unicos = [...new Set(data.map(r=>r.proveedor))];
+    const sel = document.getElementById("selProveedor");
+    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
+    unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
+  }
+
+  window.cargarDatos = async function () {
+    const prov = document.getElementById("selProveedor").value;
+    if (!prov) return;
+    let { data, error } = await supabaseClient
+      .from("estadisticapagos").select("id,fecha,cargo").eq("proveedor", prov).order("fecha");
+    if (error) return console.error(error);
+
+    const tbody=document.querySelector("#tabla tbody");
+    tbody.innerHTML="";
+    data.forEach(r=>{
+      const f = new Date(r.fecha).toLocaleDateString("es-MX",{weekday:"short", day:"2-digit", month:"short", year:"2-digit"});
+      tbody.innerHTML+=`<tr>
+        <td>${f}</td>
+        <td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editar(${r.id}, ${r.cargo})">✏️</button>
+          <button class="btn btn-del" onclick="borrar(${r.id})">🗑️</button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  window.editar=async function(id,cargo){
+    const nuevoCargo=prompt("Nuevo cargo:",cargo);
+    if(!nuevoCargo) return;
+    let {error}=await supabaseClient.from("estadisticapagos").update({cargo:parseFloat(nuevoCargo)}).eq("id",id);
+    if(error) alert("❌ "+error.message); else cargarDatos();
+  }
+
+  window.borrar=async function(id){
+    if(!confirm("¿Eliminar este registro?")) return;
+    let {error}=await supabaseClient.from("estadisticapagos").delete().eq("id",id);
+    if(error) alert("❌ "+error.message); else cargarDatos();
+  }
+
+  cargarProveedores();
+</script>
+</body>
+</html>
