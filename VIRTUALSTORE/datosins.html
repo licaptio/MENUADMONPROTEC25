@@ -71,15 +71,16 @@
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // Cargar proveedores con distinct y trim
+  // ✅ Cargar proveedores (sin duplicados, con trim, y ordenados)
   async function cargarProveedores() {
     let { data, error } = await supabaseClient
       .from("estadisticapagos")
-      .select("proveedor", { distinct: true });
+      .select("proveedor");
 
     if (error) return console.error(error);
 
-    const unicos = [...new Set(data.map(r => r.proveedor.trim()))];
+    const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
+
     const sel = document.getElementById("selProveedor");
     sel.innerHTML = "<option value=''>-- Selecciona --</option>";
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
