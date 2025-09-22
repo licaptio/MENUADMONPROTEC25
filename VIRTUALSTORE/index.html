@@ -46,6 +46,23 @@
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
+  // 🔹 MAPA DE MESES EN ESPAÑOL
+  const meses = {
+    ene: "01", feb: "02", mar: "03", abr: "04", may: "05", jun: "06",
+    jul: "07", ago: "08", sep: "09", oct: "10", nov: "11", dic: "12"
+  };
+
+  // 🔹 FUNCIÓN PARA PARSEAR FECHAS
+  function parseFecha(fechaTexto) {
+    // Ejemplo: "mié-13-ene-21"
+    const partes = fechaTexto.split("-");
+    if (partes.length < 4) return null;
+    const dia = partes[1].padStart(2,"0");
+    const mes = meses[partes[2].toLowerCase()];
+    const anio = "20" + partes[3]; // convierte "21" → "2021"
+    return `${anio}-${mes}-${dia}`;
+  }
+
   // 🔹 GUARDAR NUEVOS PAGOS
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
@@ -54,7 +71,7 @@
       const partes = l.split(/\t|,/); // acepta TAB o coma
       return {
         proveedor,
-        fecha: new Date(partes[0]),
+        fecha: parseFecha(partes[0]),
         cargo: parseFloat(partes[1].replace(/,/g,""))
       };
     });
