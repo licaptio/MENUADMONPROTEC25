@@ -33,9 +33,9 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "TU_KEY_AQUI"; // ⚠️ pega aquí tu anon key
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"; // 👈 pega aquí tu anon key
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
-
+  
   // 📌 Cargar proveedores
   async function cargarProveedores() {
     let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
