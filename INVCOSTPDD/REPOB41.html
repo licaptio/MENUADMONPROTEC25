@@ -41,31 +41,33 @@
 
     let productosMap = {};
 
+    // -------- Cargar productos --------
     async function cargarProductos() {
       const snap = await getDocs(collection(dbProd, "productos"));
       snap.forEach(doc => {
         const d = doc.data();
-        if (d.codigoBarra) {
-          productosMap[d.codigoBarra] = {
-            descripcion: d.concepto,
-            costo: Number(d.costoSinImpuesto) || 0
-          };
-        }
+        productosMap[doc.id] = {
+          descripcion: d.concepto || "",
+          costo: Number(d.costoSinImpuesto) || 0
+        };
       });
+      console.log("Productos cargados:", Object.keys(productosMap).length);
     }
 
+    // -------- Exportar a Excel --------
     async function exportarExcel() {
-      document.getElementById("status").innerText = "⏳ Preparando datos...";
+      document.getElementById("status").innerText = "⏳ Cargando productos...";
       actualizarBarra(0);
 
       await cargarProductos();
 
+      document.getElementById("status").innerText = "⏳ Cargando inventario...";
       const registros = [];
-      const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega41_reportes", "escaneosPlano"));
+      const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega 41 reportes", "escaneosPlano"));
       const total = escaneosSnap.size;
       let procesados = 0;
 
-      for (let it of escaneosSnap.docs) {
+      escaneosSnap.forEach(it => {
         const d = it.data();
         const prod = productosMap[d.codigo] || {};
         const costo = prod.costo || 0;
@@ -85,23 +87,22 @@
         });
 
         procesados++;
-        if (procesados % 50 === 0 || procesados === total) {
+        if (procesados % 50 === 0) {
           actualizarBarra((procesados / total) * 100);
-          await new Promise(r => setTimeout(r, 0)); // permite refrescar la barra
         }
-      }
+      });
 
-      // --- Totales al final ---
+      actualizarBarra(100);
+
+      // --- Totales ---
       const totalCantidad = registros.reduce((acc, r) => acc + r.Cantidad, 0);
       const totalImporte = registros.reduce((acc, r) => acc + r.Importe, 0);
-      const promedioCosto = totalCantidad > 0 ? totalImporte / totalCantidad : 0;
-
       registros.push({
         Usuario: "TOTAL",
         Codigo: "",
         Descripcion: "",
         Cantidad: totalCantidad,
-        Costo: promedioCosto,
+        Costo: "",
         Importe: totalImporte,
         Fecha: "",
         Sucursal: "",
@@ -109,14 +110,12 @@
         FolioSesion: ""
       });
 
-      // Crear hoja Excel
+      // Crear Excel
       const ws = XLSX.utils.json_to_sheet(registros);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "InventarioCosteado");
 
-      // Descargar
       XLSX.writeFile(wb, "InventarioCosteado.xlsx");
-
       document.getElementById("status").innerText = "✅ Archivo generado con éxito";
     }
 
