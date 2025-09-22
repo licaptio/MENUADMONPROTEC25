@@ -52,7 +52,7 @@
     return parseFloat(txt.trim().replace(/,/g,"")); // ✅ elimina comas de miles
   }
 
-  // Insertar pagos
+  // 🚀 Insertar/actualizar pagos (sin duplicados)
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     const lineas = document.getElementById("datos").value.trim().split("\n");
@@ -66,9 +66,12 @@
       };
     });
 
-    let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
+    let { error } = await supabaseClient
+      .from("estadisticapagos")
+      .upsert(registros, { onConflict: ["proveedor","fecha"] }); // 👈 evita duplicados
+
     if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
+    else { alert("✅ Guardado/actualizado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
   // ✅ Cargar proveedores (sin duplicados, con trim, y ordenados)
