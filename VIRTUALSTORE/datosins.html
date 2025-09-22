@@ -58,7 +58,7 @@
     const lineas = document.getElementById("datos").value.trim().split("\n");
 
     const registros = lineas.map(l => {
-      const partes = l.split("\t");  
+      const partes = l.split("\t");  // ✅ solo separa por tab
       return {
         proveedor,
         fecha: parseFecha(partes[0]),
@@ -71,11 +71,15 @@
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // Cargar proveedores al iniciar
+  // Cargar proveedores con distinct y trim
   async function cargarProveedores() {
-    let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
+    let { data, error } = await supabaseClient
+      .from("estadisticapagos")
+      .select("proveedor", { distinct: true });
+
     if (error) return console.error(error);
-    const unicos = [...new Set(data.map(r=>r.proveedor))];
+
+    const unicos = [...new Set(data.map(r => r.proveedor.trim()))];
     const sel = document.getElementById("selProveedor");
     sel.innerHTML = "<option value=''>-- Selecciona --</option>";
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
@@ -84,7 +88,7 @@
   // 📊 Cargar datos y agrupar por mes
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
-    if (!prov) return alert("⚠️ Selecciona un proveedor primero");
+    if (!prov) return;
 
     let { data, error } = await supabaseClient
       .from("estadisticapagos")
@@ -130,7 +134,6 @@
     });
   }
 
-  // Inicializar
   cargarProveedores();
 </script>
 </body>
