@@ -2,14 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Reporte Costeado – Bodega 41</title>
+  <title>Descargar Inventario Costeado – Bodega 41</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    #progress-container {width:100%; background:#eee; border:1px solid #aaa; height:22px; margin-top:10px;}
+    #progress-bar {height:100%; width:0%; background:#4caf50; text-align:center; color:white; font-size:12px;}
+  </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getFirestore, collection, getDocs, query, orderBy, limit, startAfter 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // -------- CONFIG FIREBASE --------
+    // --- CONFIG FIREBASE INVENTARIO ---
     const configInv = {
       apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
       authDomain: "inventariopv-643f1.firebaseapp.com",
@@ -19,152 +22,121 @@
       appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
     };
 
-    const app = initializeApp(configInv);
-    const db = getFirestore(app);
+    // --- CONFIG FIREBASE PRODUCTOS ---
+    const configProd = {
+      apiKey: "AIzaSyA0JYm16CaVXr86ZGbKP8tpe47rl0LdBaw",
+      authDomain: "bd-bodega41.firebaseapp.com",
+      projectId: "bd-bodega41",
+      storageBucket: "bd-bodega41.firebasestorage.app",
+      messagingSenderId: "63153834263",
+      appId: "1:63153834263:web:32f306d4dea573bee74f52",
+      measurementId: "G-YCCWZCHCEV"
+    };
 
-    // -------- VARIABLES --------
-    const porPagina = 50;     // lo que ves en la tabla
-    const batchTotales = 500; // tamaño de lote para calcular totales globales
-    let pagina = 0;
-    let cursors = [];
+    const appInv = initializeApp(configInv, "appInv");
+    const appProd = initializeApp(configProd, "appProd");
 
-    // -------- CALCULAR TOTALES GLOBALES (paginado) --------
-    async function calcularTotalesGlobales() {
-      let totalCantidad = 0;
-      let totalImporte = 0;
-      let lastDoc = null;
-      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
+    const dbInv = getFirestore(appInv);
+    const dbProd = getFirestore(appProd);
 
-      while (true) {
-        let q = query(escaneosRef, limit(batchTotales));
-        if (lastDoc) {
-          q = query(escaneosRef, startAfter(lastDoc), limit(batchTotales));
+    let productosMap = {};
+
+    async function cargarProductos() {
+      const snap = await getDocs(collection(dbProd, "productos"));
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (d.codigoBarra) {
+          productosMap[d.codigoBarra] = {
+            descripcion: d.concepto,
+            costo: Number(d.costoSinImpuesto) || 0
+          };
         }
-        const snap = await getDocs(q);
-        if (snap.empty) break;
-
-        snap.forEach(doc => {
-          const d = doc.data();
-          const cantidad = Number(d.cantidad) || 0;
-          const costo = Number(d.costo) || 0;
-          totalCantidad += cantidad;
-          totalImporte += cantidad * costo;
-        });
-
-        lastDoc = snap.docs[snap.docs.length - 1];
-
-        // Mostrar progreso parcial
-        document.getElementById("totalesGlobales").innerHTML =
-          `Calculando... Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}`;
-      }
-
-      // Totales finales
-      document.getElementById("totalesGlobales").innerHTML =
-        `<b>Totales Globales → Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}</b>`;
+      });
+      console.log("Productos cargados:", Object.keys(productosMap).length);
     }
 
-    // -------- CARGAR PÁGINA --------
-    async function cargarPagina(num) {
-      const escaneosRef = collection(db, "inventarios", "Bodega41_reportes", "escaneosPlano");
-      let q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), limit(porPagina));
+    async function exportarExcel() {
+      document.getElementById("status").innerText = "⏳ Preparando datos...";
+      actualizarBarra(0);
 
-      if (num > 0 && cursors[num - 1]) {
-        q = query(escaneosRef, orderBy("usuario"), orderBy("fecha"), startAfter(cursors[num - 1]), limit(porPagina));
-      }
+      await cargarProductos();
 
-      const snap = await getDocs(q);
-      if (snap.empty && num > pagina) return;
+      const registros = [];
+      const escaneosSnap = await getDocs(collection(dbInv, "inventarios", "Bodega41_reportes", "escaneosPlano"));
+      const total = escaneosSnap.size;
+      let procesados = 0;
 
-      pagina = num;
-      cursors[pagina] = snap.docs[snap.docs.length - 1];
-
-      let registros = [];
-      snap.forEach(it => {
+      escaneosSnap.forEach(it => {
         const d = it.data();
+        const prod = productosMap[d.codigo] || {};
+        const costo = prod.costo || 0;
+        const importe = (Number(d.cantidad) || 0) * costo;
+
         registros.push({
-          usuario: d.usuario,
-          codigo: d.codigo,
-          descripcion: d.descripcion,
-          cantidad: Number(d.cantidad) || 0,
-          costo: Number(d.costo) || 0,
-          fecha: d.fecha,
-          sucursal: d.sucursal,
-          folioRegistro: d.folioRegistro,
-          folioSesion: d.folioSesion
+          Usuario: d.usuario || "",
+          Codigo: d.codigo || "",
+          Descripcion: prod.descripcion || d.descripcion || "",
+          Cantidad: Number(d.cantidad) || 0,
+          Costo: costo,
+          Importe: importe,
+          Fecha: d.fecha || "",
+          Sucursal: d.sucursal || "",
+          FolioRegistro: d.folioRegistro || "",
+          FolioSesion: d.folioSesion || ""
         });
+
+        procesados++;
+        if (procesados % 50 === 0) { // actualiza cada 50 docs para no trabar
+          actualizarBarra((procesados / total) * 100);
+        }
       });
 
-      renderTabla(registros);
+      actualizarBarra(100);
+
+      // --- Totales al final ---
+      const totalCantidad = registros.reduce((acc, r) => acc + r.Cantidad, 0);
+      const totalImporte = registros.reduce((acc, r) => acc + r.Importe, 0);
+      registros.push({
+        Usuario: "TOTAL",
+        Codigo: "",
+        Descripcion: "",
+        Cantidad: totalCantidad,
+        Costo: "",
+        Importe: totalImporte,
+        Fecha: "",
+        Sucursal: "",
+        FolioRegistro: "",
+        FolioSesion: ""
+      });
+
+      // Crear hoja Excel
+      const ws = XLSX.utils.json_to_sheet(registros);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "InventarioCosteado");
+
+      // Descargar
+      XLSX.writeFile(wb, "InventarioCosteado.xlsx");
+
+      document.getElementById("status").innerText = "✅ Archivo generado con éxito";
     }
 
-    // -------- RENDER TABLA --------
-    function renderTabla(registros) {
-      let totalCantidad = 0;
-      let totalImporte = 0;
-      registros.forEach(r => {
-        totalCantidad += r.cantidad;
-        totalImporte += r.cantidad * r.costo;
-      });
-
-      let html = `
-        <div style="margin-bottom:10px;">
-          <b>Totales Página → Cantidad: ${totalCantidad} | Importe: $${totalImporte.toFixed(2)}</b>
-        </div>
-        <table border="1" cellspacing="0" cellpadding="4"
-               style="width:100%; border-collapse:collapse; font-size:12px;">
-          <thead>
-            <tr style="background:#eee;">
-              <th>Usuario</th>
-              <th>Código</th>
-              <th>Descripción</th>
-              <th>Cantidad</th>
-              <th>Costo</th>
-              <th>Importe</th>
-              <th>Fecha</th>
-              <th>Sucursal</th>
-              <th>Folio Registro</th>
-              <th>Folio Sesión</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      registros.forEach(r => {
-        html += `<tr>
-          <td>${r.usuario}</td>
-          <td>${r.codigo}</td>
-          <td>${r.descripcion}</td>
-          <td style="text-align:right;">${r.cantidad}</td>
-          <td style="text-align:right;">${r.costo.toFixed(2)}</td>
-          <td style="text-align:right;">${(r.cantidad * r.costo).toFixed(2)}</td>
-          <td>${r.fecha}</td>
-          <td>${r.sucursal}</td>
-          <td>${r.folioRegistro}</td>
-          <td>${r.folioSesion}</td>
-        </tr>`;
-      });
-
-      html += `</tbody></table>`;
-
-      html += `<div style="margin-top:10px; text-align:center;">
-        Página ${pagina + 1}
-        <button onclick="cargarPagina(${pagina - 1})" ${pagina == 0 ? "disabled" : ""}>Anterior</button>
-        <button onclick="cargarPagina(${pagina + 1})">Siguiente</button>
-      </div>`;
-
-      document.getElementById("tabla").innerHTML = html;
+    function actualizarBarra(pct) {
+      const bar = document.getElementById("progress-bar");
+      bar.style.width = pct.toFixed(0) + "%";
+      bar.innerText = pct.toFixed(0) + "%";
     }
 
-    // -------- INICIO --------
-    calcularTotalesGlobales(); // se calcula en segundo plano
-    cargarPagina(0); // carga primera página
+    window.exportarExcel = exportarExcel;
   </script>
 </head>
 <body>
-  <h2>Reporte Costeado – Bodega 41</h2>
-  <div id="totalesGlobales" style="margin:10px 0; font-size:14px; color:#00416A;">
-    Calculando totales globales...
+  <h2>Descargar Inventario Costeado – Bodega 41</h2>
+  <button onclick="exportarExcel()">Exportar a Excel</button>
+
+  <div id="progress-container">
+    <div id="progress-bar">0%</div>
   </div>
-  <div id="tabla">Cargando...</div>
+
+  <p id="status"></p>
 </body>
 </html>
