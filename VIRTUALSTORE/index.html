@@ -13,9 +13,6 @@
     table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
     th { background: #eee; }
-    .btn { padding: 4px 8px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; }
-    .btn-edit { background: #ffc107; }
-    .btn-del { background: #dc3545; color: white; }
   </style>
 </head>
 <body>
@@ -31,7 +28,7 @@
 
   <table id="tabla">
     <thead>
-      <tr><th>Fecha</th><th>Cargo</th><th>Acciones</th></tr>
+      <tr><th>Fecha</th><th>Cargo</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -41,123 +38,74 @@
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  // 🔹 CONFIGURACIÓN DE SUPABASE
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+  const supabaseKey = "TU_KEY_AQUI"; // 👈 pega aquí tu anon key
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-  // 🔹 MAPA DE MESES EN ESPAÑOL
-  const meses = {
-    ene: "01", feb: "02", mar: "03", abr: "04", may: "05", jun: "06",
-    jul: "07", ago: "08", sep: "09", oct: "10", nov: "11", dic: "12"
-  };
+  // 🔹 Meses abreviados en español
+  const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
+                  jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
 
-  // 🔹 FUNCIÓN PARA PARSEAR FECHAS
   function parseFecha(fechaTexto) {
-    // Ejemplo: "mié-13-ene-21"
     const partes = fechaTexto.split("-");
     if (partes.length < 4) return null;
     const dia = partes[1].padStart(2,"0");
     const mes = meses[partes[2].toLowerCase()];
-    const anio = "20" + partes[3]; // convierte "21" → "2021"
+    const anio = "20" + partes[3];
     return `${anio}-${mes}-${dia}`;
   }
 
-  // 🔹 GUARDAR NUEVOS PAGOS
+  function parseNumero(txt) {
+    return parseFloat(txt.trim().replace(/,/g,""));
+  }
+
+  // Insertar pagos
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     const lineas = document.getElementById("datos").value.trim().split("\n");
     const registros = lineas.map(l => {
-      const partes = l.split(/\t|,/); // acepta TAB o coma
+      const partes = l.split(/\t|,/);
       return {
         proveedor,
         fecha: parseFecha(partes[0]),
-        cargo: parseFloat(partes[1].replace(/,/g,""))
+        cargo: parseNumero(partes[1])
       };
     });
-
     let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
     if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado"); document.getElementById("datos").value = ""; cargarProveedores(); }
+    else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   }
 
-  // 🔹 CARGAR LISTA DE PROVEEDORES
   async function cargarProveedores() {
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("proveedor");
-    if (error) { console.error(error); return; }
-    const unicos = [...new Set(data.map(r => r.proveedor))];
+    let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
+    if (error) return console.error(error);
+    const unicos = [...new Set(data.map(r=>r.proveedor))];
     const sel = document.getElementById("selProveedor");
     sel.innerHTML = "<option value=''>-- Selecciona --</option>";
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
   }
 
-  // 🔹 CARGAR PAGOS DE UN PROVEEDOR
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
     let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("id,fecha,cargo")
-      .eq("proveedor", prov)
-      .order("fecha");
-    if (error) { console.error(error); return; }
+      .from("estadisticapagos").select("fecha,cargo").eq("proveedor", prov).order("fecha");
+    if (error) return console.error(error);
 
-    // Tabla
     const tbody = document.querySelector("#tabla tbody");
     tbody.innerHTML = "";
-    data.forEach(r => {
-      tbody.innerHTML += `<tr>
-        <td>${r.fecha}</td>
-        <td>${r.cargo.toFixed(2)}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editar(${r.id}, ${r.cargo})">✏️</button>
-          <button class="btn btn-del" onclick="borrar(${r.id})">🗑️</button>
-        </td>
-      </tr>`;
+    data.forEach(r=>{
+      const f = new Date(r.fecha).toLocaleDateString("es-MX",{weekday:"short", day:"2-digit", month:"short", year:"2-digit"});
+      tbody.innerHTML += `<tr><td>${f}</td><td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td></tr>`;
     });
 
-    // Gráfico
-    const ctx = document.getElementById("grafico");
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.map(r => r.fecha),
-        datasets: [{
-          label: "Pagos " + prov,
-          data: data.map(r => r.cargo),
-          borderColor: "blue",
-          fill: false
-        }]
-      }
+    const ctx=document.getElementById("grafico");
+    new Chart(ctx,{
+      type:"line",
+      data:{labels:data.map(r=>r.fecha),datasets:[{label:"Pagos "+prov,data:data.map(r=>r.cargo),borderColor:"blue",fill:false}]}
     });
   }
 
-  // 🔹 EDITAR CARGO
-  window.editar = async function (id, cargo) {
-    const nuevoCargo = prompt("Nuevo cargo:", cargo);
-    if (!nuevoCargo) return;
-    let { error } = await supabaseClient
-      .from("estadisticapagos")
-      .update({ cargo: parseFloat(nuevoCargo) })
-      .eq("id", id);
-    if (error) alert("❌ Error: " + error.message);
-    else cargarDatos();
-  }
-
-  // 🔹 ELIMINAR REGISTRO
-  window.borrar = async function (id) {
-    if (!confirm("¿Eliminar este registro?")) return;
-    let { error } = await supabaseClient
-      .from("estadisticapagos")
-      .delete()
-      .eq("id", id);
-    if (error) alert("❌ Error: " + error.message);
-    else cargarDatos();
-  }
-
-  // Inicial
   cargarProveedores();
 </script>
 </body>
