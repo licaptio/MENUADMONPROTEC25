@@ -52,7 +52,6 @@
           };
         }
       });
-      console.log("Productos cargados:", Object.keys(productosMap).length);
     }
 
     async function exportarExcel() {
@@ -66,7 +65,7 @@
       const total = escaneosSnap.size;
       let procesados = 0;
 
-      escaneosSnap.forEach(it => {
+      for (let it of escaneosSnap.docs) {
         const d = it.data();
         const prod = productosMap[d.codigo] || {};
         const costo = prod.costo || 0;
@@ -86,22 +85,23 @@
         });
 
         procesados++;
-        if (procesados % 50 === 0) { // actualiza cada 50 docs para no trabar
+        if (procesados % 50 === 0 || procesados === total) {
           actualizarBarra((procesados / total) * 100);
+          await new Promise(r => setTimeout(r, 0)); // permite refrescar la barra
         }
-      });
-
-      actualizarBarra(100);
+      }
 
       // --- Totales al final ---
       const totalCantidad = registros.reduce((acc, r) => acc + r.Cantidad, 0);
       const totalImporte = registros.reduce((acc, r) => acc + r.Importe, 0);
+      const promedioCosto = totalCantidad > 0 ? totalImporte / totalCantidad : 0;
+
       registros.push({
         Usuario: "TOTAL",
         Codigo: "",
         Descripcion: "",
         Cantidad: totalCantidad,
-        Costo: "",
+        Costo: promedioCosto,
         Importe: totalImporte,
         Fecha: "",
         Sucursal: "",
