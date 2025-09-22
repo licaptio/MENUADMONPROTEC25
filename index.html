@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📊 Estadística de Pagos</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f8; }
@@ -39,14 +38,16 @@
 
   <canvas id="grafico" height="100"></canvas>
 
-<script>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
   // 🔹 CONFIGURACIÓN DE SUPABASE
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
   // 🔹 GUARDAR NUEVOS PAGOS
-  async function guardar() {
+  window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     const lineas = document.getElementById("datos").value.trim().split("\n");
     const registros = lineas.map(l => {
@@ -76,7 +77,7 @@
   }
 
   // 🔹 CARGAR PAGOS DE UN PROVEEDOR
-  async function cargarDatos() {
+  window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
     let { data, error } = await supabaseClient
@@ -117,7 +118,7 @@
   }
 
   // 🔹 EDITAR CARGO
-  async function editar(id, cargo) {
+  window.editar = async function (id, cargo) {
     const nuevoCargo = prompt("Nuevo cargo:", cargo);
     if (!nuevoCargo) return;
     let { error } = await supabaseClient
@@ -129,7 +130,7 @@
   }
 
   // 🔹 ELIMINAR REGISTRO
-  async function borrar(id) {
+  window.borrar = async function (id) {
     if (!confirm("¿Eliminar este registro?")) return;
     let { error } = await supabaseClient
       .from("estadisticapagos")
