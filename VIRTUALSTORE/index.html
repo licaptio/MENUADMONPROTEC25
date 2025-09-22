@@ -26,26 +26,23 @@
     <select id="selProveedor" onchange="cargarDatos()"></select>
   </label>
 
-  <table id="tabla">
-    <thead>
-      <tr><th>Fecha</th><th>Cargo</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
   <canvas id="grafico" height="100"></canvas>
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+  // 🔹 CONFIGURACIÓN
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"; // 👈 pega aquí tu anon key
+  const supabaseKey = "TU_KEY_AQUI"; // ⚠️ Usa tu anon key aquí
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+  let chart; // para controlar la gráfica
 
   // 🔹 Meses abreviados en español
   const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
                   jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
 
+  // 📌 Convierte texto → YYYY-MM-DD
   function parseFecha(fechaTexto) {
     const partes = fechaTexto.split("-");
     if (partes.length < 4) return null;
@@ -55,11 +52,12 @@
     return `${anio}-${mes}-${dia}`;
   }
 
+  // 📌 Convierte número con comas → float
   function parseNumero(txt) {
     return parseFloat(txt.trim().replace(/,/g,""));
   }
 
-  // Insertar pagos
+  // 📌 Insertar pagos
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     const lineas = document.getElementById("datos").value.trim().split("\n");
@@ -71,11 +69,17 @@
         cargo: parseNumero(partes[1])
       };
     });
+
     let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
     if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
+    else { 
+      alert("✅ Guardado correctamente"); 
+      document.getElementById("datos").value=""; 
+      cargarProveedores(); 
+    }
   }
 
+  // 📌 Cargar proveedores únicos
   async function cargarProveedores() {
     let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
     if (error) return console.error(error);
@@ -85,27 +89,32 @@
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
   }
 
+  // 📌 Consultar datos + graficar
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
     let { data, error } = await supabaseClient
-      .from("estadisticapagos").select("fecha,cargo").eq("proveedor", prov).order("fecha");
+      .from("estadisticapagos")
+      .select("fecha,cargo")
+      .eq("proveedor", prov)
+      .order("fecha");
     if (error) return console.error(error);
 
-    const tbody = document.querySelector("#tabla tbody");
-    tbody.innerHTML = "";
-    data.forEach(r=>{
-      const f = new Date(r.fecha).toLocaleDateString("es-MX",{weekday:"short", day:"2-digit", month:"short", year:"2-digit"});
-      tbody.innerHTML += `<tr><td>${f}</td><td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td></tr>`;
-    });
+    // Destruir gráfica previa
+    if (chart) chart.destroy();
 
+    // Crear nueva gráfica
     const ctx=document.getElementById("grafico");
-    new Chart(ctx,{
+    chart = new Chart(ctx,{
       type:"line",
-      data:{labels:data.map(r=>r.fecha),datasets:[{label:"Pagos "+prov,data:data.map(r=>r.cargo),borderColor:"blue",fill:false}]}
+      data:{
+        labels:data.map(r=>new Date(r.fecha).toLocaleDateString("es-MX")),
+        datasets:[{label:"Pagos "+prov,data:data.map(r=>r.cargo),borderColor:"blue",tension:0.2,fill:false}]
+      }
     });
   }
 
+  // Inicial
   cargarProveedores();
 </script>
 </body>
