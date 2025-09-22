@@ -1,58 +1,137 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtual Store - PROVSOFT</title>
+  <meta charset="UTF-8">
+  <title>Estadística de Pagos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 2em;
-      background: #f4f6f8;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 1.5em;
-      font-size: 2em;
-      color: #222;
-    }
-    .menu {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    .menu a {
-      display: block;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 1.1em;
-      font-weight: bold;
-      text-decoration: none;
-      color: white;
-      transition: transform 0.2s, opacity 0.3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .menu a:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-    .btn1 { background: #16a34a; }   /* verde recorrido */
-    .btn2 { background: #0d6efd; }   /* azul panel */
-    .btn3 { background: #8e44ad; }   /* morado futuro */
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #f0f0f0; }
+    textarea { width: 100%; }
+    .btn { padding: 4px 8px; margin: 2px; cursor: pointer; }
+    .btn-edit { background: #ffc107; }
+    .btn-del { background: #dc3545; color: white; }
   </style>
 </head>
 <body>
+  <h2>📥 Insertar pagos</h2>
+  <label>Proveedor: <input id="proveedor"></label><br><br>
+  <textarea id="datos" rows="6" placeholder="Pega filas: FECHA    CARGO"></textarea><br>
+  <button onclick="guardar()">Guardar</button>
 
-  <h1>🏬 Virtual Store - PROVSOFT</h1>
+  <h2>📊 Consultar pagos</h2>
+  <label>Proveedor:
+    <select id="selProveedor" onchange="cargarDatos()"></select>
+  </label>
 
-  <div class="menu">
-    <a href="PANELCTRL.html" class="btn2" target="_blank">⚙️ Panel de Control</a>
-    <a href="bodega-scroll.html" class="btn2" target="_blank">⚙️ TIENDA CELULAR</a>
-    <a href="VIRTUALSTORE.html" class="btn2" target="_blank">⚙️ TIENDA VIRTUAL</a>
-  </div>
+  <table id="tabla">
+    <thead>
+      <tr><th>Fecha</th><th>Cargo</th><th>Acciones</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
+  <canvas id="grafico" height="100"></canvas>
+
+<script>
+const supabaseUrl = "https://TU_PROJECT.supabase.co"; // 🔹 tu URL
+const supabaseKey = "TU_PUBLIC_ANON_KEY";            // 🔹 tu KEY
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function guardar() {
+  const proveedor = document.getElementById("proveedor").value.trim();
+  const lineas = document.getElementById("datos").value.trim().split("\n");
+  const registros = lineas.map(l => {
+    const partes = l.split(/\t|,/); // acepta TAB o coma
+    return {
+      proveedor,
+      fecha: new Date(partes[0]),
+      cargo: parseFloat(partes[1].replace(/,/g,""))
+    };
+  });
+
+  let { error } = await supabase.from("estadisticapagos").insert(registros);
+  if (error) alert("❌ Error: " + error.message);
+  else { alert("✅ Guardado"); cargarProveedores(); }
+}
+
+async function cargarProveedores() {
+  let { data, error } = await supabase
+    .from("estadisticapagos")
+    .select("proveedor");
+  if (error) { console.error(error); return; }
+  const unicos = [...new Set(data.map(r => r.proveedor))];
+  const sel = document.getElementById("selProveedor");
+  sel.innerHTML = "<option value=''>-- Selecciona --</option>";
+  unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
+}
+
+async function cargarDatos() {
+  const prov = document.getElementById("selProveedor").value;
+  if (!prov) return;
+  let { data, error } = await supabase
+    .from("estadisticapagos")
+    .select("id,fecha,cargo")
+    .eq("proveedor", prov)
+    .order("fecha");
+  if (error) { console.error(error); return; }
+
+  // tabla
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+  data.forEach(r => {
+    tbody.innerHTML += `<tr>
+      <td>${r.fecha}</td>
+      <td>${r.cargo.toFixed(2)}</td>
+      <td>
+        <button class="btn btn-edit" onclick="editar(${r.id}, '${r.fecha}', ${r.cargo})">✏️</button>
+        <button class="btn btn-del" onclick="borrar(${r.id})">🗑️</button>
+      </td>
+    </tr>`;
+  });
+
+  // grafico
+  const ctx = document.getElementById("grafico");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.map(r => r.fecha),
+      datasets: [{
+        label: "Pagos " + prov,
+        data: data.map(r => r.cargo),
+        borderColor: "blue",
+        fill: false
+      }]
+    }
+  });
+}
+
+async function editar(id, fecha, cargo) {
+  const nuevoCargo = prompt("Nuevo cargo:", cargo);
+  if (!nuevoCargo) return;
+  let { error } = await supabase
+    .from("estadisticapagos")
+    .update({ cargo: parseFloat(nuevoCargo) })
+    .eq("id", id);
+  if (error) alert("❌ Error: " + error.message);
+  else cargarDatos();
+}
+
+async function borrar(id) {
+  if (!confirm("¿Eliminar este registro?")) return;
+  let { error } = await supabase
+    .from("estadisticapagos")
+    .delete()
+    .eq("id", id);
+  if (error) alert("❌ Error: " + error.message);
+  else cargarDatos();
+}
+
+// inicial
+cargarProveedores();
+</script>
 </body>
 </html>
