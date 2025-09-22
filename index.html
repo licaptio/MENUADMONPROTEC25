@@ -1,147 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📊 Estadística de Pagos</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Menú Principal</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f8; }
-    h2 { color: #333; }
-    textarea { width: 100%; margin: 10px 0; }
-    button { margin-top: 5px; padding: 8px 14px; cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background: #eee; }
-    .btn { padding: 4px 8px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; }
-    .btn-edit { background: #ffc107; }
-    .btn-del { background: #dc3545; color: white; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2em 1em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: url('TRILOBAS.png') no-repeat center 25% fixed;
+      background-size: cover;
+      color: white;
+    }
+
+    h1 {
+      margin-bottom: 1.5em;
+      font-size: 1.8em;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .menu-links {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 600px;
+      background: rgba(0,0,0,0.55);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .menu-links a {
+      padding: 0.9em;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 1.05em;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, opacity 0.3s;
+    }
+
+    .menu-links a:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+
+    /* 🎨 Colores únicos */
+    .btn1  { background: #e67e22; }  
+    .btn2  { background: #3498db; }  
+    .btn3  { background: #16a34a; }  
+    .btn4  { background: #9b59b6; }  
+    .btn5  { background: #c0392b; }  
+    .btn6  { background: #f59e0b; }  
+    .btn7  { background: #1abc9c; }  
+    .btn8  { background: #2c3e50; }  
+    .btn9  { background: #e91e63; }  
+    .btn10 { background: #3b82f6; }  
+    .btn11 { background: #10b981; }  
+    .btn12 { background: #9333ea; }  
+    .btn13 { background: #ef4444; }  
+    .btn14 { background: #84cc16; }  
+    .btn15 { background: #d97706; }  
+
+    footer {
+      margin-top: 3em;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    #fecha-hora {
+      font-weight: bold;
+    }
+
+    @media (min-width: 700px) {
+      .menu-links {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>📥 Insertar pagos</h2>
-  <label>Proveedor: <input id="proveedor"></label><br>
-  <textarea id="datos" rows="6" placeholder="Pega filas: FECHA    CARGO"></textarea><br>
-  <button onclick="guardar()">Guardar</button>
 
-  <h2>📊 Consultar pagos</h2>
-  <label>Proveedor:
-    <select id="selProveedor" onchange="cargarDatos()"></select>
-  </label>
+  <h1>📋 Menú Principal</h1>
 
-  <table id="tabla">
-    <thead>
-      <tr><th>Fecha</th><th>Cargo</th><th>Acciones</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="menu-links">
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ALIKALOBABOTS/index.html" target="_blank" class="btn1">🦊 AlikaBot</a>
+    <a href="AUDPRECIO/INDEX.html" target="_blank" class="btn2">📑 Auditoría de Precio</a>
+    <a href="BDARTIPROV/index.html" class="btn4">📚 Catálogo de Artículos PDD</a>
+    <a href="CHECK/index.html" target="_blank" class="btn5">✅ Checklist</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/CONTROLPAGOS/index.html" target="_blank" class="btn6">📥 Control Pago</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn7">💰 Deuda V2</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn8">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ENTRADAFACTINV/index.html" target="_blank" class="btn9">📥 Entrada Fact INV</a>
+    <a href="FINANCIEROPDD/index.html" class="btn10">📊 Finanzas</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn11">📦 Inventario GIT</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INV%20ZAPATA/index.html" target="_blank" class="btn12">🏷️ Inv. Zapata</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn14">📘 Sergio Aguayo</a>
+    <a href="VIRTUALSTORE/index.html" target="_blank" class="btn15">🛒 Tienda Virtual</a>
+    <a href="POSPDD/index.html" target="_blank" class="btn15">📊 Tablas Estadisticas PDD</a>
+    <a href="INVCOSTPDD/REPOB41.html" target="_blank" class="btn15">Repo Paginado B41</a>
+  </div>
 
-  <canvas id="grafico" height="100"></canvas>
+  <footer>
+    <div>📦 powered by PROVSOFT · <span id="fecha-hora">⏳</span></div>
+  </footer>
 
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  <script>
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+      const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
+      const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
+    }
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
+  </script>
 
-  // 🔹 CONFIGURACIÓN DE SUPABASE
-  const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
-  const supabaseClient = createClient(supabaseUrl, supabaseKey);
-
-  // 🔹 GUARDAR NUEVOS PAGOS
-  window.guardar = async function () {
-    const proveedor = document.getElementById("proveedor").value.trim();
-    const lineas = document.getElementById("datos").value.trim().split("\n");
-    const registros = lineas.map(l => {
-      const partes = l.split(/\t|,/); // acepta TAB o coma
-      return {
-        proveedor,
-        fecha: new Date(partes[0]),
-        cargo: parseFloat(partes[1].replace(/,/g,""))
-      };
-    });
-
-    let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
-    if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado"); document.getElementById("datos").value = ""; cargarProveedores(); }
-  }
-
-  // 🔹 CARGAR LISTA DE PROVEEDORES
-  async function cargarProveedores() {
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("proveedor");
-    if (error) { console.error(error); return; }
-    const unicos = [...new Set(data.map(r => r.proveedor))];
-    const sel = document.getElementById("selProveedor");
-    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
-    unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
-  }
-
-  // 🔹 CARGAR PAGOS DE UN PROVEEDOR
-  window.cargarDatos = async function () {
-    const prov = document.getElementById("selProveedor").value;
-    if (!prov) return;
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("id,fecha,cargo")
-      .eq("proveedor", prov)
-      .order("fecha");
-    if (error) { console.error(error); return; }
-
-    // Tabla
-    const tbody = document.querySelector("#tabla tbody");
-    tbody.innerHTML = "";
-    data.forEach(r => {
-      tbody.innerHTML += `<tr>
-        <td>${r.fecha}</td>
-        <td>${r.cargo.toFixed(2)}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editar(${r.id}, ${r.cargo})">✏️</button>
-          <button class="btn btn-del" onclick="borrar(${r.id})">🗑️</button>
-        </td>
-      </tr>`;
-    });
-
-    // Gráfico
-    const ctx = document.getElementById("grafico");
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.map(r => r.fecha),
-        datasets: [{
-          label: "Pagos " + prov,
-          data: data.map(r => r.cargo),
-          borderColor: "blue",
-          fill: false
-        }]
-      }
-    });
-  }
-
-  // 🔹 EDITAR CARGO
-  window.editar = async function (id, cargo) {
-    const nuevoCargo = prompt("Nuevo cargo:", cargo);
-    if (!nuevoCargo) return;
-    let { error } = await supabaseClient
-      .from("estadisticapagos")
-      .update({ cargo: parseFloat(nuevoCargo) })
-      .eq("id", id);
-    if (error) alert("❌ Error: " + error.message);
-    else cargarDatos();
-  }
-
-  // 🔹 ELIMINAR REGISTRO
-  window.borrar = async function (id) {
-    if (!confirm("¿Eliminar este registro?")) return;
-    let { error } = await supabaseClient
-      .from("estadisticapagos")
-      .delete()
-      .eq("id", id);
-    if (error) alert("❌ Error: " + error.message);
-    else cargarDatos();
-  }
-
-  // Inicial
-  cargarProveedores();
-</script>
 </body>
 </html>
