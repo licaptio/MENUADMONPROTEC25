@@ -17,6 +17,7 @@
 </head>
 <body>
   <h2>📋 Detalle de pagos (editar/borrar)</h2>
+
   <label>Proveedor:
     <select id="selProveedor" onchange="cargarDatos()"></select>
   </label>
@@ -32,53 +33,69 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"; 
+  const supabaseKey = "TU_KEY_AQUI"; // ⚠️ pega aquí tu anon key
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
+  // 📌 Cargar proveedores
   async function cargarProveedores() {
     let { data, error } = await supabaseClient.from("estadisticapagos").select("proveedor");
     if (error) return console.error(error);
-    const unicos = [...new Set(data.map(r=>r.proveedor))];
+    const unicos = [...new Set(data.map(r => r.proveedor))];
     const sel = document.getElementById("selProveedor");
     sel.innerHTML = "<option value=''>-- Selecciona --</option>";
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
   }
 
+  // 📌 Cargar pagos por proveedor
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
     let { data, error } = await supabaseClient
-      .from("estadisticapagos").select("id,fecha,cargo").eq("proveedor", prov).order("fecha");
+      .from("estadisticapagos")
+      .select("id,fecha,cargo")
+      .eq("proveedor", prov)
+      .order("fecha");
+
     if (error) return console.error(error);
 
-    const tbody=document.querySelector("#tabla tbody");
-    tbody.innerHTML="";
-    data.forEach(r=>{
-      const f = new Date(r.fecha).toLocaleDateString("es-MX",{weekday:"short", day:"2-digit", month:"short", year:"2-digit"});
-      tbody.innerHTML+=`<tr>
-        <td>${f}</td>
-        <td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editar(${r.id}, ${r.cargo})">✏️</button>
-          <button class="btn btn-del" onclick="borrar(${r.id})">🗑️</button>
-        </td>
-      </tr>`;
+    const tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(r => {
+      const f = new Date(r.fecha).toLocaleDateString("es-MX", {
+        weekday: "short", day: "2-digit", month: "short", year: "2-digit"
+      });
+      tbody.innerHTML += `
+        <tr>
+          <td>${f}</td>
+          <td>${r.cargo.toLocaleString("es-MX",{minimumFractionDigits:2})}</td>
+          <td>
+            <button class="btn btn-edit" onclick="editar(${r.id}, ${r.cargo})">✏️ Editar</button>
+            <button class="btn btn-del" onclick="borrar(${r.id})">🗑️ Eliminar</button>
+          </td>
+        </tr>`;
     });
   }
 
-  window.editar=async function(id,cargo){
-    const nuevoCargo=prompt("Nuevo cargo:",cargo);
-    if(!nuevoCargo) return;
-    let {error}=await supabaseClient.from("estadisticapagos").update({cargo:parseFloat(nuevoCargo)}).eq("id",id);
-    if(error) alert("❌ "+error.message); else cargarDatos();
+  // 📌 Editar cargo
+  window.editar = async function (id, cargo) {
+    const nuevoCargo = prompt("Nuevo cargo:", cargo);
+    if (!nuevoCargo) return;
+    const monto = parseFloat(nuevoCargo.toString().replace(/,/g,""));
+    let { error } = await supabaseClient.from("estadisticapagos").update({ cargo: monto }).eq("id", id);
+    if (error) alert("❌ Error: " + error.message);
+    else cargarDatos();
   }
 
-  window.borrar=async function(id){
-    if(!confirm("¿Eliminar este registro?")) return;
-    let {error}=await supabaseClient.from("estadisticapagos").delete().eq("id",id);
-    if(error) alert("❌ "+error.message); else cargarDatos();
+  // 📌 Borrar registro
+  window.borrar = async function (id) {
+    if (!confirm("¿Eliminar este registro?")) return;
+    let { error } = await supabaseClient.from("estadisticapagos").delete().eq("id", id);
+    if (error) alert("❌ Error: " + error.message);
+    else cargarDatos();
   }
 
+  // Inicial
   cargarProveedores();
 </script>
 </body>
