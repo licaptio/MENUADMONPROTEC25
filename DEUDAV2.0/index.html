@@ -7,18 +7,20 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f9;
+      background: linear-gradient(160deg, #dbe8f1, #f9f9f7);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
       margin: 0;
+      padding: 30px 10px;
     }
 
     h1 {
       margin-bottom: 40px;
       color: #003366;
+      font-size: 2rem;
     }
 
     .card-container {
@@ -29,94 +31,102 @@
     }
 
     .card {
-      background-color: #ffffff;
+      background-color: #ffffffcc;
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      padding: 25px;
       text-align: center;
-      width: 280px;
-      transition: transform 0.2s;
+      width: 260px;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .card:hover {
       transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     }
 
     .card-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 600;
       color: #222;
     }
 
+    /* Estilo base botones */
     .card a {
       text-decoration: none;
-      color: #007bff;
-      font-size: 18px;
+      color: #fff;
+      font-size: 16px;
       font-weight: bold;
       display: block;
-      margin-top: 10px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+
+    /* Colores diferenciados */
+    .btn-xml { background: #007bff; }        /* azul */
+    .btn-deuda { background: #28a745; }      /* verde */
+    .btn-qr { background: #ff9800; }         /* naranja */
+    .btn-pagos { background: #9c27b0; }      /* morado */
+    .btn-celular { background: #009688; }    /* verde azulado */
+    .btn-bancos { background: #795548; }     /* café */
+    .btn-folios { background: #3f51b5; }     /* azul índigo */
+    .btn-morris { background: #e91e63; }     /* rosa fuerte */
+
+    /* Hover (un poquito más oscuro) */
+    .card a:hover {
+      filter: brightness(90%);
+    }
+
+    footer {
+      margin-top: 50px;
+      text-align: center;
+      color: #555;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <h1>Panel de Control</h1>
-  </div>
-<div class="card-container">
-  <div class="card">
-    <div class="card-title">Cargar Archivos XML 2.0</div>
-    <a href="CARGAXML.html">Abrir herramienta</a>
-  </div>
-  <div class="card">
-    <div class="card-title">Deuda Version 3.1</div>
-    <a href="resumen-deudas-telegram.html">Abrir Herramienta</a>
-  </div>
-  <div class="card">
-    <div class="card-title">Escanear Facturas Fisicas QR</div>
-    <a href="iniciacam.html">Abrir Celular</a>
-  </div>
-    
-  <!-- NUEVA TARJETA -->
-  <div class="card">
-    <div class="card-title">Editar Facturas Pagadas</div>
-    <a href="EditorPagoPDD.html">Abrir Editor</a>
+
+  <div class="card-container">
+    <div class="card">
+      <div class="card-title">Cargar Archivos XML 2.0</div>
+      <a href="CARGAXML.html" class="btn-xml">Abrir herramienta</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Deuda Versión 3.1</div>
+      <a href="resumen-deudas-telegram.html" class="btn-deuda">Abrir Herramienta</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Escanear Facturas Físicas QR</div>
+      <a href="iniciacam.html" class="btn-qr">Abrir Celular</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Editar Facturas Pagadas</div>
+      <a href="EditorPagoPDD.html" class="btn-pagos">Abrir Editor</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Deuda Celular</div>
+      <a href="CPCELULAR.html" class="btn-celular">Abrir Editor</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Catálogo de Cuentas Bancarias</div>
+      <a href="ctasbancaria.html" class="btn-bancos">Abrir</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Reporte Facturas x FOLIO Tecnopro</div>
+      <a href="FoliosTECNOPRO.html" class="btn-folios">Abrir Reporte</a>
+    </div>
+    <div class="card">
+      <div class="card-title">Don Morris</div>
+      <a href="DONMORRISDEUDA.html" class="btn-morris">Abrir</a>
+    </div>
   </div>
 
-  <div class="card">
-  <div class="card-title">Deuda Celular </div>
-  <a href="CPCELULAR.html">Abrir Editor</a>
-  </div>
-  
-  <div class="card">
-    <div class="card-title">Catalogo de Cuentas bancarias</div>
-    <a href="ctasbancaria.html">Abrir</a>
-  </div>
-  <div class="card">
-    <div class="card-title">Reporte Facturas x FOLIO Tecnopro</div>
-    <a href="FoliosTECNOPRO.html">Abrir Reporte</a>
-  </div>
-   <div class="card">
-    <div class="card-title">Don Morris</div>
-    <a href="DONMORRISDEUDA.html">Abrir</a>
-  </div>
-</div>
-
-    
-  </div>
-  <footer style="margin-top: 50px; text-align: center; color: #666; font-size: 14px;">
+  <footer>
     <p>&copy; powered by PROVSOFT</p>
   </footer>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
