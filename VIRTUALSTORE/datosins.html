@@ -32,45 +32,51 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";  // 👈 pega aquí tu anon key
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
   // 🔹 Meses abreviados en español
   const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
                   jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
 
-function parseFecha(fechaTexto) {
-  // Caso 1: dd/mm/yyyy
-  if (fechaTexto.includes("/")) {
-    const partes = fechaTexto.split("/");
-    if (partes.length !== 3) return null;
+  // 🔹 Normalizar fechas
+  function parseFecha(fechaTexto) {
+    fechaTexto = fechaTexto.trim();
+
+    // Caso 1: dd/mm/yyyy
+    if (fechaTexto.includes("/")) {
+      const partes = fechaTexto.split("/");
+      if (partes.length !== 3) return null;
+      const dia = partes[0].padStart(2, "0");
+      const mes = partes[1].padStart(2, "0");
+      const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+      return `${anio}-${mes}-${dia}`;
+    }
+
+    // Caso 2: dd-mes-yy (ej: 01-ene-25)
+    const partes = fechaTexto.split("-");
+    if (partes.length < 3) return null;
     const dia = partes[0].padStart(2, "0");
-    const mes = partes[1].padStart(2, "0");
+    const mes = meses[partes[1].toLowerCase()];
     const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
     return `${anio}-${mes}-${dia}`;
   }
 
-  // Caso 2: dd-mes-yy (ej: 01-ene-25)
-  const partes = fechaTexto.split("-");
-  if (partes.length < 4) return null;
-  const dia = partes[1].padStart(2, "0");
-  const mes = meses[partes[2].toLowerCase()];
-  const anio = "20" + partes[3];
-  return `${anio}-${mes}-${dia}`;
-}
-
-
+  // 🔹 Normalizar montos
   function parseNumero(txt) {
-    return parseFloat(txt.trim().replace(/,/g,"")); // ✅ elimina comas de miles
+    return parseFloat(txt.trim().replace(/,/g,"")) || 0;
   }
 
-  // 🚀 Insertar pagos (ya no usamos UNIQUE ni onConflict)
+  // 🚀 Insertar pagos
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
-    const lineas = document.getElementById("datos").value.trim().split("\n");
+    if (!proveedor) return alert("⚠️ Ingresa un proveedor.");
+
+    const lineas = document.getElementById("datos").value.trim().split("\n").filter(l=>l);
+    if (!lineas.length) return alert("⚠️ Ingresa al menos una línea.");
 
     const registros = lineas.map(l => {
-      const partes = l.split("\t");  // ✅ solo separa por tab
+      const partes = l.split(/\s+/); // acepta tab o espacio
       return {
         proveedor,
         fecha: parseFecha(partes[0]),
@@ -83,50 +89,44 @@ function parseFecha(fechaTexto) {
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // ✅ Cargar proveedores (sin duplicados, con trim, y ordenados)
-async function cargarProveedores() {
-  let { data, error } = await supabaseClient
-    .from("estadisticapagos")
-    .select("proveedor", { count: "exact", head: false })
-    .neq("proveedor", "")
-    .order("proveedor", { ascending: true });
+  // ✅ Cargar lista de proveedores únicos
+  async function cargarProveedores() {
+    let { data, error } = await supabaseClient
+      .from("estadisticapagos")
+      .select("proveedor")
+      .neq("proveedor", "")
+      .order("proveedor", { ascending: true });
 
-  if (error) return console.error(error);
+    if (error) return console.error(error);
 
-  const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
+    const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
 
-  const sel = document.getElementById("selProveedor");
-  sel.innerHTML = "<option value=''>-- Selecciona --</option>";
-  unicos.forEach(p => {
-    sel.innerHTML += `<option value="${p}">${p}</option>`;
-  });
-}
+    const sel = document.getElementById("selProveedor");
+    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
+    unicos.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
+  }
 
-
-  // 📊 Cargar datos y sumar duplicados por fecha
+  // 📊 Consultar pagos y sumar duplicados por fecha
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
 
-    // 🚀 SUM por fecha
     let { data, error } = await supabaseClient
       .from("estadisticapagos")
-      .select("fecha, sum(cargo) as total")
+      .select("fecha,cargo")
       .eq("proveedor", prov)
-      .group("fecha")
       .order("fecha");
 
     if (error) return console.error(error);
 
-    // Agrupar por mes
+    // Agrupar por fecha (suma si hay duplicados)
     const agrupado = {};
     let totalGeneral = 0;
     data.forEach(r=>{
-      const fechaObj = new Date(r.fecha);
-      const clave = fechaObj.toLocaleDateString("es-MX",{month:"short", year:"numeric"});
-      if (!agrupado[clave]) agrupado[clave] = 0;
-      agrupado[clave] += parseFloat(r.total);
-      totalGeneral += parseFloat(r.total);
+      const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
+      if (!agrupado[fecha]) agrupado[fecha] = 0;
+      agrupado[fecha] += parseFloat(r.cargo);
+      totalGeneral += parseFloat(r.cargo);
     });
 
     const labels = Object.keys(agrupado);
@@ -136,7 +136,7 @@ async function cargarProveedores() {
     document.getElementById("total").innerText = 
       "💰 Total acumulado: " + totalGeneral.toLocaleString("es-MX",{minimumFractionDigits:2});
 
-    // Gráfico mensual
+    // Graficar
     const ctx=document.getElementById("grafico");
     new Chart(ctx,{
       type:"line",
@@ -154,8 +154,8 @@ async function cargarProveedores() {
     });
   }
 
+  // Inicial
   cargarProveedores();
 </script>
 </body>
 </html>
-
