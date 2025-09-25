@@ -97,22 +97,66 @@
       "💰 Total acumulado: " + totalGeneral.toLocaleString("es-MX",{minimumFractionDigits:2});
 
     // Graficar (elimina gráfico previo si existe)
+    // Graficar (elimina gráfico previo si existe)
     if (window.miGrafico) window.miGrafico.destroy();
     const ctx=document.getElementById("grafico");
+
+    // Fondo degradado
+    const gradient = ctx.getContext("2d").createLinearGradient(0,0,0,300);
+    gradient.addColorStop(0, "rgba(0,123,255,0.4)");  // azul fuerte arriba
+    gradient.addColorStop(1, "rgba(0,123,255,0)");    // transparente abajo
+
     window.miGrafico = new Chart(ctx,{
       type:"line",
       data:{
         labels:labels,
         datasets:[{
-          label:"Pagos por día - "+prov,
+          label:"📈 Pagos - "+prov,
           data:valores,
-          borderColor:"blue",
-          backgroundColor:"rgba(0,0,255,0.2)",
+          borderColor:"#007bff",         // azul tipo trading
+          backgroundColor:gradient,      // fondo degradado
+          borderWidth:2,
+          pointRadius:0,                  // sin puntitos
+          pointHoverRadius:6,             // aparecen grandes al pasar mouse
           fill:true,
-          tension:0.3
+          tension:0.3,                    // curva suave
         }]
+      },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{
+            display:true,
+            labels:{ color:"#333", font:{size:14, weight:"bold"} }
+          },
+          tooltip:{
+            mode:"index",
+            intersect:false,
+            backgroundColor:"rgba(0,0,0,0.8)",
+            titleColor:"#fff",
+            bodyColor:"#0f0",  // verde estilo trading
+            bodyFont:{weight:"bold"},
+            callbacks:{
+              label:(ctx)=>"💰 "+ctx.parsed.y.toLocaleString("es-MX",{minimumFractionDigits:2})
+            }
+          }
+        },
+        interaction:{ mode:"nearest", axis:"x", intersect:false },
+        scales:{
+          x:{
+            ticks:{ color:"#555", maxRotation:45, minRotation:45 }
+          },
+          y:{
+            ticks:{ 
+              color:"#555",
+              callback:(v)=>"$"+v.toLocaleString("es-MX")
+            },
+            grid:{ drawBorder:false, color:"rgba(0,0,0,0.05)" }
+          }
+        }
       }
     });
+
   }
 
   // Inicial
