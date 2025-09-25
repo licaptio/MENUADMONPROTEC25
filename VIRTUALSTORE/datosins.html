@@ -91,9 +91,9 @@
 
   // ✅ Cargar lista de proveedores únicos
   async function cargarProveedores() {
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("proveedor")
+let { data, error } = await supabaseClient
+  .from("proveedores_unicos")   // 👈 usa la vista
+  .select("proveedor");
       .neq("proveedor", "")
       .order("proveedor", { ascending: true });
 
@@ -111,11 +111,11 @@
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
 
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("fecha,cargo")
-      .eq("proveedor", prov)
-      .order("fecha");
+let { data, error } = await supabaseClient
+  .from("pagos_por_proveedor")  // 👈 usa la vista
+  .select("fecha,total")
+  .eq("proveedor", prov)
+  .order("fecha");
 
     if (error) return console.error(error);
 
