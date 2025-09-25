@@ -78,11 +78,12 @@
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
 
-    let { data, error } = await supabaseClient
-      .from("pagos_por_proveedor") // 👈 usamos la vista
-      .select("fecha,total")
-      .eq("proveedor", prov)
-      .order("fecha");
+let { data, error } = await supabaseClient
+  .from("pagos_por_proveedor") // 👈 ahora sí va a jalar
+  .select("fecha,total")
+  .eq("proveedor", prov)
+  .order("fecha");
+
 
     if (error) return console.error(error);
 
