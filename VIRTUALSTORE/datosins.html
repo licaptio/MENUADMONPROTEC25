@@ -57,21 +57,22 @@
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // ✅ Cargar lista de proveedores únicos (desde la tabla original)
-  async function cargarProveedores() {
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("proveedor")
-      .neq("proveedor", "")
-      .order("proveedor", { ascending: true });
+// ✅ Cargar lista de proveedores desde la tabla proveedores_unicos
+async function cargarProveedores() {
+  let { data, error } = await supabaseClient
+    .from("proveedores_unicos")   // 👈 tabla correcta
+    .select("proveedor")
+    .order("proveedor", { ascending: true });
 
-    if (error) return console.error(error);
+  if (error) return console.error(error);
 
-    const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
-    const sel = document.getElementById("selProveedor");
-    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
-    unicos.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
-  }
+  const sel = document.getElementById("selProveedor");
+  sel.innerHTML = "<option value=''>-- Selecciona --</option>";
+  data.forEach(r => {
+    sel.innerHTML += `<option value="${r.proveedor}">${r.proveedor}</option>`;
+  });
+}
+
 
   // 📊 Consultar pagos usando la vista (ya suma duplicados)
   window.cargarDatos = async function () {
