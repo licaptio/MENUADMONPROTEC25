@@ -32,42 +32,10 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";  // 👈 pega aquí tu anon key
+  const supabaseKey = "TU_ANON_KEY"; // 👈 pega tu anon key aquí
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-  // 🔹 Meses abreviados en español
-  const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
-                  jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
-
-  // 🔹 Normalizar fechas
-  function parseFecha(fechaTexto) {
-    fechaTexto = fechaTexto.trim();
-
-    // Caso 1: dd/mm/yyyy
-    if (fechaTexto.includes("/")) {
-      const partes = fechaTexto.split("/");
-      if (partes.length !== 3) return null;
-      const dia = partes[0].padStart(2, "0");
-      const mes = partes[1].padStart(2, "0");
-      const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
-      return `${anio}-${mes}-${dia}`;
-    }
-
-    // Caso 2: dd-mes-yy (ej: 01-ene-25)
-    const partes = fechaTexto.split("-");
-    if (partes.length < 3) return null;
-    const dia = partes[0].padStart(2, "0");
-    const mes = meses[partes[1].toLowerCase()];
-    const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
-    return `${anio}-${mes}-${dia}`;
-  }
-
-  // 🔹 Normalizar montos
-  function parseNumero(txt) {
-    return parseFloat(txt.trim().replace(/,/g,"")) || 0;
-  }
-
-  // 🚀 Insertar pagos
+  // 🚀 Insertar pagos en la tabla original
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     if (!proveedor) return alert("⚠️ Ingresa un proveedor.");
@@ -79,8 +47,8 @@
       const partes = l.split(/\s+/); // acepta tab o espacio
       return {
         proveedor,
-        fecha: parseFecha(partes[0]),
-        cargo: parseNumero(partes[1])
+        fecha: partes[0],  // 👈 asegúrate que venga en formato yyyy-mm-dd
+        cargo: parseFloat(partes[1].replace(/,/g,"")) || 0
       };
     });
 
@@ -89,61 +57,54 @@
     else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
-  // ✅ Cargar lista de proveedores únicos
+  // ✅ Cargar lista de proveedores únicos (desde la tabla original)
   async function cargarProveedores() {
-let { data, error } = await supabaseClient
-  .from("proveedores_unicos")   // 👈 usa la vista
-  .select("proveedor");
+    let { data, error } = await supabaseClient
+      .from("estadisticapagos")
+      .select("proveedor")
       .neq("proveedor", "")
       .order("proveedor", { ascending: true });
 
     if (error) return console.error(error);
 
     const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
-
     const sel = document.getElementById("selProveedor");
     sel.innerHTML = "<option value=''>-- Selecciona --</option>";
     unicos.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
   }
 
-  // 📊 Consultar pagos y sumar duplicados por fecha
+  // 📊 Consultar pagos usando la vista (ya suma duplicados)
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
 
-let { data, error } = await supabaseClient
-  .from("pagos_por_proveedor")  // 👈 usa la vista
-  .select("fecha,total")
-  .eq("proveedor", prov)
-  .order("fecha");
+    let { data, error } = await supabaseClient
+      .from("pagos_por_proveedor") // 👈 usamos la vista
+      .select("fecha,total")
+      .eq("proveedor", prov)
+      .order("fecha");
 
     if (error) return console.error(error);
 
-    // Agrupar por fecha (suma si hay duplicados)
-    const agrupado = {};
     let totalGeneral = 0;
-    data.forEach(r=>{
-      const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
-      if (!agrupado[fecha]) agrupado[fecha] = 0;
-      agrupado[fecha] += parseFloat(r.cargo);
-      totalGeneral += parseFloat(r.cargo);
+    const labels = data.map(r => {
+      totalGeneral += parseFloat(r.total);
+      return new Date(r.fecha).toLocaleDateString("es-MX");
     });
+    const valores = data.map(r => parseFloat(r.total));
 
-    const labels = Object.keys(agrupado);
-    const valores = Object.values(agrupado);
-
-    // Mostrar total general
-    document.getElementById("total").innerText = 
+    document.getElementById("total").innerText =
       "💰 Total acumulado: " + totalGeneral.toLocaleString("es-MX",{minimumFractionDigits:2});
 
-    // Graficar
+    // Graficar (elimina gráfico previo si existe)
+    if (window.miGrafico) window.miGrafico.destroy();
     const ctx=document.getElementById("grafico");
-    new Chart(ctx,{
+    window.miGrafico = new Chart(ctx,{
       type:"line",
       data:{
         labels:labels,
         datasets:[{
-          label:"Pagos por mes - "+prov,
+          label:"Pagos por día - "+prov,
           data:valores,
           borderColor:"blue",
           backgroundColor:"rgba(0,0,255,0.2)",
