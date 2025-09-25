@@ -36,26 +36,60 @@
   const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
   // 🚀 Insertar pagos en la tabla original
-  window.guardar = async function () {
-    const proveedor = document.getElementById("proveedor").value.trim();
-    if (!proveedor) return alert("⚠️ Ingresa un proveedor.");
+// 🔹 Diccionario de meses en español
+const meses = {
+  ene: "01", feb: "02", mar: "03", abr: "04",
+  may: "05", jun: "06", jul: "07", ago: "08",
+  sep: "09", oct: "10", nov: "11", dic: "12"
+};
 
-    const lineas = document.getElementById("datos").value.trim().split("\n").filter(l=>l);
-    if (!lineas.length) return alert("⚠️ Ingresa al menos una línea.");
+// 🔹 Función para limpiar y convertir fechas tipo "jue-18-sep-25"
+function parseFecha(fechaTexto) {
+  let partes = fechaTexto.split("-");
+  if (partes.length < 3) return null;
 
-    const registros = lineas.map(l => {
-      const partes = l.split(/\s+/); // acepta tab o espacio
-      return {
-        proveedor,
-        fecha: partes[0],  // 👈 asegúrate que venga en formato yyyy-mm-dd
-        cargo: parseFloat(partes[1].replace(/,/g,"")) || 0
-      };
-    });
+  // Si viene con día de semana ("jue-18-sep-25")
+  if (partes.length === 4) {
+    partes.shift(); // quita el "jue"
+  }
 
-    let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
-    if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
-  };
+  const dia = partes[0].padStart(2, "0");
+  const mes = meses[partes[1].toLowerCase()];
+  const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+
+  return `${anio}-${mes}-${dia}`;
+}
+
+// 🔹 Normalizar montos
+function parseNumero(txt) {
+  return parseFloat(txt.trim().replace(/,/g,"")) || 0;
+}
+
+// 🚀 Insertar pagos
+window.guardar = async function () {
+  const proveedor = document.getElementById("proveedor").value.trim();
+  if (!proveedor) return alert("⚠️ Ingresa un proveedor.");
+
+  const lineas = document.getElementById("datos").value.trim().split("\n").filter(l=>l);
+  if (!lineas.length) return alert("⚠️ Ingresa al menos una línea.");
+
+  const registros = lineas.map(l => {
+    const partes = l.split(/\s+/); // separa por tab o espacio
+    return {
+      proveedor,
+      fecha: parseFecha(partes[0]),  // ✅ ahora convierte la fecha
+      cargo: parseNumero(partes[1])  // ✅ convierte número
+    };
+  });
+
+  let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
+  if (error) alert("❌ Error: " + error.message);
+  else { 
+    alert("✅ Guardado"); 
+    document.getElementById("datos").value=""; 
+    cargarProveedores(); 
+  }
+};
 
 // ✅ Cargar lista de proveedores desde la tabla proveedores_unicos
 async function cargarProveedores() {
