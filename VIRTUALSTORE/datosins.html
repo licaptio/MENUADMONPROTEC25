@@ -52,7 +52,7 @@
     return parseFloat(txt.trim().replace(/,/g,"")); // ✅ elimina comas de miles
   }
 
-  // 🚀 Insertar/actualizar pagos (sin duplicados)
+  // 🚀 Insertar pagos (ya no usamos UNIQUE ni onConflict)
   window.guardar = async function () {
     const proveedor = document.getElementById("proveedor").value.trim();
     const lineas = document.getElementById("datos").value.trim().split("\n");
@@ -66,12 +66,9 @@
       };
     });
 
-    let { error } = await supabaseClient
-      .from("estadisticapagos")
-      .upsert(registros, { onConflict: ["proveedor","fecha"] }); // 👈 evita duplicados
-
+    let { error } = await supabaseClient.from("estadisticapagos").insert(registros);
     if (error) alert("❌ Error: " + error.message);
-    else { alert("✅ Guardado/actualizado"); document.getElementById("datos").value=""; cargarProveedores(); }
+    else { alert("✅ Guardado"); document.getElementById("datos").value=""; cargarProveedores(); }
   };
 
   // ✅ Cargar proveedores (sin duplicados, con trim, y ordenados)
@@ -89,15 +86,17 @@
     unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
   }
 
-  // 📊 Cargar datos y agrupar por mes
+  // 📊 Cargar datos y sumar duplicados por fecha
   window.cargarDatos = async function () {
     const prov = document.getElementById("selProveedor").value;
     if (!prov) return;
 
+    // 🚀 SUM por fecha
     let { data, error } = await supabaseClient
       .from("estadisticapagos")
-      .select("fecha,cargo")
+      .select("fecha, sum(cargo) as total")
       .eq("proveedor", prov)
+      .group("fecha")
       .order("fecha");
 
     if (error) return console.error(error);
@@ -109,8 +108,8 @@
       const fechaObj = new Date(r.fecha);
       const clave = fechaObj.toLocaleDateString("es-MX",{month:"short", year:"numeric"});
       if (!agrupado[clave]) agrupado[clave] = 0;
-      agrupado[clave] += r.cargo;
-      totalGeneral += r.cargo;
+      agrupado[clave] += parseFloat(r.total);
+      totalGeneral += parseFloat(r.total);
     });
 
     const labels = Object.keys(agrupado);
@@ -142,3 +141,4 @@
 </script>
 </body>
 </html>
+
