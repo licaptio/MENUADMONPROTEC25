@@ -39,14 +39,26 @@
   const meses = { ene:"01", feb:"02", mar:"03", abr:"04", may:"05", jun:"06",
                   jul:"07", ago:"08", sep:"09", oct:"10", nov:"11", dic:"12" };
 
-  function parseFecha(fechaTexto) {
-    const partes = fechaTexto.split("-");
-    if (partes.length < 4) return null;
-    const dia = partes[1].padStart(2,"0");
-    const mes = meses[partes[2].toLowerCase()];
-    const anio = "20" + partes[3];
+function parseFecha(fechaTexto) {
+  // Caso 1: dd/mm/yyyy
+  if (fechaTexto.includes("/")) {
+    const partes = fechaTexto.split("/");
+    if (partes.length !== 3) return null;
+    const dia = partes[0].padStart(2, "0");
+    const mes = partes[1].padStart(2, "0");
+    const anio = partes[2].length === 2 ? "20" + partes[2] : partes[2];
     return `${anio}-${mes}-${dia}`;
   }
+
+  // Caso 2: dd-mes-yy (ej: 01-ene-25)
+  const partes = fechaTexto.split("-");
+  if (partes.length < 4) return null;
+  const dia = partes[1].padStart(2, "0");
+  const mes = meses[partes[2].toLowerCase()];
+  const anio = "20" + partes[3];
+  return `${anio}-${mes}-${dia}`;
+}
+
 
   function parseNumero(txt) {
     return parseFloat(txt.trim().replace(/,/g,"")); // ✅ elimina comas de miles
