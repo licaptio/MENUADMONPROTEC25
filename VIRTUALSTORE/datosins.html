@@ -84,19 +84,24 @@ function parseFecha(fechaTexto) {
   };
 
   // ✅ Cargar proveedores (sin duplicados, con trim, y ordenados)
-  async function cargarProveedores() {
-    let { data, error } = await supabaseClient
-      .from("estadisticapagos")
-      .select("proveedor");
+async function cargarProveedores() {
+  let { data, error } = await supabaseClient
+    .from("estadisticapagos")
+    .select("proveedor", { count: "exact", head: false })
+    .neq("proveedor", "")
+    .order("proveedor", { ascending: true });
 
-    if (error) return console.error(error);
+  if (error) return console.error(error);
 
-    const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
+  const unicos = [...new Set(data.map(r => r.proveedor?.trim()))].sort();
 
-    const sel = document.getElementById("selProveedor");
-    sel.innerHTML = "<option value=''>-- Selecciona --</option>";
-    unicos.forEach(p => sel.innerHTML += `<option>${p}</option>`);
-  }
+  const sel = document.getElementById("selProveedor");
+  sel.innerHTML = "<option value=''>-- Selecciona --</option>";
+  unicos.forEach(p => {
+    sel.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+}
+
 
   // 📊 Cargar datos y sumar duplicados por fecha
   window.cargarDatos = async function () {
