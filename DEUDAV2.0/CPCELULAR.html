@@ -276,6 +276,7 @@ function mostrarTabla(data) {
     <th>Fotos</th>
     <th>Banco</th>
     <th>Cuenta</th>
+    <th>Copiar</th>   <!-- 👈 Nueva columna -->
   </tr>
 </thead>
 <tbody>`;
@@ -314,6 +315,9 @@ function mostrarTabla(data) {
         <td style="text-align:center;">${fotosHtml}</td>
         <td>${f.banco || "—"}</td>
         <td>${f.cuenta || "—"}</td>
+        <td style="text-align:center;">
+        <button onclick='copiarFila(${JSON.stringify(f)})'>📋</button>
+        </td>
       </tr>`;
     }
 
@@ -468,6 +472,36 @@ function mostrarTabla(data) {
       }
       mostrarTabla(filtrados);
     }
+<script>
+function copiarFila(factura) {
+  // Armamos un arreglo con todos los campos que quieras exportar
+  const datos = [
+    factura.fecha || "-",
+    calcDiasDesdeHoy(factura.fecha) || "—",
+    factura.uuid_cfdi || "-",
+    factura.rfc_emisor || "-",
+    factura.razon_social_emisor || "-",
+    formatSerieFactura(factura.serie, factura.factura),
+    (factura.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }),
+    (factura.factura_pagada || "NO").toUpperCase(),
+    (factura.factura_fisicamente || "NO").toUpperCase(),
+    factura.banco || "—",
+    factura.cuenta || "—"
+  ];
+
+  // Convertimos a texto separado por tabulaciones
+  const texto = datos.join("\t");
+
+  // Copiar al portapapeles
+  navigator.clipboard.writeText(texto).then(() => {
+    alert("✅ Fila copiada. Ahora pégala en Excel.");
+  }).catch(err => {
+    console.error("❌ Error al copiar:", err);
+    alert("No se pudo copiar.");
+  });
+}
+</script>
+
   </script>
 </body>
 </html>
