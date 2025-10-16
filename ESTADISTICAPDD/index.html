@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Estadísticas de Pagos - PROVSOFT</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f6f9;
+      color: #222;
+      padding: 20px;
+    }
+    h1 {
+      color: #00416A;
+      text-align: center;
+    }
+    #contenedor {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      margin-bottom: 20px;
+      width: 250px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #00416A;
+      color: white;
+    }
+    #grafica-container {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Estadísticas de Pagos por Proveedor</h1>
+  <div id="contenedor">
+    <label for="proveedor">Selecciona un proveedor:</label>
+    <select id="proveedor"></select>
+
+    <div id="grafica-container">
+      <canvas id="grafica"></canvas>
+    </div>
+
+    <table id="tabla-datos">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cargo ($)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    // ⚙️ Configura tu conexión Supabase
+    const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const selectProveedor = document.getElementById('proveedor');
+    const tbody = document.querySelector('#tabla-datos tbody');
+    let chart;
+
+    // 🧩 Carga de proveedores en lotes (por si hay más de 1000 registros)
+    async function cargarProveedores() {
+      let proveedoresUnicos = new Set();
+      let desde = 0;
+      const paso = 1000;
+      let masDatos = true;
+
+      while (masDatos) {
+        const { data, error } = await supabase
+          .from('estadisticapagos')
+          .select('proveedor')
+          .not('proveedor', 'is', null)
+          .range(desde, desde + paso - 1);
+
+        if (error) {
+          console.error(error);
+          break;
+        }
+
+        if (!data || data.length === 0) {
+          masDatos = false;
+          break;
+        }
+
+        data.forEach(p => {
+          if (p.proveedor && p.proveedor.trim() !== '')
+            proveedoresUnicos.add(p.proveedor.trim());
+        });
+
+        desde += paso;
+        if (data.length < paso) masDatos = false;
+      }
+
+      const proveedores = Array.from(proveedoresUnicos).sort((a, b) => a.localeCompare(b, 'es'));
+      console.log("✅ Proveedores detectados:", proveedores);
+
+      selectProveedor.innerHTML = "";
+      proveedores.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p;
+        option.textContent = p;
+        selectProveedor.appendChild(option);
+      });
+
+      if (proveedores.length > 0) {
+        selectProveedor.value = proveedores[0];
+        cargarDatosProveedor(proveedores[0]);
+      }
+    }
+
+    // 🧩 Carga los datos (tabla + gráfica) del proveedor seleccionado
+    async function cargarDatosProveedor(proveedor) {
+      const { data, error } = await supabase
+        .from('estadisticapagos')
+        .select('fecha, cargo')
+        .ilike('proveedor', `%${proveedor.trim()}%`)
+        .order('fecha', { ascending: true });
+
+      if (error) {
+        console.error("Error al obtener datos:", error);
+        return;
+      }
+
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.fecha}</td>
+          <td>$${Number(row.cargo).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const labels = data.map(r => r.fecha);
+      const valores = data.map(r => Number(r.cargo));
+
+      const ctx = document.getElementById('grafica').getContext('2d');
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: `Cargos de ${proveedor}`,
+            data: valores,
+            backgroundColor: 'rgba(0, 102, 204, 0.6)',
+            borderColor: '#00416A',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Monto ($)' }
+            },
+            x: {
+              title: { display: true, text: 'Fecha' }
+            }
+          }
+        }
+      });
+    }
+
+    // 🔄 Escucha cambios de proveedor
+    selectProveedor.addEventListener('change', e => {
+      cargarDatosProveedor(e.target.value);
+    });
+
+    // 🚀 Inicia todo
+    cargarProveedores();
+  </script>
+</body>
+</html>
