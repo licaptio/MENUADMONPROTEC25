@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Carga de XML – Ingresos PDD</title>
+  <title>Carga de XML – Ingresos PDD (Depurado)</title>
   <style>
     body { font-family: Arial; padding: 20px; background: #f9f9f9; color:#111; }
     h2 { color: #00416A; }
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h2>Subir CFDI válidos (solo tipo I y emisor PDD031204KL5)</h2>
+  <h2>Subir CFDI válidos (solo tipo I, emisor PDD031204KL5, sin nómina/egreso/carta porte/pago)</h2>
   <input type="file" id="xmlInput" accept=".xml" multiple>
   <button onclick="procesarArchivos()">Procesar y Subir</button>
 
@@ -44,40 +44,46 @@
           const parser = new DOMParser();
           const xml = parser.parseFromString(text, "application/xml");
 
-          // Namespaces
           const cfdiNS = "http://www.sat.gob.mx/cfd/4";
-
           const comprobante = xml.getElementsByTagNameNS(cfdiNS, "Comprobante")[0];
           const emisor = xml.getElementsByTagNameNS(cfdiNS, "Emisor")[0];
           const receptor = xml.getElementsByTagNameNS(cfdiNS, "Receptor")[0];
 
-// Buscar timbre de forma robusta
-let timbre = null;
-for (const node of xml.getElementsByTagName("*")) {
-  if (node.localName === "TimbreFiscalDigital") {
-    timbre = node;
-    break;
-  }
-}
+          // Buscar timbre fiscal
+          let timbre = null;
+          for (const node of xml.getElementsByTagName("*")) {
+            if (node.localName === "TimbreFiscalDigital") {
+              timbre = node;
+              break;
+            }
+          }
+          const uuid = timbre?.getAttribute("UUID")?.toUpperCase().trim() || "";
+          const comprobanteTipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
+          const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
 
-// Extraer UUID correctamente
-const uuid = timbre?.getAttribute("UUID")?.toUpperCase().trim() || "";
+          // Verificar complementos para excluir
+          const complementos = xml.getElementsByTagNameNS(cfdiNS, "Complemento");
+          let tieneExcluido = false;
+          if (complementos.length > 0) {
+            const xmlTxt = text.toUpperCase();
+            if (xmlTxt.includes("NOMINA12") || xmlTxt.includes("CARTAPORTE") || xmlTxt.includes("PAGOS20")) {
+              tieneExcluido = true;
+            }
+          }
 
-// Leer tipo y RFC del emisor
-const comprobanteTipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
-const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
-
-// --- FILTRO PRINCIPAL ---
-if (comprobanteTipo !== "I" || emisorRFC !== "PDD031204KL5" || !uuid) {
-  const motivo =
-    !uuid ? "sin UUID" :
-    comprobanteTipo !== "I" ? `tipo ${comprobanteTipo}` :
-    emisorRFC !== "PDD031204KL5" ? `emisor ${emisorRFC}` : "motivo desconocido";
-  const li = document.createElement("li");
-  li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado (${motivo})</span>`;
-  lista.appendChild(li);
-  continue;
-}
+          // --- FILTRO PRINCIPAL ---
+          if (comprobanteTipo !== "I" || emisorRFC !== "PDD031204KL5" || tieneExcluido || !uuid) {
+            const motivo =
+              !uuid ? "sin UUID" :
+              comprobanteTipo !== "I" ? `tipo ${comprobanteTipo}` :
+              emisorRFC !== "PDD031204KL5" ? `emisor ${emisorRFC}` :
+              tieneExcluido ? `complemento excluido` :
+              "motivo desconocido";
+            const li = document.createElement("li");
+            li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado (${motivo})</span>`;
+            lista.appendChild(li);
+            continue;
+          }
 
           // --- Datos CFDI válidos ---
           const receptorRFC = receptor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
@@ -132,28 +138,28 @@ if (comprobanteTipo !== "I" || emisorRFC !== "PDD031204KL5" || !uuid) {
             });
           }
 
-archivosDatos.push({
-  uuid,
-  tipo: comprobanteTipo,
-  receptorRFC,
-  receptorNombre,
-  emisorRFC,
-  razonSocial,
-  folio,
-  serie,
-  total,
-  subtotal,
-  descuento,
-  moneda,
-  formaPago,
-  metodoPago,
-  usoCFDI,
-  fecha,
-  fecha_certificacion: fechaTimbrado,
-  selloSAT,
-  noCertificadoSAT,
-  conceptosDetalle,
-});
+          archivosDatos.push({
+            uuid,
+            tipo: comprobanteTipo,
+            receptorRFC,
+            receptorNombre,
+            emisorRFC,
+            razonSocial,
+            folio,
+            serie,
+            total,
+            subtotal,
+            descuento,
+            moneda,
+            formaPago,
+            metodoPago,
+            usoCFDI,
+            fecha,
+            fecha_certificacion: fechaTimbrado,
+            selloSAT,
+            noCertificadoSAT,
+            conceptosDetalle,
+          });
 
           const li = document.createElement("li");
           li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado</span>`;
@@ -182,7 +188,6 @@ archivosDatos.push({
           const item = items[index];
           const avance = ((index + 1) / totalArchivos) * 100;
           progreso.style.width = `${avance}%`;
-
           logBitacora(`📄 Revisando UUID: ${data.uuid}`);
 
           const existe = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd?uuid_cfdi=eq.${data.uuid}`, {
@@ -264,5 +269,9 @@ archivosDatos.push({
       log.scrollTop = log.scrollHeight;
     }
   </script>
+
+  <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
+    ©️ 2025 Ingresos PDD · Desarrollado por Gerardo Quezada · versión con exclusión de nómina, egreso, carta porte y pagos
+  </footer>
 </body>
 </html>
