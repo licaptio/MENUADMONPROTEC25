@@ -2,23 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>PROVSOFT – Carga Fiscal CFDI v2</title>
-
-  <!-- ✅ Carga compatible con GitHub Pages -->
+  <title>📂 PROVSOFT – Carga Fiscal CFDI v2</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- 🔧 AQUÍ ABRIMOS EL STYLE QUE FALTABA -->
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f6f9;
-      color: #222;
-      padding: 30px;
-      text-align: center;
-    }
+    body { font-family: 'Poppins', sans-serif; background:#f4f6f9; color:#222; padding:30px; text-align:center; }
     h1 { color:#00416A; margin-bottom:10px; }
-    input[type=file] { display:block; margin:20px auto; padding:12px;
-      border:2px dashed #007bff; border-radius:10px; background:#fff; max-width:400px; cursor:pointer; }
+    input[type=file] { display:block; margin:20px auto; padding:12px; border:2px dashed #007bff;
+      border-radius:10px; background:#fff; max-width:400px; cursor:pointer; }
     #controls { margin:10px 0; }
     button { padding:10px 20px; border:none; border-radius:6px; margin:5px; cursor:pointer; font-weight:600; }
     .start { background:#16a34a; color:white; }
@@ -45,18 +35,13 @@
   <div id="log"></div>
 
   <script>
-    const { createClient } = supabase;
-
-    // 🔑 Conexión Supabase
-    const supabaseClient = createClient(
+  window.addEventListener("DOMContentLoaded", () => {
+    const supabaseClient = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNDAwNjg0OX0.mAb0gHvm33I2vU-2tTcvQ_J4hHzFefpVly9mAGoX_g"
     );
 
-    const EMPRESAS = [
-      "PDD031204KL5","AUPS540605TF0","MUSJ5705122Q4",
-      "CAC180615354","RIQS740906PQ2","GORB0001058R2"
-    ];
+    const EMPRESAS = ["PDD031204KL5","AUPS540605TF0","MUSJ5705122Q4","CAC180615354","RIQS740906PQ2","GORB0001058R2"];
 
     const fileInput = document.getElementById("fileInput");
     const startBtn = document.getElementById("startBtn");
@@ -73,12 +58,11 @@
       running = true;
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      let ok = 0, skip = 0, err = 0;
+      let ok=0, skip=0, err=0;
 
-      for (let i = 0; i < files.length; i++) {
+      for (let i=0; i<files.length; i++) {
         if (!running) break;
         const file = files[i];
-
         try {
           const text = await file.text();
           const xml = new DOMParser().parseFromString(text, "text/xml");
@@ -89,36 +73,28 @@
           const uuid = tfd?.getAttribute("UUID") || null;
           if (!uuid) continue;
 
-          // 🧩 Verifica si ya existe
           const { data: existe } = await supabaseClient
             .from("ingresosprovsoftc")
             .select("uuid")
             .eq("uuid", uuid)
             .maybeSingle();
 
-          if (existe) {
-            skip++;
-            addLog(file.name, "Duplicado", "skip");
-            update(i, files.length, ok, skip, err);
-            continue;
-          }
+          if (existe) { skip++; addLog(file.name, "Duplicado", "skip"); update(i, files.length, ok, skip, err); continue; }
 
           const tipo = comp.getAttribute("TipoDeComprobante");
           const empresaRFC = EMPRESAS.includes(emisor.getAttribute("Rfc"))
             ? emisor.getAttribute("Rfc")
             : EMPRESAS.includes(receptor.getAttribute("Rfc"))
-            ? receptor.getAttribute("Rfc")
-            : null;
+              ? receptor.getAttribute("Rfc")
+              : null;
 
-          let clasificacion = "Otro", afecta = false;
-          if (tipo === "I" && EMPRESAS.includes(emisor.getAttribute("Rfc"))) {
-            clasificacion = "Ingreso"; afecta = true;
-          } else if (tipo === "I" && EMPRESAS.includes(receptor.getAttribute("Rfc"))) {
-            clasificacion = "Egreso"; afecta = true;
-          } else if (tipo === "E") { clasificacion = "Nota de crédito"; afecta = true; }
-          else if (tipo === "P") clasificacion = "Pago";
-          else if (tipo === "N") clasificacion = "Nómina";
-          else if (tipo === "T") clasificacion = "Traslado";
+          let clasificacion="Otro", afecta=false;
+          if (tipo==="I" && EMPRESAS.includes(emisor.getAttribute("Rfc"))) { clasificacion="Ingreso"; afecta=true; }
+          else if (tipo==="I" && EMPRESAS.includes(receptor.getAttribute("Rfc"))) { clasificacion="Egreso"; afecta=true; }
+          else if (tipo==="E") { clasificacion="Nota de crédito"; afecta=true; }
+          else if (tipo==="P") clasificacion="Pago";
+          else if (tipo==="N") clasificacion="Nómina";
+          else if (tipo==="T") clasificacion="Traslado";
 
           const obj = {
             uuid,
@@ -131,31 +107,21 @@
             nombre_emisor: emisor.getAttribute("Nombre"),
             rfc_receptor: receptor.getAttribute("Rfc"),
             nombre_receptor: receptor.getAttribute("Nombre"),
-            subtotal: parseFloat(comp.getAttribute("SubTotal") || 0),
-            total: parseFloat(comp.getAttribute("Total") || 0),
+            subtotal: parseFloat(comp.getAttribute("SubTotal")||0),
+            total: parseFloat(comp.getAttribute("Total")||0),
             fecha_emision: comp.getAttribute("Fecha"),
             empresa_rfc: empresaRFC,
             fuente_archivo: file.name
           };
 
-          const { error } = await supabaseClient
-            .from("ingresosprovsoftc")
-            .insert([obj]);
-
-          if (error) {
-            err++;
-            addLog(file.name, "Error", "err");
-          } else {
-            ok++;
-            addLog(file.name, "Cargado", "ok");
-          }
+          const { error } = await supabaseClient.from("ingresosprovsoftc").insert([obj]);
+          if (error) { err++; addLog(file.name, "Error", "err"); }
+          else { ok++; addLog(file.name, "Cargado", "ok"); }
 
           update(i, files.length, ok, skip, err);
-          await new Promise(res => setTimeout(res, 250));
-
-        } catch (e) {
-          err++;
-          addLog(file.name, "Error lectura", "err");
+          await new Promise(res => setTimeout(res, 300));
+        } catch {
+          err++; addLog(file.name, "Error lectura", "err");
         }
       }
 
@@ -181,10 +147,11 @@
     }
 
     function update(current, total, ok, skip, err) {
-      const pct = Math.round(((current + 1) / total) * 100);
-      progressBar.style.width = pct + "%";
-      stats.textContent = `Procesando ${current + 1}/${total} archivos... | ✅ ${ok} | ⚠️ ${skip} | ❌ ${err}`;
+      const pct = Math.round(((current+1)/total)*100);
+      progressBar.style.width = pct+"%";
+      stats.textContent = `Procesando ${current+1}/${total} archivos... | ✅ ${ok} | ⚠️ ${skip} | ❌ ${err}`;
     }
+  });
   </script>
 </body>
 </html>
