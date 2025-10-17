@@ -2,148 +2,129 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>PROVSOFT – Carga Fiscal CFDI v2</title>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menú Principal</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f6f9;
-      color: #222;
-      padding: 30px;
-      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2em 1em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: url('TRILOBAS.png') no-repeat center 25% fixed;
+      background-size: cover;
+      color: white;
     }
-    h1 { color:#00416A; margin-bottom:10px; }
-    input[type=file] { display:block; margin:20px auto; padding:12px;
-      border:2px dashed #007bff; border-radius:10px; background:#fff; max-width:400px; cursor:pointer; }
-    #controls { margin:10px 0; }
-    button { padding:10px 20px; border:none; border-radius:6px; margin:5px; cursor:pointer; font-weight:600; }
-    .start { background:#16a34a; color:white; }
-    .stop { background:#dc2626; color:white; }
-    #progressBox { width:400px; margin:15px auto; background:#ddd; border-radius:8px; overflow:hidden; height:22px; }
-    #progressBar { width:0; height:22px; background:#007bff; transition:width .3s; }
-    #stats { margin-top:10px; font-size:15px; }
-    #log { text-align:left; margin:20px auto; max-width:800px; height:300px; overflow-y:auto;
-      background:white; border-radius:10px; box-shadow:0 3px 6px rgba(0,0,0,.1); padding:10px; font-size:13px; }
-    .ok { color:green; } .skip { color:orange; } .err { color:red; }
+
+    h1 {
+      margin-bottom: 1.5em;
+      font-size: 1.8em;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .menu-links {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 600px;
+      background: rgba(0,0,0,0.55);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .menu-links a {
+      padding: 0.9em;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 1.05em;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, opacity 0.3s;
+    }
+
+    .menu-links a:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+
+    /* 🎨 Colores únicos */
+    .btn1  { background: #e67e22; }  
+    .btn2  { background: #3498db; }  
+    .btn3  { background: #16a34a; }  
+    .btn4  { background: #9b59b6; }  
+    .btn5  { background: #c0392b; }  
+    .btn6  { background: #f59e0b; }  
+    .btn7  { background: #1abc9c; }  
+    .btn8  { background: #2c3e50; }  
+    .btn9  { background: #e91e63; }  
+    .btn10 { background: #3b82f6; }  
+    .btn11 { background: #10b981; }  
+    .btn12 { background: #9333ea; }  
+    .btn13 { background: #ef4444; }  
+    .btn14 { background: #84cc16; }  
+    .btn15 { background: #d97706; }  
+
+    footer {
+      margin-top: 3em;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    #fecha-hora {
+      font-weight: bold;
+    }
+
+    @media (min-width: 700px) {
+      .menu-links {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>📂 PROVSOFT – Carga Fiscal CFDI v2</h1>
 
-  <input type="file" id="fileInput" accept=".xml" multiple />
-  <div id="controls">
-    <button id="startBtn" class="start">▶️ Iniciar</button>
-    <button id="stopBtn" class="stop" disabled>⏹ Detener</button>
+  <h1>📋 Menú Principal</h1>
+
+  <div class="menu-links">
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ALIKALOBABOTS/index.html" target="_blank" class="btn1">🦊 AlikaBot</a>
+    <a href="AUDPRECIO/INDEX.html" target="_blank" class="btn2">📑 Auditoría de Precio</a>
+    <a href="CHECK/index.html" target="_blank" class="btn5">✅ Checklist</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn7">💰 Deuda V2</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn8">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn11">📦 Inventario GIT</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn14">📘 Sergio Aguayo</a>
+    <a href="ESTADISTICAPDD/index.html" target="_blank" class="btn15">📊 Estadisticas PDD</a>
+    <a href="POSPDD/index.html" target="_blank" class="btn15">POS venta PDD</a>
+    <a href="https://licaptio.github.io/pwa-provsoft/index.html" target="_blank" class="btnPWA"> Menu (PWAS)</a>
   </div>
 
-  <div id="progressBox"><div id="progressBar"></div></div>
-  <div id="stats">Listo para comenzar...</div>
-  <div id="log"></div>
+  <footer>
+    <div>📦 powered by PROVSOFT · <span id="fecha-hora">⏳</span></div>
+  </footer>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabase = createClient(
-      "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNDAwNjg0OX0.mAb0gHvm33I2vU-2tTcvQ_J4hHzFefpVly9mAGoX_g"
-    );
-
-    const EMPRESAS = [
-      "PDD031204KL5","AUPS540605TF0","MUSJ5705122Q4",
-      "CAC180615354","RIQS740906PQ2","GORB0001058R2"
-    ];
-
-    const fileInput = document.getElementById("fileInput");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const progressBar = document.getElementById("progressBar");
-    const stats = document.getElementById("stats");
-    const log = document.getElementById("log");
-
-    let running = false;
-
-    startBtn.onclick = async () => {
-      const files = fileInput.files;
-      if (!files.length) return alert("Selecciona archivos XML primero.");
-      running = true;
-      startBtn.disabled = true; stopBtn.disabled = false;
-      let ok=0, skip=0, err=0;
-
-      for (let i=0; i<files.length; i++) {
-        if (!running) break;
-        const file = files[i];
-        try {
-          const text = await file.text();
-          const xml = new DOMParser().parseFromString(text, "text/xml");
-          const comp = xml.querySelector("cfdi\\:Comprobante, Comprobante");
-          const emisor = xml.querySelector("cfdi\\:Emisor, Emisor");
-          const receptor = xml.querySelector("cfdi\\:Receptor, Receptor");
-          const tfd = xml.querySelector("tfd\\:TimbreFiscalDigital, TimbreFiscalDigital");
-          const concepto = xml.querySelector("cfdi\\:Concepto, Concepto");
-          const uuid = tfd?.getAttribute("UUID") || null;
-          if (!uuid) continue;
-
-          const { data: existe } = await supabase
-            .from("ingresosprovsoftc").select("uuid").eq("uuid", uuid).maybeSingle();
-          if (existe) { skip++; addLog(file.name, "Duplicado", "skip"); update(i, files.length, ok, skip, err); continue; }
-
-          const tipo = comp.getAttribute("TipoDeComprobante");
-          const empresaRFC = EMPRESAS.includes(emisor.getAttribute("Rfc")) ? emisor.getAttribute("Rfc") :
-                             EMPRESAS.includes(receptor.getAttribute("Rfc")) ? receptor.getAttribute("Rfc") : null;
-          let clasificacion="Otro", afecta=false;
-          if (tipo==="I" && EMPRESAS.includes(emisor.getAttribute("Rfc"))) { clasificacion="Ingreso"; afecta=true; }
-          else if (tipo==="I" && EMPRESAS.includes(receptor.getAttribute("Rfc"))) { clasificacion="Egreso"; afecta=true; }
-          else if (tipo==="E") { clasificacion="Nota de crédito"; afecta=true; }
-          else if (tipo==="P") clasificacion="Pago";
-          else if (tipo==="N") clasificacion="Nómina";
-          else if (tipo==="T") clasificacion="Traslado";
-
-          const obj = {
-            uuid, serie: comp.getAttribute("Serie"), folio: comp.getAttribute("Folio"),
-            tipo_comprobante: tipo, clasificacion, afecta_finanzas: afecta,
-            rfc_emisor: emisor.getAttribute("Rfc"), nombre_emisor: emisor.getAttribute("Nombre"),
-            rfc_receptor: receptor.getAttribute("Rfc"), nombre_receptor: receptor.getAttribute("Nombre"),
-            subtotal: parseFloat(comp.getAttribute("SubTotal")||0),
-            total: parseFloat(comp.getAttribute("Total")||0),
-            fecha_emision: comp.getAttribute("Fecha"), empresa_rfc: empresaRFC, fuente_archivo: file.name
-          };
-
-          const { error } = await supabase.from("ingresosprovsoftc").insert([obj]);
-          if (error) { err++; addLog(file.name, "Error", "err"); }
-          else { ok++; addLog(file.name, "Cargado", "ok"); }
-
-          update(i, files.length, ok, skip, err);
-          await new Promise(res => setTimeout(res, 250));
-        } catch {
-          err++; addLog(file.name, "Error lectura", "err");
-        }
-      }
-
-      running = false;
-      startBtn.disabled = false; stopBtn.disabled = true;
-      stats.textContent = `✅ ${ok} cargados | ⚠️ ${skip} duplicados | ❌ ${err} errores`;
-    };
-
-    stopBtn.onclick = () => {
-      running = false;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      addLog("⏹ Proceso detenido por usuario", "", "skip");
-    };
-
-    function addLog(name, msg, cls) {
-      const line = document.createElement("div");
-      line.className = cls;
-      line.textContent = `${new Date().toLocaleTimeString()} – ${name}: ${msg}`;
-      log.appendChild(line);
-      log.scrollTop = log.scrollHeight;
+  <script>
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+      const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
+      const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
     }
-
-    function update(current, total, ok, skip, err) {
-      const pct = Math.round(((current+1)/total)*100);
-      progressBar.style.width = pct+"%";
-      stats.textContent = `Procesando ${current+1}/${total} archivos... | ✅ ${ok} | ⚠️ ${skip} | ❌ ${err}`;
-    }
+    actualizarFechaHora();
+    setInterval(actualizarFechaHora, 1000);
   </script>
+
 </body>
 </html>
