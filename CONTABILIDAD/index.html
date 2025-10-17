@@ -2,191 +2,147 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>🚀 PROVSOFT – Carga Fiscal CFDI v1</title>
+  <title>PROVSOFT – Carga Fiscal CFDI v2</title>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
       background: #f4f6f9;
       color: #222;
-      padding: 40px;
+      padding: 30px;
       text-align: center;
     }
-    h1 {
-      color: #00416A;
-      margin-bottom: 20px;
-    }
-    input[type=file] {
-      display: block;
-      margin: 20px auto;
-      padding: 12px;
-      border: 2px dashed #007bff;
-      border-radius: 10px;
-      background: #fff;
-      cursor: pointer;
-      max-width: 400px;
-    }
-    #progressBox {
-      width: 400px;
-      margin: 20px auto;
-      background: #ddd;
-      border-radius: 8px;
-      overflow: hidden;
-      height: 22px;
-    }
-    #progressBar {
-      width: 0;
-      height: 22px;
-      background: #007bff;
-      transition: width .3s;
-    }
-    .msg {
-      margin-top: 25px;
-      font-size: 16px;
-    }
-    .ok { color: green; }
-    .warn { color: #c57f00; }
-    .err { color: red; }
+    h1 { color:#00416A; margin-bottom:10px; }
+    input[type=file] { display:block; margin:20px auto; padding:12px;
+      border:2px dashed #007bff; border-radius:10px; background:#fff; max-width:400px; cursor:pointer; }
+    #controls { margin:10px 0; }
+    button { padding:10px 20px; border:none; border-radius:6px; margin:5px; cursor:pointer; font-weight:600; }
+    .start { background:#16a34a; color:white; }
+    .stop { background:#dc2626; color:white; }
+    #progressBox { width:400px; margin:15px auto; background:#ddd; border-radius:8px; overflow:hidden; height:22px; }
+    #progressBar { width:0; height:22px; background:#007bff; transition:width .3s; }
+    #stats { margin-top:10px; font-size:15px; }
+    #log { text-align:left; margin:20px auto; max-width:800px; height:300px; overflow-y:auto;
+      background:white; border-radius:10px; box-shadow:0 3px 6px rgba(0,0,0,.1); padding:10px; font-size:13px; }
+    .ok { color:green; } .skip { color:orange; } .err { color:red; }
   </style>
 </head>
 <body>
-  <h1>📂 PROVSOFT – Carga Fiscal CFDI v1</h1>
+  <h1>📂 PROVSOFT – Carga Fiscal CFDI v2</h1>
+
   <input type="file" id="fileInput" accept=".xml" multiple />
+  <div id="controls">
+    <button id="startBtn" class="start">▶️ Iniciar</button>
+    <button id="stopBtn" class="stop" disabled>⏹ Detener</button>
+  </div>
+
   <div id="progressBox"><div id="progressBar"></div></div>
-  <div id="mensaje" class="msg">Selecciona uno o varios archivos XML para comenzar...</div>
+  <div id="stats">Listo para comenzar...</div>
+  <div id="log"></div>
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    // 🔑 Conexión Supabase
     const supabase = createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNDAwNjg0OX0.mAb0gHvm33I2vU-2tTcvQ_J4hHzFefpVly9mAGoX_g"
     );
 
-    // 📂 RFCs PROPIOS de tus empresas/filiales
     const EMPRESAS = [
-      "PDD031204KL5",  // Proveedora de Dulces y Desechables
-      "AUPS540605TF0", // Cliente AUPS
-      "MUSJ5705122Q4", // Cliente MUSJ
-      "CAC180615354",  // La Cachota
-      "RIQS740906PQ2", // Cliente RIQS
-      "GORB0001058R2"  // Cliente GORB
+      "PDD031204KL5","AUPS540605TF0","MUSJ5705122Q4",
+      "CAC180615354","RIQS740906PQ2","GORB0001058R2"
     ];
 
-    const mensaje = document.getElementById("mensaje");
-    const bar = document.getElementById("progressBar");
+    const fileInput = document.getElementById("fileInput");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const progressBar = document.getElementById("progressBar");
+    const stats = document.getElementById("stats");
+    const log = document.getElementById("log");
 
-    document.getElementById("fileInput").addEventListener("change", async (e) => {
-      const files = e.target.files;
-      let okCount = 0, skipCount = 0, errCount = 0;
-      const totalFiles = files.length;
+    let running = false;
 
-      for (let i = 0; i < totalFiles; i++) {
+    startBtn.onclick = async () => {
+      const files = fileInput.files;
+      if (!files.length) return alert("Selecciona archivos XML primero.");
+      running = true;
+      startBtn.disabled = true; stopBtn.disabled = false;
+      let ok=0, skip=0, err=0;
+
+      for (let i=0; i<files.length; i++) {
+        if (!running) break;
         const file = files[i];
         try {
           const text = await file.text();
           const xml = new DOMParser().parseFromString(text, "text/xml");
-
           const comp = xml.querySelector("cfdi\\:Comprobante, Comprobante");
           const emisor = xml.querySelector("cfdi\\:Emisor, Emisor");
           const receptor = xml.querySelector("cfdi\\:Receptor, Receptor");
           const tfd = xml.querySelector("tfd\\:TimbreFiscalDigital, TimbreFiscalDigital");
           const concepto = xml.querySelector("cfdi\\:Concepto, Concepto");
-
           const uuid = tfd?.getAttribute("UUID") || null;
-          if (!uuid || !comp || !emisor || !receptor) continue;
+          if (!uuid) continue;
 
-          // 🧩 Revisión de duplicados
-          const { data: existente } = await supabase
-            .from("ingresosprovsoftc")
-            .select("uuid")
-            .eq("uuid", uuid)
-            .maybeSingle();
-
-          if (existente) {
-            skipCount++;
-            updateStatus(i, totalFiles, okCount, skipCount, errCount);
-            continue; // ya existe, lo omitimos
-          }
+          const { data: existe } = await supabase
+            .from("ingresosprovsoftc").select("uuid").eq("uuid", uuid).maybeSingle();
+          if (existe) { skip++; addLog(file.name, "Duplicado", "skip"); update(i, files.length, ok, skip, err); continue; }
 
           const tipo = comp.getAttribute("TipoDeComprobante");
-          const empresaRFC = EMPRESAS.includes(emisor.getAttribute("Rfc"))
-            ? emisor.getAttribute("Rfc")
-            : EMPRESAS.includes(receptor.getAttribute("Rfc"))
-            ? receptor.getAttribute("Rfc")
-            : null;
+          const empresaRFC = EMPRESAS.includes(emisor.getAttribute("Rfc")) ? emisor.getAttribute("Rfc") :
+                             EMPRESAS.includes(receptor.getAttribute("Rfc")) ? receptor.getAttribute("Rfc") : null;
+          let clasificacion="Otro", afecta=false;
+          if (tipo==="I" && EMPRESAS.includes(emisor.getAttribute("Rfc"))) { clasificacion="Ingreso"; afecta=true; }
+          else if (tipo==="I" && EMPRESAS.includes(receptor.getAttribute("Rfc"))) { clasificacion="Egreso"; afecta=true; }
+          else if (tipo==="E") { clasificacion="Nota de crédito"; afecta=true; }
+          else if (tipo==="P") clasificacion="Pago";
+          else if (tipo==="N") clasificacion="Nómina";
+          else if (tipo==="T") clasificacion="Traslado";
 
-          // Clasificación automática
-          let clasificacion = "Otro", afecta = false;
-          if (tipo === "I" && EMPRESAS.includes(emisor.getAttribute("Rfc"))) { clasificacion = "Ingreso"; afecta = true; }
-          else if (tipo === "I" && EMPRESAS.includes(receptor.getAttribute("Rfc"))) { clasificacion = "Egreso"; afecta = true; }
-          else if (tipo === "E") { clasificacion = "Nota de crédito"; afecta = true; }
-          else if (tipo === "P") clasificacion = "Pago";
-          else if (tipo === "N") clasificacion = "Nómina";
-          else if (tipo === "T") clasificacion = "Traslado";
-
-          // Datos generales y de conceptos
-          const insertObj = {
-            uuid,
-            serie: comp.getAttribute("Serie"),
-            folio: comp.getAttribute("Folio"),
-            tipo_comprobante: tipo,
-            clasificacion,
-            afecta_finanzas: afecta,
-            rfc_emisor: emisor.getAttribute("Rfc"),
-            nombre_emisor: emisor.getAttribute("Nombre"),
-            regimen_emisor: emisor.getAttribute("RegimenFiscal"),
-            rfc_receptor: receptor.getAttribute("Rfc"),
-            nombre_receptor: receptor.getAttribute("Nombre"),
-            regimen_receptor: receptor.getAttribute("RegimenFiscalReceptor"),
-            uso_cfdi: receptor.getAttribute("UsoCFDI"),
-            subtotal: parseFloat(comp.getAttribute("SubTotal") || 0),
-            total: parseFloat(comp.getAttribute("Total") || 0),
-            moneda: comp.getAttribute("Moneda"),
-            forma_pago: comp.getAttribute("FormaPago"),
-            metodo_pago: comp.getAttribute("MetodoPago"),
-            lugar_expedicion: comp.getAttribute("LugarExpedicion"),
-            fecha_emision: comp.getAttribute("Fecha"),
-            clave_prodserv: concepto?.getAttribute("ClaveProdServ"),
-            descripcion: concepto?.getAttribute("Descripcion"),
-            cantidad: parseFloat(concepto?.getAttribute("Cantidad") || 0),
-            unidad: concepto?.getAttribute("Unidad"),
-            valor_unitario: parseFloat(concepto?.getAttribute("ValorUnitario") || 0),
-            importe: parseFloat(concepto?.getAttribute("Importe") || 0),
-            objeto_imp: concepto?.getAttribute("ObjetoImp"),
-            empresa_rfc: empresaRFC,
-            fuente_archivo: file.name
+          const obj = {
+            uuid, serie: comp.getAttribute("Serie"), folio: comp.getAttribute("Folio"),
+            tipo_comprobante: tipo, clasificacion, afecta_finanzas: afecta,
+            rfc_emisor: emisor.getAttribute("Rfc"), nombre_emisor: emisor.getAttribute("Nombre"),
+            rfc_receptor: receptor.getAttribute("Rfc"), nombre_receptor: receptor.getAttribute("Nombre"),
+            subtotal: parseFloat(comp.getAttribute("SubTotal")||0),
+            total: parseFloat(comp.getAttribute("Total")||0),
+            fecha_emision: comp.getAttribute("Fecha"), empresa_rfc: empresaRFC, fuente_archivo: file.name
           };
 
-          const { error } = await supabase.from("ingresosprovsoftc").insert([insertObj]);
-          if (error) errCount++; else okCount++;
+          const { error } = await supabase.from("ingresosprovsoftc").insert([obj]);
+          if (error) { err++; addLog(file.name, "Error", "err"); }
+          else { ok++; addLog(file.name, "Cargado", "ok"); }
 
-          updateStatus(i, totalFiles, okCount, skipCount, errCount);
-
-          // ⏳ Espera 300 ms entre archivos
-          await new Promise(res => setTimeout(res, 300));
-
-        } catch (err) {
-          errCount++;
-          updateStatus(i, totalFiles, okCount, skipCount, errCount);
+          update(i, files.length, ok, skip, err);
+          await new Promise(res => setTimeout(res, 250));
+        } catch {
+          err++; addLog(file.name, "Error lectura", "err");
         }
       }
 
-      mensaje.innerHTML = `
-        ✅ ${okCount} cargados | ⚠️ ${skipCount} duplicados | ❌ ${errCount} errores
-      `;
-      mensaje.className = "msg ok";
-    });
+      running = false;
+      startBtn.disabled = false; stopBtn.disabled = true;
+      stats.textContent = `✅ ${ok} cargados | ⚠️ ${skip} duplicados | ❌ ${err} errores`;
+    };
 
-    // 🔄 Barra y progreso visual
-    function updateStatus(current, total, ok, skip, err) {
-      const pct = Math.round(((current + 1) / total) * 100);
-      bar.style.width = pct + "%";
-      mensaje.innerHTML = `
-        Procesando ${current + 1}/${total} archivos...<br>
-        ✅ ${ok} cargados | ⚠️ ${skip} duplicados | ❌ ${err} errores
-      `;
+    stopBtn.onclick = () => {
+      running = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      addLog("⏹ Proceso detenido por usuario", "", "skip");
+    };
+
+    function addLog(name, msg, cls) {
+      const line = document.createElement("div");
+      line.className = cls;
+      line.textContent = `${new Date().toLocaleTimeString()} – ${name}: ${msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function update(current, total, ok, skip, err) {
+      const pct = Math.round(((current+1)/total)*100);
+      progressBar.style.width = pct+"%";
+      stats.textContent = `Procesando ${current+1}/${total} archivos... | ✅ ${ok} | ⚠️ ${skip} | ❌ ${err}`;
     }
   </script>
 </body>
