@@ -80,6 +80,7 @@
               tieneExcluido ? `complemento excluido` :
               "motivo desconocido";
             const li = document.createElement("li");
+            li.dataset.uuid = uuid; // ← Asocia este <li> con su UUID
             li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado (${motivo})</span>`;
             lista.appendChild(li);
             continue;
@@ -162,6 +163,7 @@
           });
 
           const li = document.createElement("li");
+          li.dataset.uuid = uuid; // ← también aquí
           li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado</span>`;
           lista.appendChild(li);
         } catch (err) {
@@ -185,13 +187,11 @@ async function procesarArchivos() {
     for (let i = 0; i < lote.length; i++) {
       const index = inicio + i;
       const data = lote[i];
-      const item = items[index];
-
-      if (!item) {
-        logBitacora(`⚠️ Archivo sin elemento visual para UUID: ${data.uuid}`);
-        continue;
-      }
-
+      const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
+if (!item) {
+  logBitacora(`⚠️ No se encontró elemento visual para UUID: ${data.uuid}`);
+  continue;
+}
       const avance = ((index + 1) / totalArchivos) * 100;
       progreso.style.width = `${avance}%`;
       logBitacora(`📄 Revisando UUID: ${data.uuid}`);
