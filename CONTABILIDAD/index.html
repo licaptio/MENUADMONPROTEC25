@@ -7,6 +7,7 @@
   <!-- ✅ Carga compatible con GitHub Pages -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- 🔧 AQUÍ ABRIMOS EL STYLE QUE FALTABA -->
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -85,7 +86,6 @@
           const emisor = xml.querySelector("cfdi\\:Emisor, Emisor");
           const receptor = xml.querySelector("cfdi\\:Receptor, Receptor");
           const tfd = xml.querySelector("tfd\\:TimbreFiscalDigital, TimbreFiscalDigital");
-          const concepto = xml.querySelector("cfdi\\:Concepto, Concepto");
           const uuid = tfd?.getAttribute("UUID") || null;
           if (!uuid) continue;
 
