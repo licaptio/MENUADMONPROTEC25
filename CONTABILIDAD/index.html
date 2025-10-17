@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>PROVSOFT – Carga Fiscal CFDI v2</title>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
-  <style>
-    body {
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const { createClient } = supabase;
+
+  const supabase = createClient(
+    "https://cvpbtjlupswbyxenugpz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNDAwNjg0OX0.mAb0gHvm33I2vU-2tTcvQ_J4hHzFefpVly9mAGoX_g"
+  );
+</script>    body {
       font-family: 'Poppins', sans-serif;
       background: #f4f6f9;
       color: #222;
@@ -147,5 +153,6 @@
   </script>
 </body>
 </html>
+
 
 
