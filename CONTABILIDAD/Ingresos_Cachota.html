@@ -49,7 +49,7 @@
           const emisor = xml.getElementsByTagNameNS(cfdiNS, "Emisor")[0];
           const receptor = xml.getElementsByTagNameNS(cfdiNS, "Receptor")[0];
 
-          // Buscar timbre fiscal digital
+          // Timbre Fiscal Digital
           let timbre = null;
           for (const node of xml.getElementsByTagName("*")) {
             if (node.localName === "TimbreFiscalDigital") {
@@ -62,23 +62,42 @@
           const tipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
           const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
 
-          // Excluir CFDI con complementos no deseados
-          const xmlTxt = text.toUpperCase();
-          const tieneExcluido = (
-            xmlTxt.includes("NOMINA12") ||
-            xmlTxt.includes("CARTAPORTE") ||
-            xmlTxt.includes("PAGOS20") ||
-            tipo === "E" // egresos
-          );
+          // Detectar complementos reales (no solo namespaces)
+          let tieneExcluido = false;
+          const complementos = xml.getElementsByTagNameNS(cfdiNS, "Complemento");
+          if (complementos.length > 0) {
+            const hijos = complementos[0].children;
+            for (const h of hijos) {
+              const nombre = h.localName.toUpperCase();
+              if (nombre.includes("NOMINA") || nombre.includes("CARTAPORTE") || nombre.includes("PAGOS")) {
+                tieneExcluido = true;
+                break;
+              }
+            }
+          }
 
-          // Filtro principal: solo tipo I y emisor CAC180615354
-          if (tipo !== "I" || emisorRFC !== "CAC180615354" || tieneExcluido || !uuid) {
-            const motivo =
-              !uuid ? "sin UUID" :
-              tipo !== "I" ? `tipo ${tipo}` :
-              emisorRFC !== "CAC180615354" ? `emisor ${emisorRFC}` :
-              tieneExcluido ? `complemento o tipo excluido` :
-              "motivo desconocido";
+          // --- VALIDACIÓN JERÁRQUICA ---
+          let motivo = "";
+          let valido = true;
+
+          if (!uuid || uuid.length < 10) {
+            valido = false;
+            motivo = "sin UUID";
+          } else if (archivosDatos.some(a => a.uuid === uuid)) {
+            valido = false;
+            motivo = "duplicado en lote";
+          } else if (tipo !== "I") {
+            valido = false;
+            motivo = `tipo ${tipo}`;
+          } else if (emisorRFC !== "CAC180615354") {
+            valido = false;
+            motivo = `emisor ${emisorRFC}`;
+          } else if (tieneExcluido) {
+            valido = false;
+            motivo = "complemento o tipo excluido";
+          }
+
+          if (!valido) {
             const li = document.createElement("li");
             li.dataset.uuid = uuid;
             li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado (${motivo})</span>`;
@@ -86,7 +105,7 @@
             continue;
           }
 
-          // Datos CFDI válidos
+          // Extraer datos CFDI válidos
           const receptorRFC = receptor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
           const receptorNombre = receptor?.getAttribute("Nombre") || "";
           const razonSocial = emisor?.getAttribute("Nombre") || "";
@@ -278,7 +297,7 @@
   </script>
 
   <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
-    ©️ 2025 Ingresos CAC180615354 · Desarrollado por Gerardo Quezada · versión con exclusión de nómina, egreso, carta porte y pagos
+    ©️ 2025 Ingresos CAC180615354 · Desarrollado por Gerardo Quezada · versión validada por tipo, emisor y complementos reales
   </footer>
 </body>
 </html>
