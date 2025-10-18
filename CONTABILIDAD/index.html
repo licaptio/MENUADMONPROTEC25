@@ -16,28 +16,49 @@
       color:#111;text-align:center;padding:20px;
     }
     h1{color:white;text-shadow:1px 1px 3px rgba(0,0,0,.3);margin-bottom:30px;}
-    .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));width:100%;max-width:700px;}
+    .grid{
+      display:grid;
+      gap:20px;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      width:100%;
+      max-width:800px;
+    }
     a{
       text-decoration:none;color:#111;background:var(--card);padding:20px;border-radius:var(--radius);
       box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;
       display:flex;flex-direction:column;justify-content:center;align-items:center;
     }
     a:hover{transform:translateY(-4px);box-shadow:0 8px 18px rgba(0,0,0,.25);}
+    h2{margin:0;font-size:18px;color:#00416A;}
+    p{margin:6px 0 0;font-size:13px;color:#444;}
     footer{margin-top:50px;font-size:13px;color:#eee;}
   </style>
 </head>
 <body>
   <h1>CONTABILIDAD · PROVSOFT</h1>
+
   <div class="grid">
+    <!-- Bloques para PDD -->
     <a href="CargaIngresoPDD.html">
       <h2>📤 Cargar Ingresos PDD</h2>
-      <p>Sube y valida archivos XML de tipo Ingreso</p>
+      <p>Sube y valida archivos XML de tipo Ingreso (PDD031204KL5)</p>
     </a>
     <a href="VisorIngresoPDD.html">
       <h2>📑 Visor de Ingresos PDD</h2>
-      <p>Consulta y visualiza CFDI cargados</p>
+      <p>Consulta y visualiza CFDI cargados de PDD</p>
+    </a>
+
+    <!-- Bloques para CAC180615354 -->
+    <a href="Ingresos_Cachota.html">
+      <h2>📤 Cargar Ingresos CAC</h2>
+      <p>Sube y valida archivos XML de tipo Ingreso (CAC180615354)</p>
+    </a>
+    <a href="Visor_ingreso_Cachota.html">
+      <h2>📑 Visor de Ingresos CAC</h2>
+      <p>Consulta y visualiza CFDI cargados de CAC</p>
     </a>
   </div>
-  <footer>© 2025 PROVSOFT · La Proveedora</footer>
+
+  <footer>© 2025 PROVSOFT · La Proveedora · Módulo Contabilidad</footer>
 </body>
 </html>
