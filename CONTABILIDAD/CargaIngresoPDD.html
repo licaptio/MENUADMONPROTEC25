@@ -49,7 +49,7 @@
           const emisor = xml.getElementsByTagNameNS(cfdiNS, "Emisor")[0];
           const receptor = xml.getElementsByTagNameNS(cfdiNS, "Receptor")[0];
 
-          // Buscar timbre fiscal
+          // Timbre Fiscal Digital
           let timbre = null;
           for (const node of xml.getElementsByTagName("*")) {
             if (node.localName === "TimbreFiscalDigital") {
@@ -57,36 +57,55 @@
               break;
             }
           }
+
           const uuid = timbre?.getAttribute("UUID")?.toUpperCase().trim() || "";
-          const comprobanteTipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
+          const tipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
           const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
 
-          // Verificar complementos para excluir
-          const complementos = xml.getElementsByTagNameNS(cfdiNS, "Complemento");
+          // Detectar complementos reales (no solo namespaces)
           let tieneExcluido = false;
+          const complementos = xml.getElementsByTagNameNS(cfdiNS, "Complemento");
           if (complementos.length > 0) {
-            const xmlTxt = text.toUpperCase();
-            if (xmlTxt.includes("NOMINA12") || xmlTxt.includes("CARTAPORTE") || xmlTxt.includes("PAGOS20")) {
-              tieneExcluido = true;
+            const hijos = complementos[0].children;
+            for (const h of hijos) {
+              const nombre = h.localName.toUpperCase();
+              if (nombre.includes("NOMINA") || nombre.includes("CARTAPORTE") || nombre.includes("PAGOS")) {
+                tieneExcluido = true;
+                break;
+              }
             }
           }
 
-          // --- FILTRO PRINCIPAL ---
-          if (comprobanteTipo !== "I" || emisorRFC !== "PDD031204KL5" || tieneExcluido || !uuid) {
-            const motivo =
-              !uuid ? "sin UUID" :
-              comprobanteTipo !== "I" ? `tipo ${comprobanteTipo}` :
-              emisorRFC !== "PDD031204KL5" ? `emisor ${emisorRFC}` :
-              tieneExcluido ? `complemento excluido` :
-              "motivo desconocido";
+          // --- VALIDACIÓN JERÁRQUICA ---
+          let motivo = "";
+          let valido = true;
+
+          if (!uuid || uuid.length < 10) {
+            valido = false;
+            motivo = "sin UUID";
+          } else if (archivosDatos.some(a => a.uuid === uuid)) {
+            valido = false;
+            motivo = "duplicado en lote";
+          } else if (tipo !== "I") {
+            valido = false;
+            motivo = `tipo ${tipo}`;
+          } else if (emisorRFC !== "PDD031204KL5") {
+            valido = false;
+            motivo = `emisor ${emisorRFC}`;
+          } else if (tieneExcluido) {
+            valido = false;
+            motivo = "complemento o tipo excluido";
+          }
+
+          if (!valido) {
             const li = document.createElement("li");
-            li.dataset.uuid = uuid; // ← Asocia este <li> con su UUID
+            li.dataset.uuid = uuid;
             li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado (${motivo})</span>`;
             lista.appendChild(li);
             continue;
           }
 
-          // --- Datos CFDI válidos ---
+          // Extraer datos CFDI válidos
           const receptorRFC = receptor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
           const receptorNombre = receptor?.getAttribute("Nombre") || "";
           const razonSocial = emisor?.getAttribute("Nombre") || "";
@@ -141,7 +160,7 @@
 
           archivosDatos.push({
             uuid,
-            tipo: comprobanteTipo,
+            tipo,
             receptorRFC,
             receptorNombre,
             emisorRFC,
@@ -163,9 +182,10 @@
           });
 
           const li = document.createElement("li");
-          li.dataset.uuid = uuid; // ← también aquí
+          li.dataset.uuid = uuid;
           li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado</span>`;
           lista.appendChild(li);
+
         } catch (err) {
           const li = document.createElement("li");
           li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Error al leer (${err.message})</span>`;
@@ -174,100 +194,100 @@
       }
     });
 
-async function procesarArchivos() {
-  const items = document.querySelectorAll("#archivoList li");
-  const loteTamaño = 10;
-  const pausaEntreLotes = 2000;
-  const progreso = document.getElementById("progreso");
-  const totalArchivos = archivosDatos.length;
+    async function procesarArchivos() {
+      const progreso = document.getElementById("progreso");
+      const totalArchivos = archivosDatos.length;
+      const loteTamaño = 10;
+      const pausaEntreLotes = 2000;
 
-  for (let inicio = 0; inicio < archivosDatos.length; inicio += loteTamaño) {
-    const lote = archivosDatos.slice(inicio, inicio + loteTamaño);
+      for (let inicio = 0; inicio < archivosDatos.length; inicio += loteTamaño) {
+        const lote = archivosDatos.slice(inicio, inicio + loteTamaño);
 
-    for (let i = 0; i < lote.length; i++) {
-      const index = inicio + i;
-      const data = lote[i];
-      const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
-if (!item) {
-  logBitacora(`⚠️ No se encontró elemento visual para UUID: ${data.uuid}`);
-  continue;
-}
-      const avance = ((index + 1) / totalArchivos) * 100;
-      progreso.style.width = `${avance}%`;
-      logBitacora(`📄 Revisando UUID: ${data.uuid}`);
+        for (let i = 0; i < lote.length; i++) {
+          const index = inicio + i;
+          const data = lote[i];
+          const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
+          if (!item) {
+            logBitacora(`⚠️ No se encontró elemento visual para UUID: ${data.uuid}`);
+            continue;
+          }
 
-      const existe = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd?uuid_cfdi=eq.${data.uuid}`, {
-        headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
-      });
-      const yaExiste = await existe.json();
-      if (yaExiste.length > 0) {
-        item.querySelector("span").textContent = `⚠️ Ya existe`;
-        item.querySelector("span").className = "warn";
-        logBitacora(`⚠️ Ya existía: ${data.uuid}`);
-        continue;
-      }
+          const avance = ((index + 1) / totalArchivos) * 100;
+          progreso.style.width = `${avance}%`;
+          logBitacora(`📄 Revisando UUID: ${data.uuid}`);
 
-      const datosInsert = {
-        uuid_cfdi: data.uuid,
-        fecha: data.fecha,
-        rfc_emisor: data.emisorRFC,
-        razon_social_emisor: data.razonSocial,
-        rfc_receptor: data.receptorRFC,
-        razon_social_receptor: data.receptorNombre,
-        factura: data.folio,
-        serie: data.serie,
-        subtotal: data.subtotal,
-        descuento: data.descuento,
-        total: data.total,
-        moneda: data.moneda,
-        forma_pago: data.formaPago,
-        metodo_pago: data.metodoPago,
-        uso_cfdi: data.usoCFDI,
-        sello_sat: data.selloSAT,
-        no_certificado_sat: data.noCertificadoSAT,
-        fecha_certificacion: data.fecha_certificacion,
-        conceptos_detalle: data.conceptosDetalle,
-      };
+          const existe = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd?uuid_cfdi=eq.${data.uuid}`, {
+            headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
+          });
+          const yaExiste = await existe.json();
+          if (yaExiste.length > 0) {
+            item.querySelector("span").textContent = `⚠️ Ya existe`;
+            item.querySelector("span").className = "warn";
+            logBitacora(`⚠️ Ya existía: ${data.uuid}`);
+            continue;
+          }
 
-      try {
-        const insert = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
-          method: "POST",
-          headers: {
-            apikey: API_KEY,
-            Authorization: `Bearer ${API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(datosInsert),
-        });
+          const datosInsert = {
+            uuid_cfdi: data.uuid,
+            fecha: data.fecha,
+            rfc_emisor: data.emisorRFC,
+            razon_social_emisor: data.razonSocial,
+            rfc_receptor: data.receptorRFC,
+            razon_social_receptor: data.receptorNombre,
+            factura: data.folio,
+            serie: data.serie,
+            subtotal: data.subtotal,
+            descuento: data.descuento,
+            total: data.total,
+            moneda: data.moneda,
+            forma_pago: data.formaPago,
+            metodo_pago: data.metodoPago,
+            uso_cfdi: data.usoCFDI,
+            sello_sat: data.selloSAT,
+            no_certificado_sat: data.noCertificadoSAT,
+            fecha_certificacion: data.fecha_certificacion,
+            conceptos_detalle: data.conceptosDetalle,
+          };
 
-        if (insert.ok) {
-          item.querySelector("span").textContent = `✅ Subido`;
-          item.querySelector("span").className = "ok";
-          logBitacora(`✔️ Subida exitosa`);
-        } else {
-          const err = await insert.text();
-          item.querySelector("span").textContent = `❌ Error: ${err}`;
-          item.querySelector("span").className = "err";
-          logBitacora(`❌ Error al subir: ${err}`);
+          try {
+            const insert = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
+              method: "POST",
+              headers: {
+                apikey: API_KEY,
+                Authorization: `Bearer ${API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(datosInsert),
+            });
+
+            if (insert.ok) {
+              item.querySelector("span").textContent = `✅ Subido`;
+              item.querySelector("span").className = "ok";
+              logBitacora(`✔️ Subida exitosa`);
+            } else {
+              const err = await insert.text();
+              item.querySelector("span").textContent = `❌ Error: ${err}`;
+              item.querySelector("span").className = "err";
+              logBitacora(`❌ Error al subir: ${err}`);
+            }
+          } catch (error) {
+            item.querySelector("span").textContent = `❌ Error de red`;
+            item.querySelector("span").className = "err";
+            logBitacora(`❌ Error de red: ${error.message}`);
+          }
+
+          await new Promise(r => setTimeout(r, 300));
         }
-      } catch (error) {
-        item.querySelector("span").textContent = `❌ Error de red`;
-        item.querySelector("span").className = "err";
-        logBitacora(`❌ Error de red: ${error.message}`);
+
+        if (inicio + loteTamaño < totalArchivos) {
+          logBitacora(`🕒 Esperando ${pausaEntreLotes / 1000} segundos antes del siguiente lote...`);
+          await new Promise(r => setTimeout(r, pausaEntreLotes));
+        }
       }
 
-      await new Promise((r) => setTimeout(r, 300));
+      progreso.style.width = `100%`;
+      logBitacora("✅ Proceso completo");
     }
-
-    if (inicio + loteTamaño < totalArchivos) {
-      logBitacora(`🕒 Esperando ${pausaEntreLotes / 1000} segundos antes del siguiente lote...`);
-      await new Promise((r) => setTimeout(r, pausaEntreLotes));
-    }
-  }
-
-  progreso.style.width = `100%`;
-  logBitacora("✅ Proceso completo");
-}
 
     function logBitacora(mensaje) {
       const log = document.getElementById("bitacora");
@@ -277,7 +297,7 @@ if (!item) {
   </script>
 
   <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
-    ©️ 2025 Ingresos PDD · Desarrollado por Gerardo Quezada · versión con exclusión de nómina, egreso, carta porte y pagos
+    ©️ 2025 Ingresos PDD · Desarrollado por Gerardo Quezada · versión validada por tipo, emisor y complementos reales
   </footer>
 </body>
 </html>
