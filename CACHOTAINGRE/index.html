@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>PROVSOFT – Dashboard de Ingresos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Librerías externas -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #00416A, #E4E5E6);
+      margin: 0;
+      padding: 20px;
+      color: #111;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: white;
+      margin-top: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 1000px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border-bottom: 1px solid #ddd; }
+    th { background: #00416A; color: white; }
+    canvas { margin-top: 20px; width: 100% !important; }
+    tr:hover { background-color: #f1f1f1; }
+
+    /* Barra de progreso */
+    .progress-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 24px;
+      margin: 10px auto;
+      width: 90%;
+      max-width: 600px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      transition: width 0.8s ease;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📊 PROVSOFT – Dashboard de Ingresos</h1>
+  <h3>La Cachota | Resumen 24 Meses</h3>
+
+  <!-- 💰 Ingresos por mes -->
+  <div class="card">
+    <h2>💰 Ingresos Totales por Mes</h2>
+    <canvas id="graficoMensual" height="120"></canvas>
+  </div>
+
+  <!-- 📦 Totales 2024 -->
+  <div class="card">
+    <h2>📦 Totales por Artículo – Año 2024</h2>
+    <canvas id="graficoArticulos2024" height="120"></canvas>
+  </div>
+
+  <!-- 📦 Totales 2025 -->
+  <div class="card">
+    <h2>📦 Totales por Artículo – Año 2025</h2>
+    <canvas id="graficoArticulos2025" height="120"></canvas>
+  </div>
+
+  <!-- 📈 Comparativo -->
+  <div class="card">
+    <h2>📈 Ingreso Acumulado 2025 vs 2024</h2>
+    <canvas id="graficoComparativo" height="120"></canvas>
+    <p style="text-align:center; font-size:0.9em; color:#333;">
+      *Límite 2025: <b>20 × UMA anual ($41,273.52) × 10 socios = $8,254,700 MXN</b>.
+    </p>
+  </div>
+
+  <!-- 🧾 Totales y barra dinámica -->
+  <div class="card">
+    <h2>🧾 Ingreso Total Acumulado 2024 vs 2025</h2>
+    <canvas id="graficoTotalesAnuales" height="120"></canvas>
+    <div class="progress-container"><div id="progressBar" class="progress-bar">0%</div></div>
+    <p id="progressText" style="text-align:center; font-size:0.9em; color:#333;"></p>
+  </div>
+
+  <footer>PROVSOFT © 2025 | Dashboard Inteligente de Ingresos y CFDI</footer>
+
+  <script>
+    // ✅ Tu Supabase con las keys correctas
+    const supabase = window.supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+    );
+
+    // ⚖️ Límite fiscal 2025 basado en UMA
+    const UMA_ANUAL_2025 = 41273.52;
+    const NUM_SOCIOS = 10;
+    const LIMITE_SPR_2025 = UMA_ANUAL_2025 * 20 * NUM_SOCIOS; // ≈ 8,254,700
+
+    // 1️⃣ Ingresos Totales por Mes
+    async function cargarTotalesMensuales() {
+      const { data, error } = await supabase.from('v_ingresos_articulo_mes')
+        .select('mes, total_articulo').order('mes', { ascending: true });
+      if (error) return console.error(error);
+
+      const totales = {};
+      data.forEach(r => totales[r.mes] = (totales[r.mes] || 0) + Number(r.total_articulo));
+
+      new Chart(document.getElementById('graficoMensual'), {
+        type: 'line',
+        data: {
+          labels: Object.keys(totales),
+          datasets: [{
+            label: 'Total mensual ($)',
+            data: Object.values(totales),
+            borderColor: '#00416A',
+            backgroundColor: '#66a6ff40',
+            borderWidth: 2,
+            fill: true
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    // 2️⃣ Totales por Artículo 2024 / 2025
+    async function cargarGraficasPorArticulo() {
+      const { data, error } = await supabase.from('v_ingresos_articulo_mes').select('*');
+      if (error) return console.error(error);
+
+      const agrupar = datos => Object.entries(datos.reduce((a,r)=>{
+        a[r.articulo]=(a[r.articulo]||0)+Number(r.total_articulo);return a;
+      },{})).map(([articulo,total])=>({articulo,total}));
+
+      const d24 = agrupar(data.filter(r=>r.mes.startsWith('2024'))).sort((a,b)=>b.total-a.total).slice(0,15);
+      const d25 = agrupar(data.filter(r=>r.mes.startsWith('2025'))).sort((a,b)=>b.total-a.total).slice(0,15);
+
+      new Chart(document.getElementById('graficoArticulos2024'), {
+        type:'bar', data:{labels:d24.map(r=>r.articulo), datasets:[{label:'Total 2024 ($)', data:d24.map(r=>r.total), backgroundColor:'#FFA726'}]},
+        options:{scales:{y:{beginAtZero:true}}}
+      });
+      new Chart(document.getElementById('graficoArticulos2025'), {
+        type:'bar', data:{labels:d25.map(r=>r.articulo), datasets:[{label:'Total 2025 ($)', data:d25.map(r=>r.total), backgroundColor:'#42A5F5'}]},
+        options:{scales:{y:{beginAtZero:true}}}
+      });
+    }
+
+    // 3️⃣ Comparativo 2024 vs 2025
+    async function cargarComparativo() {
+      const { data, error } = await supabase.from('v_ingresos_acumulado_anual').select('*');
+      if (error) return console.error(error);
+
+      const d24 = data.filter(r=>r.anio===2024);
+      const d25 = data.filter(r=>r.anio===2025);
+      const meses = d25.map(r=>r.mes);
+      const linea = meses.map(()=>LIMITE_SPR_2025);
+
+      new Chart(document.getElementById('graficoComparativo'), {
+        type:'line',
+        data:{
+          labels:meses,
+          datasets:[
+            {label:'2024 – Acumulado ($)', data:d24.map(r=>r.acumulado_anual), borderColor:'#FFA726', borderWidth:2, tension:0.3},
+            {label:'2025 – Acumulado ($)', data:d25.map(r=>r.acumulado_anual), borderColor:'#42A5F5', borderWidth:2, tension:0.3},
+            {label:`Límite SPR 2025 ($${LIMITE_SPR_2025.toLocaleString('es-MX')})`, data:linea, borderColor:'#E53935', borderDash:[5,5], borderWidth:1.5, pointRadius:0}
+          ]
+        },
+        options:{scales:{y:{beginAtZero:true}}, plugins:{legend:{position:'bottom'}}}
+      });
+    }
+
+    // 4️⃣ Total Anual + Barra de progreso dinámica
+    async function cargarTotalesAnuales() {
+      const { data, error } = await supabase.from('v_ingresos_acumulado_anual').select('*');
+      if (error) return console.error(error);
+
+      const totales = {};
+      data.forEach(r => { if(!totales[r.anio] || r.acumulado_anual > totales[r.anio]) totales[r.anio] = r.acumulado_anual; });
+
+      const total24 = totales[2024] || 0;
+      const total25 = totales[2025] || 0;
+
+      // --- Barra de progreso dinámica ---
+      const progress = Math.min((total25 / LIMITE_SPR_2025) * 100, 100);
+      const bar = document.getElementById("progressBar");
+      const text = document.getElementById("progressText");
+
+      let color = "#4CAF50"; // verde
+      if (progress >= 90) color = "#E53935";
+      else if (progress >= 70) color = "#FBC02D";
+
+      bar.style.width = progress.toFixed(1) + "%";
+      bar.style.background = color;
+      bar.textContent = progress.toFixed(1) + "%";
+      text.innerHTML = `Ingresos acumulados 2025: <b>$${total25.toLocaleString('es-MX')}</b> / Límite: <b>$${LIMITE_SPR_2025.toLocaleString('es-MX')}</b>`;
+
+      new Chart(document.getElementById('graficoTotalesAnuales'), {
+        type:'bar',
+        data:{
+          labels:['2024','2025','Límite SPR 2025'],
+          datasets:[{
+            label:'Total Acumulado ($)',
+            data:[total24,total25,LIMITE_SPR_2025],
+            backgroundColor:['#FFA726',color,'#9E9E9E']
+          }]
+        },
+        options:{
+          plugins:{
+            legend:{display:false},
+            datalabels:{
+              color:'#111',anchor:'end',align:'start',font:{weight:'bold',size:13},
+              formatter:v=>'$'+v.toLocaleString('es-MX')
+            }
+          },
+          scales:{y:{beginAtZero:true}}
+        },
+        plugins:[ChartDataLabels]
+      });
+    }
+
+    // 🔄 Inicialización
+    cargarTotalesMensuales();
+    cargarGraficasPorArticulo();
+    cargarComparativo();
+    cargarTotalesAnuales();
+  </script>
+</body>
+</html>
