@@ -13,36 +13,39 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: url('TRILOBAS.png') no-repeat center 25% fixed;
+      background: url('TRILOBAS.png') no-repeat center top fixed;
       background-size: cover;
       color: white;
+      min-height: 100vh;
     }
 
     h1 {
       margin-bottom: 1.5em;
-      font-size: 1.8em;
-      background: rgba(0,0,0,0.6);
-      padding: 10px 20px;
+      font-size: 2em;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 24px;
       border-radius: 10px;
+      text-align: center;
     }
 
     .menu-links {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
       width: 100%;
-      max-width: 600px;
-      background: rgba(0,0,0,0.55);
-      padding: 20px;
+      max-width: 900px;
+      background: rgba(0,0,0,0.6);
+      padding: 25px;
       border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
 
     .menu-links a {
-      padding: 0.9em;
+      padding: 1em;
       color: white;
       text-decoration: none;
       border-radius: 10px;
-      font-size: 1.05em;
+      font-size: 1.1em;
       font-weight: 600;
       text-align: center;
       box-shadow: 0 3px 8px rgba(0,0,0,0.4);
@@ -50,11 +53,11 @@
     }
 
     .menu-links a:hover {
-      transform: scale(1.05);
+      transform: scale(1.07);
       opacity: 0.9;
     }
 
-    /* 🎨 Colores únicos */
+    /* 🎨 Colores de botones */
     .btn1  { background: #e67e22; }  
     .btn2  { background: #3498db; }  
     .btn3  { background: #16a34a; }  
@@ -69,26 +72,17 @@
     .btn12 { background: #9333ea; }  
     .btn13 { background: #ef4444; }  
     .btn14 { background: #84cc16; }  
-    .btn15 { background: #d97706; }  
+    .btn15 { background: #d97706; }
 
     footer {
       margin-top: 3em;
       text-align: center;
-      font-size: 13px;
+      font-size: 14px;
       color: #fff;
       background: rgba(0,0,0,0.5);
-      padding: 8px;
+      padding: 10px;
       border-radius: 6px;
-    }
-
-    #fecha-hora {
-      font-weight: bold;
-    }
-
-    @media (min-width: 700px) {
-      .menu-links {
-        grid-template-columns: 1fr 1fr;
-      }
+      width: fit-content;
     }
   </style>
 </head>
@@ -105,27 +99,16 @@
     <a href="https://licaptio.github.io/MENUADMONPROTEC25/INVENTARIO%20GIT/index.html" target="_blank" class="btn11">📦 Inventario GIT</a>
     <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
     <a href="https://licaptio.github.io/MENUADMONPROTEC25/BDSERGIOAGUAYO25/index.html" target="_blank" class="btn14">📘 Sergio Aguayo</a>
-    <a href="ESTADISTICAPDD/index.html" target="_blank" class="btn15">📊 Estadisticas PDD</a>
-    <a href="CONTABILIDAD/index.html" target="_blank" class="btn15">📊 CONTABILIDAD CLIENTES CARGA </a>
-    <a href="POSPDD/index.html" target="_blank" class="btn15">POS venta PDD</a>
-    <a href="https://licaptio.github.io/pwa-provsoft/index.html" target="_blank" class="btnPWA"> Menu (PWAS)</a>
+    <a href="ESTADISTICAPDD/index.html" target="_blank" class="btn15">📊 Estadísticas PDD</a>
+    <a href="CONTABILIDAD/index.html" target="_blank" class="btn10">📂 Contabilidad</a>
+    <a href="POSPDD/index.html" target="_blank" class="btn4">🧾 POS PDD</a>
+    <a href="CACHOTAINGRE/submenu.html" target="_blank" class="btn6">🐺 Cachota Ingresos</a>
+    <a href="https://licaptio.github.io/pwa-provsoft/index.html" target="_blank" class="btn9">📱 Menú PWA</a>
   </div>
 
   <footer>
-    <div>📦 powered by PROVSOFT · <span id="fecha-hora">⏳</span></div>
+    📦 Powered by PROVSOFT
   </footer>
-
-  <script>
-    function actualizarFechaHora() {
-      const ahora = new Date();
-      const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
-      const fechaStr = ahora.toLocaleDateString('es-MX', opcionesFecha);
-      const horaStr = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      document.getElementById('fecha-hora').textContent = `${fechaStr} ${horaStr}`;
-    }
-    actualizarFechaHora();
-    setInterval(actualizarFechaHora, 1000);
-  </script>
 
 </body>
 </html>
