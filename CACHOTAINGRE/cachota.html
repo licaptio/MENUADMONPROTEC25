@@ -98,10 +98,36 @@
     <p id="progressText" style="text-align:center; font-size:0.9em; color:#333;"></p>
   </div>
 
+  <!-- 📄 Detalle de Ingresos CFDI -->
+  <div class="card">
+    <h2>📄 Detalle de Ingresos (Tabla ingresos_cac)</h2>
+    <input id="buscador" type="text"
+      placeholder="🔍 Buscar por RFC, nombre, UUID o serie..."
+      style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-bottom:10px;">
+
+    <div style="overflow-x:auto; max-height:420px;">
+      <table id="tablaCFDI">
+        <thead>
+          <tr>
+            <th>UUID</th>
+            <th>Fecha</th>
+            <th>RFC Receptor</th>
+            <th>Nombre del Receptor</th>
+            <th>Serie</th>
+            <th>Factura</th>
+            <th>Total ($)</th>
+            <th>Periodo</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
   <footer>PROVSOFT © 2025 | Dashboard Inteligente de Ingresos y CFDI</footer>
 
   <script>
-    // ✅ Tu Supabase con las keys correctas
+    // ✅ Conexión Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
@@ -195,12 +221,11 @@
       const total24 = totales[2024] || 0;
       const total25 = totales[2025] || 0;
 
-      // --- Barra de progreso dinámica ---
       const progress = Math.min((total25 / LIMITE_SPR_2025) * 100, 100);
       const bar = document.getElementById("progressBar");
       const text = document.getElementById("progressText");
 
-      let color = "#4CAF50"; // verde
+      let color = "#4CAF50";
       if (progress >= 90) color = "#E53935";
       else if (progress >= 70) color = "#FBC02D";
 
@@ -233,11 +258,53 @@
       });
     }
 
-    // 🔄 Inicialización
+    // 5️⃣ Detalle CFDI desde ingresos_cac
+    async function cargarDetalleCFDI() {
+      const { data, error } = await supabase
+        .from('ingresos_cac')
+        .select('uuid_cfdi, fecha, rfc_receptor, razon_social_receptor, serie, factura, total')
+        .order('fecha', { ascending: false })
+        .limit(200);
+
+      if (error) return console.error("Error cargando ingresos_cac:", error);
+
+      const tbody = document.querySelector("#tablaCFDI tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(r => {
+        const periodo = new Date(r.fecha).toISOString().slice(0,7);
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td>${r.uuid_cfdi}</td>
+          <td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td>
+          <td>${r.rfc_receptor || '-'}</td>
+          <td>${r.razon_social_receptor || '-'}</td>
+          <td>${r.serie || '-'}</td>
+          <td>${r.factura || '-'}</td>
+          <td>$${Number(r.total || 0).toLocaleString('es-MX')}</td>
+          <td>${periodo}</td>
+        `;
+        tbody.appendChild(fila);
+      });
+
+      const buscador = document.getElementById("buscador");
+      buscador.addEventListener("input", e => {
+        const filtro = e.target.value.toLowerCase();
+        document.querySelectorAll("#tablaCFDI tbody tr").forEach(tr => {
+          const visible = [...tr.children].some(td =>
+            td.textContent.toLowerCase().includes(filtro)
+          );
+          tr.style.display = visible ? "" : "none";
+        });
+      });
+    }
+
+    // 🔄 Inicialización general
     cargarTotalesMensuales();
     cargarGraficasPorArticulo();
     cargarComparativo();
     cargarTotalesAnuales();
+    cargarDetalleCFDI();
   </script>
 </body>
 </html>
