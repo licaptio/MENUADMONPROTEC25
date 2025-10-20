@@ -287,17 +287,68 @@
     const registrosPorPagina = 10;
     let datosTotales = [];
 
-    async function cargarDetalleCFDI() {
-      const { data, error } = await supabase
-        .from('ingresos_pdd')
-        .select('uuid_cfdi, fecha, rfc_receptor, razon_social_receptor, serie, factura, total')
-        .order('fecha', { ascending: false })
-        .limit(30);
+// 5️⃣ CFDI con paginación descendente (más recientes primero)
+let paginaActual = 1;
+const registrosPorPagina = 10;
+let datosTotales = [];
 
-      if (error) return console.error("Error cargando ingresos_pdd:", error);
-      datosTotales = data;
-      mostrarPagina(1);
-    }
+async function cargarDetalleCFDI() {
+  const { data, error } = await supabase
+    .from('ingresos_pdd')
+    .select('uuid_cfdi, fecha, rfc_receptor, razon_social_receptor, serie, factura, total')
+    .order('fecha', { ascending: false });
+
+  if (error) return console.error("Error cargando ingresos_pdd:", error);
+
+  // Ordenamos manualmente para asegurar consistencia descendente
+  datosTotales = data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  mostrarPagina(1);
+}
+
+// 📋 Mostrar registros de la página actual
+function mostrarPagina(numPagina) {
+  const inicio = (numPagina - 1) * registrosPorPagina;
+  const fin = inicio + registrosPorPagina;
+  const paginaDatos = datosTotales.slice(inicio, fin);
+
+  const tbody = document.querySelector("#tablaCFDI tbody");
+  tbody.innerHTML = "";
+
+  paginaDatos.forEach(r => {
+    const periodo = new Date(r.fecha).toISOString().slice(0, 7);
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${r.uuid_cfdi}</td>
+      <td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td>
+      <td>${r.rfc_receptor || '-'}</td>
+      <td>${r.razon_social_receptor || '-'}</td>
+      <td>${r.serie || '-'}</td>
+      <td>${r.factura || '-'}</td>
+      <td>$${Number(r.total || 0).toLocaleString('es-MX')}</td>
+      <td>${periodo}</td>`;
+    tbody.appendChild(fila);
+  });
+
+  actualizarControles(numPagina);
+}
+
+// ⬅➡ Control de botones
+function actualizarControles(numPagina) {
+  const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
+  document.getElementById("paginaInfo").textContent = `Página ${numPagina} de ${totalPaginas}`;
+  document.getElementById("anterior").disabled = numPagina === 1;
+  document.getElementById("siguiente").disabled = numPagina === totalPaginas;
+}
+
+document.getElementById("anterior").addEventListener("click", () => {
+  if (paginaActual > 1) { paginaActual--; mostrarPagina(paginaActual); }
+});
+document.getElementById("siguiente").addEventListener("click", () => {
+  const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
+  if (paginaActual < totalPaginas) { paginaActual++; mostrarPagina(paginaActual); }
+});
+
 
     function mostrarPagina(numPagina) {
       const inicio = (numPagina - 1) * registrosPorPagina;
