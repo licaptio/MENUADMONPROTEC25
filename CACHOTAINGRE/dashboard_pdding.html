@@ -287,26 +287,26 @@
     const registrosPorPagina = 10;
     let datosTotales = [];
 
-// 5️⃣ CFDI con paginación descendente (más recientes primero)
+// 5️⃣ CFDI con paginación (30 por página, orden descendente)
 let paginaActual = 1;
-const registrosPorPagina = 10;
+const registrosPorPagina = 30;
 let datosTotales = [];
 
 async function cargarDetalleCFDI() {
+  // ⚙️ Trae los 120 más recientes por eficiencia (4 páginas)
   const { data, error } = await supabase
     .from('ingresos_pdd')
     .select('uuid_cfdi, fecha, rfc_receptor, razon_social_receptor, serie, factura, total')
-    .order('fecha', { ascending: false });
+    .order('fecha', { ascending: false })
+    .limit(120);
 
   if (error) return console.error("Error cargando ingresos_pdd:", error);
 
-  // Ordenamos manualmente para asegurar consistencia descendente
-  datosTotales = data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
+  // 🔽 Orden descendente asegurado
+  datosTotales = (data || []).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   mostrarPagina(1);
 }
 
-// 📋 Mostrar registros de la página actual
 function mostrarPagina(numPagina) {
   const inicio = (numPagina - 1) * registrosPorPagina;
   const fin = inicio + registrosPorPagina;
@@ -330,25 +330,40 @@ function mostrarPagina(numPagina) {
     tbody.appendChild(fila);
   });
 
-  actualizarControles(numPagina);
+  actualizarControles(numPagina, inicio, fin);
 }
 
-// ⬅➡ Control de botones
-function actualizarControles(numPagina) {
-  const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
-  document.getElementById("paginaInfo").textContent = `Página ${numPagina} de ${totalPaginas}`;
+function actualizarControles(numPagina, inicio, fin) {
+  const totalRegistros = datosTotales.length;
+  const totalPaginas = Math.ceil(totalRegistros / registrosPorPagina);
+
+  const paginaInfo = document.getElementById("paginaInfo");
+  paginaInfo.innerHTML = `
+    Página ${numPagina} de ${totalPaginas} 
+    — Mostrando del ${inicio + 1} al ${Math.min(fin, totalRegistros)} de ${totalRegistros} registros
+  `;
+
   document.getElementById("anterior").disabled = numPagina === 1;
   document.getElementById("siguiente").disabled = numPagina === totalPaginas;
 }
 
 document.getElementById("anterior").addEventListener("click", () => {
-  if (paginaActual > 1) { paginaActual--; mostrarPagina(paginaActual); }
-});
-document.getElementById("siguiente").addEventListener("click", () => {
-  const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
-  if (paginaActual < totalPaginas) { paginaActual++; mostrarPagina(paginaActual); }
+  if (paginaActual > 1) {
+    paginaActual--;
+    mostrarPagina(paginaActual);
+  }
 });
 
+document.getElementById("siguiente").addEventListener("click", () => {
+  const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
+  if (paginaActual < totalPaginas) {
+    paginaActual++;
+    mostrarPagina(paginaActual);
+  }
+});
+
+// 🔄 Inicialización
+cargarDetalleCFDI();
 
     function mostrarPagina(numPagina) {
       const inicio = (numPagina - 1) * registrosPorPagina;
