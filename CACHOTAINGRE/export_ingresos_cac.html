@@ -30,18 +30,25 @@
   <button onclick="exportarExcel()">📥 Descargar Excel</button>
 
   <script>
-    // 🔑 Conecta a tu proyecto Supabase
+    // 🔑 Conecta a tu proyecto Supabase con la anon key
     const supabaseUrl = "https://cvpbtjlupswbyxenugpz.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY5OTYwOTM5MSwiZXhwIjoyMDE1MTg1MzkxfQ.fHbwXZVRxwM07iTjTT-5d_oAwgqRWFGj7AfU0yimqZ0";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     async function exportarExcel() {
-      alert("Descargando datos... espera unos segundos.");
+      alert("⏳ Descargando datos... espera unos segundos.");
 
       // 🔍 Trae todos los registros de la tabla
       let { data, error } = await supabase.from('ingresos_cac').select('*');
+
       if (error) {
-        alert("Error al obtener los datos: " + error.message);
+        console.error(error);
+        alert("⚠️ Error al obtener los datos: " + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert("No se encontraron datos en la tabla.");
         return;
       }
 
@@ -52,6 +59,7 @@
 
       // 💾 Genera y descarga el archivo
       XLSX.writeFile(libro, "ingresos_cac.xlsx");
+      alert("✅ Exportación completada. Archivo descargado correctamente.");
     }
   </script>
 </body>
