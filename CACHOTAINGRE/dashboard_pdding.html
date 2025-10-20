@@ -349,13 +349,24 @@ function actualizarControles(numPagina, inicio, fin) {
   document.getElementById("siguiente").disabled = numPagina === totalPaginas;
 }
 
+// 🔍 Filtro por texto
+document.getElementById("buscador").addEventListener("input", e => {
+  const filtro = e.target.value.toLowerCase();
+  document.querySelectorAll("#tablaCFDI tbody tr").forEach(tr => {
+    const visible = [...tr.children].some(td =>
+      td.textContent.toLowerCase().includes(filtro)
+    );
+    tr.style.display = visible ? "" : "none";
+  });
+});
+
+// ⬅➡ Navegación
 document.getElementById("anterior").addEventListener("click", () => {
   if (paginaActual > 1) {
     paginaActual--;
     mostrarPagina(paginaActual);
   }
 });
-
 document.getElementById("siguiente").addEventListener("click", () => {
   const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
   if (paginaActual < totalPaginas) {
@@ -366,7 +377,6 @@ document.getElementById("siguiente").addEventListener("click", () => {
 
 // 🔄 Inicialización
 cargarDetalleCFDI();
-
     function mostrarPagina(numPagina) {
       const inicio = (numPagina - 1) * registrosPorPagina;
       const fin = inicio + registrosPorPagina;
