@@ -187,127 +187,135 @@
   const NUM_SOCIOS = 10;
   const LIMITE_SPR_2025 = UMA_ANUAL_2025 * 20 * NUM_SOCIOS;
 
-  // 1️⃣ Ingresos mensuales (subtotal)
-  async function cargarTotalesMensuales() {
-    const { data, error } = await supabase.from('v_ingresos_articulo_mes_pdd')
-      .select('mes, subtotal_articulo').order('mes', { ascending: true });
-    if (error) return console.error(error);
+<script>
+const supabase = window.supabase.createClient(
+  "https://cvpbtjlupswbyxenugpz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+);
 
-    const totales = {};
-    data.forEach(r => totales[r.mes] = (totales[r.mes] || 0) + Number(r.subtotal_articulo));
+const UMA_ANUAL_2025 = 41273.52;
+const NUM_SOCIOS = 10;
+const LIMITE_SPR_2025 = UMA_ANUAL_2025 * 20 * NUM_SOCIOS;
 
-    new Chart(document.getElementById('graficoMensual'), {
-      type: 'line',
-      data: {
-        labels: Object.keys(totales),
-        datasets: [{
-          label: 'Subtotal mensual ($)',
-          data: Object.values(totales),
-          borderColor: '#F12711',
-          backgroundColor: '#F5AF1940',
-          borderWidth: 2,
-          fill: true
-        }]
+// 1️⃣ Ingresos totales por mes (usando subtotal)
+async function cargarTotalesMensuales() {
+  const { data, error } = await supabase
+    .from('ingresos_pdd')
+    .select('fecha, subtotal');
+
+  if (error) return console.error("Error al cargar ingresos_pdd:", error);
+
+  // Agrupar por mes (YYYY-MM)
+  const totales = {};
+  data.forEach(r => {
+    const mes = new Date(r.fecha).toISOString().slice(0,7);
+    totales[mes] = (totales[mes] || 0) + Number(r.subtotal || 0);
+  });
+
+  new Chart(document.getElementById('graficoMensual'), {
+    type: 'line',
+    data: {
+      labels: Object.keys(totales),
+      datasets: [{
+        label: 'Subtotal mensual ($)',
+        data: Object.values(totales),
+        borderColor: '#F12711',
+        backgroundColor: '#F5AF1940',
+        borderWidth: 2,
+        fill: true
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+}
+
+// 2️⃣ Totales por año (comparativo 2024 vs 2025)
+async function cargarTotalesAnuales() {
+  const { data, error } = await supabase
+    .from('ingresos_pdd')
+    .select('fecha, subtotal');
+  if (error) return console.error(error);
+
+  const totales = {2024:0,2025:0};
+  data.forEach(r=>{
+    const anio = new Date(r.fecha).getFullYear();
+    if(anio===2024||anio===2025)
+      totales[anio] += Number(r.subtotal||0);
+  });
+
+  const total24 = totales[2024];
+  const total25 = totales[2025];
+  const progress = Math.min((total25 / LIMITE_SPR_2025) * 100, 100);
+  const bar = document.getElementById("progressBar");
+  const text = document.getElementById("progressText");
+
+  let color = "#4CAF50";
+  if (progress >= 90) color = "#E53935";
+  else if (progress >= 70) color = "#FBC02D";
+
+  bar.style.width = progress.toFixed(1) + "%";
+  bar.style.background = color;
+  bar.textContent = progress.toFixed(1) + "%";
+  text.innerHTML = `Ingresos acumulados 2025 (Subtotal): <b>$${total25.toLocaleString('es-MX')}</b> / Límite: <b>$${LIMITE_SPR_2025.toLocaleString('es-MX')}</b>`;
+
+  new Chart(document.getElementById('graficoTotalesAnuales'), {
+    type:'bar',
+    data:{
+      labels:['2024','2025','Límite SPR 2025'],
+      datasets:[{
+        label:'Subtotal Acumulado ($)',
+        data:[total24,total25,LIMITE_SPR_2025],
+        backgroundColor:['#F5AF19',color,'#9E9E9E']
+      }]
+    },
+    options:{
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          color:'#111',anchor:'end',align:'start',font:{weight:'bold',size:13},
+          formatter:v=>'$'+v.toLocaleString('es-MX')
+        }
       },
-      options: { scales: { y: { beginAtZero: true } } }
-    });
-  }
+      scales:{y:{beginAtZero:true}}
+    },
+    plugins:[ChartDataLabels]
+  });
+}
 
-  // 2️⃣ Totales por artículo 2024 / 2025 (subtotal)
-  async function cargarGraficasPorArticulo() {
-    const { data, error } = await supabase.from('v_ingresos_articulo_mes_pdd').select('*');
-    if (error) return console.error(error);
+// 3️⃣ Comparativo mensual (2024 vs 2025)
+async function cargarComparativo() {
+  const { data, error } = await supabase
+    .from('ingresos_pdd')
+    .select('fecha, subtotal');
+  if (error) return console.error(error);
 
-    const agrupar = datos => Object.entries(datos.reduce((a,r)=>{
-      a[r.articulo]=(a[r.articulo]||0)+Number(r.subtotal_articulo);return a;
-    },{})).map(([articulo,total])=>({articulo,total}));
+  const porMesYAño = {};
+  data.forEach(r=>{
+    const fecha = new Date(r.fecha);
+    const anio = fecha.getFullYear();
+    const mes = fecha.toISOString().slice(0,7);
+    if(!porMesYAño[anio]) porMesYAño[anio]={};
+    porMesYAño[anio][mes]=(porMesYAño[anio][mes]||0)+Number(r.subtotal||0);
+  });
 
-    const d24 = agrupar(data.filter(r=>r.mes.startsWith('2024'))).sort((a,b)=>b.total-a.total).slice(0,15);
-    const d25 = agrupar(data.filter(r=>r.mes.startsWith('2025'))).sort((a,b)=>b.total-a.total).slice(0,15);
+  const meses = [...new Set(Object.keys(porMesYAño[2024]||{}).concat(Object.keys(porMesYAño[2025]||{})))].sort();
+  const linea = meses.map(()=>LIMITE_SPR_2025);
+  
+  new Chart(document.getElementById('graficoComparativo'), {
+    type:'line',
+    data:{
+      labels:meses,
+      datasets:[
+        {label:'2024 – Subtotal ($)', data:meses.map(m=>porMesYAño[2024]?.[m]||0), borderColor:'#F5AF19', borderWidth:2, tension:0.3},
+        {label:'2025 – Subtotal ($)', data:meses.map(m=>porMesYAño[2025]?.[m]||0), borderColor:'#F12711', borderWidth:2, tension:0.3},
+        {label:`Límite SPR 2025 ($${LIMITE_SPR_2025.toLocaleString('es-MX')})`, data:linea, borderColor:'#E53935', borderDash:[5,5], borderWidth:1.5, pointRadius:0}
+      ]
+    },
+    options:{scales:{y:{beginAtZero:true}}, plugins:{legend:{position:'bottom'}}}
+  });
+}
 
-    new Chart(document.getElementById('graficoArticulos2024'), {
-      type:'bar', data:{labels:d24.map(r=>r.articulo), datasets:[{label:'Subtotal 2024 ($)', data:d24.map(r=>r.total), backgroundColor:'#F5AF19'}]},
-      options:{scales:{y:{beginAtZero:true}}}
-    });
-    new Chart(document.getElementById('graficoArticulos2025'), {
-      type:'bar', data:{labels:d25.map(r=>r.articulo), datasets:[{label:'Subtotal 2025 ($)', data:d25.map(r=>r.total), backgroundColor:'#F12711'}]},
-      options:{scales:{y:{beginAtZero:true}}}
-    });
-  }
-
-  // 3️⃣ Comparativo 2024 vs 2025 (subtotal)
-  async function cargarComparativo() {
-    const { data, error } = await supabase.from('v_ingresos_acumulado_anual_pdd').select('*');
-    if (error) return console.error(error);
-
-    const d24 = data.filter(r=>r.anio===2024);
-    const d25 = data.filter(r=>r.anio===2025);
-    const meses = d25.map(r=>r.mes);
-    const linea = meses.map(()=>LIMITE_SPR_2025);
-
-    new Chart(document.getElementById('graficoComparativo'), {
-      type:'line',
-      data:{
-        labels:meses,
-        datasets:[
-          {label:'2024 – Acumulado Subtotal ($)', data:d24.map(r=>r.acumulado_subtotal), borderColor:'#F5AF19', borderWidth:2, tension:0.3},
-          {label:'2025 – Acumulado Subtotal ($)', data:d25.map(r=>r.acumulado_subtotal), borderColor:'#F12711', borderWidth:2, tension:0.3},
-          {label:`Límite SPR 2025 ($${LIMITE_SPR_2025.toLocaleString('es-MX')})`, data:linea, borderColor:'#E53935', borderDash:[5,5], borderWidth:1.5, pointRadius:0}
-        ]
-      },
-      options:{scales:{y:{beginAtZero:true}}, plugins:{legend:{position:'bottom'}}}
-    });
-  }
-
-  // 4️⃣ Total anual + barra progreso (subtotal)
-  async function cargarTotalesAnuales() {
-    const { data, error } = await supabase.from('v_ingresos_acumulado_anual_pdd').select('*');
-    if (error) return console.error(error);
-
-    const totales = {};
-    data.forEach(r => { if(!totales[r.anio] || r.acumulado_subtotal > totales[r.anio]) totales[r.anio] = r.acumulado_subtotal; });
-
-    const total24 = totales[2024] || 0;
-    const total25 = totales[2025] || 0;
-
-    const progress = Math.min((total25 / LIMITE_SPR_2025) * 100, 100);
-    const bar = document.getElementById("progressBar");
-    const text = document.getElementById("progressText");
-
-    let color = "#4CAF50";
-    if (progress >= 90) color = "#E53935";
-    else if (progress >= 70) color = "#FBC02D";
-
-    bar.style.width = progress.toFixed(1) + "%";
-    bar.style.background = color;
-    bar.textContent = progress.toFixed(1) + "%";
-    text.innerHTML = `Ingresos acumulados 2025 (Subtotal): <b>$${total25.toLocaleString('es-MX')}</b> / Límite: <b>$${LIMITE_SPR_2025.toLocaleString('es-MX')}</b>`;
-
-    new Chart(document.getElementById('graficoTotalesAnuales'), {
-      type:'bar',
-      data:{
-        labels:['2024','2025','Límite SPR 2025'],
-        datasets:[{
-          label:'Subtotal Acumulado ($)',
-          data:[total24,total25,LIMITE_SPR_2025],
-          backgroundColor:['#F5AF19',color,'#9E9E9E']
-        }]
-      },
-      options:{
-        plugins:{
-          legend:{display:false},
-          datalabels:{
-            color:'#111',anchor:'end',align:'start',font:{weight:'bold',size:13},
-            formatter:v=>'$'+v.toLocaleString('es-MX')
-          }
-        },
-        scales:{y:{beginAtZero:true}}
-      },
-      plugins:[ChartDataLabels]
-    });
-  }
-
-// 5️⃣ Detalle CFDI (mantiene el total SAT)
+// 4️⃣ Detalle CFDI (igual, mantiene total SAT)
 let paginaActual = 1;
 const registrosPorPagina = 30;
 let datosTotales = [];
@@ -384,28 +392,13 @@ document.getElementById("siguiente").addEventListener("click", () => {
   }
 });
 
-
-  document.getElementById("anterior").addEventListener("click", () => {
-    if (paginaActual > 1) {
-      paginaActual--;
-      mostrarPagina(paginaActual);
-    }
-  });
-  document.getElementById("siguiente").addEventListener("click", () => {
-    const totalPaginas = Math.ceil(datosTotales.length / registrosPorPagina);
-    if (paginaActual < totalPaginas) {
-      paginaActual++;
-      mostrarPagina(paginaActual);
-    }
-  });
-
-  // Inicialización
-  cargarTotalesMensuales();
-  cargarGraficasPorArticulo();
-  cargarComparativo();
-  cargarTotalesAnuales();
-  cargarDetalleCFDI();
+// 🚀 Inicialización
+cargarTotalesMensuales();
+cargarComparativo();
+cargarTotalesAnuales();
+cargarDetalleCFDI();
 </script>
+
 
 </body>
 </html>
