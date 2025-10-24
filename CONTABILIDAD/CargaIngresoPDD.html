@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h2>Subir CFDI válidos (solo tipo I, emisor PDD031204KL5, sin nómina/egreso/carta porte/pago)</h2>
+  <h2>Subir CFDI válidos (tipo I, emisor PDD031204KL5, sin nómina/egreso/carta porte/pago)</h2>
   <input type="file" id="xmlInput" accept=".xml" multiple>
   <button onclick="procesarArchivos()">Procesar y Subir</button>
 
@@ -62,7 +62,7 @@
           const tipo = comprobante?.getAttribute("TipoDeComprobante")?.trim() || "";
           const emisorRFC = emisor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
 
-          // Detectar complementos reales (no solo namespaces)
+          // Validar complementos
           let tieneExcluido = false;
           const complementos = xml.getElementsByTagNameNS(cfdiNS, "Complemento");
           if (complementos.length > 0) {
@@ -76,26 +76,13 @@
             }
           }
 
-          // --- VALIDACIÓN JERÁRQUICA ---
-          let motivo = "";
-          let valido = true;
-
-          if (!uuid || uuid.length < 10) {
-            valido = false;
-            motivo = "sin UUID";
-          } else if (archivosDatos.some(a => a.uuid === uuid)) {
-            valido = false;
-            motivo = "duplicado en lote";
-          } else if (tipo !== "I") {
-            valido = false;
-            motivo = `tipo ${tipo}`;
-          } else if (emisorRFC !== "PDD031204KL5") {
-            valido = false;
-            motivo = `emisor ${emisorRFC}`;
-          } else if (tieneExcluido) {
-            valido = false;
-            motivo = "complemento o tipo excluido";
-          }
+          // Validaciones
+          let valido = true, motivo = "";
+          if (!uuid || uuid.length < 10) { valido = false; motivo = "sin UUID"; }
+          else if (archivosDatos.some(a => a.uuid === uuid)) { valido = false; motivo = "duplicado en lote"; }
+          else if (tipo !== "I") { valido = false; motivo = `tipo ${tipo}`; }
+          else if (emisorRFC !== "PDD031204KL5") { valido = false; motivo = `emisor ${emisorRFC}`; }
+          else if (tieneExcluido) { valido = false; motivo = "complemento o tipo excluido"; }
 
           if (!valido) {
             const li = document.createElement("li");
@@ -105,7 +92,7 @@
             continue;
           }
 
-          // Extraer datos CFDI válidos
+          // Datos base CFDI
           const receptorRFC = receptor?.getAttribute("Rfc")?.toUpperCase().trim() || "";
           const receptorNombre = receptor?.getAttribute("Nombre") || "";
           const razonSocial = emisor?.getAttribute("Nombre") || "";
@@ -123,67 +110,86 @@
           const selloSAT = timbre?.getAttribute("SelloSAT") || "";
           const noCertificadoSAT = timbre?.getAttribute("NoCertificadoSAT") || "";
 
-          // Conceptos
-          const conceptosDetalle = [];
-          const conceptos = xml.getElementsByTagNameNS(cfdiNS, "Concepto");
-          for (let c of conceptos) {
+          // Identificar tipo de factura (global o individual)
+          const tipoFactura = receptorRFC === "XAXX010101000" ? "GLOBAL" : "INDIVIDUAL";
+
+          // Extraer InformacionGlobal o calcular periodo
+          const infoGlobal = xml.getElementsByTagNameNS(cfdiNS, "InformacionGlobal")[0];
+          let periodoMes = infoGlobal?.getAttribute("Meses") || null;
+          let periodoAnio = infoGlobal?.getAttribute("Año") || null;
+
+          if (!periodoMes || !periodoAnio) {
+            try {
+              const fechaObj = new Date(fecha);
+              periodoMes = (fechaObj.getMonth() + 1).toString().padStart(2, "0");
+              periodoAnio = fechaObj.getFullYear().toString();
+            } catch {
+              periodoMes = null;
+              periodoAnio = null;
+            }
+          }
+
+          // Conceptos e impuestos
+          const conceptos = [];
+          const ivaDetalle = [];
+          const iepsDetalle = [];
+          let totalIVA = 0, totalIEPS = 0;
+
+          for (const c of xml.getElementsByTagNameNS(cfdiNS, "Concepto")) {
             const cantidad = parseFloat(c.getAttribute("Cantidad")) || 0;
             const descripcion = c.getAttribute("Descripcion") || "";
-            const codigoSAT = c.getAttribute("ClaveProdServ") || "";
-            const claveUnidad = c.getAttribute("ClaveUnidad") || "";
+            const claveProdServ = c.getAttribute("ClaveProdServ") || "";
             const valorUnitario = parseFloat(c.getAttribute("ValorUnitario")) || 0;
             const importe = parseFloat(c.getAttribute("Importe")) || 0;
-            const descuentoConcepto = parseFloat(c.getAttribute("Descuento")) || 0;
 
             const impuestos = [];
-            const traslados = c.getElementsByTagNameNS(cfdiNS, "Traslado");
-            for (let t of traslados) {
-              impuestos.push({
+            for (const t of c.getElementsByTagNameNS(cfdiNS, "Traslado")) {
+              const imp = {
                 impuesto: t.getAttribute("Impuesto"),
                 tipoFactor: t.getAttribute("TipoFactor"),
                 tasaOCuota: parseFloat(t.getAttribute("TasaOCuota")) || 0,
                 importe: parseFloat(t.getAttribute("Importe")) || 0,
-              });
+              };
+              impuestos.push(imp);
+              if (imp.impuesto === "002") { ivaDetalle.push(imp); totalIVA += imp.importe; }
+              if (imp.impuesto === "003") { iepsDetalle.push(imp); totalIEPS += imp.importe; }
             }
 
-            conceptosDetalle.push({
-              cantidad,
-              descripcion,
-              codigoSAT,
-              claveUnidad,
-              valorUnitario,
-              importe,
-              descuentoConcepto,
-              impuestos,
-            });
+            conceptos.push({ cantidad, descripcion, claveProdServ, valorUnitario, importe, impuestos });
           }
 
           archivosDatos.push({
             uuid,
-            tipo,
-            receptorRFC,
-            receptorNombre,
+            fecha,
+            periodoMes,
+            periodoAnio,
+            tipoFactura,
             emisorRFC,
             razonSocial,
+            receptorRFC,
+            receptorNombre,
             folio,
             serie,
-            total,
             subtotal,
             descuento,
+            total,
             moneda,
             formaPago,
             metodoPago,
             usoCFDI,
-            fecha,
-            fecha_certificacion: fechaTimbrado,
             selloSAT,
             noCertificadoSAT,
-            conceptosDetalle,
+            fecha_certificacion: fechaTimbrado,
+            totalIVA,
+            totalIEPS,
+            ivaDetalle,
+            iepsDetalle,
+            conceptos
           });
 
           const li = document.createElement("li");
           li.dataset.uuid = uuid;
-          li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado</span>`;
+          li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Precargado (${tipoFactura})</span>`;
           lista.appendChild(li);
 
         } catch (err) {
@@ -197,96 +203,74 @@
     async function procesarArchivos() {
       const progreso = document.getElementById("progreso");
       const totalArchivos = archivosDatos.length;
-      const loteTamaño = 10;
-      const pausaEntreLotes = 2000;
+      let contador = 0;
 
-      for (let inicio = 0; inicio < archivosDatos.length; inicio += loteTamaño) {
-        const lote = archivosDatos.slice(inicio, inicio + loteTamaño);
+      for (const data of archivosDatos) {
+        const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
+        const datosInsert = {
+          uuid_cfdi: data.uuid,
+          fecha: data.fecha,
+          periodo_mes: data.periodoMes,
+          periodo_anio: data.periodoAnio,
+          tipo_factura: data.tipoFactura,
+          rfc_emisor: data.emisorRFC,
+          razon_social_emisor: data.razonSocial,
+          rfc_receptor: data.receptorRFC,
+          razon_social_receptor: data.receptorNombre,
+          folio: data.folio,
+          serie: data.serie,
+          subtotal: data.subtotal,
+          descuento: data.descuento,
+          total: data.total,
+          moneda: data.moneda,
+          forma_pago: data.formaPago,
+          metodo_pago: data.metodoPago,
+          uso_cfdi: data.usoCFDI,
+          sello_sat: data.selloSAT,
+          no_certificado_sat: data.noCertificadoSAT,
+          fecha_certificacion: data.fecha_certificacion,
+          total_iva: data.totalIVA,
+          total_ieps: data.totalIEPS,
+          iva_detalle: data.ivaDetalle,
+          ieps_detalle: data.iepsDetalle,
+          conceptos: data.conceptos
+        };
 
-        for (let i = 0; i < lote.length; i++) {
-          const index = inicio + i;
-          const data = lote[i];
-          const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
-          if (!item) {
-            logBitacora(`⚠️ No se encontró elemento visual para UUID: ${data.uuid}`);
-            continue;
-          }
-
-          const avance = ((index + 1) / totalArchivos) * 100;
-          progreso.style.width = `${avance}%`;
-          logBitacora(`📄 Revisando UUID: ${data.uuid}`);
-
-          const existe = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd?uuid_cfdi=eq.${data.uuid}`, {
-            headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
+            method: "POST",
+            headers: {
+              apikey: API_KEY,
+              Authorization: `Bearer ${API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(datosInsert),
           });
-          const yaExiste = await existe.json();
-          if (yaExiste.length > 0) {
-            item.querySelector("span").textContent = `⚠️ Ya existe`;
-            item.querySelector("span").className = "warn";
-            logBitacora(`⚠️ Ya existía: ${data.uuid}`);
-            continue;
-          }
 
-          const datosInsert = {
-            uuid_cfdi: data.uuid,
-            fecha: data.fecha,
-            rfc_emisor: data.emisorRFC,
-            razon_social_emisor: data.razonSocial,
-            rfc_receptor: data.receptorRFC,
-            razon_social_receptor: data.receptorNombre,
-            factura: data.folio,
-            serie: data.serie,
-            subtotal: data.subtotal,
-            descuento: data.descuento,
-            total: data.total,
-            moneda: data.moneda,
-            forma_pago: data.formaPago,
-            metodo_pago: data.metodoPago,
-            uso_cfdi: data.usoCFDI,
-            sello_sat: data.selloSAT,
-            no_certificado_sat: data.noCertificadoSAT,
-            fecha_certificacion: data.fecha_certificacion,
-            conceptos_detalle: data.conceptosDetalle,
-          };
-
-          try {
-            const insert = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
-              method: "POST",
-              headers: {
-                apikey: API_KEY,
-                Authorization: `Bearer ${API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(datosInsert),
-            });
-
-            if (insert.ok) {
-              item.querySelector("span").textContent = `✅ Subido`;
-              item.querySelector("span").className = "ok";
-              logBitacora(`✔️ Subida exitosa`);
-            } else {
-              const err = await insert.text();
-              item.querySelector("span").textContent = `❌ Error: ${err}`;
-              item.querySelector("span").className = "err";
-              logBitacora(`❌ Error al subir: ${err}`);
-            }
-          } catch (error) {
-            item.querySelector("span").textContent = `❌ Error de red`;
+          if (res.ok) {
+            contador++;
+            const avance = (contador / totalArchivos) * 100;
+            progreso.style.width = `${avance}%`;
+            item.querySelector("span").textContent = `✅ Subido`;
+            item.querySelector("span").className = "ok";
+            logBitacora(`✔️ ${data.uuid} (${data.tipoFactura}) subido correctamente (IVA=${data.totalIVA.toFixed(2)} IEPS=${data.totalIEPS.toFixed(2)})`);
+          } else {
+            const err = await res.text();
+            item.querySelector("span").textContent = `❌ Error: ${err}`;
             item.querySelector("span").className = "err";
-            logBitacora(`❌ Error de red: ${error.message}`);
+            logBitacora(`❌ Error al subir ${data.uuid}: ${err}`);
           }
-
-          await new Promise(r => setTimeout(r, 300));
+        } catch (error) {
+          item.querySelector("span").textContent = `❌ Error red`;
+          item.querySelector("span").className = "err";
+          logBitacora(`❌ Error de red: ${error.message}`);
         }
 
-        if (inicio + loteTamaño < totalArchivos) {
-          logBitacora(`🕒 Esperando ${pausaEntreLotes / 1000} segundos antes del siguiente lote...`);
-          await new Promise(r => setTimeout(r, pausaEntreLotes));
-        }
+        await new Promise(r => setTimeout(r, 400));
       }
 
       progreso.style.width = `100%`;
-      logBitacora("✅ Proceso completo");
+      logBitacora("✅ Proceso completo (una fila por UUID, con periodo calculado)");
     }
 
     function logBitacora(mensaje) {
@@ -297,7 +281,7 @@
   </script>
 
   <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
-    ©️ 2025 Ingresos PDD · Desarrollado por Gerardo Quezada · versión validada por tipo, emisor y complementos reales
+    ⚙️ POWERED BY <b>PROVSOFT</b> · 2025 · Sistema de integración CFDI 4.0
   </footer>
 </body>
 </html>
