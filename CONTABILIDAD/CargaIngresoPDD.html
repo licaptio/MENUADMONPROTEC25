@@ -200,78 +200,90 @@
       }
     });
 
-    async function procesarArchivos() {
-      const progreso = document.getElementById("progreso");
-      const totalArchivos = archivosDatos.length;
-      let contador = 0;
+async function procesarArchivos() {
+  const progreso = document.getElementById("progreso");
+  const totalArchivos = archivosDatos.length;
+  const loteTamaño = 50;           // ✅ tamaño del lote
+  const pausaEntreArchivos = 500;  // 0.5 s entre cada XML
+  const pausaEntreLotes = 2000;    // 2 s entre lotes
 
-      for (const data of archivosDatos) {
-        const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
-        const datosInsert = {
-          uuid_cfdi: data.uuid,
-          fecha: data.fecha,
-          periodo_mes: data.periodoMes,
-          periodo_anio: data.periodoAnio,
-          tipo_factura: data.tipoFactura,
-          rfc_emisor: data.emisorRFC,
-          razon_social_emisor: data.razonSocial,
-          rfc_receptor: data.receptorRFC,
-          razon_social_receptor: data.receptorNombre,
-          folio: data.folio,
-          serie: data.serie,
-          subtotal: data.subtotal,
-          descuento: data.descuento,
-          total: data.total,
-          moneda: data.moneda,
-          forma_pago: data.formaPago,
-          metodo_pago: data.metodoPago,
-          uso_cfdi: data.usoCFDI,
-          sello_sat: data.selloSAT,
-          no_certificado_sat: data.noCertificadoSAT,
-          fecha_certificacion: data.fecha_certificacion,
-          total_iva: data.totalIVA,
-          total_ieps: data.totalIEPS,
-          iva_detalle: data.ivaDetalle,
-          ieps_detalle: data.iepsDetalle,
-          conceptos: data.conceptos
-        };
+  logBitacora(`🚀 Iniciando carga de ${totalArchivos} CFDI en lotes de ${loteTamaño}...`);
 
-        try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
-            method: "POST",
-            headers: {
-              apikey: API_KEY,
-              Authorization: `Bearer ${API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(datosInsert),
-          });
+  for (let inicio = 0; inicio < archivosDatos.length; inicio += loteTamaño) {
+    const lote = archivosDatos.slice(inicio, inicio + loteTamaño);
+    const numLote = Math.floor(inicio / loteTamaño) + 1;
+    const totalLotes = Math.ceil(totalArchivos / loteTamaño);
 
-          if (res.ok) {
-            contador++;
-            const avance = (contador / totalArchivos) * 100;
-            progreso.style.width = `${avance}%`;
-            item.querySelector("span").textContent = `✅ Subido`;
-            item.querySelector("span").className = "ok";
-            logBitacora(`✔️ ${data.uuid} (${data.tipoFactura}) subido correctamente (IVA=${data.totalIVA.toFixed(2)} IEPS=${data.totalIEPS.toFixed(2)})`);
-          } else {
-            const err = await res.text();
-            item.querySelector("span").textContent = `❌ Error: ${err}`;
-            item.querySelector("span").className = "err";
-            logBitacora(`❌ Error al subir ${data.uuid}: ${err}`);
-          }
-        } catch (error) {
-          item.querySelector("span").textContent = `❌ Error red`;
-          item.querySelector("span").className = "err";
-          logBitacora(`❌ Error de red: ${error.message}`);
-        }
+    logBitacora(`📦 Procesando lote ${numLote} de ${totalLotes} (${lote.length} archivos)...`);
 
-        await new Promise(r => setTimeout(r, 400));
+    for (let i = 0; i < lote.length; i++) {
+      const index = inicio + i;
+      const data = lote[i];
+      const item = document.querySelector(`#archivoList li[data-uuid="${data.uuid}"]`);
+      if (!item) {
+        logBitacora(`⚠️ No se encontró elemento visual para UUID: ${data.uuid}`);
+        continue;
       }
 
-      progreso.style.width = `100%`;
-      logBitacora("✅ Proceso completo (una fila por UUID, con periodo calculado)");
+      const avance = ((index + 1) / totalArchivos) * 100;
+      progreso.style.width = `${avance}%`;
+      logBitacora(`📄 Subiendo ${index + 1}/${totalArchivos} → UUID: ${data.uuid}`);
+
+      try {
+        // Verificar si ya existe el registro
+        const existe = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd?uuid_cfdi=eq.${data.uuid}`, {
+          headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` },
+        });
+        const yaExiste = await existe.json();
+        if (yaExiste.length > 0) {
+          item.querySelector("span").textContent = `⚠️ Ya existe`;
+          item.querySelector("span").className = "warn";
+          logBitacora(`⚠️ Ya existía: ${data.uuid}`);
+          continue;
+        }
+
+        // Insertar nuevo registro
+        const insert = await fetch(`${SUPABASE_URL}/rest/v1/ingresos_pdd`, {
+          method: "POST",
+          headers: {
+            apikey: API_KEY,
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (insert.ok) {
+          item.querySelector("span").textContent = `✅ Subido`;
+          item.querySelector("span").className = "ok";
+          logBitacora(`✔️ Subida exitosa`);
+        } else {
+          const err = await insert.text();
+          item.querySelector("span").textContent = `❌ Error: ${err}`;
+          item.querySelector("span").className = "err";
+          logBitacora(`❌ Error al subir: ${err}`);
+        }
+
+      } catch (error) {
+        item.querySelector("span").textContent = `❌ Error de red`;
+        item.querySelector("span").className = "err";
+        logBitacora(`❌ Error de red: ${error.message}`);
+      }
+
+      // ⏱️ pequeña pausa entre cada XML
+      await new Promise(r => setTimeout(r, pausaEntreArchivos));
     }
+
+    // 🕒 pausa entre lotes
+    if (inicio + loteTamaño < totalArchivos) {
+      logBitacora(`🕒 Esperando ${pausaEntreLotes / 1000} s antes del siguiente lote...`);
+      await new Promise(r => setTimeout(r, pausaEntreLotes));
+    }
+  }
+
+  progreso.style.width = `100%`;
+  logBitacora("✅ Carga completa sin errores. Todos los CFDI procesados correctamente.");
+}
 
     function logBitacora(mensaje) {
       const log = document.getElementById("bitacora");
