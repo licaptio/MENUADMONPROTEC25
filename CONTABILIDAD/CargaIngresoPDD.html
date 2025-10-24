@@ -250,7 +250,35 @@ async function procesarArchivos() {
             Authorization: `Bearer ${API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+  uuid_cfdi: data.uuid,
+  fecha: data.fecha,
+  periodo_mes: data.periodoMes,
+  periodo_anio: data.periodoAnio,
+  tipo_factura: data.tipoFactura,
+  rfc_emisor: data.emisorRFC,
+  razon_social_emisor: data.razonSocial,
+  rfc_receptor: data.receptorRFC,
+  razon_social_receptor: data.receptorNombre,
+  folio: data.folio,
+  serie: data.serie,
+  subtotal: data.subtotal,
+  descuento: data.descuento,
+  total: data.total,
+  moneda: data.moneda,
+  forma_pago: data.formaPago,
+  metodo_pago: data.metodoPago,
+  uso_cfdi: data.usoCFDI,
+  sello_sat: data.selloSAT,
+  no_certificado_sat: data.noCertificadoSAT,
+  fecha_certificacion: data.fecha_certificacion,
+  total_iva: data.totalIVA,
+  total_ieps: data.totalIEPS,
+  iva_detalle: data.ivaDetalle,
+  ieps_detalle: data.iepsDetalle,
+  conceptos: data.conceptos
+}),
+
         });
 
         if (insert.ok) {
