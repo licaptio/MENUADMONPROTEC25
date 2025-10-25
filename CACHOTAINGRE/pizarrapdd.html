@@ -491,8 +491,13 @@ async function exportarExcel(supabase) {
 // ======================================================
 async function main() {
   const supabase = conectarSupabase();
+  
+  // 🔹 Cargar las tres gráficas principales
   await generarGraficaComparativa(supabase);
   await generarGraficaSucursales(supabase);
+  await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
+
+  // 🔹 Botón de descarga
   document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
 }
 
