@@ -164,26 +164,60 @@
   }
 
 // ======================================================
-// 📥 3. FUNCIÓN: Exportar tabla completa a Excel (crudo, sin límite)
+// 📥 3. FUNCIÓN: Exportar tabla completa a Excel (con barra de progreso y control de texto largo)
 // ======================================================
 async function exportarExcel(supabase) {
   const tabla = "ingresos_pdd";
-  const limite = 1000; // cada bloque de 1000 registros
+  const limite = 1000;
   let desde = 0;
   let registrosTotales = [];
   let seguir = true;
 
-  alert("⏳ Descargando todos los datos en bruto... Esto puede tardar un poco.");
+  // 🟩 Crear barra de progreso visual
+  let barra = document.createElement("div");
+  barra.style.position = "fixed";
+  barra.style.bottom = "20px";
+  barra.style.left = "50%";
+  barra.style.transform = "translateX(-50%)";
+  barra.style.width = "60%";
+  barra.style.height = "24px";
+  barra.style.border = "2px solid #00416A";
+  barra.style.borderRadius = "10px";
+  barra.style.background = "#eee";
+  barra.style.overflow = "hidden";
+  barra.style.zIndex = "9999";
 
+  let progreso = document.createElement("div");
+  progreso.style.height = "100%";
+  progreso.style.width = "0%";
+  progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
+  progreso.style.transition = "width 0.3s ease";
+  barra.appendChild(progreso);
+
+  let texto = document.createElement("div");
+  texto.style.position = "absolute";
+  texto.style.width = "100%";
+  texto.style.top = "0";
+  texto.style.textAlign = "center";
+  texto.style.color = "#00416A";
+  texto.style.fontWeight = "600";
+  texto.style.lineHeight = "24px";
+  texto.textContent = "Descargando datos...";
+  barra.appendChild(texto);
+
+  document.body.appendChild(barra);
+
+  // 🔁 Descargar por bloques
   while (seguir) {
-    const { data, error, count } = await supabase
+    const { data, error } = await supabase
       .from(tabla)
-      .select("*", { count: "exact" })
+      .select("*")
       .range(desde, desde + limite - 1);
 
     if (error) {
       console.error(error);
       alert("Error al descargar datos: " + error.message);
+      document.body.removeChild(barra);
       return;
     }
 
@@ -195,37 +229,53 @@ async function exportarExcel(supabase) {
     registrosTotales = registrosTotales.concat(data);
     desde += limite;
 
-    console.log(`📦 Bloque descargado: ${registrosTotales.length} registros acumulados`);
+    // Actualizar progreso visual
+    const porcentaje = Math.min((desde / 12000) * 100, 100); // aprox. si tienes 12k registros
+    progreso.style.width = `${porcentaje.toFixed(1)}%`;
+    texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
 
-    // Si ya descargamos todos los registros, salimos del bucle
+    // detener si ya no hay más datos
     if (data.length < limite) seguir = false;
   }
 
-  if (registrosTotales.length === 0) {
-    alert("No se encontraron registros para exportar.");
-    return;
-  }
+  // 🔧 Limpiar barra al finalizar
+  progreso.style.width = "100%";
+  texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
 
-  // Convertir todos los objetos JSON en texto plano (para Excel)
-  const datosPlano = registrosTotales.map(reg => {
+  // 🧮 Normalizar JSON largos
+  const datosPlano = registrosTotales.map((reg) => {
     const obj = {};
     for (const [clave, valor] of Object.entries(reg)) {
       if (typeof valor === "object" && valor !== null) {
-        obj[clave] = JSON.stringify(valor);
+        const jsonString = JSON.stringify(valor);
+        obj[clave] =
+          jsonString.length > 32000
+            ? jsonString.substring(0, 32000) + "… [truncado]"
+            : jsonString;
       } else {
-        obj[clave] = valor;
+        const textoPlano =
+          typeof valor === "string" && valor.length > 32000
+            ? valor.substring(0, 32000) + "… [truncado]"
+            : valor;
+        obj[clave] = textoPlano;
       }
     }
     return obj;
   });
 
-  // Crear y exportar Excel
+  // 📗 Crear Excel
   const ws = XLSX.utils.json_to_sheet(datosPlano);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD_Crudo");
-  XLSX.writeFile(wb, `ingresos_pdd_crudo_${new Date().toISOString().split("T")[0]}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
 
-  alert(`✅ Exportación completa (${registrosTotales.length} registros).`);
+  // 💾 Guardar archivo
+  XLSX.writeFile(
+    wb,
+    `ingresos_pdd_crudo_${new Date().toISOString().split("T")[0]}.xlsx`
+  );
+
+  texto.textContent = "✅ Exportación completa";
+  setTimeout(() => document.body.removeChild(barra), 3000);
 }
 
   // ======================================================
