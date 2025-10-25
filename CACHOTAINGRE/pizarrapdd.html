@@ -163,13 +163,23 @@
     });
   }
 
-  // ======================================================
-  // 📥 3. FUNCIÓN: Exportar tabla completa a Excel
-  // ======================================================
-  async function exportarExcel(supabase) {
-    const { data, error } = await supabase
-      .from("ingresos_pdd")
-      .select("*");
+// ======================================================
+// 📥 3. FUNCIÓN: Exportar tabla completa a Excel (crudo, sin límite)
+// ======================================================
+async function exportarExcel(supabase) {
+  const tabla = "ingresos_pdd";
+  const limite = 1000; // cada bloque de 1000 registros
+  let desde = 0;
+  let registrosTotales = [];
+  let seguir = true;
+
+  alert("⏳ Descargando todos los datos en bruto... Esto puede tardar un poco.");
+
+  while (seguir) {
+    const { data, error, count } = await supabase
+      .from(tabla)
+      .select("*", { count: "exact" })
+      .range(desde, desde + limite - 1);
 
     if (error) {
       console.error(error);
@@ -177,14 +187,46 @@
       return;
     }
 
-    // Convertir a hoja de cálculo
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Ingresos PDD");
+    if (!data || data.length === 0) {
+      seguir = false;
+      break;
+    }
 
-    // Descargar
-    XLSX.writeFile(wb, "ingresos_pdd_completo.xlsx");
+    registrosTotales = registrosTotales.concat(data);
+    desde += limite;
+
+    console.log(`📦 Bloque descargado: ${registrosTotales.length} registros acumulados`);
+
+    // Si ya descargamos todos los registros, salimos del bucle
+    if (data.length < limite) seguir = false;
   }
+
+  if (registrosTotales.length === 0) {
+    alert("No se encontraron registros para exportar.");
+    return;
+  }
+
+  // Convertir todos los objetos JSON en texto plano (para Excel)
+  const datosPlano = registrosTotales.map(reg => {
+    const obj = {};
+    for (const [clave, valor] of Object.entries(reg)) {
+      if (typeof valor === "object" && valor !== null) {
+        obj[clave] = JSON.stringify(valor);
+      } else {
+        obj[clave] = valor;
+      }
+    }
+    return obj;
+  });
+
+  // Crear y exportar Excel
+  const ws = XLSX.utils.json_to_sheet(datosPlano);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD_Crudo");
+  XLSX.writeFile(wb, `ingresos_pdd_crudo_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+  alert(`✅ Exportación completa (${registrosTotales.length} registros).`);
+}
 
   // ======================================================
   // 🚀 4. FUNCIÓN PRINCIPAL: flujo general
