@@ -711,8 +711,8 @@ const { data, error } = await supabase
   // 🧮 Agrupar por nombre del artículo (campo conceptos)
   const acumulado = {};
   data.forEach(row => {
-    const concepto = (row.conceptos || "Sin descripción").trim();
-    const monto = Number(row.subtotal) || 0;
+const concepto = (row.articulo || "Sin descripción").trim();
+const monto = Number(row.total_subtotal) || 0;
     acumulado[concepto] = (acumulado[concepto] || 0) + monto;
   });
 
