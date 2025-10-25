@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <title>PROVSOFT – Dashboard Ingresos PDD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- 🔧 Librerías -->
+
+  <!-- 📚 Librerías -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
-  
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -50,15 +51,36 @@
   </style>
 </head>
 <body>
+
   <h1>PROVSOFT – Dashboard Ingresos PDD</h1>
 
-  <!-- 📊 Sección: Gráfica comparativa -->
+  <!-- ========================================================== -->
+  <!-- 📊 SECCIÓN 1: COMPARATIVO POR AÑO Y MES -->
+  <!-- ========================================================== -->
   <div class="card">
     <h2 style="color:#00416A;text-align:center;">Comparativo por Año y Mes</h2>
     <canvas id="grafica"></canvas>
   </div>
 
-  <!-- 📁 Sección: Descarga Excel -->
+  <!-- ========================================================== -->
+  <!-- 📈 SECCIÓN 2: COMPARATIVO POR SUCURSAL (SERIE) -->
+  <!-- ========================================================== -->
+  <div class="card">
+    <h2 style="color:#00416A;text-align:center;">Comparativo por Sucursal (Serie)</h2>
+    <p style="text-align:center;color:#555;">Evolución mensual por sucursal — selecciona un año:</p>
+    <div style="text-align:center;margin-bottom:12px;">
+      <select id="selectorAnioSucursal" style="padding:8px 10px;border-radius:8px;border:1px solid #ccc;">
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025" selected>2025</option>
+      </select>
+    </div>
+    <canvas id="graficaSucursales"></canvas>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- 📥 SECCIÓN 3: DESCARGA EXCEL -->
+  <!-- ========================================================== -->
   <div class="card" style="text-align:center;">
     <h2 style="color:#00416A;">Descargar Reporte Completo</h2>
     <p>Puedes exportar todos los registros de la tabla <b>ingresos_pdd</b> a Excel para análisis o respaldo.</p>
@@ -67,239 +89,260 @@
 
   <script>
   // ======================================================
-  // 🔧 1. FUNCIÓN: Conectar a Supabase
+  // 🔧 1. FUNCIÓN: Conexión a Supabase
   // ======================================================
   function conectarSupabase() {
     return window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY" // 🔑 tu anon key real
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
   }
 
   // ======================================================
-  // 📊 2. FUNCIÓN: Generar gráfica comparativa por año y mes
+  // 📊 2. FUNCIÓN: Gráfica comparativa por año y mes
   // ======================================================
-// ======================================================
-// 📊 FUNCIÓN: Generar gráfica directamente desde la vista SQL
-// ======================================================
-async function generarGraficaComparativa(supabase) {
-  // Llamamos a la vista agrupada directamente
-  const { data, error } = await supabase
-    .from("vista_ingresos_agrupados")
-    .select("*");
-
-  if (error) {
-    console.error(error);
-    alert("Error al cargar datos agrupados");
-    return;
-  }
-
-  // Reorganizamos por clave año-mes
-  const acumulado = {};
-  data.forEach((row) => {
-    const anio = row.periodo_anio?.toString().trim() || "Sin año";
-    const mes = row.periodo_mes?.toString().padStart(2, "0") || "00";
-    const key = `${anio}-${mes}`;
-    const val = Number(row.total_subtotal) || 0;
-    acumulado[key] = val;
-  });
-
-  // Años y meses únicos
-  const años = [...new Set(data.map((r) => r.periodo_anio))].sort();
-  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  const colores = [
-    "rgba(0, 65, 106, 0.8)",
-    "rgba(0, 160, 190, 0.8)",
-    "rgba(100, 190, 255, 0.8)",
-    "rgba(255, 193, 7, 0.8)",
-    "rgba(220, 53, 69, 0.8)"
-  ];
-
-  // Crear datasets por año
-  const datasets = años.map((anio, i) => ({
-    label: anio,
-    data: mesesOrden.map((m) => acumulado[`${anio}-${m}`] || 0),
-    backgroundColor: colores[i % colores.length],
-    borderWidth: 1
-  }));
-
-  // Graficar
-  const ctx = document.getElementById("grafica").getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: { labels: etiquetas, datasets },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: "Monto ($)" },
-          ticks: { callback: (v) => "$" + v.toLocaleString("es-MX") }
-        }
-      },
-      plugins: {
-        tooltip: {
-          backgroundColor: "#00416A",
-          titleColor: "#fff",
-          bodyColor: "#fff",
-          callbacks: {
-            title: (ctx) => "Mes: " + ctx[0].label,
-            label: (ctx) => {
-              const val = ctx.raw || 0;
-              return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`;
-            }
-          }
-        },
-        legend: {
-          position: "top",
-          labels: { color: "#00416A", font: { size: 14 } }
-        },
-        title: {
-          display: true,
-          text: "Comparativo histórico de ingresos (Subtotales agrupados por año y mes)",
-          color: "#00416A",
-          font: { size: 16 }
-        }
-      },
-      interaction: { mode: "index", intersect: false },
-      animation: { duration: 800, easing: "easeOutQuart" }
-    }
-  });
-
-  // Validación en consola
-  console.table(data);
-  console.log("✅ Totales exactos agrupados desde SQL:", acumulado);
-}
-
-// ======================================================
-// 📥 3. FUNCIÓN: Exportar tabla completa a Excel (con barra de progreso y control de texto largo)
-// ======================================================
-async function exportarExcel(supabase) {
-  const tabla = "ingresos_pdd";
-  const limite = 1000;
-  let desde = 0;
-  let registrosTotales = [];
-  let seguir = true;
-
-  // 🟩 Crear barra de progreso visual
-  let barra = document.createElement("div");
-  barra.style.position = "fixed";
-  barra.style.bottom = "20px";
-  barra.style.left = "50%";
-  barra.style.transform = "translateX(-50%)";
-  barra.style.width = "60%";
-  barra.style.height = "24px";
-  barra.style.border = "2px solid #00416A";
-  barra.style.borderRadius = "10px";
-  barra.style.background = "#eee";
-  barra.style.overflow = "hidden";
-  barra.style.zIndex = "9999";
-
-  let progreso = document.createElement("div");
-  progreso.style.height = "100%";
-  progreso.style.width = "0%";
-  progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
-  progreso.style.transition = "width 0.3s ease";
-  barra.appendChild(progreso);
-
-  let texto = document.createElement("div");
-  texto.style.position = "absolute";
-  texto.style.width = "100%";
-  texto.style.top = "0";
-  texto.style.textAlign = "center";
-  texto.style.color = "#00416A";
-  texto.style.fontWeight = "600";
-  texto.style.lineHeight = "24px";
-  texto.textContent = "Descargando datos...";
-  barra.appendChild(texto);
-
-  document.body.appendChild(barra);
-
-  // 🔁 Descargar por bloques
-  while (seguir) {
+  async function generarGraficaComparativa(supabase) {
     const { data, error } = await supabase
-      .from(tabla)
-      .select("*")
-      .range(desde, desde + limite - 1);
+      .from("ingresos_pdd")
+      .select("periodo_mes, periodo_anio, subtotal");
 
     if (error) {
       console.error(error);
-      alert("Error al descargar datos: " + error.message);
-      document.body.removeChild(barra);
+      alert("Error al cargar datos");
       return;
     }
 
-    if (!data || data.length === 0) {
-      seguir = false;
-      break;
-    }
+    const acumulado = {};
+    data.forEach(row => {
+      const anio = row.periodo_anio || "Sin año";
+      const mes = row.periodo_mes?.toString().padStart(2, "0") || "00";
+      const subtotal = parseFloat(row.subtotal || 0);
+      if (!acumulado[anio]) acumulado[anio] = {};
+      acumulado[anio][mes] = (acumulado[anio][mes] || 0) + subtotal;
+    });
 
-    registrosTotales = registrosTotales.concat(data);
-    desde += limite;
+    const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+    const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const colores = [
+      "rgba(0, 65, 106, 0.8)",
+      "rgba(0, 160, 190, 0.8)",
+      "rgba(100, 190, 255, 0.8)"
+    ];
 
-    // Actualizar progreso visual
-    const porcentaje = Math.min((desde / 12000) * 100, 100); // aprox. si tienes 12k registros
-    progreso.style.width = `${porcentaje.toFixed(1)}%`;
-    texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
+    const datasets = Object.keys(acumulado).sort().map((anio, i) => ({
+      label: anio,
+      data: mesesOrden.map(m => acumulado[anio][m] || 0),
+      backgroundColor: colores[i % colores.length],
+      borderWidth: 1
+    }));
 
-    // detener si ya no hay más datos
-    if (data.length < limite) seguir = false;
+    const ctx = document.getElementById("grafica").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: { labels: etiquetas, datasets },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Monto ($)" },
+            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              title: ctx => "Mes: " + ctx[0].label,
+              label: ctx => `${ctx.dataset.label}: $${(ctx.raw || 0).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}`
+            }
+          },
+          legend: { position: "top" },
+          title: {
+            display: true,
+            text: "Comparativo histórico de ingresos (Subtotales)",
+            color: "#00416A"
+          }
+        }
+      }
+    });
   }
 
-  // 🔧 Limpiar barra al finalizar
-  progreso.style.width = "100%";
-  texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
+  // ======================================================
+  // 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie)
+  // ======================================================
+  async function generarGraficaSucursales(supabase) {
+    const selectAnio = document.getElementById("selectorAnioSucursal");
 
-  // 🧮 Normalizar JSON largos
-  const datosPlano = registrosTotales.map((reg) => {
-    const obj = {};
-    for (const [clave, valor] of Object.entries(reg)) {
-      if (typeof valor === "object" && valor !== null) {
-        const jsonString = JSON.stringify(valor);
-        obj[clave] =
-          jsonString.length > 32000
-            ? jsonString.substring(0, 32000) + "… [truncado]"
-            : jsonString;
-      } else {
-        const textoPlano =
-          typeof valor === "string" && valor.length > 32000
-            ? valor.substring(0, 32000) + "… [truncado]"
-            : valor;
-        obj[clave] = textoPlano;
+    async function cargarDatos(anioSeleccionado) {
+      const { data, error } = await supabase
+        .from("vista_ingresos_sucursales")
+        .select("*")
+        .eq("periodo_anio", anioSeleccionado);
+
+      if (error) {
+        console.error(error);
+        alert("Error al cargar datos de sucursales");
+        return;
       }
+
+      const sucursales = [...new Set(data.map(d => d.serie))];
+      const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+      const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+      const colores = [
+        "#00416A", "#00A0BE", "#64BEFF", "#FFC107",
+        "#DC3545", "#28A745", "#6F42C1", "#FF5733"
+      ];
+
+      const datasets = sucursales.map((serie, i) => ({
+        label: serie,
+        data: mesesOrden.map(mes => {
+          const fila = data.find(f => f.periodo_mes === mes && f.serie === serie);
+          return fila ? Number(fila.total_subtotal) : 0;
+        }),
+        borderColor: colores[i % colores.length],
+        backgroundColor: colores[i % colores.length],
+        tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: false
+      }));
+
+      const ctx = document.getElementById("graficaSucursales").getContext("2d");
+      if (window.graficaSucursales) window.graficaSucursales.destroy();
+      window.graficaSucursales = new Chart(ctx, {
+        type: "line",
+        data: { labels: etiquetas, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Ingresos por Sucursal – Año ${anioSeleccionado}`,
+              color: "#00416A"
+            },
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: $${(ctx.raw || 0).toLocaleString("es-MX", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Monto ($)" },
+              ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+            }
+          }
+        }
+      });
     }
-    return obj;
-  });
 
-  // 📗 Crear Excel
-  const ws = XLSX.utils.json_to_sheet(datosPlano);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
-
-  // 💾 Guardar archivo
-  XLSX.writeFile(
-    wb,
-    `ingresos_pdd_crudo_${new Date().toISOString().split("T")[0]}.xlsx`
-  );
-
-  texto.textContent = "✅ Exportación completa";
-  setTimeout(() => document.body.removeChild(barra), 3000);
-}
+    await cargarDatos(selectAnio.value);
+    selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
+  }
 
   // ======================================================
-  // 🚀 4. FUNCIÓN PRINCIPAL: flujo general
+  // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
+  // ======================================================
+  async function exportarExcel(supabase) {
+    const tabla = "ingresos_pdd";
+    const limite = 1000;
+    let desde = 0;
+    let registrosTotales = [];
+    let seguir = true;
+
+    let barra = document.createElement("div");
+    barra.style.position = "fixed";
+    barra.style.bottom = "20px";
+    barra.style.left = "50%";
+    barra.style.transform = "translateX(-50%)";
+    barra.style.width = "60%";
+    barra.style.height = "24px";
+    barra.style.border = "2px solid #00416A";
+    barra.style.borderRadius = "10px";
+    barra.style.background = "#eee";
+    barra.style.overflow = "hidden";
+    barra.style.zIndex = "9999";
+
+    let progreso = document.createElement("div");
+    progreso.style.height = "100%";
+    progreso.style.width = "0%";
+    progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
+    progreso.style.transition = "width 0.3s ease";
+    barra.appendChild(progreso);
+
+    let texto = document.createElement("div");
+    texto.style.position = "absolute";
+    texto.style.width = "100%";
+    texto.style.top = "0";
+    texto.style.textAlign = "center";
+    texto.style.color = "#00416A";
+    texto.style.fontWeight = "600";
+    texto.style.lineHeight = "24px";
+    texto.textContent = "Descargando datos...";
+    barra.appendChild(texto);
+
+    document.body.appendChild(barra);
+
+    while (seguir) {
+      const { data, error } = await supabase
+        .from(tabla)
+        .select("*")
+        .range(desde, desde + limite - 1);
+
+      if (error) {
+        console.error(error);
+        alert("Error al descargar datos: " + error.message);
+        document.body.removeChild(barra);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        seguir = false;
+        break;
+      }
+
+      registrosTotales = registrosTotales.concat(data);
+      desde += limite;
+
+      const porcentaje = Math.min((desde / 12000) * 100, 100);
+      progreso.style.width = `${porcentaje.toFixed(1)}%`;
+      texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
+
+      if (data.length < limite) seguir = false;
+    }
+
+    progreso.style.width = "100%";
+    texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
+
+    const ws = XLSX.utils.json_to_sheet(registrosTotales);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
+    XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+    texto.textContent = "✅ Exportación completa";
+    setTimeout(() => document.body.removeChild(barra), 3000);
+  }
+
+  // ======================================================
+  // 🚀 5. FUNCIÓN PRINCIPAL
   // ======================================================
   async function main() {
     const supabase = conectarSupabase();
     await generarGraficaComparativa(supabase);
+    await generarGraficaSucursales(supabase);
     document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
   }
 
-  // Iniciar al cargar
+  // Ejecutar
   main();
   </script>
 </body>
