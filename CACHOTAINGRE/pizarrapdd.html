@@ -99,15 +99,16 @@ function conectarSupabase() {
 }
 
 // ======================================================
-// 📊 2. FUNCIÓN: Gráfica comparativa por año y mes (DEPURADA)
+// 📊 2. FUNCIÓN: Gráfica comparativa por año y mes (desde vista_ingresos_mensuales)
 // ======================================================
 async function generarGraficaComparativa(supabase) {
   const ctx = document.getElementById("grafica").getContext("2d");
   let graficaComparativa = null;
 
+  // 📡 Leer datos desde la nueva vista
   const { data, error } = await supabase
-    .from("ingresos_pdd")
-    .select("periodo_mes, periodo_anio, subtotal");
+    .from("vista_ingresos_mensuales")
+    .select("periodo_anio, periodo_mes, total_subtotal");
 
   if (error) {
     console.error("❌ Error al cargar ingresos:", error);
@@ -120,19 +121,19 @@ async function generarGraficaComparativa(supabase) {
     return;
   }
 
-// Agrupar montos
-const acumulado = {};
-data.forEach(row => {
-  const anio = (row.periodo_anio || "Sin año").toString().trim();
-  const mes = String(row.periodo_mes).padStart(2, "0"); // ✅ fuerza "01".."12"
-  const val = parseFloat(row.subtotal) || 0;
-  if (!acumulado[anio]) acumulado[anio] = {};
-  acumulado[anio][mes] = (acumulado[anio][mes] || 0) + val;
-});
+  // 🧮 Agrupar por año y mes
+  const acumulado = {};
+  data.forEach(row => {
+    const anio = String(row.periodo_anio);
+    const mes = String(row.periodo_mes).padStart(2, "0");
+    const val = Number(row.total_subtotal) || 0;
+    if (!acumulado[anio]) acumulado[anio] = {};
+    acumulado[anio][mes] = val;
+  });
 
-
-const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  // 📅 Configuración de meses y colores
+  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const colores = [
     "rgba(0, 65, 106, 0.8)",
     "rgba(0, 160, 190, 0.8)",
@@ -140,6 +141,7 @@ const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","
     "rgba(255, 193, 7, 0.8)"
   ];
 
+  // 📊 Crear datasets por año
   const datasets = Object.keys(acumulado).sort().map((anio, i) => ({
     label: anio,
     data: mesesOrden.map(m => acumulado[anio][m] || 0),
@@ -148,8 +150,10 @@ const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","
     borderWidth: 1
   }));
 
+  // 🧹 Limpiar gráfica previa
   if (graficaComparativa instanceof Chart) graficaComparativa.destroy();
 
+  // 🧭 Graficar
   graficaComparativa = new Chart(ctx, {
     type: "bar",
     data: { labels: etiquetas, datasets },
@@ -158,6 +162,7 @@ const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","
       scales: {
         y: {
           beginAtZero: true,
+          suggestedMax: Math.max(...datasets.flatMap(d => d.data)) * 1.1,
           title: { display: true, text: "Monto ($)" },
           ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
         }
@@ -165,7 +170,7 @@ const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","
       plugins: {
         title: {
           display: true,
-          text: "Comparativo histórico de ingresos (Subtotales agrupados por año y mes)",
+          text: "Comparativo histórico de ingresos (Vista agrupada por año y mes)",
           color: "#00416A",
           font: { size: 16 }
         },
@@ -185,7 +190,7 @@ const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","
     }
   });
 
-  console.log("✅ Datos comparativa año/mes:", acumulado);
+  console.log("✅ Datos graficados (vista_ingresos_mensuales):", acumulado);
 }
 
 // ======================================================
