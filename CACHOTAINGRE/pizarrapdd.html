@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>PROVSOFT – Ingresos Globales PDD</title>
+  <title>PROVSOFT – Ingresos por Año y Mes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,17 +24,17 @@
       border-radius: 16px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.25);
       padding: 20px;
-      max-width: 900px;
+      max-width: 980px;
       margin: auto;
     }
     canvas {
       width: 100%;
-      height: 460px;
+      height: 480px;
     }
   </style>
 </head>
 <body>
-  <h1>PROVSOFT – Ingresos Globales (Subtotal por Mes)</h1>
+  <h1>PROVSOFT – Ingresos por Año y Mes (Subtotal)</h1>
   <div class="card">
     <canvas id="grafica"></canvas>
   </div>
@@ -43,13 +43,13 @@
     // 🔑 Configuración de Supabase
     const supabase = window.supabase.createClient(
       "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY" // Reemplaza con tu anon key real
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // 🔑 Reemplaza con tu anon key
     );
 
-    async function cargarGraficaGlobal() {
+    async function cargarGraficaComparativa() {
       const { data, error } = await supabase
         .from("ingresos_pdd")
-        .select("periodo_mes, subtotal");
+        .select("periodo_mes, periodo_anio, subtotal");
 
       if (error) {
         console.error(error);
@@ -57,85 +57,94 @@
         return;
       }
 
-      // 📊 Agrupar subtotales por mes (sumando todo lo cargado)
-      const totalesMes = {};
+      // 📊 Agrupar subtotales por año y mes
+      const acumulado = {}; // {2024: {01: 1234, 02: 2000}, 2025: {...}}
       data.forEach(row => {
+        const anio = row.periodo_anio || "Sin año";
         const mes = row.periodo_mes || "00";
         const subtotal = parseFloat(row.subtotal || 0);
-        totalesMes[mes] = (totalesMes[mes] || 0) + subtotal;
+        if (!acumulado[anio]) acumulado[anio] = {};
+        acumulado[anio][mes] = (acumulado[anio][mes] || 0) + subtotal;
       });
 
-      // 🔢 Ordenar meses
+      // 🔢 Meses ordenados
       const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
       const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-      const valores = mesesOrden.map(m => totalesMes[m] || 0);
 
-      // 🎨 Crear la gráfica
+      // 🎨 Generar datasets por año
+      const colores = [
+        "rgba(0, 65, 106, 0.8)",
+        "rgba(0, 160, 190, 0.8)",
+        "rgba(100, 190, 255, 0.8)",
+        "rgba(255, 193, 7, 0.8)",
+        "rgba(220, 53, 69, 0.8)"
+      ];
+
+      const datasets = Object.keys(acumulado)
+        .sort()
+        .map((anio, i) => ({
+          label: anio,
+          data: mesesOrden.map(m => acumulado[anio][m] || 0),
+          backgroundColor: colores[i % colores.length],
+          borderWidth: 1
+        }));
+
+      // 🧭 Dibujar gráfica
       const ctx = document.getElementById("grafica").getContext("2d");
       new Chart(ctx, {
         type: "bar",
         data: {
           labels: etiquetas,
-          datasets: [{
-            label: "Subtotal acumulado por mes",
-            data: valores,
-            borderWidth: 1,
-            backgroundColor: valores.map(() => "rgba(0, 65, 106, 0.8)"),
-            hoverBackgroundColor: valores.map(() => "rgba(0, 120, 180, 0.9)")
-          }]
+          datasets
         },
         options: {
+          responsive: true,
           scales: {
             y: {
               beginAtZero: true,
               title: { display: true, text: "Monto acumulado ($)" },
               ticks: {
-                callback: value => "$" + value.toLocaleString("es-MX")
+                callback: v => "$" + v.toLocaleString("es-MX")
               }
             },
-            x: {
-              title: { display: true, text: "Mes del año" }
-            }
+            x: { title: { display: true, text: "Mes" } }
           },
           plugins: {
-            legend: { display: false },
             tooltip: {
               backgroundColor: "#00416A",
               titleColor: "#fff",
               bodyColor: "#fff",
-              borderColor: "#fff",
-              borderWidth: 1,
               callbacks: {
-                label: (ctx) => {
-                  const val = ctx.raw || 0;
-                  return " Subtotal: $" + val.toLocaleString("es-MX", {
+                title: ctx => "Mes: " + ctx[0].label,
+                label: ctx => {
+                  const valor = ctx.raw || 0;
+                  return `${ctx.dataset.label}: $${valor.toLocaleString("es-MX", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
-                  });
+                  })}`;
                 }
               }
             },
+            legend: {
+              display: true,
+              position: "top",
+              labels: { color: "#00416A", font: { size: 14 } }
+            },
             title: {
               display: true,
-              text: "Ingresos acumulados (Subtotales por mes – todos los años)",
+              text: "Comparativo histórico de ingresos por mes y año",
               color: "#00416A",
               font: { size: 16 }
             }
           },
-          interaction: {
-            mode: "nearest",
-            intersect: true
-          },
-          animation: {
-            duration: 800,
-            easing: "easeOutQuart"
-          }
+          interaction: { mode: "index", intersect: false },
+          animation: { duration: 800, easing: "easeOutQuart" }
         }
       });
     }
 
     // 🚀 Ejecutar al iniciar
-    cargarGraficaGlobal();
+    cargarGraficaComparativa();
   </script>
 </body>
 </html>
