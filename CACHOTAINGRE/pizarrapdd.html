@@ -486,6 +486,104 @@ async function exportarExcel(supabase) {
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
 
+
+// ======================================================
+// 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
+// ======================================================
+async function mostrarUltimasFacturasPorSucursal(supabase) {
+  const contenedor = document.getElementById("contenedorUltimasFacturas");
+  contenedor.innerHTML = "<p style='text-align:center;'>Cargando últimas facturas...</p>";
+
+  // 📡 Consulta las columnas necesarias
+  const { data, error } = await supabase
+    .from("ingresos_pdd")
+    .select("fecha, razon_social_receptor, serie, subtotal")
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    console.error("❌ Error al cargar facturas:", error);
+    contenedor.innerHTML = "<p>Error al cargar datos.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    contenedor.innerHTML = "<p>No hay facturas disponibles.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = "";
+
+  // 🔹 Agrupar por serie (sucursal)
+  const agrupado = {};
+  data.forEach(factura => {
+    const clave = factura.serie || "Sin serie";
+    if (!agrupado[clave]) agrupado[clave] = [];
+    if (agrupado[clave].length < 3) agrupado[clave].push(factura);
+  });
+
+  // 🔹 Definir colores por sucursal (opcional PROVSOFT style)
+  const coloresSucursal = {
+    "LMN": "#0c6cbd",
+    "MM": "#28A745",
+    "LP": "#FFC107",
+    "LO": "#DC3545",
+    "AM": "#6F42C1",
+    "SAN": "#17A2B8"
+  };
+
+  // 🔹 Crear tarjetas por sucursal
+  Object.keys(agrupado).forEach(serie => {
+    const facturas = agrupado[serie];
+    const colorCabecera = coloresSucursal[serie] || "#00416A";
+
+    const div = document.createElement("div");
+    div.style.flex = "1 1 380px";
+    div.style.background = "white";
+    div.style.borderRadius = "12px";
+    div.style.padding = "16px";
+    div.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+    div.style.textAlign = "center";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = `Sucursal ${serie}`;
+    titulo.style.color = colorCabecera;
+    titulo.style.marginBottom = "10px";
+    div.appendChild(titulo);
+
+    const tabla = document.createElement("table");
+    tabla.style.width = "100%";
+    tabla.style.borderCollapse = "collapse";
+    tabla.innerHTML = `
+      <thead>
+        <tr style="background:${colorCabecera};color:white;">
+          <th>Fecha</th><th>Nombre</th><th>Serie</th><th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${facturas.map(f => `
+          <tr>
+            <td>${new Date(f.fecha).toLocaleDateString("es-MX")}</td>
+            <td>${f.razon_social_receptor || "—"}</td>
+            <td>${f.serie || "—"}</td>
+            <td>$${Number(f.subtotal || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    `;
+
+    // Estilo de tabla
+    tabla.querySelectorAll("td").forEach(td => {
+      td.style.padding = "6px";
+      td.style.borderBottom = "1px solid #ddd";
+      td.style.fontSize = "13px";
+    });
+    tabla.querySelectorAll("th").forEach(th => th.style.padding = "6px");
+    div.appendChild(tabla);
+    contenedor.appendChild(div);
+  });
+}
+
+    
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
 // ======================================================
@@ -495,6 +593,7 @@ async function main() {
   // 🔹 Cargar las tres gráficas principales
   await generarGraficaComparativa(supabase);
   await generarGraficaSucursales(supabase);
+  await mostrarUltimasFacturasPorSucursal(supabase);
   await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
 
   // 🔹 Botón de descarga
