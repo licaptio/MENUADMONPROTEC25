@@ -691,10 +691,11 @@ async function mostrarTopArticulos2025(supabase) {
   contenedor.innerHTML = "<p style='text-align:center;'>Cargando artículos...</p>";
 
   // 📡 Consulta los datos del año 2025
-  const { data, error } = await supabase
-    .from("ingresos_pdd")
-    .select("conceptos, subtotal, periodo_anio")
-    .eq("periodo_anio", 2025);
+const { data, error } = await supabase
+  .from("vista_top_articulos")
+  .select("*")
+  .eq("periodo_anio", 2025);
+
 
   if (error) {
     console.error("❌ Error al cargar artículos:", error);
