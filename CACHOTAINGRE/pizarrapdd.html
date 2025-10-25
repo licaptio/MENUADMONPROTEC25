@@ -79,33 +79,32 @@
   // ======================================================
   // 📊 2. FUNCIÓN: Generar gráfica comparativa por año y mes
   // ======================================================
-  // ======================================================
-// 📊 FUNCIÓN: Generar gráfica con sumas agrupadas SQL
+// ======================================================
+// 📊 FUNCIÓN: Generar gráfica directamente desde la vista SQL
 // ======================================================
 async function generarGraficaComparativa(supabase) {
-  // Usamos una llamada RPC para agrupar en el servidor
+  // Llamamos a la vista agrupada directamente
   const { data, error } = await supabase
-    .from("ingresos_pdd")
-    .select("periodo_anio, periodo_mes, subtotal")
-    .neq("subtotal", null);
+    .from("vista_ingresos_agrupados")
+    .select("*");
 
   if (error) {
     console.error(error);
-    alert("Error al cargar datos");
+    alert("Error al cargar datos agrupados");
     return;
   }
 
-  // Agrupamos en JS pero con base en claves exactas (año + mes)
+  // Reorganizamos por clave año-mes
   const acumulado = {};
   data.forEach((row) => {
     const anio = row.periodo_anio?.toString().trim() || "Sin año";
     const mes = row.periodo_mes?.toString().padStart(2, "0") || "00";
     const key = `${anio}-${mes}`;
-    const val = Number(row.subtotal) || 0;
-    acumulado[key] = (acumulado[key] || 0) + val;
+    const val = Number(row.total_subtotal) || 0;
+    acumulado[key] = val;
   });
 
-  // Reorganizamos por año
+  // Años y meses únicos
   const años = [...new Set(data.map((r) => r.periodo_anio))].sort();
   const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
   const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -117,11 +116,10 @@ async function generarGraficaComparativa(supabase) {
     "rgba(220, 53, 69, 0.8)"
   ];
 
+  // Crear datasets por año
   const datasets = años.map((anio, i) => ({
     label: anio,
-    data: mesesOrden.map(
-      (m) => acumulado[`${anio}-${m}`] || 0
-    ),
+    data: mesesOrden.map((m) => acumulado[`${anio}-${m}`] || 0),
     backgroundColor: colores[i % colores.length],
     borderWidth: 1
   }));
@@ -172,10 +170,10 @@ async function generarGraficaComparativa(supabase) {
     }
   });
 
-  // Validar en consola
-  console.log("✅ Totales por año-mes:", acumulado);
+  // Validación en consola
+  console.table(data);
+  console.log("✅ Totales exactos agrupados desde SQL:", acumulado);
 }
-
 
 // ======================================================
 // 📥 3. FUNCIÓN: Exportar tabla completa a Excel (con barra de progreso y control de texto largo)
