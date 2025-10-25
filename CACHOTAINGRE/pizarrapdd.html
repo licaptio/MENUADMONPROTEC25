@@ -79,103 +79,103 @@
   // ======================================================
   // 📊 2. FUNCIÓN: Generar gráfica comparativa por año y mes
   // ======================================================
-  async function generarGraficaComparativa(supabase) {
-    const { data, error } = await supabase
-      .from("ingresos_pdd")
-      .select("periodo_mes, periodo_anio, subtotal");
+  // ======================================================
+// 📊 FUNCIÓN: Generar gráfica con sumas agrupadas SQL
+// ======================================================
+async function generarGraficaComparativa(supabase) {
+  // Usamos una llamada RPC para agrupar en el servidor
+  const { data, error } = await supabase
+    .from("ingresos_pdd")
+    .select("periodo_anio, periodo_mes, subtotal")
+    .neq("subtotal", null);
 
-    if (error) {
-      console.error(error);
-      alert("Error al cargar datos");
-      return;
-    }
-
-// Agrupar subtotales por año y mes con precisión decimal
-const acumulado = {};
-data.forEach(row => {
-  const anio = row.periodo_anio || "Sin año";
-  const mes = row.periodo_mes || "00";
-
-  // Conversión segura
-  let subtotal = 0;
-  if (row.subtotal !== null && row.subtotal !== undefined && row.subtotal !== "") {
-    subtotal = Number(row.subtotal);
-    if (isNaN(subtotal)) subtotal = 0;
+  if (error) {
+    console.error(error);
+    alert("Error al cargar datos");
+    return;
   }
 
-  // Inicializar acumulador
-  if (!acumulado[anio]) acumulado[anio] = {};
-  if (!acumulado[anio][mes]) acumulado[anio][mes] = 0;
+  // Agrupamos en JS pero con base en claves exactas (año + mes)
+  const acumulado = {};
+  data.forEach((row) => {
+    const anio = row.periodo_anio?.toString().trim() || "Sin año";
+    const mes = row.periodo_mes?.toString().padStart(2, "0") || "00";
+    const key = `${anio}-${mes}`;
+    const val = Number(row.subtotal) || 0;
+    acumulado[key] = (acumulado[key] || 0) + val;
+  });
 
-  // Sumar con precisión (evitar errores binarios)
-  acumulado[anio][mes] = parseFloat(
-    (acumulado[anio][mes] + subtotal).toFixed(6)
-  );
-});
+  // Reorganizamos por año
+  const años = [...new Set(data.map((r) => r.periodo_anio))].sort();
+  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const colores = [
+    "rgba(0, 65, 106, 0.8)",
+    "rgba(0, 160, 190, 0.8)",
+    "rgba(100, 190, 255, 0.8)",
+    "rgba(255, 193, 7, 0.8)",
+    "rgba(220, 53, 69, 0.8)"
+  ];
 
+  const datasets = años.map((anio, i) => ({
+    label: anio,
+    data: mesesOrden.map(
+      (m) => acumulado[`${anio}-${m}`] || 0
+    ),
+    backgroundColor: colores[i % colores.length],
+    borderWidth: 1
+  }));
 
-    // Configuración visual
-    const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-    const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-    const colores = [
-      "rgba(0, 65, 106, 0.8)",
-      "rgba(0, 160, 190, 0.8)",
-      "rgba(100, 190, 255, 0.8)",
-      "rgba(255, 193, 7, 0.8)",
-      "rgba(220, 53, 69, 0.8)"
-    ];
-
-    const datasets = Object.keys(acumulado)
-      .sort()
-      .map((anio, i) => ({
-        label: anio,
-        data: mesesOrden.map(m => acumulado[anio][m] || 0),
-        backgroundColor: colores[i % colores.length],
-        borderWidth: 1
-      }));
-
-    const ctx = document.getElementById("grafica").getContext("2d");
-    new Chart(ctx, {
-      type: "bar",
-      data: { labels: etiquetas, datasets },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: "Monto ($)" },
-            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
-          }
-        },
-        plugins: {
-          tooltip: {
-            backgroundColor: "#00416A",
-            titleColor: "#fff",
-            bodyColor: "#fff",
-            callbacks: {
-              title: ctx => "Mes: " + ctx[0].label,
-              label: ctx => {
-                const valor = ctx.raw || 0;
-                return `${ctx.dataset.label}: $${valor.toLocaleString("es-MX", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}`;
-              }
+  // Graficar
+  const ctx = document.getElementById("grafica").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: { labels: etiquetas, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Monto ($)" },
+          ticks: { callback: (v) => "$" + v.toLocaleString("es-MX") }
+        }
+      },
+      plugins: {
+        tooltip: {
+          backgroundColor: "#00416A",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          callbacks: {
+            title: (ctx) => "Mes: " + ctx[0].label,
+            label: (ctx) => {
+              const val = ctx.raw || 0;
+              return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}`;
             }
-          },
-          legend: { position: "top", labels: { color: "#00416A", font: { size: 14 } } },
-          title: {
-            display: true,
-            text: "Comparativo histórico de ingresos (Subtotales)",
-            color: "#00416A",
-            font: { size: 16 }
           }
         },
-        interaction: { mode: "index", intersect: false },
-        animation: { duration: 800, easing: "easeOutQuart" }
-      }
-    });
-  }
+        legend: {
+          position: "top",
+          labels: { color: "#00416A", font: { size: 14 } }
+        },
+        title: {
+          display: true,
+          text: "Comparativo histórico de ingresos (Subtotales agrupados por año y mes)",
+          color: "#00416A",
+          font: { size: 16 }
+        }
+      },
+      interaction: { mode: "index", intersect: false },
+      animation: { duration: 800, easing: "easeOutQuart" }
+    }
+  });
+
+  // Validar en consola
+  console.log("✅ Totales por año-mes:", acumulado);
+}
+
 
 // ======================================================
 // 📥 3. FUNCIÓN: Exportar tabla completa a Excel (con barra de progreso y control de texto largo)
