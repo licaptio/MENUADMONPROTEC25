@@ -88,98 +88,112 @@
   </div>
 
   <script>
-  // ======================================================
-  // 🔧 1. FUNCIÓN: Conexión a Supabase
-  // ======================================================
-  function conectarSupabase() {
-    return window.supabase.createClient(
-      "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-    );
+// ======================================================
+// 🔧 1. FUNCIÓN: Conexión a Supabase
+// ======================================================
+function conectarSupabase() {
+  return window.supabase.createClient(
+    "https://cvpbtjlupswbyxenugpz.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+  );
+}
+
+// ======================================================
+// 📊 2. FUNCIÓN: Gráfica comparativa por año y mes (DEPURADA)
+// ======================================================
+async function generarGraficaComparativa(supabase) {
+  const ctx = document.getElementById("grafica").getContext("2d");
+  let graficaComparativa = null;
+
+  const { data, error } = await supabase
+    .from("ingresos_pdd")
+    .select("periodo_mes, periodo_anio, subtotal");
+
+  if (error) {
+    console.error("❌ Error al cargar ingresos:", error);
+    alert("Error al cargar datos de ingresos");
+    return;
   }
 
-  // ======================================================
-  // 📊 2. FUNCIÓN: Gráfica comparativa por año y mes
-  // ======================================================
-  async function generarGraficaComparativa(supabase) {
-    const { data, error } = await supabase
-      .from("ingresos_pdd")
-      .select("periodo_mes, periodo_anio, subtotal");
+  if (!data || data.length === 0) {
+    console.warn("⚠️ No hay datos para mostrar");
+    return;
+  }
 
-    if (error) {
-      console.error(error);
-      alert("Error al cargar datos");
-      return;
-    }
+  // Agrupar montos
+  const acumulado = {};
+  data.forEach(row => {
+    const anio = (row.periodo_anio || "Sin año").toString().trim();
+    const mes = (row.periodo_mes || "00").toString().padStart(2, "0");
+    const val = parseFloat(row.subtotal) || 0;
+    if (!acumulado[anio]) acumulado[anio] = {};
+    acumulado[anio][mes] = (acumulado[anio][mes] || 0) + val;
+  });
 
-    const acumulado = {};
-    data.forEach(row => {
-      const anio = row.periodo_anio || "Sin año";
-      const mes = row.periodo_mes?.toString().padStart(2, "0") || "00";
-      const subtotal = parseFloat(row.subtotal || 0);
-      if (!acumulado[anio]) acumulado[anio] = {};
-      acumulado[anio][mes] = (acumulado[anio][mes] || 0) + subtotal;
-    });
+  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const colores = [
+    "rgba(0, 65, 106, 0.8)",
+    "rgba(0, 160, 190, 0.8)",
+    "rgba(100, 190, 255, 0.8)",
+    "rgba(255, 193, 7, 0.8)"
+  ];
 
-    const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-    const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-    const colores = [
-      "rgba(0, 65, 106, 0.8)",
-      "rgba(0, 160, 190, 0.8)",
-      "rgba(100, 190, 255, 0.8)"
-    ];
+  const datasets = Object.keys(acumulado).sort().map((anio, i) => ({
+    label: anio,
+    data: mesesOrden.map(m => acumulado[anio][m] || 0),
+    backgroundColor: colores[i % colores.length],
+    borderColor: colores[i % colores.length],
+    borderWidth: 1
+  }));
 
-    const datasets = Object.keys(acumulado).sort().map((anio, i) => ({
-      label: anio,
-      data: mesesOrden.map(m => acumulado[anio][m] || 0),
-      backgroundColor: colores[i % colores.length],
-      borderWidth: 1
-    }));
+  if (graficaComparativa instanceof Chart) graficaComparativa.destroy();
 
-    const ctx = document.getElementById("grafica").getContext("2d");
-    new Chart(ctx, {
-      type: "bar",
-      data: { labels: etiquetas, datasets },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: "Monto ($)" },
-            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
-          }
+  graficaComparativa = new Chart(ctx, {
+    type: "bar",
+    data: { labels: etiquetas, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Monto ($)" },
+          ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: "Comparativo histórico de ingresos (Subtotales agrupados por año y mes)",
+          color: "#00416A",
+          font: { size: 16 }
         },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              title: ctx => "Mes: " + ctx[0].label,
-              label: ctx => `${ctx.dataset.label}: $${(ctx.raw || 0).toLocaleString("es-MX", {
+        legend: { position: "top", labels: { color: "#00416A" } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.raw || 0;
+              return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
-              })}`
+              })}`;
             }
-          },
-          legend: { position: "top" },
-          title: {
-            display: true,
-            text: "Comparativo histórico de ingresos (Subtotales)",
-            color: "#00416A"
           }
         }
       }
-    });
-  }
+    }
+  });
 
-  // ======================================================
-  // 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie)
-  // ======================================================
-  // ======================================================
-// 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie) – CORREGIDA
+  console.log("✅ Datos comparativa año/mes:", acumulado);
+}
+
+// ======================================================
+// 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie) – DEPURADA
 // ======================================================
 async function generarGraficaSucursales(supabase) {
   const selectAnio = document.getElementById("selectorAnioSucursal");
   const ctx = document.getElementById("graficaSucursales").getContext("2d");
-  let graficaSucursales = null; // 🟢 Variable local controlada
+  let graficaSucursales = null;
 
   async function cargarDatos(anioSeleccionado) {
     const { data, error } = await supabase
@@ -188,21 +202,17 @@ async function generarGraficaSucursales(supabase) {
       .eq("periodo_anio", anioSeleccionado);
 
     if (error) {
-      console.error(error);
+      console.error("❌ Error al cargar sucursales:", error);
       alert("Error al cargar datos de sucursales");
       return;
     }
 
     if (!data || data.length === 0) {
-      console.warn("⚠️ No hay datos para el año seleccionado");
-      if (graficaSucursales) {
-        graficaSucursales.destroy();
-        graficaSucursales = null;
-      }
+      console.warn("⚠️ Sin datos para el año:", anioSeleccionado);
+      if (graficaSucursales) graficaSucursales.destroy();
       return;
     }
 
-    // Agrupar por sucursal
     const sucursales = [...new Set(data.map(d => d.serie))];
     const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
     const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -211,11 +221,10 @@ async function generarGraficaSucursales(supabase) {
       "#DC3545", "#28A745", "#6F42C1", "#FF5733"
     ];
 
-    // Construir datasets
     const datasets = sucursales.map((serie, i) => ({
       label: serie,
-      data: mesesOrden.map(mes => {
-        const fila = data.find(f => f.periodo_mes === mes && f.serie === serie);
+      data: mesesOrden.map(m => {
+        const fila = data.find(f => f.periodo_mes === m && f.serie === serie);
         return fila ? Number(fila.total_subtotal) : 0;
       }),
       borderColor: colores[i % colores.length],
@@ -227,12 +236,8 @@ async function generarGraficaSucursales(supabase) {
       fill: false
     }));
 
-    // Destruir anterior si existe (evita error)
-    if (graficaSucursales instanceof Chart) {
-      graficaSucursales.destroy();
-    }
+    if (graficaSucursales instanceof Chart) graficaSucursales.destroy();
 
-    // Crear nueva gráfica
     graficaSucursales = new Chart(ctx, {
       type: "line",
       data: { labels: etiquetas, datasets },
@@ -273,106 +278,102 @@ async function generarGraficaSucursales(supabase) {
     });
   }
 
-  // Inicialización + eventos
   await cargarDatos(selectAnio.value);
   selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
 }
 
-  // ======================================================
-  // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
-  // ======================================================
-  async function exportarExcel(supabase) {
-    const tabla = "ingresos_pdd";
-    const limite = 1000;
-    let desde = 0;
-    let registrosTotales = [];
-    let seguir = true;
+// ======================================================
+// 📥 4. FUNCIÓN: Exportar tabla completa a Excel
+// ======================================================
+async function exportarExcel(supabase) {
+  const tabla = "ingresos_pdd";
+  const limite = 1000;
+  let desde = 0;
+  let registrosTotales = [];
+  let seguir = true;
 
-    let barra = document.createElement("div");
-    barra.style.position = "fixed";
-    barra.style.bottom = "20px";
-    barra.style.left = "50%";
-    barra.style.transform = "translateX(-50%)";
-    barra.style.width = "60%";
-    barra.style.height = "24px";
-    barra.style.border = "2px solid #00416A";
-    barra.style.borderRadius = "10px";
-    barra.style.background = "#eee";
-    barra.style.overflow = "hidden";
-    barra.style.zIndex = "9999";
+  const barra = document.createElement("div");
+  barra.style.position = "fixed";
+  barra.style.bottom = "20px";
+  barra.style.left = "50%";
+  barra.style.transform = "translateX(-50%)";
+  barra.style.width = "60%";
+  barra.style.height = "24px";
+  barra.style.border = "2px solid #00416A";
+  barra.style.borderRadius = "10px";
+  barra.style.background = "#eee";
+  barra.style.overflow = "hidden";
+  barra.style.zIndex = "9999";
 
-    let progreso = document.createElement("div");
-    progreso.style.height = "100%";
-    progreso.style.width = "0%";
-    progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
-    progreso.style.transition = "width 0.3s ease";
-    barra.appendChild(progreso);
+  const progreso = document.createElement("div");
+  progreso.style.height = "100%";
+  progreso.style.width = "0%";
+  progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
+  progreso.style.transition = "width 0.3s ease";
+  barra.appendChild(progreso);
 
-    let texto = document.createElement("div");
-    texto.style.position = "absolute";
-    texto.style.width = "100%";
-    texto.style.top = "0";
-    texto.style.textAlign = "center";
-    texto.style.color = "#00416A";
-    texto.style.fontWeight = "600";
-    texto.style.lineHeight = "24px";
-    texto.textContent = "Descargando datos...";
-    barra.appendChild(texto);
+  const texto = document.createElement("div");
+  texto.style.position = "absolute";
+  texto.style.width = "100%";
+  texto.style.top = "0";
+  texto.style.textAlign = "center";
+  texto.style.color = "#00416A";
+  texto.style.fontWeight = "600";
+  texto.style.lineHeight = "24px";
+  texto.textContent = "Descargando datos...";
+  barra.appendChild(texto);
 
-    document.body.appendChild(barra);
+  document.body.appendChild(barra);
 
-    while (seguir) {
-      const { data, error } = await supabase
-        .from(tabla)
-        .select("*")
-        .range(desde, desde + limite - 1);
+  while (seguir) {
+    const { data, error } = await supabase
+      .from(tabla)
+      .select("*")
+      .range(desde, desde + limite - 1);
 
-      if (error) {
-        console.error(error);
-        alert("Error al descargar datos: " + error.message);
-        document.body.removeChild(barra);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        seguir = false;
-        break;
-      }
-
-      registrosTotales = registrosTotales.concat(data);
-      desde += limite;
-
-      const porcentaje = Math.min((desde / 12000) * 100, 100);
-      progreso.style.width = `${porcentaje.toFixed(1)}%`;
-      texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
-
-      if (data.length < limite) seguir = false;
+    if (error) {
+      console.error(error);
+      alert("Error al descargar datos: " + error.message);
+      document.body.removeChild(barra);
+      return;
     }
 
-    progreso.style.width = "100%";
-    texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
+    if (!data || data.length === 0) break;
 
-    const ws = XLSX.utils.json_to_sheet(registrosTotales);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
-    XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
+    registrosTotales = registrosTotales.concat(data);
+    desde += limite;
 
-    texto.textContent = "✅ Exportación completa";
-    setTimeout(() => document.body.removeChild(barra), 3000);
+    const porcentaje = Math.min((desde / 12000) * 100, 100);
+    progreso.style.width = `${porcentaje.toFixed(1)}%`;
+    texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
+
+    if (data.length < limite) seguir = false;
   }
 
-  // ======================================================
-  // 🚀 5. FUNCIÓN PRINCIPAL
-  // ======================================================
-  async function main() {
-    const supabase = conectarSupabase();
-    await generarGraficaComparativa(supabase);
-    await generarGraficaSucursales(supabase);
-    document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
-  }
+  progreso.style.width = "100%";
+  texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
 
-  // Ejecutar
-  main();
-  </script>
+  const ws = XLSX.utils.json_to_sheet(registrosTotales);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
+  XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+  texto.textContent = "✅ Exportación completa";
+  setTimeout(() => document.body.removeChild(barra), 3000);
+}
+
+// ======================================================
+// 🚀 5. FUNCIÓN PRINCIPAL
+// ======================================================
+async function main() {
+  const supabase = conectarSupabase();
+  await generarGraficaComparativa(supabase);
+  await generarGraficaSucursales(supabase);
+  document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
+}
+
+main();
+</script>
+
 </body>
 </html>
