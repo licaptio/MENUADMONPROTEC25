@@ -87,6 +87,17 @@
     <button id="btnDescargar">⬇️ Descargar Excel</button>
   </div>
 
+<!-- ========================================================== -->
+<!-- 🧩 SECCIÓN 4: GRAFICAS COMPARATIVAS POR SUCURSAL -->
+<!-- ========================================================== -->
+<div class="card">
+  <h2 style="color:#00416A;text-align:center;">Comparativo por Sucursal (2023-2025)</h2>
+  <p style="text-align:center;color:#555;">Evolución mensual por sucursal – comparación de años</p>
+  <div id="contenedorGraficasSucursales"
+       style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;"></div>
+</div>
+
+  
   <script>
 // ======================================================
 // 🔧 1. FUNCIÓN: Conexión a Supabase
@@ -288,6 +299,113 @@ async function generarGraficaSucursales(supabase) {
   selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
 }
 
+// ======================================================
+// 🧩 4. FUNCIÓN: Generar gráficas comparativas por sucursal (2023–2025)
+// ======================================================
+async function generarGraficasSucursalesComparativo(supabase) {
+  const contenedor = document.getElementById("contenedorGraficasSucursales");
+  contenedor.innerHTML = "<p style='text-align:center;'>Cargando datos...</p>";
+
+  const { data, error } = await supabase
+    .from("vista_ingresos_sucursal_anual")
+    .select("serie, periodo_anio, periodo_mes, total_subtotal");
+
+  if (error) {
+    console.error("❌ Error al cargar datos comparativos:", error);
+    contenedor.innerHTML = "<p>Error al cargar datos.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    contenedor.innerHTML = "<p>No hay datos disponibles.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = ""; // limpiar el “Cargando…”
+
+  const sucursales = [...new Set(data.map(d => d.serie))];
+  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const colores = [
+    "rgba(0, 65, 106, 0.8)",
+    "rgba(0, 160, 190, 0.8)",
+    "rgba(100, 190, 255, 0.8)"
+  ];
+
+  sucursales.forEach(serie => {
+    // Crear el contenedor individual
+    const div = document.createElement("div");
+    div.style.flex = "1 1 420px";
+    div.style.minWidth = "380px";
+    div.style.background = "white";
+    div.style.borderRadius = "12px";
+    div.style.padding = "16px";
+    div.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+    div.style.textAlign = "center";
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = `Sucursal ${serie}`;
+    titulo.style.color = "#00416A";
+    titulo.style.marginBottom = "10px";
+    div.appendChild(titulo);
+
+    const canvas = document.createElement("canvas");
+    div.appendChild(canvas);
+    contenedor.appendChild(div);
+
+    // Filtrar los datos de esa sucursal
+    const datosSucursal = data.filter(d => d.serie === serie);
+    const anios = [...new Set(datosSucursal.map(d => d.periodo_anio))].sort();
+
+    // Crear datasets comparativos
+    const datasets = anios.map((anio, i) => ({
+      label: anio,
+      data: mesesOrden.map(mes => {
+        const fila = datosSucursal.find(f => f.periodo_anio === anio && f.periodo_mes === mes);
+        return fila ? Number(fila.total_subtotal) : 0;
+      }),
+      backgroundColor: colores[i % colores.length],
+      borderColor: colores[i % colores.length],
+      borderWidth: 1
+    }));
+
+    new Chart(canvas, {
+      type: "bar",
+      data: { labels: etiquetas, datasets },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: `Comparativo ${serie} – Ingresos por mes`,
+            color: "#00416A"
+          },
+          legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const val = ctx.raw || 0;
+                return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Monto ($)" },
+            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+          }
+        }
+      }
+    });
+  });
+}
+
+    
 // ======================================================
 // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
 // ======================================================
