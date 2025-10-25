@@ -173,81 +173,110 @@
   // ======================================================
   // 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie)
   // ======================================================
-  async function generarGraficaSucursales(supabase) {
-    const selectAnio = document.getElementById("selectorAnioSucursal");
+  // ======================================================
+// 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie) – CORREGIDA
+// ======================================================
+async function generarGraficaSucursales(supabase) {
+  const selectAnio = document.getElementById("selectorAnioSucursal");
+  const ctx = document.getElementById("graficaSucursales").getContext("2d");
+  let graficaSucursales = null; // 🟢 Variable local controlada
 
-    async function cargarDatos(anioSeleccionado) {
-      const { data, error } = await supabase
-        .from("vista_ingresos_sucursales")
-        .select("*")
-        .eq("periodo_anio", anioSeleccionado);
+  async function cargarDatos(anioSeleccionado) {
+    const { data, error } = await supabase
+      .from("vista_ingresos_sucursales")
+      .select("*")
+      .eq("periodo_anio", anioSeleccionado);
 
-      if (error) {
-        console.error(error);
-        alert("Error al cargar datos de sucursales");
-        return;
-      }
-
-      const sucursales = [...new Set(data.map(d => d.serie))];
-      const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-      const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-      const colores = [
-        "#00416A", "#00A0BE", "#64BEFF", "#FFC107",
-        "#DC3545", "#28A745", "#6F42C1", "#FF5733"
-      ];
-
-      const datasets = sucursales.map((serie, i) => ({
-        label: serie,
-        data: mesesOrden.map(mes => {
-          const fila = data.find(f => f.periodo_mes === mes && f.serie === serie);
-          return fila ? Number(fila.total_subtotal) : 0;
-        }),
-        borderColor: colores[i % colores.length],
-        backgroundColor: colores[i % colores.length],
-        tension: 0.3,
-        borderWidth: 3,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        fill: false
-      }));
-
-      const ctx = document.getElementById("graficaSucursales").getContext("2d");
-      if (window.graficaSucursales) window.graficaSucursales.destroy();
-      window.graficaSucursales = new Chart(ctx, {
-        type: "line",
-        data: { labels: etiquetas, datasets },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: `Ingresos por Sucursal – Año ${anioSeleccionado}`,
-              color: "#00416A"
-            },
-            legend: { position: "bottom" },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: $${(ctx.raw || 0).toLocaleString("es-MX", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}`
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: "Monto ($)" },
-              ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
-            }
-          }
-        }
-      });
+    if (error) {
+      console.error(error);
+      alert("Error al cargar datos de sucursales");
+      return;
     }
 
-    await cargarDatos(selectAnio.value);
-    selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
+    if (!data || data.length === 0) {
+      console.warn("⚠️ No hay datos para el año seleccionado");
+      if (graficaSucursales) {
+        graficaSucursales.destroy();
+        graficaSucursales = null;
+      }
+      return;
+    }
+
+    // Agrupar por sucursal
+    const sucursales = [...new Set(data.map(d => d.serie))];
+    const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+    const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const colores = [
+      "#00416A", "#00A0BE", "#64BEFF", "#FFC107",
+      "#DC3545", "#28A745", "#6F42C1", "#FF5733"
+    ];
+
+    // Construir datasets
+    const datasets = sucursales.map((serie, i) => ({
+      label: serie,
+      data: mesesOrden.map(mes => {
+        const fila = data.find(f => f.periodo_mes === mes && f.serie === serie);
+        return fila ? Number(fila.total_subtotal) : 0;
+      }),
+      borderColor: colores[i % colores.length],
+      backgroundColor: colores[i % colores.length],
+      tension: 0.3,
+      borderWidth: 3,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: false
+    }));
+
+    // Destruir anterior si existe (evita error)
+    if (graficaSucursales instanceof Chart) {
+      graficaSucursales.destroy();
+    }
+
+    // Crear nueva gráfica
+    graficaSucursales = new Chart(ctx, {
+      type: "line",
+      data: { labels: etiquetas, datasets },
+      options: {
+        responsive: true,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          title: {
+            display: true,
+            text: `Ingresos por Sucursal – Año ${anioSeleccionado}`,
+            color: "#00416A",
+            font: { size: 16 }
+          },
+          legend: {
+            position: "bottom",
+            labels: { color: "#00416A", font: { size: 13 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const val = ctx.raw || 0;
+                return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Monto ($)" },
+            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+          }
+        }
+      }
+    });
   }
+
+  // Inicialización + eventos
+  await cargarDatos(selectAnio.value);
+  selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
+}
 
   // ======================================================
   // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
