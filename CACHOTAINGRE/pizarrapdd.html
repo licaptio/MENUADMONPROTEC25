@@ -116,6 +116,14 @@
   <div id="contenedorTopClientes" style="max-width:900px;margin:auto;"></div>
 </div>
   
+<!-- ========================================================== -->
+<!-- 📦 SECCIÓN 7: TOP 15 ARTÍCULOS MÁS FACTURADOS (2025) -->
+<!-- ========================================================== -->
+<div class="card">
+  <h2 style="color:#00416A;text-align:center;">📦 Top 15 Artículos Más Facturados – Año 2025</h2>
+  <p style="text-align:center;color:#555;">Basado en subtotales acumulados del campo <b>conceptos</b></p>
+  <div id="contenedorTopArticulos" style="max-width:900px;margin:auto;"></div>
+</div>
   
   <script>
 // ======================================================
@@ -674,6 +682,79 @@ async function mostrarTopClientes2025(supabase) {
     </table>
   `;
 }
+
+// ======================================================
+// 📦 7. FUNCIÓN: TOP 15 ARTÍCULOS MÁS FACTURADOS (AÑO 2025)
+// ======================================================
+async function mostrarTopArticulos2025(supabase) {
+  const contenedor = document.getElementById("contenedorTopArticulos");
+  contenedor.innerHTML = "<p style='text-align:center;'>Cargando artículos...</p>";
+
+  // 📡 Consulta los datos del año 2025
+  const { data, error } = await supabase
+    .from("ingresos_pdd")
+    .select("conceptos, subtotal, periodo_anio")
+    .eq("periodo_anio", 2025);
+
+  if (error) {
+    console.error("❌ Error al cargar artículos:", error);
+    contenedor.innerHTML = "<p>Error al cargar datos.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    contenedor.innerHTML = "<p>No hay datos disponibles para 2025.</p>";
+    return;
+  }
+
+  // 🧮 Agrupar por nombre del artículo (campo conceptos)
+  const acumulado = {};
+  data.forEach(row => {
+    const concepto = (row.conceptos || "Sin descripción").trim();
+    const monto = Number(row.subtotal) || 0;
+    acumulado[concepto] = (acumulado[concepto] || 0) + monto;
+  });
+
+  // 🏆 Ordenar y tomar los 15 más altos
+  const top15 = Object.entries(acumulado)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15);
+
+  const maxValor = top15[0] ? top15[0][1] : 1;
+
+  // 🎨 Crear tabla con barra de progreso
+  contenedor.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#00416A;color:white;">
+          <th style="padding:8px;text-align:left;">#</th>
+          <th style="padding:8px;text-align:left;">Artículo</th>
+          <th style="padding:8px;text-align:right;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${top15.map(([concepto, monto], i) => `
+          <tr>
+            <td style="padding:8px;text-align:center;font-weight:600;">${i + 1}</td>
+            <td style="padding:8px;">${concepto}</td>
+            <td style="padding:8px;text-align:right;">$${monto.toLocaleString("es-MX", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding:4px 8px;">
+              <div style="background:#e5e5e5;border-radius:6px;height:10px;overflow:hidden;">
+                <div style="height:10px;width:${(monto / maxValor) * 100}%;
+                            background:linear-gradient(to right,#0078b9,#00a6ff);"></div>
+              </div>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
     
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
@@ -687,6 +768,8 @@ async function main() {
   await mostrarUltimasFacturasPorSucursal(supabase);
   await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
   await mostrarTopClientes2025(supabase); // 🏆 Nuevo Top 10
+  await mostrarTopArticulos2025(supabase);
+
   
   // 🔹 Botón de descarga
   document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
