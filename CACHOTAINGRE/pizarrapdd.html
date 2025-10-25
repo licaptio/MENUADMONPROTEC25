@@ -90,15 +90,29 @@
       return;
     }
 
-    // Agrupar subtotales por año y mes
-    const acumulado = {};
-    data.forEach(row => {
-      const anio = row.periodo_anio || "Sin año";
-      const mes = row.periodo_mes || "00";
-      const subtotal = parseFloat(row.subtotal || 0);
-      if (!acumulado[anio]) acumulado[anio] = {};
-      acumulado[anio][mes] = (acumulado[anio][mes] || 0) + subtotal;
-    });
+// Agrupar subtotales por año y mes con precisión decimal
+const acumulado = {};
+data.forEach(row => {
+  const anio = row.periodo_anio || "Sin año";
+  const mes = row.periodo_mes || "00";
+
+  // Conversión segura
+  let subtotal = 0;
+  if (row.subtotal !== null && row.subtotal !== undefined && row.subtotal !== "") {
+    subtotal = Number(row.subtotal);
+    if (isNaN(subtotal)) subtotal = 0;
+  }
+
+  // Inicializar acumulador
+  if (!acumulado[anio]) acumulado[anio] = {};
+  if (!acumulado[anio][mes]) acumulado[anio][mes] = 0;
+
+  // Sumar con precisión (evitar errores binarios)
+  acumulado[anio][mes] = parseFloat(
+    (acumulado[anio][mes] + subtotal).toFixed(6)
+  );
+});
+
 
     // Configuración visual
     const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
