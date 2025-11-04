@@ -261,55 +261,55 @@ function limpiarTodo(){
 
 
 /* Telegram y Orden (igual que tenías) */
-function enviarTelegram(){
+function enviarTelegram() {
   const data = inventarios[pagina];
-  if(!data || !data.items) return;
+  if (!data || !data.items) return;
 
-  // Encabezado
-  let mensaje = `📦 ${data.nombre}\n\`\`\`\n`;
-  mensaje += `Producto                          Acum\n`;
-  mensaje += `--------------------------------------\n`;
+  // Construir mensaje
+  let mensaje = `📦 *${data.nombre}*\n`;
+  mensaje += `\n*Producto* — *Acumulado*\n`;
 
-  data.items.forEach(row=>{
-    const acum = parseInt(row[4])||0;
-    if(acum>0){
-      const nombre = row[0].padEnd(30," ").slice(0,30);
-      const acuStr = String(acum).padStart(4," ");
-      mensaje += `${nombre} ${acuStr}\n`;
+  data.items.forEach(row => {
+    const acum = parseInt(row[4]) || 0;
+    if (acum > 0) {
+      mensaje += `• ${row[0]} — ${acum}\n`;
     }
   });
 
-  mensaje += `\`\`\``;
-
-  // Si no hay nada que mandar
-  if(mensaje.trim()===`📦 ${data.nombre}\n\`\`\`\n\`\`\``){
+  // Validación: si no hay productos acumulados
+  if (!mensaje.match(/— \d+/)) {
     alert("⚠ No hay acumulados en esta página para enviar");
     return;
   }
 
-  const token  = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw"; // tu token
-  const chatId = "6617988297"; // tu chat_id
+  // TOKEN y CHAT_ID (no cambies si ya funcionan con tus bots)
+  const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+  const chatId = "6617988297";
 
-  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
+  // Enviar usando fetch
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       chat_id: chatId,
       text: mensaje,
       parse_mode: "Markdown"
     })
   })
-  .then(r=>r.json())
-  .then(data=>{
-    console.log("Enviado:",data);
-    alert("✅ Acumulado enviado a Telegram");
+  .then(async res => {
+    const respuesta = await res.json();
+    if (!respuesta.ok) {
+      console.error("Error Telegram:", respuesta);
+      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
+      return;
+    }
+    alert("✅ Acumulado enviado correctamente a Telegram");
   })
-  .catch(err=>{
-    console.error(err);
-    alert("❌ Error al enviar a Telegram");
+  .catch(err => {
+    console.error("Error de red:", err);
+    alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
   });
 }
-
 
 function generarOrden(){
   const modal = document.getElementById("ordenModal");
@@ -438,3 +438,4 @@ function activarNavegacionTeclas(){
 
 </body>
 </html>
+
