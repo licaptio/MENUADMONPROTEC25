@@ -143,7 +143,7 @@ const inventarios = [
   ["ALUMINIO 10 MTS ALUMSTAR","",5,""],
   ["ENCERADO 10 MTS","",5,""],
   ["ENCERADO 20 MTS","",5,""],
-  ["ROLLO ENCERADO 3 KG","",2,""]
+  ["ROLLO ENCERADO 3 KG","",2,""],
   ["PAPEL HOJAS CORTADO","",10,""]
 ]},
 ];
@@ -311,42 +311,69 @@ function enviarTelegram() {
   });
 }
 
-function generarOrden(){
+function generarOrden() {
   const modal = document.getElementById("ordenModal");
   const list = document.getElementById("orden-list");
-  
-
   list.innerHTML = "";
 
-  // ID aleatorio tipo PDD...
+  // ID aleatorio tipo PDD
   const id = "PDD" + new Date().toISOString().slice(2,10).replace(/-/g,"") +
              Math.random().toString(36).substr(2,3).toUpperCase();
 
-  // Ahora muestra con "PROVEEDORA"
-  
-  inventarios.forEach(g=>{
-    g.items.forEach(row=>{
-      const pedido = parseInt(row[3])||0;
-      if(pedido>0){
+  // Crear mensaje para Telegram
+  let mensaje = `🧾 *ORDEN DE COMPRA – PROVEEDORA PDD*\n`;
+  mensaje += `📅 ${new Date().toLocaleDateString("es-MX")}\n🆔 ${id}\n\n`;
+
+  let hayPedidos = false;
+
+  inventarios.forEach(g => {
+    g.items.forEach(row => {
+      const pedido = parseInt(row[3]) || 0;
+      if (pedido > 0) {
+        hayPedidos = true;
         const li = document.createElement("li");
         li.innerHTML = `📦 ${row[0]} → <strong>${pedido}</strong>`;
         list.appendChild(li);
+        mensaje += `• ${row[0]} — ${pedido}\n`;
       }
     });
   });
 
-  if(list.children.length===0){
+  if (!hayPedidos) {
     list.innerHTML = "<li>No hay productos con pedido</li>";
+    alert("⚠ No hay productos con pedido para enviar");
+    return;
   }
 
-  modal.style.display="flex";
+  modal.style.display = "flex";
+
+  // === Enviar por Telegram ===
+  const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+  const chatId = "6617988297";
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  })
+  .then(async res => {
+    const respuesta = await res.json();
+    if (!respuesta.ok) {
+      console.error("Error Telegram:", respuesta);
+      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
+      return;
+    }
+    alert("✅ Orden de compra enviada correctamente a Telegram");
+  })
+  .catch(err => {
+    console.error("Error de red:", err);
+    alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
+  });
 }
-function cerrarModal(){ document.getElementById("ordenModal").style.display="none"; }
-
-/* init */
-loadData();
-render();  // 👉 Al iniciar, pagina=0 → abre índice
-
 </script>
 <div id="ordenModal" class="modal">
   <div class="modal-content" id="ordenContenido" 
@@ -438,4 +465,5 @@ function activarNavegacionTeclas(){
 
 </body>
 </html>
+
 
