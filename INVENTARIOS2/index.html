@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📦 Índice de Inventarios | PROVSOFT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#00416A; --gris:#f7f8fb; --acento:#0c6cbd;
+    --texto:#1f2937; --shadow:0 3px 8px rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,var(--azul),#E4E5E6);
+    color:var(--texto); min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:20px;
+  }
+  header{
+    background:rgba(255,255,255,0.95);
+    box-shadow:var(--shadow);
+    border-radius:12px;
+    padding:15px 20px;
+    width:100%; max-width:600px;
+    text-align:center; margin-bottom:20px;
+  }
+  header h1{
+    font-size:1.5rem; color:var(--azul);
+  }
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px; width:100%; max-width:600px;
+  }
+  a.card{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:#fff; padding:18px; border-radius:14px;
+    text-decoration:none; box-shadow:var(--shadow);
+    transition:all .2s ease; font-weight:600; color:var(--azul);
+  }
+  a.card:hover{
+    transform:translateY(-3px);
+    background:#0c6cbd; color:#fff;
+  }
+  footer{
+    margin-top:30px; font-size:.85rem; color:#333; opacity:.8;
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>📋 Panel de Inventarios – PROVSOFT</h1>
+    <p>Selecciona un inventario para abrirlo</p>
+  </header>
+
+  <div class="grid">
+    <a href="ALUMINIOSPAPEL.html" class="card">📦 Aluminio y Papel</a>
+    <a href="PROVEX1.html" class="card">📦 Proveedora General</a>
+    <!-- Agrega más enlaces aquí -->
+    <!-- <a href="DESECHABLES.html" class="card">🧃 Desechables</a> -->
+    <!-- <a href="LIMPIEZA.html" class="card">🧽 Limpieza</a> -->
+  </div>
+
+  <footer>
+    © 2025 PROVSOFT – Sistema de Inventarios Local
+  </footer>
+
+</body>
+</html>
