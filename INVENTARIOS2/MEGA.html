@@ -269,7 +269,6 @@ const inventarios = [
   ]},
 ];
 
-let pagina = 0;
 
 // === Render principal ===
 function render(){ 
@@ -348,6 +347,10 @@ function render(){
 // === Funciones de navegación ===
 function siguiente(){ if(pagina<inventarios.length-1){ pagina++; render(); } }
 function anterior(){ if(pagina>0){ pagina--; render(); } }
+// === Generador de clave local ===
+function getStorageKey() {
+  return "inventariosData_" + document.title.replace(/\s+/g, "_") + "_pagina_" + pagina;
+}
 
 // === Guardado Local ===
 function saveData() {
@@ -577,14 +580,14 @@ function cerrarModal() {
   document.getElementById("ordenModal").style.display = "none";
 }
 // === Inicialización al cargar la página ===
+
+function getStorageKey() {
+  return "inventariosData_" + document.title.replace(/\s+/g, "_") + "_pagina_" + pagina;
+}
 window.addEventListener("DOMContentLoaded", () => {
   loadData();
   render();
 });
-function getStorageKey() {
-  return "inventariosData_" + document.title.replace(/\s+/g, "_") + "_pagina_" + pagina;
-}
-
 </script>
 
 </body>
