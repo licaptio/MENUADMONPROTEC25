@@ -351,11 +351,11 @@ function anterior(){ if(pagina>0){ pagina--; render(); } }
 
 // === Guardado Local ===
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(inventarios[pagina]));
+  localStorage.setItem(getStorageKey(), JSON.stringify(inventarios[pagina]));
 }
 
 function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(getStorageKey());
   if (!raw) return;
   try {
     const parsed = JSON.parse(raw);
@@ -363,18 +363,15 @@ function loadData() {
   } catch(e) { console.error(e); }
 }
 
-
-
 function limpiarTodo(){
   if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
   inventarios.forEach(g=>g.items.forEach(r=>{
     r[1] = ""; r[3] = ""; r[4] = 0;
   }));
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(getStorageKey());
   render();
   alert("✅ Inventario y localStorage limpiados");
 }
-
 
 /* Telegram y Orden (igual que tenías) */
 function enviarTelegram() {
@@ -584,6 +581,9 @@ window.addEventListener("DOMContentLoaded", () => {
   loadData();
   render();
 });
+function getStorageKey() {
+  return "inventariosData_" + document.title.replace(/\s+/g, "_") + "_pagina_" + pagina;
+}
 
 </script>
 
