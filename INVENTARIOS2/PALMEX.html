@@ -5,87 +5,203 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Paginación Inventarios</title>
 <style>
-  :root{
-    --primary:#2c3e50; --secondary:#3498db; --bg:#f7f8fb; --border:#e2e8f0;
-    --text:#1f2937; --ok:#16a34a; --warn:#f59e0b; --card:#fff; --muted:#6b7280;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:Arial, sans-serif;
-    background:var(--bg); color:var(--text);
-    padding:10px 10px 84px;
-  }
-  .container{max-width:900px;margin:0 auto}
-  header{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0 8px}
-  h2{
-    font-size:1.12rem;text-align:center;color:var(--primary);
-    background:var(--card);border-radius:12px;padding:8px 10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:6px;
-    display:flex;justify-content:center;gap:8px;align-items:center
-  }
-  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
-  thead th{background:var(--primary);color:#fff;padding:.6rem}
-  td{padding:.5rem;border-bottom:1px solid var(--border)}
-  .producto{font-weight:bold}
-  .compact-row{display:flex;align-items:center;gap:5px}
-  .spinner{display:inline-flex;align-items:center;gap:4px}
-  .spinner button{
-    background:#e5e7eb;border:none;border-radius:6px;padding:2px 6px;
-    cursor:pointer;font-size:1rem;font-weight:bold;line-height:1
-  }
-  .stock-badge{font-size:.85rem;background:#f9fafb;padding:2px 6px;border-radius:6px}
-  /* acciones abajo */
-  .actions{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:8px;border-top:1px solid #ddd}
-  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-  button.action{padding:.6rem .5rem;font-weight:bold;border:none;border-radius:10px;color:#fff}
-  #btn-anterior{background:#9ca3af} #btn-siguiente{background:var(--ok)}
-  #btn-enviar{background:var(--warn)} #btn-orden{background:#6d28d9}
-  #btn-limpiar{background:#ef4444}
-/* Quitar spinners de los inputs tipo number */
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+:root{
+  --primary:#2c3e50;
+  --secondary:#3498db;
+  --bg:#f7f8fb;
+  --border:#e2e8f0;
+  --text:#1f2937;
+  --ok:#16a34a;
+  --warn:#f59e0b;
+  --card:#fff;
+  --muted:#6b7280;
 }
-input[type=number] {
-  -moz-appearance: textfield; /* Firefox */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Poppins',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  padding:10px 10px 90px;
 }
-/* Modal */
-.modal {
-  display:none; position:fixed; z-index:100; left:0; top:0;
-  width:100%; height:100%; background:rgba(0,0,0,0.4);
-  justify-content:center; align-items:center;
+
+/* CONTENEDOR GENERAL */
+.container{max-width:900px;margin:0 auto}
+
+/* ENCABEZADO */
+header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:var(--bg);
+  padding:8px 0 10px;
 }
-.modal-content {
-  background:#fff; padding:20px; border-radius:12px;
-  max-width:400px; width:90%; text-align:center;
+h2{
+  font-size:1.2rem;
+  text-align:center;
+  color:var(--primary);
+  background:var(--card);
+  border-radius:12px;
+  padding:10px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  margin-bottom:6px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  align-items:center;
+}
+
+/* TABLA GENERAL */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+  font-size:0.9rem;
+}
+thead th{
+  background:var(--primary);
+  color:#fff;
+  padding:.6rem;
+  text-align:left;
+}
+td{
+  padding:.5rem .4rem;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+  font-size:0.9rem;
+}
+.producto{font-weight:bold;font-size:0.9rem;}
+input[type=number]{
+  width:70px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  padding:4px;
+  font-size:0.9rem;
+  text-align:center;
+}
+
+/* SPINNERS */
+.spinner{display:inline-flex;align-items:center;gap:4px;}
+.spinner button{
+  background:#e5e7eb;
+  border:none;
+  border-radius:6px;
+  padding:2px 6px;
+  cursor:pointer;
+  font-size:1.2rem;
+  font-weight:bold;
+  line-height:1;
+}
+
+/* BARRA DE ACCIONES INFERIOR */
+.actions{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#fff;
+  padding:10px 8px 12px;
+  border-top:1px solid #ddd;
+  box-shadow:0 -2px 8px rgba(0,0,0,0.08);
+}
+.grid {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+button.action{
+  padding:.7rem .5rem;
+  font-weight:bold;
+  border:none;
+  border-radius:10px;
+  color:#fff;
+  font-size:0.9rem;
+}
+#btn-anterior{background:#9ca3af}
+#btn-siguiente{background:var(--ok)}
+#btn-enviar{background:var(--warn)}
+#btn-orden{background:#6d28d9}
+#btn-limpiar{background:#ef4444}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  z-index:100;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.4);
+  justify-content:center;
+  align-items:center;
+  padding:10px;
+}
+.modal-content{
+  background:#fff;
+  padding:18px;
+  border-radius:12px;
+  max-width:400px;
+  width:100%;
+  text-align:center;
   box-shadow:0 4px 12px rgba(0,0,0,0.2);
   animation:fadeIn .3s;
 }
-.modal-content h3 {margin-bottom:10px; color:#111;}
-.modal-content ul {list-style:none; padding:0; margin:10px 0;}
-.modal-content li {padding:6px 0; border-bottom:1px solid #eee;}
+.modal-content h3{margin-bottom:10px;color:#111;}
+.modal-content ul{list-style:none;padding:0;margin:10px 0;text-align:left;}
+.modal-content li{padding:6px 0;border-bottom:1px solid #eee;}
 .modal-content li:last-child{border-bottom:none;}
-.modal-content strong{color:#000; font-weight:700;}
-.modal button {
-  background:#2563eb; color:white; border:none;
-  padding:8px 20px; border-radius:8px; margin-top:12px;
-  cursor:pointer; font-size:1rem;
+.modal-content strong{color:#000;font-weight:700;}
+.modal button{
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:10px 20px;
+  border-radius:8px;
+  margin-top:12px;
+  cursor:pointer;
+  font-size:1rem;
 }
-@keyframes fadeIn {from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
-.indice {
-  background:#fff; border:1px solid var(--border); border-radius:10px;
-  padding:8px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,.05);
-  display:flex; flex-wrap:wrap; gap:6px;
+
+/* INDICE */
+.indice{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:8px;
+  margin-bottom:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
 }
-.indice button {
-  background:var(--secondary); color:#fff; border:none;
-  padding:6px 10px; border-radius:6px; cursor:pointer;
+.indice button{
+  background:var(--secondary);
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
   font-size:0.85rem;
 }
-.indice button:hover { background:#2563eb; }
+.indice button:hover{background:#2563eb;}
 
+/* MOBILE FIRST ADAPTACIONES */
+@media (max-width:600px){
+  h2{font-size:1rem;padding:8px;}
+  thead th, td{font-size:0.8rem;}
+  input[type=number]{width:60px;font-size:0.8rem;}
+  .spinner button{padding:1px 5px;font-size:1rem;}
+  .grid{grid-template-columns:repeat(2,1fr);}
+  button.action{font-size:0.8rem;padding:.6rem .3rem;}
+  .modal-content{max-width:90%;padding:16px;}
+  .modal-content ul{font-size:0.85rem;}
+}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
 </style>
+
 </head>
 <body>
   <div class="container">
@@ -112,16 +228,16 @@ input[type=number] {
     </div>
   </div>
 
-  <!-- Barra acciones -->
-  <div class="actions">
-    <div class="grid">
-      <button id="btn-anterior" class="action" onclick="anterior()">⬅ Anterior</button>
-      <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
-      <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
-      <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
-      <button id="btn-siguiente" class="action" onclick="siguiente()">Siguiente ➡</button>
-    </div>
+ <!-- Sustituye desde aquí (donde estaba la barra de acciones) -->
+<div class="actions" style="position:static; margin-top:15px;">
+  <div class="grid">
+    <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
+    <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
+    <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
   </div>
+</div>
+<!-- Hasta aquí -->
+
 
 
 
@@ -259,92 +375,119 @@ function limpiarTodo(){
 
 
 /* Telegram y Orden (igual que tenías) */
-function enviarTelegram(){
+function enviarTelegram() {
   const data = inventarios[pagina];
-  if(!data || !data.items) return;
+  if (!data || !data.items) return;
 
-  // Encabezado
-  let mensaje = `📦 ${data.nombre}\n\`\`\`\n`;
-  mensaje += `Producto                          Acum\n`;
-  mensaje += `--------------------------------------\n`;
+  // Construir mensaje
+  let mensaje = `📦 *${data.nombre}*\n`;
+  mensaje += `\n*Producto* — *Acumulado*\n`;
 
-  data.items.forEach(row=>{
-    const acum = parseInt(row[4])||0;
-    if(acum>0){
-      const nombre = row[0].padEnd(30," ").slice(0,30);
-      const acuStr = String(acum).padStart(4," ");
-      mensaje += `${nombre} ${acuStr}\n`;
+  data.items.forEach(row => {
+    const acum = parseInt(row[4]) || 0;
+    if (acum > 0) {
+      mensaje += `• ${row[0]} — ${acum}\n`;
     }
   });
 
-  mensaje += `\`\`\``;
-
-  // Si no hay nada que mandar
-  if(mensaje.trim()===`📦 ${data.nombre}\n\`\`\`\n\`\`\``){
+  // Validación: si no hay productos acumulados
+  if (!mensaje.match(/— \d+/)) {
     alert("⚠ No hay acumulados en esta página para enviar");
     return;
   }
 
-  const token  = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw"; // tu token
-  const chatId = "6617988297"; // tu chat_id
+  // TOKEN y CHAT_ID (no cambies si ya funcionan con tus bots)
+  const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+  const chatId = "6617988297";
 
-  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
+  // Enviar usando fetch
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       chat_id: chatId,
       text: mensaje,
       parse_mode: "Markdown"
     })
   })
-  .then(r=>r.json())
-  .then(data=>{
-    console.log("Enviado:",data);
-    alert("✅ Acumulado enviado a Telegram");
+  .then(async res => {
+    const respuesta = await res.json();
+    if (!respuesta.ok) {
+      console.error("Error Telegram:", respuesta);
+      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
+      return;
+    }
+    alert("✅ Acumulado enviado correctamente a Telegram");
   })
-  .catch(err=>{
-    console.error(err);
-    alert("❌ Error al enviar a Telegram");
+  .catch(err => {
+    console.error("Error de red:", err);
+    alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
   });
 }
 
-
-function generarOrden(){
+function generarOrden() {
   const modal = document.getElementById("ordenModal");
   const list = document.getElementById("orden-list");
-  
-
   list.innerHTML = "";
 
-  // ID aleatorio tipo PDD...
+  // ID aleatorio tipo PDD
   const id = "PDD" + new Date().toISOString().slice(2,10).replace(/-/g,"") +
              Math.random().toString(36).substr(2,3).toUpperCase();
 
-  // Ahora muestra con "PROVEEDORA"
-  
-  inventarios.forEach(g=>{
-    g.items.forEach(row=>{
-      const pedido = parseInt(row[3])||0;
-      if(pedido>0){
+  // Crear mensaje para Telegram
+  let mensaje = `🧾 *ORDEN DE COMPRA – PROVEEDORA PDD*\n`;
+  mensaje += `📅 ${new Date().toLocaleDateString("es-MX")}\n🆔 ${id}\n\n`;
+
+  let hayPedidos = false;
+
+  inventarios.forEach(g => {
+    g.items.forEach(row => {
+      const pedido = parseInt(row[3]) || 0;
+      if (pedido > 0) {
+        hayPedidos = true;
         const li = document.createElement("li");
         li.innerHTML = `📦 ${row[0]} → <strong>${pedido}</strong>`;
         list.appendChild(li);
+        mensaje += `• ${row[0]} — ${pedido}\n`;
       }
     });
   });
 
-  if(list.children.length===0){
+  if (!hayPedidos) {
     list.innerHTML = "<li>No hay productos con pedido</li>";
+    alert("⚠ No hay productos con pedido para enviar");
+    return;
   }
 
-  modal.style.display="flex";
+  modal.style.display = "flex";
+
+  // === Enviar por Telegram ===
+  const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
+  const chatId = "6617988297";
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: mensaje,
+      parse_mode: "Markdown"
+    })
+  })
+  .then(async res => {
+    const respuesta = await res.json();
+    if (!respuesta.ok) {
+      console.error("Error Telegram:", respuesta);
+      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
+      return;
+    }
+    alert("✅ Orden de compra enviada correctamente a Telegram");
+  })
+  .catch(err => {
+    console.error("Error de red:", err);
+    alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
+  });
 }
-function cerrarModal(){ document.getElementById("ordenModal").style.display="none"; }
-
-/* init */
-loadData();
-render();  // 👉 Al iniciar, pagina=0 → abre índice
-
 </script>
 <div id="ordenModal" class="modal">
   <div class="modal-content" id="ordenContenido" 
@@ -431,6 +574,14 @@ function activarNavegacionTeclas(){
     });
   });
 }
+function cerrarModal() {
+  document.getElementById("ordenModal").style.display = "none";
+}
+// === Inicialización al cargar la página ===
+window.addEventListener("DOMContentLoaded", () => {
+  loadData();
+  render();
+});
 
 </script>
 
