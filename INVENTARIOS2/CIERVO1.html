@@ -227,16 +227,16 @@ button.action{
     </div>
   </div>
 
-  <!-- Barra acciones -->
-  <div class="actions">
-    <div class="grid">
-      <button id="btn-anterior" class="action" onclick="anterior()">⬅ Anterior</button>
-      <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
-      <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
-      <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
-      <button id="btn-siguiente" class="action" onclick="siguiente()">Siguiente ➡</button>
-    </div>
+ <!-- Sustituye desde aquí (donde estaba la barra de acciones) -->
+<div class="actions" style="position:static; margin-top:15px;">
+  <div class="grid">
+    <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
+    <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
+    <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
   </div>
+</div>
+<!-- Hasta aquí -->
+
 
 
 
@@ -600,3 +600,4 @@ window.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
