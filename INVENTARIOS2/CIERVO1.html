@@ -105,10 +105,11 @@ input[type=number]{
   border-top:1px solid #ddd;
   box-shadow:0 -2px 8px rgba(0,0,0,0.08);
 }
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(80px,1fr));
-  gap:6px;
+.grid {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 button.action{
   padding:.7rem .5rem;
@@ -600,4 +601,5 @@ window.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
