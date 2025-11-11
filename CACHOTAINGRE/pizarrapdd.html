@@ -55,14 +55,6 @@
   <h1>PROVSOFT – Dashboard Ingresos PDD</h1>
 
   <!-- ========================================================== -->
-  <!-- 📊 SECCIÓN 1: COMPARATIVO POR AÑO Y MES -->
-  <!-- ========================================================== -->
-  <div class="card">
-    <h2 style="color:#00416A;text-align:center;">Comparativo por Año y Mes</h2>
-    <canvas id="grafica"></canvas>
-  </div>
-
-  <!-- ========================================================== -->
   <!-- 📈 SECCIÓN 2: COMPARATIVO POR SUCURSAL (SERIE) -->
   <!-- ========================================================== -->
   <div class="card">
@@ -134,101 +126,6 @@ function conectarSupabase() {
     "https://cvpbtjlupswbyxenugpz.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
   );
-}
-
-// ======================================================
-// 📊 2. FUNCIÓN: Gráfica comparativa por año y mes (desde vista_ingresos_mensuales)
-// ======================================================
-async function generarGraficaComparativa(supabase) {
-  const ctx = document.getElementById("grafica").getContext("2d");
-  let graficaComparativa = null;
-
-  // 📡 Leer datos desde la nueva vista
-  const { data, error } = await supabase
-    .from("vista_ingresos_mensuales")
-    .select("periodo_anio, periodo_mes, total_subtotal");
-
-  if (error) {
-    console.error("❌ Error al cargar ingresos:", error);
-    alert("Error al cargar datos de ingresos");
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("⚠️ No hay datos para mostrar");
-    return;
-  }
-
-  // 🧮 Agrupar por año y mes
-  const acumulado = {};
-  data.forEach(row => {
-    const anio = String(row.periodo_anio);
-    const mes = String(row.periodo_mes).padStart(2, "0");
-    const val = Number(row.total_subtotal) || 0;
-    if (!acumulado[anio]) acumulado[anio] = {};
-    acumulado[anio][mes] = val;
-  });
-
-  // 📅 Configuración de meses y colores
-  const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  const colores = [
-    "rgba(0, 65, 106, 0.8)",
-    "rgba(0, 160, 190, 0.8)",
-    "rgba(100, 190, 255, 0.8)",
-    "rgba(255, 193, 7, 0.8)"
-  ];
-
-  // 📊 Crear datasets por año
-  const datasets = Object.keys(acumulado).sort().map((anio, i) => ({
-    label: anio,
-    data: mesesOrden.map(m => acumulado[anio][m] || 0),
-    backgroundColor: colores[i % colores.length],
-    borderColor: colores[i % colores.length],
-    borderWidth: 1
-  }));
-
-  // 🧹 Limpiar gráfica previa
-  if (graficaComparativa instanceof Chart) graficaComparativa.destroy();
-
-  // 🧭 Graficar
-  graficaComparativa = new Chart(ctx, {
-    type: "bar",
-    data: { labels: etiquetas, datasets },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          suggestedMax: Math.max(...datasets.flatMap(d => d.data)) * 1.1,
-          title: { display: true, text: "Monto ($)" },
-          ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
-        }
-      },
-      plugins: {
-        title: {
-          display: true,
-          text: "Comparativo histórico de ingresos (Vista agrupada por año y mes)",
-          color: "#00416A",
-          font: { size: 16 }
-        },
-        legend: { position: "top", labels: { color: "#00416A" } },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const val = ctx.raw || 0;
-              return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`;
-            }
-          }
-        }
-      }
-    }
-  });
-
-  console.log("✅ Datos graficados (vista_ingresos_mensuales):", acumulado);
 }
 
 // ======================================================
@@ -764,7 +661,6 @@ async function main() {
   const supabase = conectarSupabase();
   
   // 🔹 Cargar las tres gráficas principales
-  await generarGraficaComparativa(supabase);
   await generarGraficaSucursales(supabase);
   await mostrarUltimasFacturasPorSucursal(supabase);
   await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
