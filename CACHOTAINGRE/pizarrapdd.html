@@ -662,36 +662,45 @@ const monto = Number(row.total_subtotal) || 0;
   `;
 }
 // ======================================================
-// 💰 FUNCIÓN: Ingresos Totales 2025 con Impuestos (mes a mes)
+// 💰 FUNCIÓN: Ingresos Totales 2025 con Impuestos (ajustada)
 // ======================================================
 async function generarGraficaTotales2025(supabase) {
   const ctx = document.getElementById("graficaTotales2025").getContext("2d");
 
-  // 📡 Consultar ingresos del RFC PDD031204KL5, año 2025
+  // 📡 Cargar todos los registros 2025 (sin filtrar aún por RFC)
   const { data, error } = await supabase
     .from("ingresos_pdd")
-    .select("periodo_anio, periodo_mes, total, rfc_emisor")
-    .eq("periodo_anio", 2025)
-    .eq("rfc_emisor", "PDD031204KL5");
+    .select("periodo_anio, periodo_mes, total, rfc_emisor");
 
   if (error) {
-    console.error("❌ Error al cargar datos:", error);
+    console.error("❌ Error al cargar ingresos:", error);
     alert("Error al cargar datos de ingresos totales");
     return;
   }
 
   if (!data || data.length === 0) {
-    console.warn("⚠️ No hay datos de ingresos 2025");
+    console.warn("⚠️ No hay datos disponibles");
     return;
   }
 
-  // 🧮 Agrupar por mes y sumar total
+  // 🧹 Filtro robusto: RFC exacto, ignorando mayúsculas/minúsculas y espacios
+  const datosFiltrados = data.filter(row =>
+    (row.periodo_anio === 2025) &&
+    (row.rfc_emisor || "").trim().toUpperCase() === "PDD031204KL5"
+  );
+
+  if (datosFiltrados.length === 0) {
+    console.warn("⚠️ No se encontraron facturas del RFC PDD031204KL5 en 2025");
+    return;
+  }
+
+  // 🧮 Agrupar totales por mes
   const meses = ["01","02","03","04","05","06","07","08","09","10","11","12"];
   const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const totalesPorMes = {};
 
-  data.forEach(row => {
-    const mes = row.periodo_mes;
+  datosFiltrados.forEach(row => {
+    const mes = String(row.periodo_mes).padStart(2, "0");
     const total = Number(row.total) || 0;
     if (!totalesPorMes[mes]) totalesPorMes[mes] = 0;
     totalesPorMes[mes] += total;
@@ -699,7 +708,7 @@ async function generarGraficaTotales2025(supabase) {
 
   const valores = meses.map(m => totalesPorMes[m] || 0);
 
-  // 📊 Crear la gráfica
+  // 📊 Renderizar gráfica
   new Chart(ctx, {
     type: "bar",
     data: {
@@ -717,7 +726,7 @@ async function generarGraficaTotales2025(supabase) {
       plugins: {
         title: {
           display: true,
-          text: "Ingresos Totales 2025 – PDD031204KL5",
+          text: "Ingresos Totales 2025 – RFC PDD031204KL5",
           color: "#00416A",
           font: { size: 16 }
         },
@@ -746,6 +755,7 @@ async function generarGraficaTotales2025(supabase) {
 
   console.log("✅ Ingresos totales 2025 graficados:", totalesPorMes);
 }
+
     
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
