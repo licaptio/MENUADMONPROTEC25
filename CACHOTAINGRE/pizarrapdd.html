@@ -583,7 +583,7 @@ async function generarGraficaHistorica(supabase) {
 
   // 📡 Leer todos los registros del RFC en la vista
   const { data, error } = await supabase
-    .from("vista_ingresos_totales_mensuales")
+    .from("vista_ingresos_totales_anuales")
     .select("periodo_anio, periodo_mes, total_con_impuestos, rfc_emisor")
     .eq("rfc_emisor", "PDD031204KL5")
     .order("periodo_anio", { ascending: true })
