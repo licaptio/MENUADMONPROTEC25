@@ -576,14 +576,14 @@ const monto = Number(row.total_subtotal) || 0;
   `;
 }
 // ======================================================
-// 📈 FUNCIÓN: Gráfica histórica mensual (todos los años)
+// 📈 FUNCIÓN CORREGIDA: Gráfica histórica mensual (multi-año)
 // ======================================================
 async function generarGraficaHistorica(supabase) {
   const ctx = document.getElementById("graficaHistorica").getContext("2d");
 
-  // 📡 Leer todos los registros del RFC en la vista
+  // 📡 Leer datos de la vista existente
   const { data, error } = await supabase
-    .from("vista_ingresos_totales_anuales")
+    .from("vista_ingresos_totales_mensuales")
     .select("periodo_anio, periodo_mes, total_con_impuestos, rfc_emisor")
     .eq("rfc_emisor", "PDD031204KL5")
     .order("periodo_anio", { ascending: true })
@@ -600,10 +600,9 @@ async function generarGraficaHistorica(supabase) {
     return;
   }
 
-  // 🧮 Crear etiquetas combinadas: "Ene 2023", "Feb 2023", ..., "Dic 2025"
+  // 🧮 Crear etiquetas tipo "Ene 2023", "Feb 2023", etc.
   const etiquetas = [];
   const valores = [];
-
   const nombresMes = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
   data.forEach(row => {
@@ -613,7 +612,7 @@ async function generarGraficaHistorica(supabase) {
     valores.push(Number(row.total_con_impuestos) || 0);
   });
 
-  // 🎨 Crear gráfica de línea continua
+  // 🎨 Gráfica tipo línea
   new Chart(ctx, {
     type: "line",
     data: {
@@ -670,16 +669,17 @@ async function generarGraficaHistorica(supabase) {
 }
 
 // ======================================================
-// 💵 FUNCIÓN: Mostrar resumen anual antes de impuestos
+// 💵 FUNCIÓN CORREGIDA: Mostrar resumen anual (subtotal)
 // ======================================================
 async function mostrarResumenIngresosAnuales(supabase) {
   const contenedor = document.getElementById("contenedorResumenIngresos");
   contenedor.innerHTML = "<p style='text-align:center;'>Cargando resumen...</p>";
 
+  // 📡 Agrupar totales anuales desde ingresos_pdd
   const { data, error } = await supabase
-    .from("vista_ingresos_totales_mensuales")
-    .select("periodo_anio, rfc_emisor, total_sin_impuestos")
-    .eq("rfc_emisor", "PDD031204KL5");
+    .from("ingresos_pdd")
+    .select("periodo_anio, subtotal")
+    .not("periodo_anio", "is", null);
 
   if (error) {
     console.error("❌ Error al cargar resumen:", error);
@@ -692,26 +692,36 @@ async function mostrarResumenIngresosAnuales(supabase) {
     return;
   }
 
-  // 🧮 Ordenar por año y tomar los últimos tres
-  const datosOrdenados = data.sort((a, b) => a.periodo_anio - b.periodo_anio);
-  const ultimos = datosOrdenados.slice(-3);
-  const maxValor = Math.max(...ultimos.map(x => x.total_sin_impuestos));
+  // 🧮 Agrupar por año
+  const totalesPorAnio = {};
+  data.forEach(row => {
+    const anio = row.periodo_anio;
+    const monto = Number(row.subtotal) || 0;
+    totalesPorAnio[anio] = (totalesPorAnio[anio] || 0) + monto;
+  });
 
-  // 🎨 Renderizar tabla con barras comparativas
+  const anios = Object.keys(totalesPorAnio).sort();
+  const ultimos = anios.slice(-3).map(a => ({
+    periodo_anio: a,
+    total: totalesPorAnio[a]
+  }));
+  const maxValor = Math.max(...ultimos.map(x => x.total));
+
+  // 🎨 Renderizar resumen con barras
   contenedor.innerHTML = `
     <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
       <thead>
         <tr style="background:#00416A;color:white;">
           <th style="padding:10px;">Año</th>
-          <th style="padding:10px;text-align:right;">Total sin impuestos</th>
+          <th style="padding:10px;text-align:right;">Total subtotal</th>
         </tr>
       </thead>
       <tbody>
-        ${ultimos.map((row, i) => `
-          <tr style="background:${row.periodo_anio === 2025 ? '#D1F7D1' : '#f8f8f8'};">
+        ${ultimos.map(row => `
+          <tr style="background:${row.periodo_anio == 2025 ? '#D1F7D1' : '#f8f8f8'};">
             <td style="padding:8px;font-weight:600;">${row.periodo_anio}</td>
             <td style="padding:8px;text-align:right;font-weight:600;">
-              $${Number(row.total_sin_impuestos).toLocaleString("es-MX", {
+              $${Number(row.total).toLocaleString("es-MX", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
@@ -726,13 +736,13 @@ async function mostrarResumenIngresosAnuales(supabase) {
         <div style="margin:10px 0;">
           <div style="display:flex;justify-content:space-between;color:#00416A;font-weight:600;">
             <span>${row.periodo_anio}</span>
-            <span>$${Number(row.total_sin_impuestos).toLocaleString("es-MX")}</span>
+            <span>$${Number(row.total).toLocaleString("es-MX")}</span>
           </div>
           <div style="background:#eee;border-radius:8px;height:10px;overflow:hidden;">
-            <div style="height:10px;width:${(row.total_sin_impuestos / maxValor) * 100}%;
-                        background:${row.periodo_anio === 2025 ? '#28A745' :
-                                   row.periodo_anio === 2024 ? '#FFC107' :
-                                   '#E91E63'};
+            <div style="height:10px;width:${(row.total / maxValor) * 100}%,
+                        background:${row.periodo_anio == 2025 ? '#28A745' :
+                                   row.periodo_anio == 2024 ? '#FFC107' :
+                                   '#E91E63'},
                         border-radius:8px;"></div>
           </div>
         </div>
