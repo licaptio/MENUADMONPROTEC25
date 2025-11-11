@@ -289,17 +289,24 @@ async function generarGraficasSucursalesComparativo(supabase) {
     const datosSucursal = data.filter(d => d.serie === serie);
     const anios = [...new Set(datosSucursal.map(d => d.periodo_anio))].sort();
 
-    // Crear datasets comparativos
-    const datasets = anios.map((anio, i) => ({
-      label: anio,
-      data: mesesOrden.map(mes => {
-        const fila = datosSucursal.find(f => f.periodo_anio === anio && f.periodo_mes === mes);
-        return fila ? Number(fila.total_subtotal) : 0;
-      }),
-      backgroundColor: colores[i % colores.length],
-      borderColor: colores[i % colores.length],
-      borderWidth: 1
-    }));
+// Crear datasets comparativos con colores fijos por año
+const coloresPorAnio = {
+  2023: "#E91E63", // rosa
+  2024: "#FFC107", // amarillo
+  2025: "#28A745"  // verde
+};
+
+const datasets = anios.map(anio => ({
+  label: anio,
+  data: mesesOrden.map(mes => {
+    const fila = datosSucursal.find(f => f.periodo_anio === anio && f.periodo_mes === mes);
+    return fila ? Number(fila.total_subtotal) : 0;
+  }),
+  backgroundColor: coloresPorAnio[anio] || "#999", // color por año o gris por defecto
+  borderColor: coloresPorAnio[anio] || "#999",
+  borderWidth: 1
+}));
+
 
     new Chart(canvas, {
       type: "bar",
