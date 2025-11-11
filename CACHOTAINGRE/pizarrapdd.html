@@ -70,12 +70,12 @@
     <canvas id="graficaSucursales"></canvas>
   </div>
 <!-- ========================================================== -->
-<!-- 💰 SECCIÓN NUEVA: INGRESOS 2025 TOTALES CON IMPUESTOS -->
+<!-- 📈 SECCIÓN: HISTÓRICO MENSUAL DE INGRESOS (MULTI-AÑO) -->
 <!-- ========================================================== -->
 <div class="card">
-  <h2 style="color:#00416A;text-align:center;">💰 Ingresos Totales 2025 (con Impuestos)</h2>
-  <p style="text-align:center;color:#555;">Suma mensual de ingresos con impuestos — RFC: PDD031204KL5</p>
-  <canvas id="graficaTotales2025"></canvas>
+  <h2 style="color:#00416A;text-align:center;">📈 Histórico Mensual de Ingresos (Todos los Años)</h2>
+  <p style="text-align:center;color:#555;">Evolución mensual total — RFC: PDD031204KL5</p>
+  <canvas id="graficaHistorica"></canvas>
 </div>
 
   <!-- ========================================================== -->
@@ -662,48 +662,58 @@ const monto = Number(row.total_subtotal) || 0;
   `;
 }
 // ======================================================
-// 💰 FUNCIÓN: Ingresos Totales Mensuales (desde vista general)
+// 📈 FUNCIÓN: Gráfica histórica mensual (todos los años)
 // ======================================================
-async function generarGraficaTotalesAnuales(supabase, anio = 2025) {
-  const ctx = document.getElementById("graficaTotales2025").getContext("2d");
+async function generarGraficaHistorica(supabase) {
+  const ctx = document.getElementById("graficaHistorica").getContext("2d");
 
-  // 📡 Consulta la vista general, filtrando por año y RFC
+  // 📡 Leer todos los registros del RFC en la vista
   const { data, error } = await supabase
     .from("vista_ingresos_totales_mensuales")
     .select("periodo_anio, periodo_mes, total_con_impuestos, rfc_emisor")
-    .eq("periodo_anio", anio)
-    .eq("rfc_emisor", "PDD031204KL5");
+    .eq("rfc_emisor", "PDD031204KL5")
+    .order("periodo_anio", { ascending: true })
+    .order("periodo_mes", { ascending: true });
 
   if (error) {
-    console.error("❌ Error al cargar datos:", error);
-    alert("Error al cargar datos de ingresos");
+    console.error("❌ Error al cargar datos históricos:", error);
+    alert("Error al cargar datos históricos");
     return;
   }
 
   if (!data || data.length === 0) {
-    console.warn(`⚠️ No hay datos para ${anio}`);
+    console.warn("⚠️ No hay datos para graficar");
     return;
   }
 
-  // 🧮 Agrupar por mes
-  const meses = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-  const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  const totales = meses.map(mes => {
-    const fila = data.find(d => d.periodo_mes === mes);
-    return fila ? Number(fila.total_con_impuestos) : 0;
+  // 🧮 Crear etiquetas combinadas: "Ene 2023", "Feb 2023", ..., "Dic 2025"
+  const etiquetas = [];
+  const valores = [];
+
+  const nombresMes = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+  data.forEach(row => {
+    const anio = row.periodo_anio;
+    const mes = nombresMes[parseInt(row.periodo_mes) - 1] || row.periodo_mes;
+    etiquetas.push(`${mes} ${anio}`);
+    valores.push(Number(row.total_con_impuestos) || 0);
   });
 
-  // 🎨 Gráfica de barras
+  // 🎨 Crear gráfica de línea continua
   new Chart(ctx, {
-    type: "bar",
+    type: "line",
     data: {
       labels: etiquetas,
       datasets: [{
-        label: `Total mensual ${anio} (con impuestos)`,
-        data: totales,
-        backgroundColor: "rgba(0, 160, 190, 0.8)",
+        label: "Ingresos totales con impuestos",
+        data: valores,
         borderColor: "#00416A",
-        borderWidth: 2
+        backgroundColor: "rgba(0, 160, 190, 0.2)",
+        fill: true,
+        tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 3,
+        pointHoverRadius: 5
       }]
     },
     options: {
@@ -711,11 +721,11 @@ async function generarGraficaTotalesAnuales(supabase, anio = 2025) {
       plugins: {
         title: {
           display: true,
-          text: `Ingresos Totales ${anio} – PDD031204KL5`,
+          text: "Histórico de Ingresos Totales Mensuales (multi-año)",
           color: "#00416A",
           font: { size: 16 }
         },
-        legend: { display: false },
+        legend: { position: "bottom" },
         tooltip: {
           callbacks: {
             label: ctx => {
@@ -729,6 +739,10 @@ async function generarGraficaTotalesAnuales(supabase, anio = 2025) {
         }
       },
       scales: {
+        x: {
+          ticks: { color: "#00416A", maxRotation: 45, minRotation: 45 },
+          title: { display: true, text: "Mes / Año" }
+        },
         y: {
           beginAtZero: true,
           title: { display: true, text: "Monto ($)" },
@@ -738,8 +752,9 @@ async function generarGraficaTotalesAnuales(supabase, anio = 2025) {
     }
   });
 
-  console.log(`✅ Ingresos ${anio}:`, totales);
+  console.log("✅ Datos históricos graficados:", data.length, "meses");
 }
+
     
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
@@ -753,7 +768,7 @@ async function main() {
   await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
   await mostrarTopClientes2025(supabase); // 🏆 Nuevo Top 10
   await mostrarTopArticulos2025(supabase);
-await generarGraficaTotalesAnuales(supabase, 2025);
+await generarGraficaHistorica(supabase);
   
   // 🔹 Botón de descarga
   document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
