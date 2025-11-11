@@ -53,22 +53,6 @@
 <body>
 
   <h1>PROVSOFT – Dashboard Ingresos PDD</h1>
-
-  <!-- ========================================================== -->
-  <!-- 📈 SECCIÓN 2: COMPARATIVO POR SUCURSAL (SERIE) -->
-  <!-- ========================================================== -->
-  <div class="card">
-    <h2 style="color:#00416A;text-align:center;">Comparativo por Sucursal (Serie)</h2>
-    <p style="text-align:center;color:#555;">Evolución mensual por sucursal — selecciona un año:</p>
-    <div style="text-align:center;margin-bottom:12px;">
-      <select id="selectorAnioSucursal" style="padding:8px 10px;border-radius:8px;border:1px solid #ccc;">
-        <option value="2023">2023</option>
-        <option value="2024">2024</option>
-        <option value="2025" selected>2025</option>
-      </select>
-    </div>
-    <canvas id="graficaSucursales"></canvas>
-  </div>
 <!-- ========================================================== -->
 <!-- 📈 SECCIÓN: HISTÓRICO MENSUAL DE INGRESOS (MULTI-AÑO) -->
 <!-- ========================================================== -->
@@ -142,101 +126,6 @@ function conectarSupabase() {
     "https://cvpbtjlupswbyxenugpz.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
   );
-}
-
-// ======================================================
-// 📈 3. FUNCIÓN: Gráfica lineal por sucursal (serie) – DEPURADA
-// ======================================================
-async function generarGraficaSucursales(supabase) {
-  const selectAnio = document.getElementById("selectorAnioSucursal");
-  const ctx = document.getElementById("graficaSucursales").getContext("2d");
-  let graficaSucursales = null;
-
-  async function cargarDatos(anioSeleccionado) {
-    const { data, error } = await supabase
-      .from("vista_ingresos_sucursales")
-      .select("*")
-      .eq("periodo_anio", anioSeleccionado);
-
-    if (error) {
-      console.error("❌ Error al cargar sucursales:", error);
-      alert("Error al cargar datos de sucursales");
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      console.warn("⚠️ Sin datos para el año:", anioSeleccionado);
-      if (graficaSucursales) graficaSucursales.destroy();
-      return;
-    }
-
-    const sucursales = [...new Set(data.map(d => d.serie))];
-    const mesesOrden = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-    const etiquetas = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-    const colores = [
-      "#00416A", "#00A0BE", "#64BEFF", "#FFC107",
-      "#DC3545", "#28A745", "#6F42C1", "#FF5733"
-    ];
-
-    const datasets = sucursales.map((serie, i) => ({
-      label: serie,
-      data: mesesOrden.map(m => {
-        const fila = data.find(f => f.periodo_mes === m && f.serie === serie);
-        return fila ? Number(fila.total_subtotal) : 0;
-      }),
-      borderColor: colores[i % colores.length],
-      backgroundColor: colores[i % colores.length],
-      tension: 0.3,
-      borderWidth: 3,
-      pointRadius: 4,
-      pointHoverRadius: 6,
-      fill: false
-    }));
-
-    if (graficaSucursales instanceof Chart) graficaSucursales.destroy();
-
-    graficaSucursales = new Chart(ctx, {
-      type: "line",
-      data: { labels: etiquetas, datasets },
-      options: {
-        responsive: true,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          title: {
-            display: true,
-            text: `Ingresos por Sucursal – Año ${anioSeleccionado}`,
-            color: "#00416A",
-            font: { size: 16 }
-          },
-          legend: {
-            position: "bottom",
-            labels: { color: "#00416A", font: { size: 13 } }
-          },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const val = ctx.raw || 0;
-                return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}`;
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: "Monto ($)" },
-            ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
-          }
-        }
-      }
-    });
-  }
-
-  await cargarDatos(selectAnio.value);
-  selectAnio.addEventListener("change", e => cargarDatos(e.target.value));
 }
 
 // ======================================================
@@ -849,8 +738,7 @@ async function main() {
   const supabase = conectarSupabase();
   
   // 🔹 Cargar las tres gráficas principales
-  await generarGraficaSucursales(supabase);
-  await mostrarUltimasFacturasPorSucursal(supabase);
+   await mostrarUltimasFacturasPorSucursal(supabase);
   await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
   await mostrarTopClientes2025(supabase); // 🏆 Nuevo Top 10
   await mostrarTopArticulos2025(supabase);
