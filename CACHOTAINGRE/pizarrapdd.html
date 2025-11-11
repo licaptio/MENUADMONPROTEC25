@@ -677,7 +677,7 @@ async function mostrarResumenIngresosAnuales(supabase) {
   contenedor.innerHTML = "<p style='text-align:center;'>Cargando resumen...</p>";
 
   const { data, error } = await supabase
-    .from("vista_ingresos_totales_anuales")
+    .from("vista_ingresos_totales_mensuales")
     .select("periodo_anio, rfc_emisor, total_sin_impuestos")
     .eq("rfc_emisor", "PDD031204KL5");
 
