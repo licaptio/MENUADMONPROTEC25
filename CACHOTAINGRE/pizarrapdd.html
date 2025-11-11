@@ -77,6 +77,14 @@
   <p style="text-align:center;color:#555;">Evolución mensual total — RFC: PDD031204KL5</p>
   <canvas id="graficaHistorica"></canvas>
 </div>
+<!-- ========================================================== -->
+<!-- 💵 SECCIÓN: RESUMEN ANUAL DE INGRESOS (ANTES DE IMPUESTOS) -->
+<!-- ========================================================== -->
+<div class="card">
+  <h2 style="color:#00416A;text-align:center;">💵 Ingresos Totales Antes de Impuestos</h2>
+  <p style="text-align:center;color:#555;">Comparativo anual (subtotal acumulado) — RFC: PDD031204KL5</p>
+  <div id="contenedorResumenIngresos" style="max-width:700px;margin:auto;text-align:center;"></div>
+</div>
 
   <!-- ========================================================== -->
   <!-- 📥 SECCIÓN 3: DESCARGA EXCEL -->
@@ -762,6 +770,77 @@ async function generarGraficaHistorica(supabase) {
   console.log("✅ Datos históricos graficados:", data.length, "meses");
 }
 
+// ======================================================
+// 💵 FUNCIÓN: Mostrar resumen anual antes de impuestos
+// ======================================================
+async function mostrarResumenIngresosAnuales(supabase) {
+  const contenedor = document.getElementById("contenedorResumenIngresos");
+  contenedor.innerHTML = "<p style='text-align:center;'>Cargando resumen...</p>";
+
+  const { data, error } = await supabase
+    .from("vista_ingresos_totales_anuales")
+    .select("periodo_anio, rfc_emisor, total_sin_impuestos")
+    .eq("rfc_emisor", "PDD031204KL5");
+
+  if (error) {
+    console.error("❌ Error al cargar resumen:", error);
+    contenedor.innerHTML = "<p>Error al cargar datos.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    contenedor.innerHTML = "<p>No hay datos disponibles.</p>";
+    return;
+  }
+
+  // 🧮 Ordenar por año y tomar los últimos tres
+  const datosOrdenados = data.sort((a, b) => a.periodo_anio - b.periodo_anio);
+  const ultimos = datosOrdenados.slice(-3);
+  const maxValor = Math.max(...ultimos.map(x => x.total_sin_impuestos));
+
+  // 🎨 Renderizar tabla con barras comparativas
+  contenedor.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+      <thead>
+        <tr style="background:#00416A;color:white;">
+          <th style="padding:10px;">Año</th>
+          <th style="padding:10px;text-align:right;">Total sin impuestos</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ultimos.map((row, i) => `
+          <tr style="background:${row.periodo_anio === 2025 ? '#D1F7D1' : '#f8f8f8'};">
+            <td style="padding:8px;font-weight:600;">${row.periodo_anio}</td>
+            <td style="padding:8px;text-align:right;font-weight:600;">
+              $${Number(row.total_sin_impuestos).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <div>
+      ${ultimos.map(row => `
+        <div style="margin:10px 0;">
+          <div style="display:flex;justify-content:space-between;color:#00416A;font-weight:600;">
+            <span>${row.periodo_anio}</span>
+            <span>$${Number(row.total_sin_impuestos).toLocaleString("es-MX")}</span>
+          </div>
+          <div style="background:#eee;border-radius:8px;height:10px;overflow:hidden;">
+            <div style="height:10px;width:${(row.total_sin_impuestos / maxValor) * 100}%;
+                        background:${row.periodo_anio === 2025 ? '#28A745' :
+                                   row.periodo_anio === 2024 ? '#FFC107' :
+                                   '#E91E63'};
+                        border-radius:8px;"></div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
     
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
@@ -776,6 +855,8 @@ async function main() {
   await mostrarTopClientes2025(supabase); // 🏆 Nuevo Top 10
   await mostrarTopArticulos2025(supabase);
 await generarGraficaHistorica(supabase);
+  await mostrarResumenIngresosAnuales(supabase);
+
   
   // 🔹 Botón de descarga
   document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
