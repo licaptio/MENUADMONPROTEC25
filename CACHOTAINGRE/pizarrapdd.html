@@ -69,6 +69,16 @@
   <p style="text-align:center;color:#555;">Comparativo anual (subtotal acumulado) — RFC: PDD031204KL5</p>
   <div id="contenedorResumenIngresos" style="max-width:700px;margin:auto;text-align:center;"></div>
 </div>
+<!-- ========================================================== -->
+<!-- 💰 SECCIÓN: VENTAS POR IMPUESTO MULTIANUAL -->
+<!-- ========================================================== -->
+<div class="card">
+  <h2 style="color:#00416A;text-align:center;">💰 Ventas por Impuesto (Multianual)</h2>
+  <p style="text-align:center;color:#555;">
+    Totales por tipo de impuesto (IVA, IEPS, 0%) — Fuente: ingresos_pdd
+  </p>
+  <canvas id="graficaImpuestos"></canvas>
+</div>
 
   <!-- ========================================================== -->
   <!-- 📥 SECCIÓN 3: DESCARGA EXCEL -->
@@ -730,6 +740,94 @@ async function mostrarResumenIngresosAnuales(supabase) {
     </div>
   `;
 }
+// ======================================================
+// 💰 FUNCIÓN: Graficar ventas por impuesto (multianual)
+// ======================================================
+async function generarGraficaImpuestos(supabase) {
+  const ctx = document.getElementById("graficaImpuestos").getContext("2d");
+
+  const { data, error } = await supabase
+    .from("vista_ventas_por_impuesto_multianual")
+    .select("*")
+    .order("periodo_anio", { ascending: true })
+    .order("tipo_impuesto", { ascending: true });
+
+  if (error) {
+    console.error("❌ Error al cargar datos de impuestos:", error);
+    alert("Error al cargar datos fiscales");
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("⚠️ No hay datos de impuestos disponibles");
+    return;
+  }
+
+  // 🧮 Agrupar por tipo de impuesto
+  const tipos = ["IVA", "IEPS", "0%"];
+  const anios = [...new Set(data.map(d => d.periodo_anio))].sort();
+
+  const colores = {
+    "IVA": "#0c6cbd",  // Azul PROVSOFT
+    "IEPS": "#FFC107", // Amarillo
+    "0%": "#E91E63"    // Rosa
+  };
+
+  const datasets = tipos.map(tipo => ({
+    label: tipo,
+    backgroundColor: colores[tipo],
+    data: anios.map(anio => {
+      const fila = data.find(f => f.periodo_anio === anio && f.tipo_impuesto === tipo);
+      return fila ? Number(fila.total_impuesto) : 0;
+    }),
+    borderWidth: 1
+  }));
+
+  // 📊 Renderizar la gráfica de barras agrupadas
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: anios,
+      datasets
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Monto ($)" },
+          ticks: { callback: v => "$" + v.toLocaleString("es-MX") }
+        },
+        x: {
+          title: { display: true, text: "Año" }
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: "Comparativo Multianual de Ventas por Impuesto",
+          color: "#00416A",
+          font: { size: 16 }
+        },
+        legend: {
+          position: "bottom",
+          labels: { color: "#00416A", font: { size: 13 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.raw || 0;
+              return `${ctx.dataset.label}: $${val.toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
     
 // ======================================================
 // 🚀 5. FUNCIÓN PRINCIPAL
@@ -744,6 +842,8 @@ async function main() {
   await mostrarTopArticulos2025(supabase);
 await generarGraficaHistorica(supabase);
   await mostrarResumenIngresosAnuales(supabase);
+  await generarGraficaImpuestos(supabase);
+
 
   
   // 🔹 Botón de descarga
