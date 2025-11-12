@@ -264,6 +264,7 @@ const inventarios = [
   }
 ];
 
+/* ===================== RENDER DE TABLA ===================== */
 function render(){ 
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
@@ -325,6 +326,7 @@ function render(){
   });
 }
 
+/* ===================== GUARDADO LOCAL ===================== */
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(inventarios[pagina]));
 }
@@ -337,13 +339,7 @@ function loadData() {
   } catch(e) { console.error(e); }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  render();
-});
-</script>
-
-
+/* ===================== LIMPIAR TODO ===================== */
 function limpiarTodo(){
   if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
   inventarios.forEach(g=>g.items.forEach(r=>{
@@ -354,34 +350,27 @@ function limpiarTodo(){
   alert("✅ Inventario y localStorage limpiados");
 }
 
-
-/* Telegram y Orden (igual que tenías) */
+/* ===================== TELEGRAM ===================== */
 function enviarTelegram() {
   const data = inventarios[pagina];
   if (!data || !data.items) return;
 
-  // Construir mensaje
   let mensaje = `📦 *${data.nombre}*\n`;
   mensaje += `\n*Producto* — *Acumulado*\n`;
 
   data.items.forEach(row => {
     const acum = parseInt(row[4]) || 0;
-    if (acum > 0) {
-      mensaje += `• ${row[0]} — ${acum}\n`;
-    }
+    if (acum > 0) mensaje += `• ${row[0]} — ${acum}\n`;
   });
 
-  // Validación: si no hay productos acumulados
   if (!mensaje.match(/— \d+/)) {
     alert("⚠ No hay acumulados en esta página para enviar");
     return;
   }
 
-  // TOKEN y CHAT_ID (no cambies si ya funcionan con tus bots)
   const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
   const chatId = "6617988297";
 
-  // Enviar usando fetch
   fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -406,16 +395,15 @@ function enviarTelegram() {
   });
 }
 
+/* ===================== GENERAR ORDEN ===================== */
 function generarOrden() {
   const modal = document.getElementById("ordenModal");
   const list = document.getElementById("orden-list");
   list.innerHTML = "";
 
-  // ID aleatorio tipo PDD
   const id = "PDD" + new Date().toISOString().slice(2,10).replace(/-/g,"") +
              Math.random().toString(36).substr(2,3).toUpperCase();
 
-  // Crear mensaje para Telegram
   let mensaje = `🧾 *ORDEN DE COMPRA – PROVEEDORA PDD*\n`;
   mensaje += `📅 ${new Date().toLocaleDateString("es-MX")}\n🆔 ${id}\n\n`;
 
@@ -442,7 +430,6 @@ function generarOrden() {
 
   modal.style.display = "flex";
 
-  // === Enviar por Telegram ===
   const token = "8303572166:AAH0xLN7798A3LROd3CoGkq0RqVogrLhZtw";
   const chatId = "6617988297";
 
@@ -469,101 +456,42 @@ function generarOrden() {
     alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
   });
 }
-</script>
-<div id="ordenModal" class="modal">
-  <div class="modal-content" id="ordenContenido" 
-       style="text-align:center; padding:20px; background:#fff; border:2px solid #444; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.3);">
 
-    <!-- Logo -->
-    <img src="LOGO.jpeg" alt="Logo Proveedora" 
-         style="max-width:180px; margin:0 auto 15px; display:block;">
-
-    <!-- Encabezado -->
-    <h3 style="margin:0; font-size:1.6rem; color:#111; text-transform:uppercase;">ORDEN DE COMPRA</h3>
-
-    <!-- Lista de productos -->
-    <ul id="orden-list" 
-        style="list-style:none; padding:0; margin:20px 0; text-align:left; font-size:1rem; color:#333; line-height:1.5;">
-    </ul>
-
-    <!-- Botones -->
-    <div style="margin-top:20px;">
-      <button onclick="generarImagen()" 
-              style="background:#16a34a; color:#fff; border:none; padding:10px 20px;
-                     border-radius:8px; font-size:1rem; cursor:pointer; margin-right:10px;">
-        📸 Generar Imagen
-      </button>
-      <button onclick="cerrarModal()" 
-              style="background:#2563eb; color:#fff; border:none; padding:10px 20px;
-                     border-radius:8px; font-size:1rem; cursor:pointer;">
-        Cerrar
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Librería html2canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
+/* ===================== HTML2CANVAS ===================== */
 function generarImagen(){
   const contenido = document.getElementById("ordenContenido");
   html2canvas(contenido, {scale:2}).then(canvas => {
-    // Abre la imagen en nueva pestaña lista para copiar o guardar
     const imgData = canvas.toDataURL("image/png");
     const nuevaVentana = window.open("");
     nuevaVentana.document.write("<img src='"+imgData+"' style='width:100%;'/>");
   });
 }
-// === Navegación con flechas en inputs ===
+
+/* ===================== NAVEGACIÓN CON FLECHAS ===================== */
 function activarNavegacionTeclas(){
   const filas = Array.from(document.querySelectorAll("#tabla tbody tr"));
-
   filas.forEach((fila, filaIndex) => {
     const inputs = Array.from(fila.querySelectorAll("input"));
-
     inputs.forEach((inp, colIndex) => {
       inp.addEventListener("keydown", e => {
-        let target;
-
-        if(e.key === "ArrowRight"){ // →
-          e.preventDefault();
-          if(colIndex < inputs.length-1){
-            inputs[colIndex+1].focus();
-          }
-        }
-        if(e.key === "ArrowLeft"){ // ←
-          e.preventDefault();
-          if(colIndex > 0){
-            inputs[colIndex-1].focus();
-          }
-        }
-        if(e.key === "ArrowDown"){ // ↓
-          e.preventDefault();
-          if(filaIndex < filas.length-1){
-            const nextInputs = filas[filaIndex+1].querySelectorAll("input");
-            if(nextInputs[colIndex]) nextInputs[colIndex].focus();
-          }
-        }
-        if(e.key === "ArrowUp"){ // ↑
-          e.preventDefault();
-          if(filaIndex > 0){
-            const prevInputs = filas[filaIndex-1].querySelectorAll("input");
-            if(prevInputs[colIndex]) prevInputs[colIndex].focus();
-          }
-        }
+        if(e.key === "ArrowRight"){ e.preventDefault(); if(colIndex < inputs.length-1) inputs[colIndex+1].focus(); }
+        if(e.key === "ArrowLeft"){ e.preventDefault(); if(colIndex > 0) inputs[colIndex-1].focus(); }
+        if(e.key === "ArrowDown"){ e.preventDefault(); if(filaIndex < filas.length-1){ const nextInputs = filas[filaIndex+1].querySelectorAll("input"); if(nextInputs[colIndex]) nextInputs[colIndex].focus(); } }
+        if(e.key === "ArrowUp"){ e.preventDefault(); if(filaIndex > 0){ const prevInputs = filas[filaIndex-1].querySelectorAll("input"); if(prevInputs[colIndex]) prevInputs[colIndex].focus(); } }
       });
     });
   });
 }
+
 function cerrarModal() {
   document.getElementById("ordenModal").style.display = "none";
 }
-// === Inicialización al cargar la página ===
+
+/* ===================== INICIALIZACIÓN ===================== */
 window.addEventListener("DOMContentLoaded", () => {
   loadData();
   render();
 });
-
 </script>
 
 </body>
