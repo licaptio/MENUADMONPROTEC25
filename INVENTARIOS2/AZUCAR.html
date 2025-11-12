@@ -238,10 +238,6 @@ button.action{
 </div>
 <!-- Hasta aquí -->
 
-
-
-
-
 <script>
 /* ===== Datos ===== */
 let pagina = 0;
@@ -266,7 +262,31 @@ const inventarios = [
     ]
   }
 ];
-// === Render principal ===
+<script>
+let pagina = 0;
+const STORAGE_KEY = "inventariosData_" + document.title.replace(/\s+/g, "_");
+
+const inventarios = [
+  { 
+    nombre:"📦 Azúcares y derivados", 
+    items:[
+      ["AZÚCAR MORENA 25","",100,""],
+      ["AZÚCAR BLANCA 25","",20,""],
+      ["MORENA SWITEN 907","",30,""],
+      ["AZÚCAR GLASS 6X","",3,""],
+      ["FÉCULA DE MAÍZ","",3,""],
+      ["AZÚCAR MOSCABADA","",2,""],
+      ["GLUCOSA 19 LTS 27K","",2,""],
+      ["MORENA SWITEN 907","",50,""],
+      ["NUTRILECHE C90 PAQ","",8,""],
+      ["KARTAMUS 12 CAMA","",100,""],
+      ["HARIMASA C10","",100,""],
+      ["CHILE FARO ROD","",100,""],
+      ["KLEENEX 80","",100,""]
+    ]
+  }
+];
+
 function render(){ 
   const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
@@ -275,33 +295,27 @@ function render(){
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
 
-  // 👉 Ya no hay índice, siempre muestra tabla
   document.getElementById("indice").style.display = "none";
   document.querySelector(".table-container").style.display = "block";
 
   data.items.forEach((row,i)=>{
     const tr = document.createElement("tr");
 
-    // Producto
     const tdProd = document.createElement("td");
     tdProd.textContent = row[0];
     tdProd.className="producto";
     tr.appendChild(tdProd);
 
-    // Inventario manual
     const tdInv = document.createElement("td");
     const input = document.createElement("input");
     input.type="number"; input.min="0"; input.placeholder="+";
-    input.style.width="70px";
     tdInv.appendChild(input);
     tr.appendChild(tdInv);
 
-    // Stock
     const tdStock = document.createElement("td");
     tdStock.textContent = row[2] ?? "";
     tr.appendChild(tdStock);
 
-    // Pedido
     const tdPedido = document.createElement("td");
     const inpPed = document.createElement("input");
     inpPed.type="number"; inpPed.min="0"; inpPed.value=row[3]||"";
@@ -309,7 +323,6 @@ function render(){
     tdPedido.appendChild(inpPed);
     tr.appendChild(tdPedido);
 
-    // Inventario acumulado
     const tdAcum = document.createElement("td");
     row[4] = row[4] || 0;
     const spanVal = document.createElement("span");
@@ -340,15 +353,24 @@ function render(){
   activarNavegacionTeclas();
 }
 
-// === Funciones de navegación ===
-function siguiente(){ if(pagina<inventarios.length-1){ pagina++; render(); } }
-function anterior(){ if(pagina>0){ pagina--; render(); } }
+function siguiente(){ 
+  if(pagina < inventarios.length - 1){ 
+    pagina++; 
+    localStorage.setItem("paginaActual", pagina);
+    render(); 
+  } 
+}
+function anterior(){ 
+  if(pagina > 0){ 
+    pagina--; 
+    localStorage.setItem("paginaActual", pagina);
+    render(); 
+  } 
+}
 
-// === Guardado Local ===
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(inventarios[pagina]));
 }
-
 function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return;
@@ -358,7 +380,13 @@ function loadData() {
   } catch(e) { console.error(e); }
 }
 
-
+window.addEventListener("DOMContentLoaded", () => {
+  const savedPage = localStorage.getItem("paginaActual");
+  if(savedPage !== null) pagina = parseInt(savedPage);
+  loadData();
+  render();
+});
+</script>
 
 function limpiarTodo(){
   if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
