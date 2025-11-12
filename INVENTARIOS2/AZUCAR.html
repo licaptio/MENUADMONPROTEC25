@@ -497,6 +497,38 @@ window.addEventListener("DOMContentLoaded", () => {
   render();
 });
 </script>
+<!-- ===== MODAL ORDEN DE COMPRA ===== -->
+<div id="ordenModal" class="modal">
+  <div class="modal-content" id="ordenContenido" 
+       style="text-align:center; padding:20px; background:#fff; border:2px solid #444; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.3);">
+
+    <!-- Logo -->
+    <img src="LOGO.jpeg" alt="Logo Proveedora" 
+         style="max-width:180px; margin:0 auto 15px; display:block;">
+
+    <!-- Encabezado -->
+    <h3 style="margin:0; font-size:1.6rem; color:#111; text-transform:uppercase;">ORDEN DE COMPRA</h3>
+
+    <!-- Lista de productos -->
+    <ul id="orden-list" 
+        style="list-style:none; padding:0; margin:20px 0; text-align:left; font-size:1rem; color:#333; line-height:1.5;">
+    </ul>
+
+    <!-- Botones -->
+    <div style="margin-top:20px;">
+      <button onclick="generarImagen()" 
+              style="background:#16a34a; color:#fff; border:none; padding:10px 20px;
+                     border-radius:8px; font-size:1rem; cursor:pointer; margin-right:10px;">
+        📸 Generar Imagen
+      </button>
+      <button onclick="cerrarModal()" 
+              style="background:#2563eb; color:#fff; border:none; padding:10px 20px;
+                     border-radius:8px; font-size:1rem; cursor:pointer;">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
