@@ -242,29 +242,6 @@ button.action{
 /* ===== Datos ===== */
 let pagina = 0;
 const STORAGE_KEY = "inventariosData_" + document.title.replace(/\s+/g, "_");
-const inventarios = [
-  { 
-    nombre: "📦 Azúcares y derivados", 
-    items: [
-      ["AZÚCAR MORENA 25","",100,""],
-      ["AZÚCAR BLANCA 25","",20,""],
-      ["MORENA SWITEN 907","",30,""],
-      ["AZÚCAR GLASS 6X","",3,""],
-      ["FÉCULA DE MAÍZ","",3,""],
-      ["AZÚCAR MOSCABADA","",2,""],
-      ["GLUCOSA 19 LTS 27K","",2,""],
-      ["MORENA SWITEN 907","",50,""],
-      ["NUTRILECHE C90 PAQ","",8,""],
-      ["KARTAMUS 12 CAMA","",100,""],
-      ["HARIMASA C10","",100,""],
-      ["CHILE FARO ROD","",100,""],
-      ["KLEENEX 80","",100,""]
-    ]
-  }
-];
-<script>
-let pagina = 0;
-const STORAGE_KEY = "inventariosData_" + document.title.replace(/\s+/g, "_");
 
 const inventarios = [
   { 
@@ -294,9 +271,6 @@ function render(){
 
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
-
-  document.getElementById("indice").style.display = "none";
-  document.querySelector(".table-container").style.display = "block";
 
   data.items.forEach((row,i)=>{
     const tr = document.createElement("tr");
@@ -349,23 +323,6 @@ function render(){
     tr.appendChild(tdAcum);
     tbody.appendChild(tr);
   });
-
-  activarNavegacionTeclas();
-}
-
-function siguiente(){ 
-  if(pagina < inventarios.length - 1){ 
-    pagina++; 
-    localStorage.setItem("paginaActual", pagina);
-    render(); 
-  } 
-}
-function anterior(){ 
-  if(pagina > 0){ 
-    pagina--; 
-    localStorage.setItem("paginaActual", pagina);
-    render(); 
-  } 
 }
 
 function saveData() {
@@ -381,12 +338,11 @@ function loadData() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  const savedPage = localStorage.getItem("paginaActual");
-  if(savedPage !== null) pagina = parseInt(savedPage);
   loadData();
   render();
 });
 </script>
+
 
 function limpiarTodo(){
   if(!confirm("¿Borrar todo inventario y limpiar localStorage?")) return;
