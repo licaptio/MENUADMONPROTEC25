@@ -430,6 +430,66 @@ function activarNavegacionTeclas(){
 function cerrarModal() {
   document.getElementById("ordenModal").style.display = "none";
 }
+function render(){ 
+  const data = inventarios[pagina];
+  document.getElementById("titulo").textContent = data.nombre;
+  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
+
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+
+  data.items.forEach((row,i)=>{
+    const tr = document.createElement("tr");
+
+    const tdProd = document.createElement("td");
+    tdProd.textContent = row[0];
+    tdProd.className="producto";
+    tr.appendChild(tdProd);
+
+    const tdInv = document.createElement("td");
+    const input = document.createElement("input");
+    input.type="number"; input.min="0"; input.placeholder="+";
+    tdInv.appendChild(input);
+    tr.appendChild(tdInv);
+
+    const tdStock = document.createElement("td");
+    tdStock.textContent = row[2] ?? "";
+    tr.appendChild(tdStock);
+
+    const tdPedido = document.createElement("td");
+    const inpPed = document.createElement("input");
+    inpPed.type="number"; inpPed.min="0"; inpPed.value=row[3]||"";
+    inpPed.oninput = e => { row[3]=e.target.value; saveData(); };
+    tdPedido.appendChild(inpPed);
+    tr.appendChild(tdPedido);
+
+    const tdAcum = document.createElement("td");
+    row[4] = row[4] || 0;
+    const spanVal = document.createElement("span");
+    spanVal.textContent = row[4];
+    tdAcum.appendChild(spanVal);
+
+    const spinner = document.createElement("div");
+    spinner.className="spinner";
+    const btnMenos = document.createElement("button"); btnMenos.textContent="−";
+    const btnMas = document.createElement("button"); btnMas.textContent="+";
+    spinner.appendChild(btnMenos); spinner.appendChild(btnMas);
+    tdAcum.appendChild(spinner);
+
+    input.onchange = () => {
+      let v = parseInt(input.value)||0;
+      row[4] += v;
+      spanVal.textContent = row[4];
+      input.value="";
+      saveData();
+    };
+    btnMas.onclick = () => { row[4]++; spanVal.textContent=row[4]; saveData(); };
+    btnMenos.onclick = () => { if(row[4]>0){ row[4]--; spanVal.textContent=row[4]; saveData(); } };
+
+    tr.appendChild(tdAcum);
+    tbody.appendChild(tr);
+  });
+}
 
 /* ===================== INICIALIZACIÓN ===================== */
 window.addEventListener("DOMContentLoaded", () => {
