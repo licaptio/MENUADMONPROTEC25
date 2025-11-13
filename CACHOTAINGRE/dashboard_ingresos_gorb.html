@@ -1,125 +1,173 @@
-<script>
-/****************************************************
- * 🔑 SECCIÓN 1 – CONFIGURACIÓN SUPABASE
- ****************************************************/
-const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Ingresos – GORB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- 📚 Librerías necesarias -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-/****************************************************
- * 📦 SECCIÓN 2 – FUNCIÓN: obtenerDatos()
- * → Consulta subtotal, IVA, IEPS y total
- ****************************************************/
-async function obtenerDatos() {
-  const { data, error } = await supabase
-    .from('ingresos_gorb')
-    .select('subtotal, total_iva, total_ieps, total, periodo_mes, periodo_anio');
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
 
-  if (error) {
-    console.error("❌ Error al obtener datos:", error);
-    return { etiquetas: [], datos: [] };
-  }
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #00416A, #E4E5E6);
+      color: #111;
+      margin: 0; padding: 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      padding: 24px;
+      max-width: 960px;
+      margin: auto;
+    }
+    canvas {
+      width: 100% !important;
+      height: 420px !important;
+    }
+    .footer {
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      margin-top: 20px;
+      font-size: 13px;
+    }
+  </style>
+</head>
 
-  // Agrupador
-  const acumulado = {};
+<body>
+  <h1>Ingresos Acumulados por Mes – GORB</h1>
 
-  data.forEach(row => {
-    const clave = `${row.periodo_anio}-${String(row.periodo_mes).padStart(2, '0')}`;
+  <div class="chart-container">
+    <canvas id="chartIngresos"></canvas>
+  </div>
 
-    if (!acumulado[clave]) {
-      acumulado[clave] = { subtotal: 0, iva: 0, ieps: 0, total: 0 };
+  <div class="footer">
+    © PROVSOFT – Sistema de Monitoreo Financiero
+  </div>
+
+  <!-- 🧩 SCRIPT PRINCIPAL COMPLETO -->
+  <script>
+  /****************************************************
+   * 🔑 SECCIÓN 1 – CONFIGURACIÓN SUPABASE
+   ****************************************************/
+  const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  /****************************************************
+   * 📦 SECCIÓN 2 – OBTENER DATOS
+   ****************************************************/
+  async function obtenerDatos() {
+    const { data, error } = await supabase
+      .from('ingresos_gorb')
+      .select('subtotal, total_iva, total_ieps, total, periodo_mes, periodo_anio');
+
+    if (error) {
+      console.error("❌ Error al obtener datos:", error);
+      return { etiquetas: [], datos: [] };
     }
 
-    acumulado[clave].subtotal += parseFloat(row.subtotal || 0);
-    acumulado[clave].iva      += parseFloat(row.total_iva || 0);
-    acumulado[clave].ieps     += parseFloat(row.total_ieps || 0);
-    acumulado[clave].total    += parseFloat(row.total || 0);
-  });
+    const acumulado = {};
 
-  // Convertir a lista ordenada
-  const ordenado = Object.entries(acumulado)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([periodo, valores]) => ({
-      periodo,
-      ...valores
-    }));
+    data.forEach(row => {
+      const clave = `${row.periodo_anio}-${String(row.periodo_mes).padStart(2, '0')}`;
 
-  return {
-    etiquetas: ordenado.map(o => o.periodo),
-    datos: ordenado
-  };
-}
+      if (!acumulado[clave]) {
+        acumulado[clave] = { subtotal: 0, iva: 0, ieps: 0, total: 0 };
+      }
 
+      acumulado[clave].subtotal += parseFloat(row.subtotal || 0);
+      acumulado[clave].iva      += parseFloat(row.total_iva || 0);
+      acumulado[clave].ieps     += parseFloat(row.total_ieps || 0);
+      acumulado[clave].total    += parseFloat(row.total || 0);
+    });
 
-/****************************************************
- * 🎨 SECCIÓN 3 – FUNCIÓN: renderizarGrafica()
- * → Dibuja la gráfica con tooltip detallado
- ****************************************************/
-function renderizarGrafica(etiquetas, datos) {
-  const ctx = document.getElementById('chartIngresos').getContext('2d');
+    const ordenado = Object.entries(acumulado)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([periodo, valores]) => ({ periodo, ...valores }));
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: etiquetas,
-      datasets: [{
-        label: 'Total Facturado',
-        data: datos.map(d => d.total),
-        backgroundColor: 'rgba(12,108,189,0.7)',
-        borderColor: '#00416A',
-        borderWidth: 1.5
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true, position: 'bottom' },
+    return {
+      etiquetas: ordenado.map(o => o.periodo),
+      datos: ordenado
+    };
+  }
 
-        /******************************
-         * 🔍 TOOLTIP PERSONALIZADO
-         ******************************/
-        tooltip: {
-          callbacks: {
-            label: context => {
-              const idx = context.dataIndex;
-              const d = datos[idx];
+  /****************************************************
+   * 🎨 SECCIÓN 3 – RENDERIZAR GRÁFICA
+   ****************************************************/
+  function renderizarGrafica(etiquetas, datos) {
+    const ctx = document.getElementById('chartIngresos').getContext('2d');
 
-              return [
-                `TOTAL: $${d.total.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
-                `Subtotal: $${d.subtotal.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
-                `IVA: $${d.iva.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
-                `IEPS: $${d.ieps.toLocaleString('es-MX',{minimumFractionDigits:2})}`
-              ];
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: etiquetas,
+        datasets: [{
+          label: 'Total Facturado',
+          data: datos.map(d => d.total),
+          backgroundColor: 'rgba(12,108,189,0.7)',
+          borderColor: '#00416A',
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const d = datos[ctx.dataIndex];
+                return [
+                  `TOTAL: $${d.total.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
+                  `Subtotal: $${d.subtotal.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
+                  `IVA: $${d.iva.toLocaleString('es-MX',{minimumFractionDigits:2})}`,
+                  `IEPS: $${d.ieps.toLocaleString('es-MX',{minimumFractionDigits:2})}`
+                ];
+              }
             }
+          },
+
+          title: {
+            display: true,
+            text: 'Total Mensual Facturado (Subtotal + IVA + IEPS)',
+            font: { size: 16 }
           }
         },
 
-        title: {
-          display: true,
-          text: 'Total Mensual Facturado (Subtotal + IVA + IEPS)',
-          font: { size: 16 }
-        }
-      },
-
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: val => '$' + val.toLocaleString('es-MX')
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: val => '$' + val.toLocaleString('es-MX')
+            }
           }
         }
       }
-    }
-  });
-}
+    });
+  }
 
+  /****************************************************
+   * 🚀 SECCIÓN 4 – INICIALIZAR
+   ****************************************************/
+  (async () => {
+    const { etiquetas, datos } = await obtenerDatos();
+    renderizarGrafica(etiquetas, datos);
+  })();
+  </script>
 
-/****************************************************
- * 🚀 SECCIÓN 4 – INICIALIZACIÓN
- ****************************************************/
-(async () => {
-  const { etiquetas, datos } = await obtenerDatos();
-  renderizarGrafica(etiquetas, datos);
-})();
-</script>
+</body>
+</html>
