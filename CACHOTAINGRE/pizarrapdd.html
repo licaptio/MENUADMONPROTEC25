@@ -724,10 +724,27 @@ async function mostrarResumenIngresosAnuales(supabase) {
   // ------------------------------------
   // SUMAR SUBTOTALES CORRECTAMENTE
   // ------------------------------------
-  const totales = {
-  2023: ingresos2023.reduce((a, r) => a + Number(r.total_con_impuestos || 0), 0),
-  2024: ingresos2024.reduce((a, r) => a + Number(r.total_con_impuestos || 0), 0),
-  2025: ingresos2025.reduce((a, r) => a + Number(r.total_con_impuestos || 0), 0)
+const totales = {
+  2023: ingresos2023.reduce((a, r) => {
+    return a +
+      Number(r.subtotal || 0) +
+      Number(r.total_iva || 0) +
+      Number(r.total_ieps || 0);
+  }, 0),
+
+  2024: ingresos2024.reduce((a, r) => {
+    return a +
+      Number(r.subtotal || 0) +
+      Number(r.total_iva || 0) +
+      Number(r.total_ieps || 0);
+  }, 0),
+
+  2025: ingresos2025.reduce((a, r) => {
+    return a +
+      Number(r.subtotal || 0) +
+      Number(r.total_iva || 0) +
+      Number(r.total_ieps || 0);
+  }, 0)
 };
 
 
