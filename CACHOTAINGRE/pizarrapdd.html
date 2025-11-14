@@ -257,6 +257,9 @@ const datasets = anios.map(anio => ({
 // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
 // ======================================================
 async function exportarExcel(supabase) {
+  const anio = document.getElementById("selectAnio").value;
+
+  // Barra de carga bonita
   const barra = document.createElement("div");
   barra.style.position = "fixed";
   barra.style.bottom = "20px";
@@ -283,8 +286,10 @@ async function exportarExcel(supabase) {
 
   document.body.appendChild(barra);
 
-  // 🔥 1. Traer TODO desde el RPC
-  const { data, error } = await supabase.rpc("descargar_ingresos");
+  // 🔥 Llamar RPC filtrado por año
+  const { data, error } = await supabase.rpc("descargar_ingresos_por_anio", {
+    anio: Number(anio)
+  });
 
   if (error) {
     console.error(error);
@@ -293,21 +298,13 @@ async function exportarExcel(supabase) {
     return;
   }
 
-  texto.textContent = `Procesando ${data.length} registros...`;
+  texto.textContent = `Exportando ${data.length} registros...`;
 
-  // 🔥 2. Dividir en pedazos de 15,000 para evitar reventar XLSX
-  const chunkSize = 15000;
+  // Excel normal (ya no necesita dividirse)
+  const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
-
-  for (let i = 0; i < data.length; i += chunkSize) {
-    const chunk = data.slice(i, i + chunkSize);
-    const ws = XLSX.utils.json_to_sheet(chunk);
-    const sheetName = `Datos_${(i / chunkSize) + 1}`;
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  }
-
-  // 🔥 3. Guardar archivo
-  XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, `Ingresos_${anio}`);
+  XLSX.writeFile(wb, `ingresos_pdd_${anio}.xlsx`);
 
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
