@@ -274,9 +274,9 @@ const datasets = anios.map(anio => ({
 // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
 // ======================================================
 async function exportarExcel(supabase) {
-  const anio = document.getElementById("selectAnio").value;
+  const anio = Number(document.getElementById("selectAnio").value);
 
-  // Barra de carga bonita
+  // barra bonita
   const barra = document.createElement("div");
   barra.style.position = "fixed";
   barra.style.bottom = "20px";
@@ -300,25 +300,40 @@ async function exportarExcel(supabase) {
   texto.style.lineHeight = "24px";
   texto.textContent = "Cargando datos...";
   barra.appendChild(texto);
-
   document.body.appendChild(barra);
 
-  // 🔥 Llamar RPC filtrado por año
-// 🔥 RPC + rango para quitar límite de 1000
-  const { data, error } = await supabase
-    .rpc("descargar_ingresos_por_anio", { anio })
-    .range(0, 50000); // <- IMPORTANTE
+  // 🚀 NUEVO: paginar de 1000 en 1000
+  let offset = 0;
+  const limite = 1000;
+  let todo = [];
 
-  if (error) {
-    console.error(error);
-    alert("Error: " + error.message);
-    document.body.removeChild(barra);
-    return;
+  while (true) {
+    const { data, error } = await supabase
+      .rpc("descargar_ingresos_por_anio", { anio })
+      .range(offset, offset + limite - 1);
+
+    if (error) {
+      console.error(error);
+      alert("Error: " + error.message);
+      document.body.removeChild(barra);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      break; // no más datos
+    }
+
+    todo = todo.concat(data);
+
+    offset += limite;
+
+    texto.textContent = `Descargando... ${todo.length} registros`;
   }
 
-  texto.textContent = `Exportando ${data.length} registros...`;
+  texto.textContent = `Exportando ${todo.length} registros...`;
 
-  const ws = XLSX.utils.json_to_sheet(data);
+  // crear excel
+  const ws = XLSX.utils.json_to_sheet(todo);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, `Ingresos_${anio}`);
   XLSX.writeFile(wb, `ingresos_pdd_${anio}.xlsx`);
@@ -326,6 +341,7 @@ async function exportarExcel(supabase) {
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
+
 // ======================================================
 // 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
 // ======================================================
