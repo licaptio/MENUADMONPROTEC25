@@ -308,9 +308,10 @@ async function exportarExcel(supabase) {
   let todo = [];
 
   while (true) {
-    const { data, error } = await supabase
-      .rpc("descargar_ingresos_por_anio", { anio })
-      .range(offset, offset + limite - 1);
+const { data, error } = await supabase.rpc(
+  "descargar_ingresos_paginado",
+  { anio: anio.toString(), inicio: offset, cantidad: limite }
+);
 
     if (error) {
       console.error(error);
