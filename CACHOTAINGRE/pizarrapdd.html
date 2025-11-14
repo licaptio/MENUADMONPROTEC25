@@ -684,39 +684,56 @@ async function mostrarResumenIngresosAnuales(supabase) {
   const contenedor = document.getElementById("contenedorResumenIngresos");
   contenedor.innerHTML = "<p style='text-align:center;'>Cargando resumen...</p>";
 
-  // 📡 Agrupar totales anuales desde ingresos_pdd
-  const { data, error } = await supabase
-    .from("ingresos_pdd")
-    .select("periodo_anio, subtotal")
-    .not("periodo_anio", "is", null);
+  // ------------------------------------
+  // FUNCION PARA DESCARGAR TODO POR AÑO
+  // ------------------------------------
+  async function obtenerIngresosPorAnio(anio) {
+    let offset = 0;
+    const tamano = 5000;
+    let lista = [];
 
-  if (error) {
-    console.error("❌ Error al cargar resumen:", error);
-    contenedor.innerHTML = "<p>Error al cargar datos.</p>";
-    return;
+    while (true) {
+      const { data, error } = await supabase.rpc("descargar_ingresos_paginado", {
+        anio,
+        inicio: offset,
+        cantidad: tamano
+      });
+
+      if (error) {
+        console.error("Error:", error);
+        break;
+      }
+
+      if (!data || data.length === 0) break;
+
+      lista = lista.concat(data);
+      offset += tamano;
+    }
+
+    return lista;
   }
 
-  if (!data || data.length === 0) {
-    contenedor.innerHTML = "<p>No hay datos disponibles.</p>";
-    return;
-  }
+  // ------------------------------------
+  // DESCARGAR AÑOS 2023, 2024, 2025
+  // ------------------------------------
+  const ingresos2023 = await obtenerIngresosPorAnio(2023);
+  const ingresos2024 = await obtenerIngresosPorAnio(2024);
+  const ingresos2025 = await obtenerIngresosPorAnio(2025);
 
-  // 🧮 Agrupar por año
-  const totalesPorAnio = {};
-  data.forEach(row => {
-    const anio = row.periodo_anio;
-    const monto = Number(row.subtotal) || 0;
-    totalesPorAnio[anio] = (totalesPorAnio[anio] || 0) + monto;
-  });
+  // ------------------------------------
+  // SUMAR SUBTOTALES CORRECTAMENTE
+  // ------------------------------------
+  const totales = {
+    2023: ingresos2023.reduce((a, r) => a + Number(r.subtotal || 0), 0),
+    2024: ingresos2024.reduce((a, r) => a + Number(r.subtotal || 0), 0),
+    2025: ingresos2025.reduce((a, r) => a + Number(r.subtotal || 0), 0)
+  };
 
-  const anios = Object.keys(totalesPorAnio).sort();
-  const ultimos = anios.slice(-3).map(a => ({
-    periodo_anio: a,
-    total: totalesPorAnio[a]
-  }));
-  const maxValor = Math.max(...ultimos.map(x => x.total));
+  const maxValor = Math.max(...Object.values(totales));
 
-  // 🎨 Renderizar resumen con barras
+  // ------------------------------------
+  // RENDERIZAR RESUMEN ANUAL
+  // ------------------------------------
   contenedor.innerHTML = `
     <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
       <thead>
@@ -726,11 +743,11 @@ async function mostrarResumenIngresosAnuales(supabase) {
         </tr>
       </thead>
       <tbody>
-        ${ultimos.map(row => `
-          <tr style="background:${row.periodo_anio == 2025 ? '#D1F7D1' : '#f8f8f8'};">
-            <td style="padding:8px;font-weight:600;">${row.periodo_anio}</td>
+        ${[2023, 2024, 2025].map(anio => `
+          <tr style="background:${anio === 2025 ? '#D1F7D1' : '#f8f8f8'};">
+            <td style="padding:8px;font-weight:600;">${anio}</td>
             <td style="padding:8px;text-align:right;font-weight:600;">
-              $${Number(row.total).toLocaleString("es-MX", {
+              $${totales[anio].toLocaleString("es-MX", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}
@@ -741,24 +758,25 @@ async function mostrarResumenIngresosAnuales(supabase) {
     </table>
 
     <div>
-      ${ultimos.map(row => `
+      ${[2023, 2024, 2025].map(anio => `
         <div style="margin:10px 0;">
           <div style="display:flex;justify-content:space-between;color:#00416A;font-weight:600;">
-            <span>${row.periodo_anio}</span>
-            <span>$${Number(row.total).toLocaleString("es-MX")}</span>
+            <span>${anio}</span>
+            <span>$${totales[anio].toLocaleString("es-MX")}</span>
           </div>
           <div style="background:#eee;border-radius:8px;height:10px;overflow:hidden;">
-            <div style="height:10px;width:${(row.total / maxValor) * 100}%,
-                        background:${row.periodo_anio == 2025 ? '#28A745' :
-                                   row.periodo_anio == 2024 ? '#FFC107' :
-                                   '#E91E63'},
-                        border-radius:8px;"></div>
+            <div style="height:10px;width:${(totales[anio] / maxValor) * 100}%;
+                        background:${anio === 2025 ? '#28A745' :
+                                   anio === 2024 ? '#FFC107' :
+                                   '#E91E63'};">
+            </div>
           </div>
         </div>
       `).join("")}
     </div>
   `;
 }
+
 // ======================================================
 // 💰 FUNCIÓN: Graficar ventas por impuesto (multianual)
 // ======================================================
