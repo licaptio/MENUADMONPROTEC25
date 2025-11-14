@@ -256,12 +256,6 @@ const datasets = anios.map(anio => ({
 // 📥 4. FUNCIÓN: Exportar tabla completa a Excel
 // ======================================================
 async function exportarExcel(supabase) {
-  const tabla = "ingresos_pdd";
-  const limite = 1000;
-  let desde = 0;
-  let registrosTotales = [];
-  let seguir = true;
-
   const barra = document.createElement("div");
   barra.style.position = "fixed";
   barra.style.bottom = "20px";
@@ -277,9 +271,8 @@ async function exportarExcel(supabase) {
 
   const progreso = document.createElement("div");
   progreso.style.height = "100%";
-  progreso.style.width = "0%";
+  progreso.style.width = "100%";
   progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
-  progreso.style.transition = "width 0.3s ease";
   barra.appendChild(progreso);
 
   const texto = document.createElement("div");
@@ -290,40 +283,25 @@ async function exportarExcel(supabase) {
   texto.style.color = "#00416A";
   texto.style.fontWeight = "600";
   texto.style.lineHeight = "24px";
-  texto.textContent = "Descargando datos...";
+  texto.textContent = "Cargando datos (puede tardar 5–10 segundos)...";
   barra.appendChild(texto);
 
   document.body.appendChild(barra);
 
-  while (seguir) {
-    const { data, error } = await supabase
-      .from(tabla)
-      .select("*")
-      .range(desde, desde + limite - 1);
+  // 🔥 Llamamos al RPC (sin tiempo límite)
+  const { data, error } = await supabase.rpc("descargar_ingresos");
 
-    if (error) {
-      console.error(error);
-      alert("Error al descargar datos: " + error.message);
-      document.body.removeChild(barra);
-      return;
-    }
-
-    if (!data || data.length === 0) break;
-
-    registrosTotales = registrosTotales.concat(data);
-    desde += limite;
-
-    const porcentaje = Math.min((desde / 12000) * 100, 100);
-    progreso.style.width = `${porcentaje.toFixed(1)}%`;
-    texto.textContent = `Descargando... ${registrosTotales.length.toLocaleString()} registros`;
-
-    if (data.length < limite) seguir = false;
+  if (error) {
+    console.error(error);
+    alert("Error: " + error.message);
+    document.body.removeChild(barra);
+    return;
   }
 
-  progreso.style.width = "100%";
-  texto.textContent = `Procesando archivo... (${registrosTotales.length.toLocaleString()} registros)`;
+  texto.textContent = "Procesando archivo Excel...";
 
-  const ws = XLSX.utils.json_to_sheet(registrosTotales);
+  // 🔄 Generar Excel
+  const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
   XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
@@ -331,7 +309,6 @@ async function exportarExcel(supabase) {
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
-
 
 // ======================================================
 // 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
