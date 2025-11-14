@@ -304,9 +304,10 @@ async function exportarExcel(supabase) {
   document.body.appendChild(barra);
 
   // 🔥 Llamar RPC filtrado por año
-  const { data, error } = await supabase.rpc("descargar_ingresos_por_anio", {
-    anio: Number(anio)
-  });
+// 🔥 RPC + rango para quitar límite de 1000
+  const { data, error } = await supabase
+    .rpc("descargar_ingresos_por_anio", { anio })
+    .range(0, 50000); // <- IMPORTANTE
 
   if (error) {
     console.error(error);
@@ -317,7 +318,6 @@ async function exportarExcel(supabase) {
 
   texto.textContent = `Exportando ${data.length} registros...`;
 
-  // Excel normal (ya no necesita dividirse)
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, `Ingresos_${anio}`);
@@ -326,7 +326,6 @@ async function exportarExcel(supabase) {
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
-
 // ======================================================
 // 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
 // ======================================================
