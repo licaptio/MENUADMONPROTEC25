@@ -80,15 +80,32 @@
   <canvas id="graficaImpuestos"></canvas>
 </div>
 
-  <!-- ========================================================== -->
-  <!-- 📥 SECCIÓN 3: DESCARGA EXCEL -->
-  <!-- ========================================================== -->
- <label style="font-weight:600;color:#00416A;">Selecciona año:</label><br>
-<select id="selectAnio" style="padding:10px;border-radius:8px;border:1px solid #00416A;margin-bottom:10px;">
-  <option value="2025">2025</option>
-  <option value="2024">2024</option>
-  <option value="2023">2023</option>
-</select>
+<!-- ========================================================== -->
+<!-- 📥 SECCIÓN DESCARGA: EXCEL POR AÑO (2023–2025) -->
+<!-- ========================================================== -->
+<div class="card">
+  <h2 style="color:#00416A;text-align:center;">📥 Descargar Ingresos por Año</h2>
+  <p style="text-align:center;color:#555;">Descarga completa sin límite — Fuente: ingresos_pdd</p>
+
+  <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:10px;flex-wrap:wrap;">
+    
+    <div>
+      <label style="font-weight:600;color:#00416A;">Selecciona año:</label><br>
+      <select id="selectAnio"
+        style="padding:10px;border-radius:8px;border:1px solid #00416A;width:140px;font-size:15px;">
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+      </select>
+    </div>
+
+    <button id="btnDescargar" style="padding:12px 24px;font-size:15px;">
+      ⬇️ Descargar Excel
+    </button>
+
+  </div>
+</div>
+
 
 <!-- ========================================================== -->
 <!-- 🧩 SECCIÓN 4: GRAFICAS COMPARATIVAS POR SUCURSAL -->
@@ -821,23 +838,27 @@ async function generarGraficaImpuestos(supabase) {
 // ======================================================
 async function main() {
   const supabase = conectarSupabase();
-  
-  // 🔹 Cargar las tres gráficas principales
-   await mostrarUltimasFacturasPorSucursal(supabase);
-  await generarGraficasSucursalesComparativo(supabase); // 🧩 <-- ESTA FALTABA
-  await mostrarTopClientes2025(supabase); // 🏆 Nuevo Top 10
-  await mostrarTopArticulos2025(supabase);
-await generarGraficaHistorica(supabase);
+
+  // 1. Gráficas principales
+  await generarGraficaHistorica(supabase);
   await mostrarResumenIngresosAnuales(supabase);
   await generarGraficaImpuestos(supabase);
 
+  // 2. Resumenes por sucursal
+  await generarGraficasSucursalesComparativo(supabase);
+  await mostrarUltimasFacturasPorSucursal(supabase);
 
-  
-  // 🔹 Botón de descarga
-  document.getElementById("btnDescargar").addEventListener("click", () => exportarExcel(supabase));
+  // 3. Top listas
+  await mostrarTopClientes2025(supabase);
+  await mostrarTopArticulos2025(supabase);
+
+  // 4. Botón Excel
+  document.getElementById("btnDescargar")
+    .addEventListener("click", () => exportarExcel(supabase));
 }
 
 main();
+
 </script>
 
 </body>
