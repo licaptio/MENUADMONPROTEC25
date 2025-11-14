@@ -269,12 +269,6 @@ async function exportarExcel(supabase) {
   barra.style.overflow = "hidden";
   barra.style.zIndex = "9999";
 
-  const progreso = document.createElement("div");
-  progreso.style.height = "100%";
-  progreso.style.width = "100%";
-  progreso.style.background = "linear-gradient(to right,#00416A,#0078b9)";
-  barra.appendChild(progreso);
-
   const texto = document.createElement("div");
   texto.style.position = "absolute";
   texto.style.width = "100%";
@@ -288,7 +282,7 @@ async function exportarExcel(supabase) {
 
   document.body.appendChild(barra);
 
-  // 📡 Llamar función RPC sin timeout
+  // 🔥 1. Traer TODO desde el RPC
   const { data, error } = await supabase.rpc("descargar_ingresos");
 
   if (error) {
@@ -298,18 +292,25 @@ async function exportarExcel(supabase) {
     return;
   }
 
-  texto.textContent = "Procesando Excel...";
+  texto.textContent = `Procesando ${data.length} registros...`;
 
-  // 📄 Crear archivo Excel
-  const ws = XLSX.utils.json_to_sheet(data);
+  // 🔥 2. Dividir en pedazos de 15,000 para evitar reventar XLSX
+  const chunkSize = 15000;
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
+
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const chunk = data.slice(i, i + chunkSize);
+    const ws = XLSX.utils.json_to_sheet(chunk);
+    const sheetName = `Datos_${(i / chunkSize) + 1}`;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  }
+
+  // 🔥 3. Guardar archivo
   XLSX.writeFile(wb, `ingresos_pdd_${new Date().toISOString().split("T")[0]}.xlsx`);
 
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
-
 
 // ======================================================
 // 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
