@@ -283,12 +283,12 @@ async function exportarExcel(supabase) {
   texto.style.color = "#00416A";
   texto.style.fontWeight = "600";
   texto.style.lineHeight = "24px";
-  texto.textContent = "Cargando datos (puede tardar 5–10 segundos)...";
+  texto.textContent = "Cargando datos...";
   barra.appendChild(texto);
 
   document.body.appendChild(barra);
 
-  // 🔥 Llamamos al RPC (sin tiempo límite)
+  // 📡 Llamar función RPC sin timeout
   const { data, error } = await supabase.rpc("descargar_ingresos");
 
   if (error) {
@@ -298,9 +298,9 @@ async function exportarExcel(supabase) {
     return;
   }
 
-  texto.textContent = "Procesando archivo Excel...";
+  texto.textContent = "Procesando Excel...";
 
-  // 🔄 Generar Excel
+  // 📄 Crear archivo Excel
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Ingresos_PDD");
@@ -309,6 +309,7 @@ async function exportarExcel(supabase) {
   texto.textContent = "✅ Exportación completa";
   setTimeout(() => document.body.removeChild(barra), 3000);
 }
+
 
 // ======================================================
 // 🧾 5. FUNCIÓN: Mostrar las 3 facturas más recientes por sucursal (adaptada a ingresos_pdd)
