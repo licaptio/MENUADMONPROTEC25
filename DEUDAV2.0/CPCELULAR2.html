@@ -13,6 +13,31 @@
   <!-- ==========================================================
         [SECCIÓN 2] ESTILOS CSS
   =========================================================== -->
+  /* =====================================
+   ESTILO LISTA AUTOCOMPLETE
+=====================================*/
+.autocomplete-list {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  width: 250px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.autocomplete-list div {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.autocomplete-list div:hover {
+  background: #007bff;
+  color: white;
+}
+
   <style>
 
     /* =============================
@@ -133,17 +158,25 @@
 
   <h2>🔍 Consulta de Facturas por RFC</h2>
 
-  <!-- RFC -->
-  <label><strong>RFC:</strong></label>
-  <select id="rfcFiltro" onchange="sincronizarNombre()">
-    <option value="">-- Selecciona uno --</option>
-  </select>
+  <!-- =============================
+     🔍 BUSCADOR TIPO GOOGLE — RFC
+==============================-->
+<label><strong>RFC:</strong></label>
+<input type="text" id="rfcFiltro" 
+       placeholder="Escribe RFC…" 
+       oninput="autocompleteRFC()" 
+       autocomplete="off">
+<div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-  <!-- NOMBRE -->
-  <label style="margin-left: 1rem;"><strong>Nombre:</strong></label>
-  <select id="nombreFiltro" onchange="sincronizarRFC()">
-    <option value="">-- Selecciona uno --</option>
-  </select>
+<!-- =============================
+     🔍 BUSCADOR TIPO GOOGLE — NOMBRE
+==============================-->
+<label style="margin-left:1rem;"><strong>Nombre:</strong></label>
+<input type="text" id="nombreFiltro"
+       placeholder="Escribe Nombre…" 
+       oninput="autocompleteNombre()" 
+       autocomplete="off">
+<div id="sugerenciasNombre" class="autocomplete-list"></div>
 
   <!-- BOTÓN CONSULTAR -->
   <button onclick="consultarPorRFC()">🔎 Consultar</button>
@@ -175,6 +208,8 @@
   let datosCrudos = [];
 
   cargarRFCs();
+// Lista combinada para autocompletar
+let listaBusqueda = [];
 
   /* =============================
      4.2 — CARGAR RFC/NOMBRE
@@ -204,7 +239,12 @@
         selectNombre.appendChild(opt);
       });
   }
+listaBusqueda = data.map(x => ({
+  rfc: x.rfc,
+  nombre: x.nombre.toUpperCase()
+}));
 
+  
   /* =============================
      4.3 — CONSULTAR FACTURAS
   ==============================*/
@@ -373,6 +413,65 @@
     alert("Fila copiada");
   }
 
+/* =================================================
+   🔥 AUTOCOMPLETE RFC
+=================================================*/
+function autocompleteRFC() {
+  const input = document.getElementById("rfcFiltro");
+  const texto = input.value.toUpperCase();
+  const lista = document.getElementById("sugerenciasRFC");
+
+  lista.innerHTML = "";
+  if (texto.length < 1) { lista.style.display = "none"; return; }
+
+  const resultados = listaBusqueda.filter(x => x.rfc.includes(texto));
+
+  if (resultados.length === 0) { lista.style.display = "none"; return; }
+
+  resultados.forEach(x => {
+    const div = document.createElement("div");
+    div.textContent = `${x.rfc} — ${x.nombre}`;
+    div.onclick = () => {
+      input.value = x.rfc;
+      document.getElementById("nombreFiltro").value = x.nombre;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
+
+  lista.style.display = "block";
+}
+
+/* =================================================
+   🔥 AUTOCOMPLETE NOMBRE
+=================================================*/
+function autocompleteNombre() {
+  const input = document.getElementById("nombreFiltro");
+  const texto = input.value.toUpperCase();
+  const lista = document.getElementById("sugerenciasNombre");
+
+  lista.innerHTML = "";
+  if (texto.length < 1) { lista.style.display = "none"; return; }
+
+  const resultados = listaBusqueda.filter(x => x.nombre.includes(texto));
+
+  if (resultados.length === 0) { lista.style.display = "none"; return; }
+
+  resultados.forEach(x => {
+    const div = document.createElement("div");
+    div.textContent = `${x.nombre} — ${x.rfc}`;
+    div.onclick = () => {
+      input.value = x.nombre;
+      document.getElementById("rfcFiltro").value = x.rfc;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
+
+  lista.style.display = "block";
+}
+
+  
 </script>
 
 </body>
