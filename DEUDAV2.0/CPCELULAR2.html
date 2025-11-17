@@ -305,8 +305,13 @@ function filtrarPagadas() {
 }
 function mostrarTabla(data) {
   let html = `<table><thead><tr>
-    <th>Fecha</th><th>Días</th><th>UUID</th><th>Proveedor</th>
-    <th>Total</th><th>Pagada</th>
+    <th>Fecha</th>
+    <th>Días</th>
+    <th>UUID</th>
+    <th>Proveedor</th>
+    <th>Total</th>
+    <th>Pagada</th>
+    <th>Factura Física</th>
   </tr></thead><tbody>`;
 
   data.forEach(f => {
@@ -323,8 +328,30 @@ function mostrarTabla(data) {
         </td>
 
         <td>${f.razon_social_emisor}</td>
-        <td>${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-        <td>${(f.factura_pagada||"NO")}</td>
+
+        <td>${(f.total||0).toLocaleString('es-MX',{
+          minimumFractionDigits:2
+        })}</td>
+
+        <td>${(f.factura_pagada || "NO")}</td>
+
+        <td>
+  <strong>FACTURA FÍSICA:</strong>
+  <button onclick="actualizarFisica('${f.uuid_cfdi}', 'SI')" 
+          style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">
+    SI
+  </button>
+
+  <button onclick="actualizarFisica('${f.uuid_cfdi}', 'NO')" 
+          style="background:#dc3545;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">
+    NO
+  </button>
+
+  <div style="margin-top:4px;font-size:0.9em;color:#333;">
+    Estado actual: <strong>${f.factura_fisicamente || "NO"}</strong>
+  </div>
+</td>
+
       </tr>
     `;
   });
@@ -337,6 +364,23 @@ function calcDiasDesdeHoy(iso){
   const f = new Date(iso);
   const h = new Date();
   return Math.floor((h - f) / 1000 / 60 / 60 / 24);
+}
+async function actualizarFisica(uuid, valor) {
+
+  const { data, error } = await supabase
+    .from("deuda_limpia_pdd")
+    .update({ factura_fisicamente: valor })
+    .eq("uuid_cfdi", uuid);
+
+  if (error) {
+    alert("Error al actualizar: " + error.message);
+    return;
+  }
+
+  // 🔄 Recargar solo los datos sin refrescar la página
+  filtrarPagadas();
+
+  alert("Factura actualizada a: " + valor);
 }
 
 </script>
