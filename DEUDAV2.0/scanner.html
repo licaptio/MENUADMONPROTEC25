@@ -59,6 +59,8 @@
             .from("deuda_limpia_pdd")
             .update({ factura_fisica: "SI" })
             .eq("uuid_cfdi", uuid);
+            showToast();
+
 
           // 🟩 2) Reiniciar escáner a los 800ms
           setTimeout(() => {
@@ -111,12 +113,52 @@
     button:active {
       transform: scale(0.97);
     }
+/* TOAST flotante */
+#toastOk {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: 9999;
+}
+#toastOk.show {
+  opacity: 1;
+}
+#btnSalir {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #b00020;
+  color: white;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 9998;
+}
+#btnSalir:hover {
+  background: #8a001a;
+}
+    
   </style>
 </head>
 <body>
+  <div id="toastOk">Registrado ✔</div>
   <h2>📷 Escaneando Factura...</h2>
   <div id="lector"></div>
   <button onclick="cancelar()">❌ Cancelar</button>
+  <button id="btnSalir" onclick="finalizarApp()">⛔ Finalizar</button>
+
 
   <script>
     // 🔊 función beep
@@ -178,6 +220,17 @@
         window.location.href = "iniciacam.html";
       });
     }
+    function showToast() {
+  const t = document.getElementById("toastOk");
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1200);
+}
+function finalizarApp() {
+  lector.stop().catch(()=>{}).finally(()=>{
+    window.location.href = "iniciacam.html"; // menú principal
+  });
+}
+
   </script>
 </body>
 </html>
