@@ -355,7 +355,7 @@ function mostrarTabla(data) {
   data.forEach(f => {
 html += `
 <tr>
-  <td data-label="Fecha">${f.fecha}</td>
+  <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
   <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
 
   <td data-label="UUID">
@@ -423,6 +423,13 @@ async function toggleFisica(uuid) {
 
   // Recargar tabla con valor REAL
   filtrarPagadas();
+}
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const año = fecha.getFullYear();
+  return `${dia}/${mes}/${año}`;
 }
 
 </script>
