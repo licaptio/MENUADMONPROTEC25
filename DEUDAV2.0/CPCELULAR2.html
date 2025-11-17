@@ -198,11 +198,12 @@ function autocompleteRFC() {
     .forEach(x => {
       let div = document.createElement("div");
       div.textContent = `${x.rfc} — ${x.nombre}`;
-      div.onclick = () => {
-        rfcFiltro.value = x.rfc;
-        nombreFiltro.value = x.nombre;
-        lista.style.display = "none";
-      };
+div.onclick = () => {
+  nombreFiltro.value = x.nombre;
+  window.rfcSeleccionado = x.rfc;  // guardamos RFC aunque el input no exista
+  lista.style.display = "none";
+};
+
       lista.appendChild(div);
     });
 
