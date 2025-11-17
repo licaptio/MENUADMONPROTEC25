@@ -105,6 +105,25 @@
 
     td:last-child { border-bottom: none; }
   }
+@media (max-width: 768px) {
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    text-align: right;
+    position: relative;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-transform: capitalize;
+    color: #555;
+    flex-basis: 50%;
+    text-align: left;
+  }
+}
 
   /* =====================================
        2.4 — TARJETA DETALLE
@@ -334,36 +353,36 @@ function mostrarTabla(data) {
   </tr></thead><tbody>`;
 
   data.forEach(f => {
-    html += `
-      <tr>
-        <td>${f.fecha}</td>
-        <td>${calcDiasDesdeHoy(f.fecha)}</td>
+html += `
+<tr>
+  <td data-label="Fecha">${f.fecha}</td>
+  <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
 
-        <td>
-          <a href="detalle-factura.html?uuid=${f.uuid_cfdi}"
-             style="color:#007bff; text-decoration:underline; cursor:pointer;">
-            ${f.uuid_cfdi}
-          </a>
-        </td>
+  <td data-label="UUID">
+    <a href="detalle-factura.html?uuid=${f.uuid_cfdi}"
+       style="color:#007bff; text-decoration:underline; cursor:pointer;">
+      ${f.uuid_cfdi}
+    </a>
+  </td>
 
-        <td>${f.razon_social_emisor}</td>
+  <td data-label="Proveedor">${f.razon_social_emisor}</td>
 
-        <td>${(f.total||0).toLocaleString('es-MX',{
-          minimumFractionDigits:2
-        })}</td>
+  <td data-label="Total">
+    ${(f.total||0).toLocaleString('es-MX',{ minimumFractionDigits:2 })}
+  </td>
 
-        <td>${(f.factura_pagada || "NO")}</td>
-<td>
-  <div 
-    class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
-    onclick="toggleFisica('${f.uuid_cfdi}')">
+  <td data-label="Pagada">${f.factura_pagada || "NO"}</td>
+
+  <td data-label="Factura Física">
+    <div 
+      class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
+      onclick="toggleFisica('${f.uuid_cfdi}')">
       ${(f.factura_fisicamente || "NO")}
-  </div>
-</td>
+    </div>
+  </td>
+</tr>
+`;
 
-
-      </tr>
-    `;
   });
 
   html += "</tbody></table>";
