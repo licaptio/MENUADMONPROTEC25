@@ -367,9 +367,7 @@ html += `
 
   <td data-label="Proveedor">${f.razon_social_emisor}</td>
 
-  <td data-label="Total">
-    ${(f.total||0).toLocaleString('es-MX',{ minimumFractionDigits:2 })}
-  </td>
+<td data-label="Total">${monedaMXN(f.total || 0)}</td>
 
   <td data-label="Pagada">${f.factura_pagada || "NO"}</td>
 
@@ -400,6 +398,12 @@ function formatearFecha(fechaISO) {
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const año = fecha.getFullYear();
   return `${dia}/${mes}/${año}`;
+}
+function monedaMXN(valor) {
+  return Number(valor).toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  });
 }
 
 async function toggleFisica(uuid) {
