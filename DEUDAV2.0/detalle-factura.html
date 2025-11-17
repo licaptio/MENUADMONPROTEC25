@@ -319,6 +319,48 @@ async function subirFoto() {
   // refrescar tras un momento
   setTimeout(() => location.reload(), 900);
 }
+async function eliminarFoto(url) {
+  if (!confirm("¿Eliminar esta foto?")) return;
+
+  // 1) Obtener ruta real en Storage
+  const ruta = url.split(`${BUCKET}/`)[1]?.replace(/^public\//,'');
+
+  if (!ruta) return showToast("❌ No se pudo obtener la ruta", true);
+
+  // 2) Borrar del bucket
+  const { error: delErr } = await supabaseClient
+    .storage
+    .from(BUCKET)
+    .remove([ruta]);
+
+  if (delErr) {
+    console.error(delErr);
+    return showToast("❌ Error al eliminar del Storage", true);
+  }
+
+  // 3) Actualizar arreglo de fotos en la BD
+  const { data: actual } = await supabaseClient
+    .from(TABLA)
+    .select("fotos")
+    .eq("uuid_cfdi", uuid)
+    .maybeSingle();
+
+  const nuevoArreglo = actual.fotos.filter(f => f !== url);
+
+  const { error: upErr } = await supabaseClient
+    .from(TABLA)
+    .update({ fotos: nuevoArreglo })
+    .eq("uuid_cfdi", uuid);
+
+  if (upErr) {
+    console.error(upErr);
+    return showToast("❌ Error al actualizar la BD", true);
+  }
+
+  showToast("🗑 Foto eliminada");
+
+  setTimeout(() => location.reload(), 600);
+}
 
     // ---------- UTILIDADES ----------
     function showToast(msg, error=false){
@@ -338,6 +380,7 @@ async function subirFoto() {
 </body>
 
 </html>
+
 
 
 
