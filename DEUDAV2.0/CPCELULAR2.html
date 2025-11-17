@@ -350,6 +350,7 @@ function mostrarTabla(data) {
     <th>Total</th>
     <th>Pagada</th>
     <th>Factura Física</th>
+    <th>📷 Fotos</th>
   </tr></thead><tbody>`;
 
   data.forEach(f => {
@@ -380,6 +381,21 @@ html += `
 </div>
 
   </td>
+<td data-label="Fotos">
+  ${
+    (f.fotos && f.fotos.length > 0)
+      ? f.fotos
+          .map(url => 
+            `<a href="${url}" target="_blank"
+                style="margin-right:4px; font-size:18px; text-decoration:none;">
+               📷
+             </a>`
+          )
+          .join('')
+      : `<span style="color:#aaa;">—</span>`
+  }
+</td>
+
 </tr>
 `;
 
