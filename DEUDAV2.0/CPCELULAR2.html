@@ -302,11 +302,11 @@ async function consultarPorRFC() {
   const limiteISO = limite.toISOString().split("T")[0];
 
   // contar registros
-  const { count, error: errorConteo } = await supabase
-    .from("deuda_limpia_pdd")
-    .select("*", { count: "exact", head: true })
-    .eq("rfc_emisor", rfc)
-    .gte("fecha", limiteISO);
+const { count, error: errorConteo } = await supabase
+  .from("deuda_limpia_pdd")
+  .select("*", { count: "exact", head: true })
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO);
 
   if (errorConteo) {
     alert("Error al contar registros");
@@ -407,7 +407,7 @@ function monedaMXN(valor) {
 }
 
 async function toggleFisica(uuid) {
-  // PRIMERO traer el valor actual desde supabase para evitar desincronización
+
   const { data, error } = await supabase
     .from("deuda_limpia_pdd")
     .select("factura_fisicamente")
@@ -432,9 +432,10 @@ async function toggleFisica(uuid) {
     return;
   }
 
-  // Recargar tabla con valor REAL
+  // recargar datos actualizados
   filtrarPagadas();
 }
+
 </script>
 
 </body>
