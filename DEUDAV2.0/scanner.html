@@ -5,7 +5,6 @@
   <title>Escáner de Factura – PROVSOFT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Librerías -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -21,6 +20,7 @@
       background: #f7f9fc;
       color: #222;
     }
+
     h2 { margin-bottom: 15px; }
 
     #lector {
@@ -51,6 +51,7 @@
       z-index: 9999;
     }
 
+    /* TOAST */
     #toastOk {
       position: fixed;
       bottom: 20px;
@@ -58,12 +59,12 @@
       transform: translateX(-50%);
       background: #28a745;
       color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 1rem;
+      padding: 14px 26px;
+      border-radius: 12px;
+      font-size: 1.1rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.25);
       opacity: 0;
-      transition: opacity .3s ease;
+      transition: opacity .35s ease;
       z-index: 9999;
     }
     #toastOk.show { opacity: 1; }
@@ -77,6 +78,7 @@
   <button id="btnCancelar" onclick="cancelar()">❌ Cancelar</button>
   <button id="btnSalir" onclick="finalizarApp()">⛔ Finalizar</button>
 
+  <!-- Toast -->
   <div id="toastOk">✔ Registrado</div>
 
   <script>
@@ -97,7 +99,7 @@
       osc.stop(ctx.currentTime + 0.12);
     }
 
-    // Obtener UUID
+    // EXTRAER UUID
     function extraeUUID(raw) {
       try {
         const url = new URL(raw);
@@ -110,14 +112,13 @@
       return null;
     }
 
-    // Toast
+    // TOAST
     function showToast() {
       const t = document.getElementById("toastOk");
       t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 1000);
+      setTimeout(() => t.classList.remove("show"), 2000);  // visible 2 segundos
     }
 
-    // Escáner
     const lector = new Html5Qrcode("lector");
     let bloqueado = false;
 
@@ -135,16 +136,17 @@
             bloqueado = true;
             beep();
 
-            // Marcar en Supabase
+            // ACTUALIZAR EN SUPABASE
             await supabase
               .from("deuda_limpia_pdd")
-              .update({ factura_fisica: "SI" })
+              .update({ factura_fisicamente: "SI" })   // 👈 CAMBIO CORRECTO
               .eq("uuid_cfdi", uuid);
 
             showToast();
 
-            // Volver a permitir lectura
-            setTimeout(() => bloqueado = false, 800);
+            // ESPERAR 3 SEGUNDOS ANTES DE VOLVER A ESCANEAR
+            setTimeout(() => bloqueado = false, 3000);
+
           },
           err => {}
         );
@@ -157,7 +159,7 @@
       });
     }
 
-    function finalizarApp(){
+    function finalizarApp() {
       lector.stop().catch(()=>{}).finally(()=>{
         window.location.href = "iniciacam.html";
       });
