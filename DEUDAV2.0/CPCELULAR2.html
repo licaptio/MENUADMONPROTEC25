@@ -303,7 +303,7 @@ async function consultarPorRFC() {
 
   // contar registros
   const { count, error: errorConteo } = await supabase
-    .from("v_deuda_proveedores")
+    .from("deuda_limpia_pdd")
     .select("*", { count: "exact", head: true })
     .eq("rfc_emisor", rfc)
     .gte("fecha", limiteISO);
@@ -314,12 +314,12 @@ async function consultarPorRFC() {
   }
 
   // consultar facturas
-  const { data: facturas, error } = await supabase
-    .from("v_deuda_proveedores")
-    .select("*")
-    .eq("rfc_emisor", rfc)
-    .gte("fecha", limiteISO)
-    .order("fecha", { ascending: true });
+const { data: facturas, error } = await supabase
+  .from("deuda_limpia_pdd")
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO)
+  .order("fecha", { ascending: true });
 
   if (error) {
     alert("Error al traer facturas");
