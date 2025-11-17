@@ -314,12 +314,13 @@ function mostrarTabla(data) {
       <tr>
         <td>${f.fecha}</td>
         <td>${calcDiasDesdeHoy(f.fecha)}</td>
+
         <td>
-  <a href="detalle-factura.html?uuid=${f.uuid_cfdi}"
-     style="color:#007bff; text-decoration:underline; cursor:pointer;">
-     ${f.uuid_cfdi}
-  </a>
-</td>
+          <a href="detalle-factura.html?uuid=${f.uuid_cfdi}"
+             style="color:#007bff; text-decoration:underline; cursor:pointer;">
+            ${f.uuid_cfdi}
+          </a>
+        </td>
 
         <td>${f.razon_social_emisor}</td>
         <td>${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
@@ -331,6 +332,7 @@ function mostrarTabla(data) {
   html += "</tbody></table>";
   document.getElementById("tablaResultados").innerHTML = html;
 }
+
 function calcDiasDesdeHoy(iso){
   const f = new Date(iso);
   const h = new Date();
