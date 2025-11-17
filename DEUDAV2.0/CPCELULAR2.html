@@ -123,7 +123,26 @@ label[for="rfcFiltro"],
 #sugerenciasRFC {
   display: none !important;
 }
-  </style>
+.badge-toggle {
+  display: inline-block;
+  padding: 6px 14px;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  user-select: none;
+}
+
+.badge-si {
+  background: #28a745;
+}
+
+.badge-no {
+  background: #dc3545;
+}
+
+</style>
 </head>
 <body>
 
@@ -334,23 +353,14 @@ function mostrarTabla(data) {
         })}</td>
 
         <td>${(f.factura_pagada || "NO")}</td>
-
-        <td>
-  <strong>FACTURA FÍSICA:</strong>
-  <button onclick="actualizarFisica('${f.uuid_cfdi}', 'SI')" 
-          style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">
-    SI
-  </button>
-
-  <button onclick="actualizarFisica('${f.uuid_cfdi}', 'NO')" 
-          style="background:#dc3545;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">
-    NO
-  </button>
-
-  <div style="margin-top:4px;font-size:0.9em;color:#333;">
-    Estado actual: <strong>${f.factura_fisicamente || "NO"}</strong>
+<td>
+  <div 
+    class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
+    onclick="toggleFisica('${f.uuid_cfdi}', '${f.factura_fisicamente || 'NO'}')">
+      ${(f.factura_fisicamente || "NO")}
   </div>
 </td>
+
 
       </tr>
     `;
@@ -381,6 +391,22 @@ async function actualizarFisica(uuid, valor) {
   filtrarPagadas();
 
   alert("Factura actualizada a: " + valor);
+}
+async function toggleFisica(uuid, estadoActual) {
+  const nuevo = estadoActual === "SI" ? "NO" : "SI";
+
+  const { error } = await supabase
+    .from("deuda_limpia_pdd")
+    .update({ factura_fisicamente: nuevo })
+    .eq("uuid_cfdi", uuid);
+
+  if (error) {
+    alert("Error al actualizar: " + error.message);
+    return;
+  }
+
+  // refrescar vista
+  filtrarPagadas();
 }
 
 </script>
