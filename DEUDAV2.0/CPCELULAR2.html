@@ -375,23 +375,7 @@ function calcDiasDesdeHoy(iso){
   const h = new Date();
   return Math.floor((h - f) / 1000 / 60 / 60 / 24);
 }
-async function actualizarFisica(uuid, valor) {
 
-  const { data, error } = await supabase
-    .from("deuda_limpia_pdd")
-    .update({ factura_fisicamente: valor })
-    .eq("uuid_cfdi", uuid);
-
-  if (error) {
-    alert("Error al actualizar: " + error.message);
-    return;
-  }
-
-  // 🔄 Recargar solo los datos sin refrescar la página
-  filtrarPagadas();
-
-  alert("Factura actualizada a: " + valor);
-}
 async function toggleFisica(uuid, estadoActual) {
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
