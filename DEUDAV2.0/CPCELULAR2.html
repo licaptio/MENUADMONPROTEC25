@@ -5,474 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Facturas por RFC</title>
 
-  <!-- ==========================================================
-        [SECCIÓN 1] LIBRERÍAS
-  =========================================================== -->
+  <!-- ================================
+       [1] LIBRERÍAS
+  =================================-->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-  <!-- ==========================================================
-        [SECCIÓN 2] ESTILOS CSS
-  =========================================================== -->
-  /* =====================================
-   ESTILO LISTA AUTOCOMPLETE
-=====================================*/
-.autocomplete-list {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  width: 250px;
-  max-height: 180px;
-  overflow-y: auto;
-  display: none;
-  border-radius: 6px;
-  z-index: 10;
-}
-
-.autocomplete-list div {
-  padding: 8px;
-  cursor: pointer;
-}
-
-.autocomplete-list div:hover {
-  background: #007bff;
-  color: white;
-}
-
+  <!-- ================================
+       [2] ESTILOS CSS
+  =================================-->
   <style>
 
-    /* =============================
+  /* =====================================
+       2.0 — AUTOCOMPLETE
+  ======================================*/
+  .autocomplete-list {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    width: 250px;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+    border-radius: 6px;
+    z-index: 10;
+  }
+
+  .autocomplete-list div {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .autocomplete-list div:hover {
+    background: #007bff;
+    color: white;
+  }
+
+  /* =====================================
        2.1 — REGLAS BASE
-    ==============================*/
-    body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 1rem;
-    }
-    button {
-      margin: 1rem 0;
-      padding: 10px 20px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover { background: #218838; }
+  ======================================*/
+  body {
+    font-family: sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 1rem;
+  }
 
-    /* =============================
+  button {
+    margin: 1rem 0;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover { background: #218838; }
+
+  /* =====================================
        2.2 — TABLAS (PC)
-    ==============================*/
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      font-size: 0.9em;
-      text-align: left;
-    }
-    th {
-      background-color: #007bff;
-      color: white;
-    }
+  ======================================*/
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  th, td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-size: 0.9em;
+    text-align: left;
+  }
+  th {
+    background-color: #007bff;
+    color: white;
+  }
 
-    .uuid-link { color:#0b6efd; text-decoration:underline; }
-    .uuid-link:hover { text-decoration:none; }
+  /* =====================================
+       2.3 — TARJETAS MÓVIL
+  ======================================*/
+  @media (max-width: 768px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
 
-    /* =============================
-       2.3 — TARJETAS (MÓVIL)
-    ==============================*/
-    @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; }
-
-      tr {
-        margin-bottom: 18px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,.08);
-        padding: 12px 15px;
-        border: 1px solid #e0e0e0;
-      }
-
-      td {
-        border: none;
-        border-bottom: 1px dashed #ddd;
-        padding: 10px 6px;
-        font-size: 0.95rem;
-      }
-      td:last-child { border-bottom: none; }
-
-      td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        display: block;
-        margin-bottom: 4px;
-        color: #0056b3;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      td[data-label="Total"] {
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #28a745;
-        text-align: right;
-      }
-
-      td[data-label="¿Pagada?"], td[data-label="¿Física?"] {
-        text-align: center;
-        font-weight: bold;
-        padding: 12px;
-        border-radius: 6px;
-      }
-    }
-
-    /* =============================
-       2.4 — TARJETAS MÓVIL (DETALLE)
-    ==============================*/
-    .card {
+    tr {
+      margin-bottom: 18px;
       background: #fff;
-      margin: 12px 0;
-      padding: 14px;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0,0,0,.08);
+      padding: 12px 15px;
       border: 1px solid #e0e0e0;
+    }
+
+    td {
+      border: none;
+      border-bottom: 1px dashed #ddd;
+      padding: 10px 6px;
       font-size: 0.95rem;
     }
-    .card div { margin-bottom: 6px; line-height: 1.3; }
-    .card strong { min-width: 100px; display: inline-block; }
+
+    td:last-child { border-bottom: none; }
+  }
+
+  /* =====================================
+       2.4 — TARJETA DETALLE
+  ======================================*/
+  .card {
+    background: #fff;
+    margin: 12px 0;
+    padding: 14px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e0e0e0;
+    font-size: 0.95rem;
+  }
 
   </style>
-
 </head>
 <body>
 
-<!-- ==========================================================
-     [SECCIÓN 3] ENCABEZADO Y FILTROS
-=========================================================== -->
+<h2>🔍 Consulta de Facturas por RFC</h2>
 
-  <h2>🔍 Consulta de Facturas por RFC</h2>
-
-  <!-- =============================
-     🔍 BUSCADOR TIPO GOOGLE — RFC
-==============================-->
+<!-- =====================================
+     [3] INPUT RFC + AUTOCOMPLETE
+======================================-->
 <label><strong>RFC:</strong></label>
-<input type="text" id="rfcFiltro" 
-       placeholder="Escribe RFC…" 
-       oninput="autocompleteRFC()" 
-       autocomplete="off">
+<input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
 <div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-<!-- =============================
-     🔍 BUSCADOR TIPO GOOGLE — NOMBRE
-==============================-->
+<!-- =====================================
+     [4] INPUT NOMBRE + AUTOCOMPLETE
+======================================-->
 <label style="margin-left:1rem;"><strong>Nombre:</strong></label>
-<input type="text" id="nombreFiltro"
-       placeholder="Escribe Nombre…" 
-       oninput="autocompleteNombre()" 
-       autocomplete="off">
+<input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
 <div id="sugerenciasNombre" class="autocomplete-list"></div>
 
-  <!-- BOTÓN CONSULTAR -->
-  <button onclick="consultarPorRFC()">🔎 Consultar</button>
+<button onclick="consultarPorRFC()">🔎 Consultar</button>
 
-  <!-- MOSTRAR PAGADAS -->
-  <label style="margin-left:1rem;">
-    <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
-    Mostrar pagadas
-  </label>
+<label style="margin-left:1rem;">
+  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
+  Mostrar pagadas
+</label>
 
-  <!-- RESULTADOS -->
-  <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
-  <div id="tablaResultados"></div>
+<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
+<div id="tablaResultados"></div>
 
-<!-- ==========================================================
-     [SECCIÓN 4] LÓGICA JAVASCRIPT
-=========================================================== -->
+<!-- =====================================
+     [5] LÓGICA JAVASCRIPT
+======================================-->
 <script>
 
-  /* =============================
-     4.1 — CONFIG SUPABASE
-  ==============================*/
-  const supabase = window.supabase.createClient(
-    'https://cvpbtjlupswbyxenugpz.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-  );
+const supabase = window.supabase.createClient(
+  "https://cvpbtjlupswbyxenugpz.supabase.co",
+  "eyJhbGciOiJIUzI1..."
+);
 
-  const tabla = "deuda_limpia_pdd";
-  let datosCrudos = [];
-
-  cargarRFCs();
-// Lista combinada para autocompletar
+const tabla = "deuda_limpia_pdd";
+let datosCrudos = [];
 let listaBusqueda = [];
 
-  /* =============================
-     4.2 — CARGAR RFC/NOMBRE
-  ==============================*/
-  async function cargarRFCs() {
-    const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
-    if (error) { alert("Error al cargar RFCs"); return; }
+/* =====================================
+   5.1 CARGAR RFC + NOMBRE
+======================================*/
+async function cargarRFCs() {
+  const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
+  if (error) { alert("Error al cargar RFCs"); return; }
 
-    const selectRFC = document.getElementById("rfcFiltro");
-    const selectNombre = document.getElementById("nombreFiltro");
+  // 🔥 AQUÍ SÍ VA — TU ERROR ESTABA EN ESTO
+  listaBusqueda = data.map(x => ({
+    rfc: x.rfc,
+    nombre: x.nombre.toUpperCase()
+  }));
+}
 
-    // RFCs
-    data.forEach(f => {
-      let opt = document.createElement("option");
-      opt.value = f.rfc;
-      opt.textContent = f.rfc;
-      selectRFC.appendChild(opt);
-    });
+cargarRFCs();
 
-    // Nombres ordenados
-    [...data]
-      .sort((a,b)=>a.nombre.localeCompare(b.nombre))
-      .forEach(f => {
-        let opt = document.createElement("option");
-        opt.value = f.rfc;
-        opt.textContent = f.nombre;
-        selectNombre.appendChild(opt);
-      });
-  }
-listaBusqueda = data.map(x => ({
-  rfc: x.rfc,
-  nombre: x.nombre.toUpperCase()
-}));
-
-  
-  /* =============================
-     4.3 — CONSULTAR FACTURAS
-  ==============================*/
-  async function consultarPorRFC() {
-    const rfc = document.getElementById("rfcFiltro").value;
-    if (!rfc) return alert("Selecciona un RFC");
-
-    document.getElementById("resumenConteo").innerText = "";
-    document.getElementById("tablaResultados").innerHTML = "";
-
-    // fecha límite
-    const hoy = new Date();
-    const limite = new Date();
-    limite.setDate(hoy.getDate() - 60);
-    const limiteISO = limite.toISOString().split("T")[0];
-
-    // contar
-    const { count } = await supabase
-      .from("v_deuda_proveedores")
-      .select("*",{ count:"exact", head:true })
-      .eq("rfc_emisor", rfc)
-      .gte("fecha", limiteISO);
-
-    // traer datos
-    const { data: facturas, error } = await supabase
-      .from("v_deuda_proveedores")
-      .select("*")
-      .eq("rfc_emisor", rfc)
-      .gte("fecha", limiteISO)
-      .order("fecha", {ascending:true});
-
-    datosCrudos = facturas;
-
-    document.getElementById("resumenConteo").innerText =
-      `🔢 Total en Supabase: ${count}\n📄 Mostrados: ${facturas.length}`;
-
-    filtrarPagadas(); // aplicar filtro
-  }
-
-  /* =============================
-     4.4 — RENDER TABLA/TARJETAS
-  ==============================*/
-  function mostrarTabla(data) {
-    const esMovil = window.innerWidth <= 768;
-
-    if (!esMovil) {
-      // TABLA PC
-      let html = `<table><thead><tr>
-      <th>Fecha</th><th>Día</th><th>UUID</th><th>RFC</th><th>Razón</th>
-      <th>Factura</th><th>Total</th><th>Pagada</th><th>Física</th>
-      <th>Fotos</th><th>Banco</th><th>Cuenta</th><th>Copiar</th>
-      </tr></thead><tbody>`;
-
-      data.forEach(f => {
-        html += `
-        <tr>
-          <td>${f.fecha}</td>
-          <td>${calcDiasDesdeHoy(f.fecha)}</td>
-          <td>${f.uuid_cfdi}</td>
-          <td>${f.rfc_emisor}</td>
-          <td>${f.razon_social_emisor}</td>
-          <td>${formatSerieFactura(f.serie, f.factura)}</td>
-          <td style="text-align:right;">${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-          <td onclick="togglePago('${f.id}',this)" style="cursor:pointer">${(f.factura_pagada||"NO")}</td>
-          <td onclick="toggleFisica('${f.id}',this)" style="cursor:pointer">${(f.factura_fisicamente||"NO")}</td>
-          <td>📷</td>
-          <td>${f.banco||"—"}</td>
-          <td>${f.cuenta||"—"}</td>
-          <td><button onclick='copiarFila(${JSON.stringify(f)})'>📋</button></td>
-        </tr>`;
-      });
-
-      html += "</tbody></table>";
-      document.getElementById("tablaResultados").innerHTML = html;
-
-    } else {
-      // TARJETAS MÓVIL
-      let html = "";
-      data.forEach(f => {
-        html += `
-        <div class="card">
-          <div><strong>Fecha:</strong> ${f.fecha}</div>
-          <div><strong>Días:</strong> ${calcDiasDesdeHoy(f.fecha)}</div>
-          <div><strong>UUID:</strong> ${f.uuid_cfdi}</div>
-          <div><strong>RFC:</strong> ${f.rfc_emisor}</div>
-          <div><strong>Razón:</strong> ${f.razon_social_emisor}</div>
-          <div><strong>Total:</strong> ${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-          <div><strong>Pagada:</strong> ${(f.factura_pagada||"NO")}</div>
-        </div>`;
-      });
-      document.getElementById("tablaResultados").innerHTML = html;
-    }
-  }
-
-  /* =============================
-     4.5 — FUNCIONES DE UTILIDAD
-  ==============================*/
-  function formatSerieFactura(s,f){
-    if(s&&f) return `${s}-${f}`;
-    return f||s||"—";
-  }
-  function calcDiasDesdeHoy(iso){
-    const f=new Date(iso); const h=new Date();
-    return Math.floor((h-f)/1000/60/60/24);
-  }
-  function normalizaFotos(f){
-    if(!f) return [];
-    if(Array.isArray(f)) return f;
-    try { return JSON.parse(f); } catch { return []; }
-  }
-
-  /* =============================
-     4.6 — TOGGLE PAGO/FÍSICA
-  ==============================*/
-  async function togglePago(id,celda){
-    const nuevo = celda.textContent.trim()==="SI" ? "NO" : "SI";
-    await supabase.from(tabla).update({factura_pagada:nuevo}).eq("id",id);
-    celda.textContent = nuevo;
-  }
-
-  async function toggleFisica(id,celda){
-    const nuevo = celda.textContent.trim()==="SI" ? "NO" : "SI";
-    await supabase.from(tabla).update({factura_fisicamente:nuevo}).eq("id",id);
-    celda.textContent = nuevo;
-  }
-
-  /* =============================
-     4.7 — SINCRONIZACIÓN RFC/NOMBRE
-  ==============================*/
-  function sincronizarNombre(){
-    let rfc = document.getElementById("rfcFiltro").value;
-    document.getElementById("nombreFiltro").value = rfc;
-  }
-  function sincronizarRFC(){
-    let rfc = document.getElementById("nombreFiltro").value;
-    document.getElementById("rfcFiltro").value = rfc;
-  }
-
-  /* =============================
-     4.8 — FILTRO DE PAGADAS
-  ==============================*/
-  function filtrarPagadas(){
-    const mostrar = document.getElementById("togglePagadas").checked;
-    const datos =
-      mostrar ? datosCrudos :
-      datosCrudos.filter(f => (f.factura_pagada||"NO")!=="SI");
-
-    mostrarTabla(datos);
-  }
-
-  /* =============================
-     4.9 — COPIAR FILA A EXCEL
-  ==============================*/
-  function copiarFila(f){
-    const texto = [
-      f.fecha,
-      calcDiasDesdeHoy(f.fecha),
-      f.uuid_cfdi,
-      f.rfc_emisor,
-      f.razon_social_emisor,
-      formatSerieFactura(f.serie,f.factura),
-      f.total
-    ].join("\t");
-
-    navigator.clipboard.writeText(texto);
-    alert("Fila copiada");
-  }
-
-/* =================================================
-   🔥 AUTOCOMPLETE RFC
-=================================================*/
+/* =====================================
+   5.2 AUTOCOMPLETE RFC
+======================================*/
 function autocompleteRFC() {
-  const input = document.getElementById("rfcFiltro");
-  const texto = input.value.toUpperCase();
+  const txt = rfcFiltro.value.toUpperCase();
   const lista = document.getElementById("sugerenciasRFC");
 
   lista.innerHTML = "";
-  if (texto.length < 1) { lista.style.display = "none"; return; }
+  if (txt.length < 1) return lista.style.display = "none";
 
-  const resultados = listaBusqueda.filter(x => x.rfc.includes(texto));
-
-  if (resultados.length === 0) { lista.style.display = "none"; return; }
-
-  resultados.forEach(x => {
-    const div = document.createElement("div");
-    div.textContent = `${x.rfc} — ${x.nombre}`;
-    div.onclick = () => {
-      input.value = x.rfc;
-      document.getElementById("nombreFiltro").value = x.nombre;
-      lista.style.display = "none";
-    };
-    lista.appendChild(div);
-  });
+  listaBusqueda
+    .filter(x => x.rfc.includes(txt))
+    .forEach(x => {
+      let div = document.createElement("div");
+      div.textContent = `${x.rfc} — ${x.nombre}`;
+      div.onclick = () => {
+        rfcFiltro.value = x.rfc;
+        nombreFiltro.value = x.nombre;
+        lista.style.display = "none";
+      };
+      lista.appendChild(div);
+    });
 
   lista.style.display = "block";
 }
 
-/* =================================================
-   🔥 AUTOCOMPLETE NOMBRE
-=================================================*/
+/* =====================================
+   5.3 AUTOCOMPLETE NOMBRE
+======================================*/
 function autocompleteNombre() {
-  const input = document.getElementById("nombreFiltro");
-  const texto = input.value.toUpperCase();
+  const txt = nombreFiltro.value.toUpperCase();
   const lista = document.getElementById("sugerenciasNombre");
 
   lista.innerHTML = "";
-  if (texto.length < 1) { lista.style.display = "none"; return; }
+  if (txt.length < 1) return lista.style.display = "none";
 
-  const resultados = listaBusqueda.filter(x => x.nombre.includes(texto));
-
-  if (resultados.length === 0) { lista.style.display = "none"; return; }
-
-  resultados.forEach(x => {
-    const div = document.createElement("div");
-    div.textContent = `${x.nombre} — ${x.rfc}`;
-    div.onclick = () => {
-      input.value = x.nombre;
-      document.getElementById("rfcFiltro").value = x.rfc;
-      lista.style.display = "none";
-    };
-    lista.appendChild(div);
-  });
-
-  lista.style.display = "block";
-}
-
-  
-</script>
-
-</body>
-</html>
+  listaBusqueda
+    .filter(x => x.nombre.includes(txt))
+    .forEach(x => {
+      let div = document.createElement("div");
+      div.textContent = `${x.nombre} — ${x.rfc}`;
+      div.onclick = () => {
+        nombreFiltro.value = x.nombre;
+        rfcFiltro.value = x.rfc;
+        lista.style.display = "none
