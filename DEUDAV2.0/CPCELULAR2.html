@@ -372,11 +372,13 @@ html += `
   <td data-label="Pagada">${f.factura_pagada || "NO"}</td>
 
   <td data-label="Factura Física">
-    <div 
-      class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
-      onclick="toggleFisica('${f.uuid_cfdi}')">
-      ${(f.factura_fisicamente || "NO")}
-    </div>
+<div 
+  class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
+  data-uuid="${f.uuid_cfdi}"
+  onclick="toggleFisica('${f.uuid_cfdi}')">
+  ${(f.factura_fisicamente || "NO")}
+</div>
+
   </td>
 </tr>
 `;
@@ -408,6 +410,7 @@ function monedaMXN(valor) {
 
 async function toggleFisica(uuid) {
 
+  // leer valor actual
   const { data, error } = await supabase
     .from("deuda_limpia_pdd")
     .select("factura_fisicamente")
@@ -422,6 +425,7 @@ async function toggleFisica(uuid) {
   const estadoActual = data.factura_fisicamente || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
+  // actualizar en supabase
   const { error: err2 } = await supabase
     .from("deuda_limpia_pdd")
     .update({ factura_fisicamente: nuevo })
@@ -432,8 +436,23 @@ async function toggleFisica(uuid) {
     return;
   }
 
-  // recargar datos actualizados
-  filtrarPagadas();
+  // ================================
+  // 🔥 1. Actualizar arreglo en memoria
+  // ================================
+  const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+  if (idx !== -1) {
+    datosCrudos[idx].factura_fisicamente = nuevo;
+  }
+
+  // ================================
+  // 🔥 2. Actualizar el DOM sin refrescar tabla
+  // ================================
+  const btn = document.querySelector(`.badge-toggle[data-uuid="${uuid}"]`);
+  if (btn) {
+    btn.textContent = nuevo;
+    btn.classList.remove("badge-si", "badge-no");
+    btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
+  }
 }
 
 </script>
