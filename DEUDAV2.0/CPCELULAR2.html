@@ -394,6 +394,13 @@ function calcDiasDesdeHoy(iso){
   const h = new Date();
   return Math.floor((h - f) / 1000 / 60 / 60 / 24);
 }
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const año = fecha.getFullYear();
+  return `${dia}/${mes}/${año}`;
+}
 
 async function toggleFisica(uuid) {
   // PRIMERO traer el valor actual desde supabase para evitar desincronización
@@ -424,14 +431,6 @@ async function toggleFisica(uuid) {
   // Recargar tabla con valor REAL
   filtrarPagadas();
 }
-function formatearFecha(fechaISO) {
-  const fecha = new Date(fechaISO);
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const año = fecha.getFullYear();
-  return `${dia}/${mes}/${año}`;
-}
-
 </script>
 
 </body>
