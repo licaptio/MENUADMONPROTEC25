@@ -175,10 +175,10 @@ async function cargarRFCs() {
   if (error) { alert("Error al cargar RFCs"); return; }
 
   // 🔥 AQUÍ SÍ VA — TU ERROR ESTABA EN ESTO
-  listaBusqueda = data.map(x => ({
-    rfc: x.rfc,
-    nombre: x.nombre.toUpperCase()
-  }));
+listaBusqueda = data.map(x => ({
+  rfc: x.rfc,
+  nombre: (x.nombre || "").toUpperCase().trim()
+}));
 }
 
 cargarRFCs();
@@ -214,27 +214,33 @@ div.onclick = () => {
    5.3 AUTOCOMPLETE NOMBRE
 ======================================*/
 function autocompleteNombre() {
-  const txt = nombreFiltro.value.toUpperCase();
+  const txt = nombreFiltro.value.toUpperCase().trim();
   const lista = document.getElementById("sugerenciasNombre");
 
   lista.innerHTML = "";
-  if (txt.length < 1) return lista.style.display = "none";
+  if (txt.length < 1) {
+    lista.style.display = "none";
+    return;
+  }
 
   listaBusqueda
     .filter(x => x.nombre.includes(txt))
     .forEach(x => {
       let div = document.createElement("div");
       div.textContent = `${x.nombre} — ${x.rfc}`;
+
       div.onclick = () => {
-        nombreFiltro.value = x.nombre;
-        rfcFiltro.value = x.rfc;
+        nombreFiltro.value = x.nombre;   // muestra el nombre
+        window.rfcSeleccionado = x.rfc;  // guarda el RFC real
         lista.style.display = "none";
       };
+
       lista.appendChild(div);
     });
 
   lista.style.display = "block";
 }
+
 /* =====================================
    5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
 ======================================*/
