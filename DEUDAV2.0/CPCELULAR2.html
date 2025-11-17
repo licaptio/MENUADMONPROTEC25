@@ -235,6 +235,90 @@ function autocompleteNombre() {
 
   lista.style.display = "block";
 }
+/* =====================================
+   5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
+======================================*/
+async function consultarPorRFC() {
+
+  // Obtenemos el RFC seleccionado desde autocompleteNombre()
+  const rfc = window.rfcSeleccionado;
+
+  if (!rfc) {
+    alert("Selecciona un proveedor válido de la lista");
+    return;
+  }
+
+  document.getElementById("tablaResultados").innerHTML = "";
+  document.getElementById("resumenConteo").innerText = "";
+
+  // últimos 60 días
+  const hoy = new Date();
+  const limite = new Date();
+  limite.setDate(hoy.getDate() - 60);
+  const limiteISO = limite.toISOString().split("T")[0];
+
+  // contar registros
+  const { count, error: errorConteo } = await supabase
+    .from("v_deuda_proveedores")
+    .select("*", { count: "exact", head: true })
+    .eq("rfc_emisor", rfc)
+    .gte("fecha", limiteISO);
+
+  if (errorConteo) {
+    alert("Error al contar registros");
+    return;
+  }
+
+  // consultar facturas
+  const { data: facturas, error } = await supabase
+    .from("v_deuda_proveedores")
+    .select("*")
+    .eq("rfc_emisor", rfc)
+    .gte("fecha", limiteISO)
+    .order("fecha", { ascending: true });
+
+  if (error) {
+    alert("Error al traer facturas");
+    return;
+  }
+
+  datosCrudos = facturas;
+
+  document.getElementById("resumenConteo").innerText =
+    `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
+
+  filtrarPagadas();
+}
+function filtrarPagadas() {
+  const mostrar = document.getElementById("togglePagadas").checked;
+  const datos = mostrar
+    ? datosCrudos
+    : datosCrudos.filter(f => (f.factura_pagada || "NO") !== "SI");
+
+  mostrarTabla(datos);
+}
+function mostrarTabla(data) {
+  let html = `<table><thead><tr>
+    <th>Fecha</th><th>Días</th><th>UUID</th><th>Proveedor</th>
+    <th>Total</th><th>Pagada</th>
+  </tr></thead><tbody>`;
+
+  data.forEach(f => {
+    html += `
+      <tr>
+        <td>${f.fecha}</td>
+        <td>${calcDiasDesdeHoy(f.fecha)}</td>
+        <td>${f.uuid_cfdi}</td>
+        <td>${f.razon_social_emisor}</td>
+        <td>${(f.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+        <td>${(f.factura_pagada||"NO")}</td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("tablaResultados").innerHTML = html;
+}
 
 </script>
 
