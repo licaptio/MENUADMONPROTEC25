@@ -6,6 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    /* Botón regresar */
+.btn-back {
+  display:inline-block;
+  background:#003366;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:6px;
+  font-size:.9rem;
+  text-decoration:none;
+  margin-bottom:15px;
+  cursor:pointer;
+  border:none;
+}
+.btn-back:hover {
+  background:#001f44;
+}
+
     body { font-family:'Segoe UI',sans-serif; background:#f3f6fa; padding:15px; max-width:900px; margin:auto }
     h2 { color:#003366; text-align:center; margin-bottom:20px }
     .info {
@@ -48,6 +65,7 @@
   </style>
 </head>
 <body>
+  <button class="btn-back" onclick="history.back()">⬅ Regresar</button>
   <h2>Detalle de Factura</h2>
 
   <div class="info" id="contenedor"><!-- aquí se pinta todo por JS --></div>
@@ -273,7 +291,9 @@ const ruta = `${CARPETA}/${nombreArchivo}`;
     }
   </script>
 </body>
+
 </html>
+
 
 
 
