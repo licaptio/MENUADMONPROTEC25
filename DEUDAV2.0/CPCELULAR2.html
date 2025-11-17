@@ -356,7 +356,7 @@ function mostrarTabla(data) {
 <td>
   <div 
     class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
-    onclick="toggleFisica('${f.uuid_cfdi}', '${f.factura_fisicamente || 'NO'}')">
+    onclick="toggleFisica('${f.uuid_cfdi}')">
       ${(f.factura_fisicamente || "NO")}
   </div>
 </td>
@@ -376,20 +376,33 @@ function calcDiasDesdeHoy(iso){
   return Math.floor((h - f) / 1000 / 60 / 60 / 24);
 }
 
-async function toggleFisica(uuid, estadoActual) {
+async function toggleFisica(uuid) {
+  // PRIMERO traer el valor actual desde supabase para evitar desincronización
+  const { data, error } = await supabase
+    .from("deuda_limpia_pdd")
+    .select("factura_fisicamente")
+    .eq("uuid_cfdi", uuid)
+    .single();
+
+  if (error) {
+    alert("Error al leer estado actual");
+    return;
+  }
+
+  const estadoActual = data.factura_fisicamente || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
-  const { error } = await supabase
+  const { error: err2 } = await supabase
     .from("deuda_limpia_pdd")
     .update({ factura_fisicamente: nuevo })
     .eq("uuid_cfdi", uuid);
 
-  if (error) {
-    alert("Error al actualizar: " + error.message);
+  if (err2) {
+    alert("Error al actualizar: " + err2.message);
     return;
   }
 
-  // refrescar vista
+  // Recargar tabla con valor REAL
   filtrarPagadas();
 }
 
