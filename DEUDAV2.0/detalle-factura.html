@@ -247,33 +247,63 @@ const padded = val.padStart(7, "0");  // asegura 7 dígitos
     }
 
     // ---------- SUBIR FOTO ----------
-    btnSubir.addEventListener('click', subirFoto);
-    async function subirFoto(){
-      const file = document.getElementById("fotoInput").files[0];
-      if (!file) return alert("Selecciona o toma una foto 📷");
-      if (!uuid)  return alert("Se requiere ?uuid= para asociar la foto.");
+btnSubir.addEventListener('click', subirFoto);
+async function subirFoto() {
+  const file = document.getElementById("fotoInput").files[0];
+  if (!file) return alert("Selecciona o toma una foto 📷");
+  if (!uuid) return alert("Se requiere ?uuid= para asociar la foto.");
 
-const nombreArchivo = `${crypto.randomUUID()}.jpg`;
-const ruta = `${CARPETA}/${nombreArchivo}`;
+  const nombreArchivo = `${crypto.randomUUID()}.jpg`;
+  const ruta = `${CARPETA}/${nombreArchivo}`;
 
-      const { error: upErr } = await supabaseClient.storage
-        .from(BUCKET)
-        .upload(ruta, file, { contentType: file.type });
-      if (upErr) return alert("❌ Error al subir: " + upErr.message);
+  // 🔵 1) SUBIR ARCHIVO
+  const { error: upErr } = await supabaseClient.storage
+    .from(BUCKET)
+    .upload(ruta, file, { contentType: file.type });
 
-      const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(ruta);
-      const url = urlData?.publicUrl;
+  if (upErr) return alert("❌ Error al subir: " + upErr.message);
 
-      if (url) {
-        const { data: actual } = await supabaseClient.from(TABLA)
-          .select('fotos').eq('uuid_cfdi', uuid).maybeSingle();
-        const nuevo = (actual?.fotos && Array.isArray(actual.fotos)) ? [...actual.fotos, url] : [url];
-        await supabaseClient.from(TABLA).update({ fotos: nuevo }).eq('uuid_cfdi', uuid);
-      }
-      showToast("✅ Foto subida");
-      // recarga suave del enlace a foto (opcional)
-      location.reload();
-    }
+  // 🔵 2) OBTENER URL PÚBLICA
+  const { data: urlData } = supabaseClient.storage
+    .from(BUCKET)
+    .getPublicUrl(ruta);
+
+  const url = urlData.publicUrl;
+
+  // 🔵 3) LEER FOTOS ACTUALES
+  const { data: actual, error: readErr } = await supabaseClient
+    .from(TABLA)
+    .select('fotos')
+    .eq('uuid_cfdi', uuid)
+    .maybeSingle();
+
+  if (readErr) {
+    console.error(readErr);
+    return showToast("❌ No se pudo leer fotos actuales", true);
+  }
+
+  const nuevoArreglo =
+    actual?.fotos && Array.isArray(actual.fotos)
+      ? [...actual.fotos, url]
+      : [url];
+
+  // 🔵 4) ACTUALIZAR EN LA TABLA
+  const { error: updateErr } = await supabaseClient
+    .from(TABLA)
+    .update({ fotos: nuevoArreglo })
+    .eq('uuid_cfdi', uuid);
+
+  if (updateErr) {
+    console.error(updateErr);
+    return showToast("❌ No se pudo guardar la URL", true);
+  }
+
+  // 🔵 5) MENSAJE FINAL
+  showToast("📸 FOTO SUBIDA CORRECTAMENTE A LA BD SUPABASE");
+
+  // refrescar tras un momento
+  setTimeout(() => location.reload(), 900);
+}
 
     // ---------- UTILIDADES ----------
     function showToast(msg, error=false){
@@ -293,6 +323,7 @@ const ruta = `${CARPETA}/${nombreArchivo}`;
 </body>
 
 </html>
+
 
 
 
