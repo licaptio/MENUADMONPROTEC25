@@ -156,9 +156,24 @@ const url = uuid
         <div class="campo"><span>RFC Emisor:</span> ${f.rfc_emisor ?? '-'}</div>
         <div class="campo"><span>Fecha:</span> ${f.fecha ? new Date(f.fecha).toLocaleDateString('es-MX') : '-'}</div>
         <div class="campo"><span>Total:</span> ${formatoPesos.format(Number(f.total||0))}</div>
-${Array.isArray(f.fotos) && f.fotos[0]
-  ? `<div class="campo"><span>Foto:</span> <a href="${f.fotos[0]}" target="_blank" rel="noopener">Ver imagen</a></div>`
-  : ``}
+${Array.isArray(f.fotos) && f.fotos.length
+  ? `
+    <div class="campo">
+      <span>Fotos:</span>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+        ${f.fotos.map((url, idx) => `
+          <div style="border:1px solid #ccc; padding:6px; border-radius:8px; background:#fff;">
+            <a href="${url}" target="_blank">
+              <img src="${url}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;">
+            </a>
+            <button class="mini-btn" onclick="eliminarFoto('${url}')">🗑 Eliminar</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `
+  : `<div class="campo"><span>Fotos:</span> Sin fotos</div>`
+}
 
         <div class="campo"><span>Conceptos:</span></div>
         <div class="tabla-wrapper">
@@ -323,6 +338,7 @@ async function subirFoto() {
 </body>
 
 </html>
+
 
 
 
