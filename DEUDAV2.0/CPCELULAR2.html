@@ -347,8 +347,9 @@ function mostrarTabla(data) {
     <th>Días</th>
     <th>UUID</th>
     <th>Proveedor</th>
-    <th>Total</th>
-    <th>Pagada</th>
+<th>Total</th>
+<th>Serie/Folio</th>
+<th>Pagada</th>
     <th>Factura Física</th>
     <th>📷 Fotos</th>
   </tr></thead><tbody>`;
@@ -370,7 +371,11 @@ html += `
 
 <td data-label="Total">${monedaMXN(f.total || 0)}</td>
 
-  <td data-label="Pagada">
+<td data-label="Serie/Folio">
+  ${f.serie_folio || "-"}
+</td>
+
+<td data-label="Pagada">
   <div 
     class="badge-toggle ${(f.factura_pagada || 'NO') === 'SI' ? 'badge-si' : 'badge-no'}"
     data-uuid-pagada="${f.uuid_cfdi}"
@@ -436,7 +441,7 @@ async function toggleFisica(uuid) {
 
   // leer valor actual
   const { data, error } = await supabase
-    .from("deuda_limpia_pdd")
+    .from("v_deuda_proveedores")
     .select("factura_fisicamente")
     .eq("uuid_cfdi", uuid)
     .single();
