@@ -303,7 +303,7 @@ async function consultarPorRFC() {
 
   // contar registros
 const { count, error: errorConteo } = await supabase
-  .from("deuda_limpia_pdd")
+  .from("v_deuda_proveedores")
   .select("*", { count: "exact", head: true })
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO);
@@ -315,7 +315,7 @@ const { count, error: errorConteo } = await supabase
 
   // consultar facturas
 const { data: facturas, error } = await supabase
-  .from("deuda_limpia_pdd")
+  .from("v_deuda_proveedores")
   .select("*")
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO)
@@ -487,7 +487,7 @@ async function togglePagada(uuid) {
 
   // leer valor actual
   const { data, error } = await supabase
-    .from("deuda_limpia_pdd")
+    .from("v_deuda_proveedores")
     .select("factura_pagada")
     .eq("uuid_cfdi", uuid)
     .single();
@@ -502,7 +502,7 @@ async function togglePagada(uuid) {
 
   // actualizar en supabase
   const { error: err2 } = await supabase
-    .from("deuda_limpia_pdd")
+    .from("v_deuda_proveedores")
     .update({ factura_pagada: nuevo })
     .eq("uuid_cfdi", uuid);
 
