@@ -345,8 +345,9 @@ function mostrarTabla(data) {
   let html = `<table><thead><tr>
     <th>Fecha</th>
     <th>Días</th>
-    <th>UUID</th>
-    <th>Proveedor</th>
+<th>UUID</th>
+<th>RFC</th>
+<th>Proveedor</th>
 <th>Total</th>
 <th>Serie/Folio</th>
 <th>Pagada</th>
@@ -366,6 +367,7 @@ html += `
       ${f.uuid_cfdi}
     </a>
   </td>
+<td data-label="RFC">${f.rfc_emisor}</td>
 
   <td data-label="Proveedor">${f.razon_social_emisor}</td>
 
