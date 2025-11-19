@@ -478,6 +478,54 @@ async function toggleFisica(uuid) {
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
   }
 }
+async function togglePagada(uuid) {
+
+  // leer valor actual
+  const { data, error } = await supabase
+    .from("deuda_limpia_pdd")
+    .select("factura_pagada")
+    .eq("uuid_cfdi", uuid)
+    .single();
+
+  if (error) {
+    alert("Error al leer estado actual de pagada");
+    return;
+  }
+
+  const estadoActual = data.factura_pagada || "NO";
+  const nuevo = estadoActual === "SI" ? "NO" : "SI";
+
+  // actualizar en supabase
+  const { error: err2 } = await supabase
+    .from("deuda_limpia_pdd")
+    .update({ factura_pagada: nuevo })
+    .eq("uuid_cfdi", uuid);
+
+  if (err2) {
+    alert("Error al actualizar pagada: " + err2.message);
+    return;
+  }
+
+  // 🔥 1. Actualizar arreglo en memoria
+  const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+  if (idx !== -1) {
+    datosCrudos[idx].factura_pagada = nuevo;
+  }
+
+  // 🔥 2. Actualizar DOM sin recargar tabla
+  const btn = document.querySelector(`.badge-toggle[data-uuid-pagada="${uuid}"]`);
+  if (btn) {
+    btn.textContent = nuevo;
+    btn.classList.remove("badge-si", "badge-no");
+    btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
+  }
+
+  // 🔥 3. Si el filtro de pagadas está activo, refrescar filtrado
+  const mostrarPagadas = document.getElementById("togglePagadas").checked;
+  if (!mostrarPagadas && nuevo === "SI") {
+    filtrarPagadas(); // desaparece inmediatamente
+  }
+}
 
 </script>
 
