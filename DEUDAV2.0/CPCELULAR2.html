@@ -370,7 +370,15 @@ html += `
 
 <td data-label="Total">${monedaMXN(f.total || 0)}</td>
 
-  <td data-label="Pagada">${f.factura_pagada || "NO"}</td>
+  <td data-label="Pagada">
+  <div 
+    class="badge-toggle ${(f.factura_pagada || 'NO') === 'SI' ? 'badge-si' : 'badge-no'}"
+    data-uuid-pagada="${f.uuid_cfdi}"
+    onclick="togglePagada('${f.uuid_cfdi}')">
+    ${f.factura_pagada || "NO"}
+  </div>
+</td>
+
 
   <td data-label="Factura Física">
 <div 
