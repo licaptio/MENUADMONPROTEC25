@@ -441,7 +441,7 @@ async function toggleFisica(uuid) {
 
   // leer valor actual
   const { data, error } = await supabase
-    .from("v_deuda_proveedores")
+    .from("deuda_limpia_pdd")
     .select("factura_fisicamente")
     .eq("uuid_cfdi", uuid)
     .single();
@@ -454,7 +454,6 @@ async function toggleFisica(uuid) {
   const estadoActual = data.factura_fisicamente || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
-  // actualizar en supabase
   const { error: err2 } = await supabase
     .from("deuda_limpia_pdd")
     .update({ factura_fisicamente: nuevo })
@@ -465,17 +464,11 @@ async function toggleFisica(uuid) {
     return;
   }
 
-  // ================================
-  // 🔥 1. Actualizar arreglo en memoria
-  // ================================
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
   if (idx !== -1) {
     datosCrudos[idx].factura_fisicamente = nuevo;
   }
 
-  // ================================
-  // 🔥 2. Actualizar el DOM sin refrescar tabla
-  // ================================
   const btn = document.querySelector(`.badge-toggle[data-uuid="${uuid}"]`);
   if (btn) {
     btn.textContent = nuevo;
@@ -483,11 +476,12 @@ async function toggleFisica(uuid) {
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
   }
 }
+
 async function togglePagada(uuid) {
 
-  // leer valor actual
+  // leer valor actual desde la TABLA REAL
   const { data, error } = await supabase
-    .from("v_deuda_proveedores")
+    .from("deuda_limpia_pdd")
     .select("factura_pagada")
     .eq("uuid_cfdi", uuid)
     .single();
@@ -500,9 +494,9 @@ async function togglePagada(uuid) {
   const estadoActual = data.factura_pagada || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
-  // actualizar en supabase
+  // actualizar en la TABLA REAL
   const { error: err2 } = await supabase
-    .from("v_deuda_proveedores")
+    .from("deuda_limpia_pdd")
     .update({ factura_pagada: nuevo })
     .eq("uuid_cfdi", uuid);
 
@@ -511,13 +505,13 @@ async function togglePagada(uuid) {
     return;
   }
 
-  // 🔥 1. Actualizar arreglo en memoria
+  // 🔥 actualizar arreglo local
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
   if (idx !== -1) {
     datosCrudos[idx].factura_pagada = nuevo;
   }
 
-  // 🔥 2. Actualizar DOM sin recargar tabla
+  // 🔥 actualizar DOM sin recargar
   const btn = document.querySelector(`.badge-toggle[data-uuid-pagada="${uuid}"]`);
   if (btn) {
     btn.textContent = nuevo;
@@ -525,10 +519,9 @@ async function togglePagada(uuid) {
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
   }
 
-  // 🔥 3. Si el filtro de pagadas está activo, refrescar filtrado
-  const mostrarPagadas = document.getElementById("togglePagadas").checked;
-  if (!mostrarPagadas && nuevo === "SI") {
-    filtrarPagadas(); // desaparece inmediatamente
+  // 🔥 aplicar filtro si es necesario
+  if (!document.getElementById("togglePagadas").checked && nuevo === "SI") {
+    filtrarPagadas();
   }
 }
 
