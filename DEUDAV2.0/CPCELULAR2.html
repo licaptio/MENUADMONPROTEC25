@@ -374,7 +374,9 @@ html += `
 <td data-label="Total">${monedaMXN(f.total || 0)}</td>
 
 <td data-label="Serie/Folio">
-  ${f.serie_folio || "-"}
+  ${ f.serie && f.serie !== "EMPTY"
+      ? `${f.serie}-${f.factura}`
+      : f.factura }
 </td>
 
 <td data-label="Pagada">
