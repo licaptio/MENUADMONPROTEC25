@@ -2,13 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>BOOKIT – Subida rápida</title>
+  <title>BOOKIT – Subida Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body { font-family: Arial; margin: 20px; background:#f3f3f3; }
     h2 { text-align: center; }
+
+    #preview {
+      width: 100%;
+      max-width: 400px;
+      margin: 10px auto;
+      display: none;
+      border-radius: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
 
     #pasteArea {
       width: 100%;
@@ -18,34 +27,56 @@
       text-align: center;
       margin-bottom: 15px;
       color: #444;
+      background: white;
     }
 
-    input, textarea, button {
+    .btn {
+      width: 100%; 
+      padding: 12px; 
+      margin-bottom: 10px;
+      border-radius: 8px; 
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+    }
+
+    .camera { background:#007bff; }
+    .gallery { background:#28a745; }
+    .upload { background:#00416A; }
+    .upload:hover { background:#003055; }
+
+    input, textarea {
       width: 100%; padding: 12px; margin-bottom: 15px;
       border-radius: 8px; border: 1px solid #ccc;
       font-size: 16px;
+      background:white;
     }
-    button {
-      background: #00416A; color: white; border: none;
-      cursor: pointer; font-weight: bold;
-    }
-    button:hover { background: #003055; }
   </style>
 </head>
 <body>
 
-<h2>📤 Subir foto al Bookit</h2>
+<h2>📤 Bookit – Subida Pro</h2>
 
+<!-- 📌 Vista previa -->
+<img id="preview">
+
+<!-- 📌 Zona de pegado -->
 <div id="pasteArea">📌 Pega aquí una imagen (Ctrl+V o Windows+Shift+S)</div>
 
-<!-- 📸 CÁMARA en cel + selector normal en PC -->
-<input type="file" id="fileInput" accept="image/*" capture="environment" />
+<!-- 📸 Botones tipo WhatsApp -->
+<button class="btn camera" onclick="openCamera()">📷 Tomar foto</button>
+<button class="btn gallery" onclick="openGallery()">🖼️ Galería</button>
+
+<!-- Inputs ocultos -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="galleryInput" accept="image/*" style="display:none">
 
 <textarea id="caption" rows="3" placeholder="Escribe una nota..."></textarea>
-
 <input type="text" id="relation" placeholder="Relación (ej: Sergio Aguayo)" />
 
-<button onclick="upload()">SUBIR FOTO</button>
+<button class="btn upload" onclick="upload()">🚀 SUBIR FOTO</button>
 
 <script>
 const supabase = supabase.createClient(
@@ -53,67 +84,142 @@ const supabase = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
 );
 
-let pastedFile = null;
+let selectedFile = null;
 
-/* PEGADO DE IMÁGENES (FUNCIONA CON WINDOWS+SHIFT+S) */
+/* ============================
+    📸 ABRIR CÁMARA
+============================ */
+function openCamera() {
+  document.getElementById("cameraInput").click();
+}
+
+/* ============================
+    🖼️ ABRIR GALERÍA
+============================ */
+function openGallery() {
+  document.getElementById("galleryInput").click();
+}
+
+/* Manejar foto desde cámara */
+document.getElementById("cameraInput").addEventListener("change", (e) => {
+  if (e.target.files.length > 0) loadPreviewFile(e.target.files[0]);
+});
+
+/* Manejar foto desde galería */
+document.getElementById("galleryInput").addEventListener("change", (e) => {
+  if (e.target.files.length > 0) loadPreviewFile(e.target.files[0]);
+});
+
+/* ============================
+    🧩 PEGADO WINDOWS + SHIFT + S
+============================ */
 document.addEventListener("paste", async () => {
   try {
-    const clipboardItems = await navigator.clipboard.read();
-
-    for (const item of clipboardItems) {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
       for (const type of item.types) {
         if (type.startsWith("image/")) {
           const blob = await item.getType(type);
-          pastedFile = new File([blob], "captura.png", { type });
 
-          document.getElementById("pasteArea").innerText =
-            "📸 Imagen pegada lista para subir";
-
+          const file = new File([blob], "pegada.png", { type });
+          loadPreviewFile(file);
           return;
         }
       }
     }
-
-    alert("No pegaste una imagen válida.");
   } catch (err) {
-    alert("⚠️ El navegador no permitió leer la imagen del portapapeles.");
-    console.error(err);
+    alert("Tu navegador no permite leer imágenes del portapapeles.");
   }
 });
 
-/* SUBIR FOTO (PEGA O CÁMARA/ARCHIVO) */
-async function upload() {
-  let file = document.getElementById("fileInput").files[0];
+/* ============================
+    🎨 MOSTRAR VISTA PREVIA
+============================ */
+function loadPreviewFile(file) {
+  selectedFile = file;
 
-  if (!file && pastedFile) file = pastedFile;
-  if (!file) return alert("Selecciona o pega una imagen.");
+  const preview = document.getElementById("preview");
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+
+  document.getElementById("pasteArea").innerText =
+    "📸 Imagen lista para subir";
+}
+
+/* ============================
+    🗜️ COMPRESIÓN DE IMAGEN
+============================ */
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const img = document.createElement("img");
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX_WIDTH = 1280;
+
+      let width = img.width;
+      let height = img.height;
+
+      if (width > MAX_WIDTH) {
+        height *= MAX_WIDTH / width;
+        width = MAX_WIDTH;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg" })),
+        "image/jpeg",
+        0.8
+      );
+    };
+  });
+}
+
+/* ============================
+    🚀 SUBIR A SUPABASE
+============================ */
+async function upload() {
+  if (!selectedFile) return alert("Selecciona o pega una imagen primero.");
 
   const caption = document.getElementById("caption").value;
   const relation = document.getElementById("relation").value;
 
-  const fileName = Date.now() + "-" + file.name;
+  // ⏳ Comprimir antes de subir
+  const compressed = await compressImage(selectedFile);
+
+  const fileName = Date.now() + "-" + compressed.name;
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("bookit")
-    .upload(fileName, file);
+    .upload(fileName, compressed);
 
   if (uploadError) return alert("Error al subir imagen");
 
-  const image_url = uploadData.fullPath;
-
   await supabase.from("bookit_entries").insert({
-    image_url,
+    image_url: uploadData.fullPath,
     caption,
     relation
   });
 
-  alert("¡Imagen subida correctamente!");
+  alert("📤 ¡Imagen subida con éxito!");
 
-  pastedFile = null;
-  document.getElementById("pasteArea").innerText = "📌 Pega aquí una imagen (Ctrl+V)";
+  selectedFile = null;
+  document.getElementById("preview").style.display = "none";
   document.getElementById("caption").value = "";
   document.getElementById("relation").value = "";
-  document.getElementById("fileInput").value = "";
+  document.getElementById("pasteArea").innerText =
+    "📌 Pega aquí una imagen (Ctrl+V o Windows+Shift+S)";
 }
 </script>
 
