@@ -144,10 +144,13 @@ async function loadMore(reset = false) {
 function addImage(item) {
   const gallery = document.getElementById("gallery");
 
-  const url = supabase
-    .storage
-    .from("bookit")
-    .getPublicUrl(item.image_url).data.publicUrl;
+let cleanPath = item.image_url.replace(/^\/+/, ""); // quitar / al inicio si existe
+
+const { data: publicUrlData } = supabase.storage
+  .from("bookit")
+  .getPublicUrl(cleanPath);
+
+const url = publicUrlData.publicUrl;
 
   const div = document.createElement("div");
   div.className = "grid-item";
