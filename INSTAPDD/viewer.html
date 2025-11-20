@@ -8,19 +8,19 @@
 
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       background: #fafafa;
       margin: 0;
       padding: 0;
     }
 
-    /* 🔝 Barra de filtros estilo Instagram */
+    /* 🔝 Filtros arriba */
     .filters {
       position: sticky;
       top: 0;
       background: #ffffffee;
       backdrop-filter: blur(5px);
-      padding: 12px;
+      padding: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,.1);
       z-index: 10;
     }
@@ -34,61 +34,31 @@
       font-size: 14px;
     }
 
-    /* 📸 Post estilo Instagram */
-    .entry {
+    /* 🖼️ GRID TIPO INSTAGRAM */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 5px;
+    }
+
+    .grid-item {
       width: 100%;
-      max-width: 600px;
-      margin: 25px auto;
-      background: #fff;
-      border-radius: 16px;
+      aspect-ratio: 1 / 1; /* CUADRADO IG */
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-      transition: transform .2s ease, opacity .2s ease;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeIn 0.4s forwards;
+      position: relative;
+      background: #ddd;
     }
 
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    img {
+    .grid-item img {
       width: 100%;
-      display: block;
-      border-bottom: 1px solid #eee;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .25s ease;
     }
 
-    .post-info {
-      padding: 14px 18px;
-    }
-
-    .date {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 6px;
-      text-align: left;
-    }
-
-    /* 🏷 Relación estilo badge */
-    .relation {
-      display: inline-block;
-      background: #00416A;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .caption {
-      margin-top: 8px;
-      font-size: 14px;
-      color: #333;
-      line-height: 1.4;
+    .grid-item:hover img {
+      transform: scale(1.05);
     }
 
   </style>
@@ -96,7 +66,7 @@
 
 <body>
 
-<!-- 🔍 Filtros -->
+<!-- FILTROS -->
 <div class="filters">
   <select id="relationFilter">
     <option value="">🔎 Filtrar por relación</option>
@@ -106,6 +76,9 @@
   <input type="date" id="endDate">
 </div>
 
+<!-- GALERÍA GRID -->
+<div id="gallery" class="grid"></div>
+
 <script>
 const supabase = supabase.createClient(
   "TU_URL_SUPABASE",
@@ -113,10 +86,9 @@ const supabase = supabase.createClient(
 );
 
 let page = 0;
-const limit = 10;
+const limit = 30; // carga 30 imágenes por tanda (rápido y fluido)
 let loading = false;
 
-/* 🔄 Cargar lista de relaciones */
 async function loadRelations() {
   const { data } = await supabase
     .from("bookit_entries")
@@ -134,13 +106,12 @@ async function loadRelations() {
   });
 }
 
-/* 📡 Cargar más posts */
 async function loadMore(reset=false) {
   if (loading) return;
   loading = true;
 
   if (reset) {
-    document.querySelectorAll(".entry").forEach(e => e.remove());
+    document.getElementById("gallery").innerHTML = "";
     page = 0;
   }
 
@@ -163,15 +134,16 @@ async function loadMore(reset=false) {
 
   const { data } = await query;
 
-  data.forEach(addEntry);
+  data.forEach(addImage);
   page++;
   loading = false;
 }
 
-/* 🎨 Insertar post en el estilo Instagram */
-function addEntry(item) {
+function addImage(item) {
+  const gallery = document.getElementById("gallery");
+
   const div = document.createElement("div");
-  div.className = "entry";
+  div.className = "grid-item";
 
   const publicUrl = supabase
     .storage
@@ -180,24 +152,17 @@ function addEntry(item) {
 
   div.innerHTML = `
     <img src="${publicUrl}">
-    <div class="post-info">
-      <div class="date">📅 ${new Date(item.created_at).toLocaleString()}</div>
-
-      ${item.relation ? `<div class="relation">${item.relation}</div>` : ""}
-
-      <div class="caption">${item.caption || ""}</div>
-    </div>
   `;
 
-  document.body.appendChild(div);
+  gallery.appendChild(div);
 }
 
-/* ⚡ Eventos de filtros */
+/* Filtros */
 document.getElementById("relationFilter").onchange = () => loadMore(true);
 document.getElementById("startDate").onchange = () => loadMore(true);
 document.getElementById("endDate").onchange = () => loadMore(true);
 
-/* ♾️ Scroll infinito estilo Instagram */
+/* SCROLL INFINITO */
 window.onscroll = () => {
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
     loadMore();
