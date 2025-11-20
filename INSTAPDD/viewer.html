@@ -144,7 +144,7 @@ async function loadMore(reset = false) {
 function addImage(item) {
   const gallery = document.getElementById("gallery");
 
-let cleanPath = item.image_url.replace(/^\/+/, ""); // quitar / al inicio si existe
+let cleanPath = "bookit/" + item.image_url.replace(/^\/+/, "");
 
 const { data: publicUrlData } = supabase.storage
   .from("bookit")
