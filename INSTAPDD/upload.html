@@ -9,6 +9,17 @@
   <style>
     body { font-family: Arial; margin: 20px; }
     h2 { text-align: center; }
+
+    #pasteArea {
+      width: 100%;
+      padding: 20px;
+      border: 2px dashed #888;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #444;
+    }
+
     input, textarea, button, select {
       width: 100%; padding: 12px; margin-bottom: 15px;
       border-radius: 8px; border: 1px solid #ccc;
@@ -25,13 +36,15 @@
 
 <h2>📤 Subir foto al Bookit</h2>
 
-<input type="file" id="fileInput" accept="image/*" capture="environment" />
+<div id="pasteArea">📌 Pega aquí una imagen (Ctrl+V)</div>
+
+<input type="file" id="fileInput" accept="image/*" />
 
 <textarea id="caption" rows="3" placeholder="Escribe una nota..."></textarea>
 
 <input type="text" id="relation" placeholder="Relación (ej: Sergio Aguayo)" />
 
-<button onclick="upload()">SUBIR</button>
+<button onclick="upload()">SUBIR FOTO SELECCIONADA</button>
 
 <script>
 const supabase = supabase.createClient(
@@ -39,16 +52,68 @@ const supabase = supabase.createClient(
   "TU_PUBLIC_ANON_KEY"
 );
 
+let pastedFile = null;
+
+// 📌 CAPTURAR CTRL+V (PEGAR) IMÁGENES
+document.getElementById("pasteArea").addEventListener("paste", async (event) => {
+  const items = event.clipboardData.items;
+
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf("image") !== -1) {
+      const file = items[i].getAsFile();
+      pastedFile = file;
+
+      document.getElementById("pasteArea").innerText =
+        "📸 Imagen pegada lista para subir";
+
+      return;
+    }
+  }
+
+  alert("No pegaste una imagen.");
+});
+
+// 📤 SUBIR ARCHIVO PEGADO AUTOMÁTICAMENTE
+async function uploadPasted() {
+  if (!pastedFile) return alert("No hay imagen pegada.");
+
+  const caption = document.getElementById("caption").value;
+  const relation = document.getElementById("relation").value;
+
+  const fileName = Date.now() + "-pasted.png";
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("bookit")
+    .upload(fileName, pastedFile);
+
+  if (uploadError) return alert("Error al subir imagen");
+
+  const image_url = uploadData.fullPath;
+
+  await supabase.from("bookit_entries").insert({
+    image_url,
+    caption,
+    relation
+  });
+
+  alert("¡Imagen pegada subida!");
+
+  pastedFile = null;
+  document.getElementById("pasteArea").innerText = "📌 Pega aquí una imagen (Ctrl+V)";
+  document.getElementById("caption").value = "";
+  document.getElementById("relation").value = "";
+}
+
+// 📤 SUBIR FOTO SELECCIONADA NORMAL (INPUT FILE)
 async function upload() {
   const file = document.getElementById("fileInput").files[0];
-  if (!file) return alert("Selecciona una foto");
+  if (!file) return uploadPasted(); // si no hay archivo, intenta subir la imagen pegada
 
   const caption = document.getElementById("caption").value;
   const relation = document.getElementById("relation").value;
 
   const fileName = Date.now() + "-" + file.name;
 
-  // 1. Subir imagen
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("bookit")
     .upload(fileName, file);
@@ -57,18 +122,14 @@ async function upload() {
 
   const image_url = uploadData.fullPath;
 
-  // 2. Insertar registro en la tabla
-  const { error: insertError } = await supabase
-    .from("bookit_entries")
-    .insert({
-      image_url,
-      caption,
-      relation
-    });
-
-  if (insertError) return alert("Error guardando en tabla");
+  await supabase.from("bookit_entries").insert({
+    image_url,
+    caption,
+    relation
+  });
 
   alert("¡Foto subida!");
+
   document.getElementById("caption").value = "";
   document.getElementById("relation").value = "";
   document.getElementById("fileInput").value = "";
