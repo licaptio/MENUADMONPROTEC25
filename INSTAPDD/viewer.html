@@ -33,7 +33,7 @@
       font-size: 14px;
     }
 
-    /* GRID */
+    /* ====== GRID DESKTOP ====== */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -62,7 +62,6 @@
       display: block;
     }
 
-    /* HOVER INFO */
     .info-hover {
       position: absolute;
       bottom: 0;
@@ -81,7 +80,6 @@
       opacity: 1;
     }
 
-    /* BOTÓN BORRAR */
     .delete-btn {
       position: absolute;
       top: 6px;
@@ -102,44 +100,32 @@
       opacity: 1;
     }
 
-  </style
-    <style>
+    /* ====== RESPONSIVE CELULAR ====== */
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
 
-/* ====== DESKTOP ====== */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  padding: 15px;
-}
+      .grid-item img {
+        height: 300px;
+      }
 
-/* ====== RESPONSIVE: CELULAR ====== */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr; /* SOLO UNA COLUMNA */
-    gap: 20px;
-  }
+      .grid-item {
+        border-width: 3px;
+      }
 
-  .grid-item img {
-    height: 300px; /* Más grandes en celular */
-  }
+      .info-hover {
+        font-size: 14px;
+        padding: 10px;
+      }
 
-  .grid-item {
-    border-width: 3px;
-  }
-
-  .info-hover {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .delete-btn {
-    padding: 8px 12px;
-    font-size: 16px;
-  }
-}
-</style>
-
+      .delete-btn {
+        padding: 8px 12px;
+        font-size: 16px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -212,6 +198,7 @@ async function loadMore(reset = false) {
   if (d2) q = q.lte("created_at", d2 + " 23:59:59");
 
   const { data } = await q;
+
   data.forEach(addImage);
 
   page++;
@@ -219,7 +206,7 @@ async function loadMore(reset = false) {
 }
 
 /* ===============================
-   AGREGAR IMAGEN
+   AGREGAR IMAGEN AL GRID
 =============================== */
 function addImage(item) {
   const gallery = document.getElementById("gallery");
@@ -268,12 +255,12 @@ async function deleteImage(id, path, ev) {
 
   const pass = prompt("Contraseña para borrar:");
 
-  if (pass !== "1982") return alert("Contraseña incorrecta ❌");
+  if (pass !== "1982") return alert("❌ Contraseña incorrecta");
 
   await supabase.from("bookit_entries").delete().eq("id", id);
   await supabase.storage.from("bookit").remove([path]);
 
-  alert("Imagen eliminada ✔");
+  alert("✔ Imagen eliminada");
   loadMore(true);
 }
 
@@ -292,7 +279,6 @@ window.onscroll = () => {
 
 loadRelations();
 loadMore();
-
 </script>
 
 </body>
