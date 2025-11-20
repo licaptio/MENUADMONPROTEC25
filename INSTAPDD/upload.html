@@ -20,7 +20,7 @@
       color: #444;
     }
 
-    input, textarea, button, select {
+    input, textarea, button {
       width: 100%; padding: 12px; margin-bottom: 15px;
       border-radius: 8px; border: 1px solid #ccc;
       font-size: 16px;
@@ -44,7 +44,7 @@
 
 <input type="text" id="relation" placeholder="Relación (ej: Sergio Aguayo)" />
 
-<button onclick="upload()">SUBIR FOTO SELECCIONADA</button>
+<button onclick="upload()">SUBIR FOTO</button>
 
 <script>
 const supabase = supabase.createClient(
@@ -54,66 +54,61 @@ const supabase = supabase.createClient(
 
 let pastedFile = null;
 
-// 📌 CAPTURAR CTRL+V (PEGAR) IMÁGENES
-document.getElementById("pasteArea").addEventListener("paste", async (event) => {
-  const items = event.clipboardData.items;
+/* 
+  -------------------------------------------------
+  🖼️ PEGAR IMÁGENES (FUNCIONA CON WINDOWS + SHIFT + S)
+  -------------------------------------------------
+*/
 
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].type.indexOf("image") !== -1) {
-      const file = items[i].getAsFile();
-      pastedFile = file;
+document.addEventListener("paste", async (event) => {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
 
-      document.getElementById("pasteArea").innerText =
-        "📸 Imagen pegada lista para subir";
+    for (const item of clipboardItems) {
+      for (const type of item.types) {
 
-      return;
+        // detectar imagen real del portapapeles
+        if (type.startsWith("image/")) {
+          const blob = await item.getType(type);
+
+          // archivo compatible
+          pastedFile = new File([blob], "captura.png", { type });
+
+          document.getElementById("pasteArea").innerText =
+            "📸 Imagen pegada lista para subir";
+
+          return;
+        }
+      }
     }
-  }
 
-  alert("No pegaste una imagen.");
+    alert("No pegaste una imagen válida.");
+  } catch (err) {
+    alert("⚠️ Tu navegador no permite leer imágenes del portapapeles.");
+    console.error(err);
+  }
 });
 
-// 📤 SUBIR ARCHIVO PEGADO AUTOMÁTICAMENTE
-async function uploadPasted() {
-  if (!pastedFile) return alert("No hay imagen pegada.");
+/*
+  -------------------------------------------------
+  📤 SUBIR FOTO (PEGADA O SELECCIONADA)
+  -------------------------------------------------
+*/
 
-  const caption = document.getElementById("caption").value;
-  const relation = document.getElementById("relation").value;
-
-  const fileName = Date.now() + "-pasted.png";
-
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from("bookit")
-    .upload(fileName, pastedFile);
-
-  if (uploadError) return alert("Error al subir imagen");
-
-  const image_url = uploadData.fullPath;
-
-  await supabase.from("bookit_entries").insert({
-    image_url,
-    caption,
-    relation
-  });
-
-  alert("¡Imagen pegada subida!");
-
-  pastedFile = null;
-  document.getElementById("pasteArea").innerText = "📌 Pega aquí una imagen (Ctrl+V)";
-  document.getElementById("caption").value = "";
-  document.getElementById("relation").value = "";
-}
-
-// 📤 SUBIR FOTO SELECCIONADA NORMAL (INPUT FILE)
 async function upload() {
-  const file = document.getElementById("fileInput").files[0];
-  if (!file) return uploadPasted(); // si no hay archivo, intenta subir la imagen pegada
+  let file = document.getElementById("fileInput").files[0];
+
+  // si no hay archivo, usar la imagen pegada
+  if (!file && pastedFile) file = pastedFile;
+
+  if (!file) return alert("Selecciona o pega una imagen.");
 
   const caption = document.getElementById("caption").value;
   const relation = document.getElementById("relation").value;
 
   const fileName = Date.now() + "-" + file.name;
 
+  // subir a supabase storage
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("bookit")
     .upload(fileName, file);
@@ -122,14 +117,18 @@ async function upload() {
 
   const image_url = uploadData.fullPath;
 
+  // guardar registro en tabla
   await supabase.from("bookit_entries").insert({
     image_url,
     caption,
     relation
   });
 
-  alert("¡Foto subida!");
+  alert("¡Imagen subida correctamente!");
 
+  // limpiar campos
+  pastedFile = null;
+  document.getElementById("pasteArea").innerText = "📌 Pega aquí una imagen (Ctrl+V)";
   document.getElementById("caption").value = "";
   document.getElementById("relation").value = "";
   document.getElementById("fileInput").value = "";
