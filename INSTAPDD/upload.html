@@ -79,6 +79,7 @@
 <button class="btn upload" onclick="upload()">🚀 SUBIR FOTO</button>
 
 <script>
+<script>
 const supabase = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
@@ -87,33 +88,30 @@ const supabase = window.supabase.createClient(
 let selectedFile = null;
 
 /* ============================
-    📸 ABRIR CÁMARA
+   📸 ABRIR CÁMARA
 ============================ */
 function openCamera() {
   document.getElementById("cameraInput").click();
 }
 
 /* ============================
-    🖼️ ABRIR GALERÍA
+   🖼️ ABRIR GALERÍA
 ============================ */
 function openGallery() {
   document.getElementById("galleryInput").click();
 }
 
-/* Manejar foto desde cámara */
 document.getElementById("cameraInput").addEventListener("change", (e) => {
   if (e.target.files.length > 0) loadPreviewFile(e.target.files[0]);
 });
 
-/* Manejar foto desde galería */
 document.getElementById("galleryInput").addEventListener("change", (e) => {
   if (e.target.files.length > 0) loadPreviewFile(e.target.files[0]);
 });
 
 /* ============================
-    🧩 PEGADO WINDOWS + SHIFT + S
+   🧩 PEGADO CTRL+V
 ============================ */
-/* PEGADO UNIVERSAL (FUNCIONA EN TODOS LOS NAVEGADORES) */
 document.addEventListener("paste", (event) => {
   const items = event.clipboardData.items;
 
@@ -128,9 +126,8 @@ document.addEventListener("paste", (event) => {
   alert("No pegaste una imagen.");
 });
 
-
 /* ============================
-    🎨 MOSTRAR VISTA PREVIA
+   🎨 VISTA PREVIA
 ============================ */
 function loadPreviewFile(file) {
   selectedFile = file;
@@ -144,7 +141,7 @@ function loadPreviewFile(file) {
 }
 
 /* ============================
-    🗜️ COMPRESIÓN DE IMAGEN
+   🗜️ COMPRESIÓN
 ============================ */
 function compressImage(file) {
   return new Promise((resolve) => {
@@ -184,7 +181,7 @@ function compressImage(file) {
 }
 
 /* ============================
-    🚀 SUBIR A SUPABASE
+   🚀 SUBIR A SUPABASE
 ============================ */
 async function upload() {
   if (!selectedFile) return alert("Selecciona o pega una imagen primero.");
@@ -192,19 +189,25 @@ async function upload() {
   const caption = document.getElementById("caption").value;
   const relation = document.getElementById("relation").value;
 
-  // ⏳ Comprimir antes de subir
+  // Comprimir antes de subir
   const compressed = await compressImage(selectedFile);
 
-  const fileName = Date.now() + "-" + compressed.name;
+  const fileName = Date.now() + "-" + compressed.name.replace(/\s+/g, "");
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("bookit")
     .upload(fileName, compressed);
 
-  if (uploadError) return alert("Error al subir imagen");
+  if (uploadError) {
+    console.error(uploadError);
+    return alert("Error al subir imagen");
+  }
+
+  // MUY IMPORTANTE: AQUÍ SE GUARDA LA RUTA CORRECTA
+  const path = uploadData.path;
 
   await supabase.from("bookit_entries").insert({
-    image_url: uploadData.fullPath,
+    image_url: path,
     caption,
     relation
   });
@@ -219,6 +222,7 @@ async function upload() {
     "📌 Pega aquí una imagen (Ctrl+V o Windows+Shift+S)";
 }
 </script>
+
 
 </body>
 </html>
