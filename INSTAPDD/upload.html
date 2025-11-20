@@ -113,24 +113,21 @@ document.getElementById("galleryInput").addEventListener("change", (e) => {
 /* ============================
     🧩 PEGADO WINDOWS + SHIFT + S
 ============================ */
-document.addEventListener("paste", async () => {
-  try {
-    const items = await navigator.clipboard.read();
-    for (const item of items) {
-      for (const type of item.types) {
-        if (type.startsWith("image/")) {
-          const blob = await item.getType(type);
+/* PEGADO UNIVERSAL (FUNCIONA EN TODOS LOS NAVEGADORES) */
+document.addEventListener("paste", (event) => {
+  const items = event.clipboardData.items;
 
-          const file = new File([blob], "pegada.png", { type });
-          loadPreviewFile(file);
-          return;
-        }
-      }
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf("image") !== -1) {
+      const file = items[i].getAsFile();
+      loadPreviewFile(file);
+      return;
     }
-  } catch (err) {
-    alert("Tu navegador no permite leer imágenes del portapapeles.");
   }
+
+  alert("No pegaste una imagen.");
 });
+
 
 /* ============================
     🎨 MOSTRAR VISTA PREVIA
