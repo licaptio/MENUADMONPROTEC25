@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>BOOKIT – Diario visual</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body { font-family: Arial; background:#f5f5f5; margin:0; padding:10px; }
+    .filters { position:sticky; top:0; background:#fff; padding:10px;
+               box-shadow:0 2px 4px rgba(0,0,0,.1); z-index:10; }
+    select, input {
+      padding:8px; width:100%; margin-bottom:10px; border-radius:6px;
+      border:1px solid #ccc;
+    }
+    .entry {
+      background:white; margin:15px 0; padding:10px;
+      border-radius:12px; box-shadow:0 3px 8px rgba(0,0,0,.1);
+    }
+    img { width:100%; border-radius:10px; }
+    .caption { margin-top:8px; font-size:14px; }
+    .relation { font-weight:bold; margin-top:5px; color:#00416A; }
+    .date { color:#666; font-size:12px; margin-bottom:5px; }
+  </style>
+</head>
+<body>
+
+<div class="filters">
+  <select id="relationFilter">
+    <option value="">-- Filtrar por relación --</option>
+  </select>
+
+  <input type="date" id="startDate">
+  <input type="date" id="endDate">
+</div>
+
+<script>
+const supabase = supabase.createClient(
+  "TU_URL_SUPABASE",
+  "TU_PUBLIC_ANON_KEY"
+);
+
+let page = 0;
+const limit = 10;
+let loading = false;
+
+// cargar relaciones dinámicamente
+async function loadRelations() {
+  const { data } = await supabase
+    .from("bookit_entries")
+    .select("relation")
+    .not("relation", "is", null);
+
+  const unique = [...new Set(data.map(d => d.relation).filter(r => r))];
+
+  const sel = document.getElementById("relationFilter");
+  unique.forEach(r => {
+    const op = document.createElement("option");
+    op.value = r;
+    op.textContent = r;
+    sel.appendChild(op);
+  });
+}
+
+async function loadMore(reset=false) {
+  if (loading) return;
+  loading = true;
+
+  if (reset) {
+    document.querySelectorAll(".entry").forEach(e => e.remove());
+    page = 0;
+  }
+
+  const start = page * limit;
+  const end = start + limit - 1;
+
+  const relation = document.getElementById("relationFilter").value;
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+
+  let query = supabase
+    .from("bookit_entries")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(start, end);
+
+  if (relation) query = query.eq("relation", relation);
+  if (startDate) query = query.gte("created_at", startDate);
+  if (endDate) query = query.lte("created_at", endDate + " 23:59:59");
+
+  const { data, error } = await query;
+
+  data.forEach(addEntry);
+  page++;
+  loading = false;
+}
+
+function addEntry(item) {
+  const div = document.createElement("div");
+  div.className = "entry";
+
+  const publicUrl = supabase
+    .storage
+    .from("bookit")
+    .getPublicUrl(item.image_url).data.publicUrl;
+
+  div.innerHTML = `
+    <div class="date">${new Date(item.created_at).toLocaleString()}</div>
+    <img src="${publicUrl}">
+    <div class="relation">${item.relation || ""}</div>
+    <div class="caption">${item.caption || ""}</div>
+  `;
+
+  document.body.appendChild(div);
+}
+
+// eventos de filtro
+document.getElementById("relationFilter").onchange = () => loadMore(true);
+document.getElementById("startDate").onchange = () => loadMore(true);
+document.getElementById("endDate").onchange = () => loadMore(true);
+
+// scroll infinito
+window.onscroll = () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+    loadMore();
+  }
+};
+
+loadRelations();
+loadMore();
+</script>
+
+</body>
+</html>
