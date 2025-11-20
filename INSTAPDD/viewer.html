@@ -71,6 +71,7 @@
 <div id="gallery" class="grid"></div>
 
 <script>
+
 /* 🔑 CONEXIÓN REAL */
 const supabase = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
@@ -81,9 +82,10 @@ let page = 0;
 const limit = 30;
 let loading = false;
 
+
 /* ===============================
    🏷 Cargar RELACIONES únicas
-=============================== */
+================================ */
 async function loadRelations() {
   const { data } = await supabase
     .from("bookit_entries")
@@ -101,9 +103,10 @@ async function loadRelations() {
   });
 }
 
+
 /* ===============================
    📸 Cargar fotos con scroll infinito
-=============================== */
+================================ */
 async function loadMore(reset = false) {
   if (loading) return;
   loading = true;
@@ -138,19 +141,21 @@ async function loadMore(reset = false) {
   loading = false;
 }
 
+
 /* ===============================
-   🖼 Agregar imagen al grid
-=============================== */
+   🖼 Agregar imagen al grid (ARREGLADO)
+================================ */
 function addImage(item) {
   const gallery = document.getElementById("gallery");
 
-let cleanPath = item.image_url.replace(/^\/+/, "");
+  // 🔥 AQUÍ ESTABA EL ERROR
+  let cleanPath = item.image_url.replace(/^\/+/, "");
 
-const { data: publicUrlData } = supabase.storage
-  .from("bookit")
-  .getPublicUrl(cleanPath);
+  const { data: publicUrlData } = supabase.storage
+    .from("bookit")
+    .getPublicUrl(cleanPath);
 
-const url = publicUrlData.publicUrl;
+  const url = publicUrlData.publicUrl;
 
   const div = document.createElement("div");
   div.className = "grid-item";
@@ -160,9 +165,10 @@ const url = publicUrlData.publicUrl;
   gallery.appendChild(div);
 }
 
+
 /* ===============================
    EVENTOS
-=============================== */
+================================ */
 document.getElementById("relationFilter").onchange = () => loadMore(true);
 document.getElementById("startDate").onchange = () => loadMore(true);
 document.getElementById("endDate").onchange = () => loadMore(true);
@@ -175,6 +181,7 @@ window.onscroll = () => {
 
 loadRelations();
 loadMore();
+
 </script>
 
 </body>
