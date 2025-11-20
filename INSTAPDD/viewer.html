@@ -24,7 +24,7 @@
       z-index: 10;
     }
 
-    select, input {
+    select {
       padding: 10px;
       width: 100%;
       margin-bottom: 10px;
@@ -134,9 +134,6 @@
   <select id="relationFilter">
     <option value="">🔎 Filtrar por relación</option>
   </select>
-
-  <input type="date" id="startDate">
-  <input type="date" id="endDate">
 </div>
 
 <div id="gallery" class="grid"></div>
@@ -159,6 +156,7 @@ async function loadRelations() {
   const { data } = await supabase.from("bookit_entries").select("relation");
 
   const relations = [...new Set(data.map(r => r.relation).filter(Boolean))];
+
   const sel = document.getElementById("relationFilter");
 
   relations.forEach(rel => {
@@ -184,18 +182,14 @@ async function loadMore(reset = false) {
   const start = page * limit;
   const end = start + limit - 1;
 
-  let q = supabase.from("bookit_entries")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .range(start, end);
+  let q = supabase
+      .from("bookit_entries")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(start, end);
 
   const rel = document.getElementById("relationFilter").value;
-  const d1 = document.getElementById("startDate").value;
-  const d2 = document.getElementById("endDate").value;
-
   if (rel) q = q.eq("relation", rel);
-  if (d1) q = q.gte("created_at", d1);
-  if (d2) q = q.lte("created_at", d2 + " 23:59:59");
 
   const { data } = await q;
 
@@ -238,7 +232,7 @@ function addImage(item) {
 }
 
 /* ===============================
-   DESCARGAR IMAGEN AL CLICK
+   DESCARGAR AL CLICK
 =============================== */
 function downloadImage(url) {
   const a = document.createElement("a");
@@ -252,15 +246,14 @@ function downloadImage(url) {
 =============================== */
 async function deleteImage(id, path, ev) {
   ev.stopPropagation();
-
-  const pass = prompt("Contraseña para borrar:");
+  const pass = prompt("Contraseña:");
 
   if (pass !== "1982") return alert("❌ Contraseña incorrecta");
 
   await supabase.from("bookit_entries").delete().eq("id", id);
   await supabase.storage.from("bookit").remove([path]);
 
-  alert("✔ Imagen eliminada");
+  alert("✔ Imagen borrada");
   loadMore(true);
 }
 
@@ -268,13 +261,10 @@ async function deleteImage(id, path, ev) {
    EVENTOS
 =============================== */
 relationFilter.onchange = () => loadMore(true);
-startDate.onchange = () => loadMore(true);
-endDate.onchange = () => loadMore(true);
 
 window.onscroll = () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200)
     loadMore();
-  }
 };
 
 loadRelations();
