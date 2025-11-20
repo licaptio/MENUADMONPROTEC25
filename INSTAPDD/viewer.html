@@ -4,7 +4,10 @@
   <meta charset="UTF-8"/>
   <title>BOOKIT – Diario Visual</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <!-- Desactivar cache alv -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -148,14 +151,13 @@ async function loadMore(reset = false) {
 function addImage(item) {
   const gallery = document.getElementById("gallery");
 
-  // 🔥 AQUÍ ESTABA EL ERROR
   let cleanPath = item.image_url.replace(/^\/+/, "");
 
   const { data: publicUrlData } = supabase.storage
     .from("bookit")
     .getPublicUrl(cleanPath);
 
-  const url = publicUrlData.publicUrl;
+  const url = publicUrlData.publicUrl + "?v=" + Date.now(); // fuerza recarga
 
   const div = document.createElement("div");
   div.className = "grid-item";
@@ -164,6 +166,7 @@ function addImage(item) {
 
   gallery.appendChild(div);
 }
+
 
 
 /* ===============================
