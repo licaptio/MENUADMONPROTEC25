@@ -36,9 +36,10 @@
 
 <h2>📤 Subir foto al Bookit</h2>
 
-<div id="pasteArea">📌 Pega aquí una imagen (Ctrl+V)</div>
+<div id="pasteArea">📌 Pega aquí una imagen (Ctrl+V o Windows+Shift+S)</div>
 
-<input type="file" id="fileInput" accept="image/*" />
+<!-- 📸 CÁMARA en cel + selector normal en PC -->
+<input type="file" id="fileInput" accept="image/*" capture="environment" />
 
 <textarea id="caption" rows="3" placeholder="Escribe una nota..."></textarea>
 
@@ -54,24 +55,15 @@ const supabase = supabase.createClient(
 
 let pastedFile = null;
 
-/* 
-  -------------------------------------------------
-  🖼️ PEGAR IMÁGENES (FUNCIONA CON WINDOWS + SHIFT + S)
-  -------------------------------------------------
-*/
-
-document.addEventListener("paste", async (event) => {
+/* PEGADO DE IMÁGENES (FUNCIONA CON WINDOWS+SHIFT+S) */
+document.addEventListener("paste", async () => {
   try {
     const clipboardItems = await navigator.clipboard.read();
 
     for (const item of clipboardItems) {
       for (const type of item.types) {
-
-        // detectar imagen real del portapapeles
         if (type.startsWith("image/")) {
           const blob = await item.getType(type);
-
-          // archivo compatible
           pastedFile = new File([blob], "captura.png", { type });
 
           document.getElementById("pasteArea").innerText =
@@ -84,23 +76,16 @@ document.addEventListener("paste", async (event) => {
 
     alert("No pegaste una imagen válida.");
   } catch (err) {
-    alert("⚠️ Tu navegador no permite leer imágenes del portapapeles.");
+    alert("⚠️ El navegador no permitió leer la imagen del portapapeles.");
     console.error(err);
   }
 });
 
-/*
-  -------------------------------------------------
-  📤 SUBIR FOTO (PEGADA O SELECCIONADA)
-  -------------------------------------------------
-*/
-
+/* SUBIR FOTO (PEGA O CÁMARA/ARCHIVO) */
 async function upload() {
   let file = document.getElementById("fileInput").files[0];
 
-  // si no hay archivo, usar la imagen pegada
   if (!file && pastedFile) file = pastedFile;
-
   if (!file) return alert("Selecciona o pega una imagen.");
 
   const caption = document.getElementById("caption").value;
@@ -108,7 +93,6 @@ async function upload() {
 
   const fileName = Date.now() + "-" + file.name;
 
-  // subir a supabase storage
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from("bookit")
     .upload(fileName, file);
@@ -117,7 +101,6 @@ async function upload() {
 
   const image_url = uploadData.fullPath;
 
-  // guardar registro en tabla
   await supabase.from("bookit_entries").insert({
     image_url,
     caption,
@@ -126,7 +109,6 @@ async function upload() {
 
   alert("¡Imagen subida correctamente!");
 
-  // limpiar campos
   pastedFile = null;
   document.getElementById("pasteArea").innerText = "📌 Pega aquí una imagen (Ctrl+V)";
   document.getElementById("caption").value = "";
