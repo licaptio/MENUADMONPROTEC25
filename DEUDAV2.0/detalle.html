@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalle CFDI – PROVSOFT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS externo -->
+  <link rel="stylesheet" href="detalle.css">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header>
+    <button class="btn-back" onclick="history.back()">⬅ Regresar</button>
+    <h2>Detalle de Factura – PROVSOFT</h2>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div id="contenedor" class="tarjeta-principal"></div>
+
+  <!-- PANEL DE FOTOS -->
+  <section class="panel-fotos">
+    <h3>Fotos de factura</h3>
+    <input type="file" accept="image/*" capture="environment" id="fotoInput">
+    <button id="btnSubirFoto">📤 Subir Foto</button>
+
+    <div id="galeriaFotos"></div>
+  </section>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast">Listo</div>
+
+  <!-- JS externo -->
+  <script src="detalle.js"></script>
+
+</body>
+</html>
