@@ -1,0 +1,151 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f3f6fa;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: #00416A;
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.btn-back {
+  display: inline-block;
+  background: #002740;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: .9rem;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  margin-right: 10px;
+}
+.btn-back:hover { background: #00182b; }
+
+.tarjeta-principal {
+  background: #fff;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,.12);
+}
+
+h2, h3 { color: #00416A; }
+
+.campo { margin-bottom: 10px; font-size: 15px; }
+.campo span.titulo { font-weight: 700; color: #00345a; margin-right: 6px; }
+
+.tabla-wrapper { overflow-x: auto; margin-top: 20px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  min-width: 700px;
+}
+th {
+  background: #dbe5f1;
+  color: #00345a;
+  padding: 6px;
+}
+td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: center;
+}
+
+tfoot td {
+  font-weight: bold;
+  background: #eef0f4;
+}
+
+.folio-seccion {
+  background: #f7faff;
+  border: 1px solid #c8d8ee;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+.folio-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.folio-row input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #9bb6d3;
+  border-radius: 6px;
+  font-size: 16px;
+}
+.folio-row button {
+  background: #0c6cbd;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+.folio-row button:hover { background: #004c8f; }
+
+.panel-fotos {
+  max-width: 900px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,.12);
+}
+
+#galeriaFotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.foto-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+  width: 110px;
+  text-align: center;
+}
+.foto-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 5px;
+}
+.foto-item button {
+  background: #c62828;
+  color: #fff;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  background: #00416A;
+  color: #fff;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+  z-index: 999;
+}
+.toast.show { opacity: 1; }
