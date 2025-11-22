@@ -42,28 +42,48 @@ h2, h3 { color: #00416A; }
 .campo span.titulo { font-weight: 700; color: #00345a; margin-right: 6px; }
 
 .tabla-wrapper { overflow-x: auto; margin-top: 20px; }
+
 table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  min-width: 700px;
+  min-width: 720px;
 }
+
+/* CABECERA */
 th {
   background: #dbe5f1;
   color: #00345a;
   padding: 6px;
+  font-size: 14px;
 }
+
+/* CELDAS */
 td {
   border: 1px solid #ddd;
   padding: 6px;
   text-align: center;
+  font-size: 14px;
 }
 
+/* DESCUENTO AMARILLO */
+.descuento-cell {
+  background: #fff7c2;
+  font-weight: bold;
+}
+
+/* FOOTER */
 tfoot td {
   font-weight: bold;
   background: #eef0f4;
 }
 
+tfoot td.desc-total {
+  background: #fff7c2 !important;
+  color: #5b4500;
+}
+
+/* FOLIO */
 .folio-seccion {
   background: #f7faff;
   border: 1px solid #c8d8ee;
@@ -77,13 +97,12 @@ tfoot td {
   margin-top: 10px;
 }
 .folio-row input {
-  width: 150px;       /* 🔥 Campo más corto */
+  flex: 1;
   padding: 10px;
   border: 1px solid #9bb6d3;
   border-radius: 6px;
   font-size: 16px;
 }
-
 .folio-row button {
   background: #0c6cbd;
   color: #fff;
@@ -94,6 +113,7 @@ tfoot td {
 }
 .folio-row button:hover { background: #004c8f; }
 
+/* FOTOS */
 .panel-fotos {
   max-width: 900px;
   margin: 30px auto;
@@ -135,6 +155,7 @@ tfoot td {
   cursor: pointer;
 }
 
+/* TOAST */
 .toast {
   position: fixed;
   left: 50%;
@@ -150,9 +171,8 @@ tfoot td {
   z-index: 999;
 }
 .toast.show { opacity: 1; }
-/* ===========================
-   BLOQUE DE DOS COLUMNAS
-   =========================== */
+
+/* GRID 2 COLUMNAS */
 .datos-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -160,12 +180,5 @@ tfoot td {
   margin-bottom: 25px;
 }
 
-.datos-box h2 {
-  margin-top: 0;
-}
-
-.datos-box p {
-  margin: 6px 0;
-  font-size: 15px;
-}
-
+.datos-box h2 { margin-top: 0; }
+.datos-box p { margin: 6px 0; font-size: 15px; }
