@@ -158,26 +158,39 @@ function mostrarTabla(data) {
         <th>UUID</th>
         <th>RFC Emisor</th>
         <th>Nombre Emisor</th>
-        <th>Serie-Folio</th>
+        <th>Factura</th>
         <th>Total</th>
       </tr>
     </thead>
     <tbody>`;
 
   for (const f of data) {
+
+    // ===============================
+    // 1️⃣ Nombre emisor automático
+    // ===============================
+    const nombreMostrado =
+      f.razon_social_emisor && f.razon_social_emisor.trim() !== ""
+        ? f.razon_social_emisor
+        : (f.nombre_emisor || "-");
+
+    // ===============================
+    // 2️⃣ Factura automática (serie + folio)
+    // ===============================
+    let facturaMostrada = "-";
+    if (f.serie || f.folio) {
+      facturaMostrada = `${f.serie || ""}${f.folio || ""}`;
+    } else if (f.factura) {
+      facturaMostrada = f.factura; // valor viejo
+    }
+
     html += `<tr>
       <td>${f.fecha || "-"}</td>
-      <td>
-        <a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">
-          ${f.uuid_cfdi || "-"}
-        </a>
-      </td>
+      <td><a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">${f.uuid_cfdi || "-"}</a></td>
       <td>${f.rfc_emisor || "-"}</td>
-      <td>${f.nombre_emisor || "-"}</td>
-      <td>${(f.serie || "")}-${(f.folio || "")}</td>
-      <td style="text-align:right;">
-        ${(f.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </td>
+      <td>${nombreMostrado}</td>
+      <td>${facturaMostrada}</td>
+      <td style="text-align:right;">${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
     </tr>`;
   }
 
