@@ -203,7 +203,7 @@ async function cargarRFCs() {
     html += `<tr>
       <td>${f.fecha || "-"}</td>
       <td>
-        <a href="detalle-factura.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">
+        <a href="detalle.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">
           ${f.uuid_cfdi || "-"}
         </a>
       </td>
