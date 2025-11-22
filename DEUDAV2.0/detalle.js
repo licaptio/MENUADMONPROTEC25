@@ -154,21 +154,23 @@ function renderFactura(f) {
       <p class="folio-hint">${f.foliotecnopro ? `Actual: ${f.foliotecnopro}` : "Sin folio capturado"}</p>
     </section>`;
 
-  // ARMAR HTML
-  contenedor.innerHTML = `
-    <section class="seccion">
-      <h2>Datos del Emisor</h2>
-      <p><strong>RFC:</strong> ${f.rfc_emisor}</p>
-      <p><strong>Nombre:</strong> ${f.nombre_emisor}</p>
-      <p><strong>Régimen Fiscal:</strong> ${f.regimen_fiscal_emisor}</p>
-    </section>
+<div class="datos-grid">
 
-    <section class="seccion">
-      <h2>Datos del Receptor</h2>
-      <p><strong>RFC:</strong> ${f.rfc_receptor}</p>
-      <p><strong>Nombre:</strong> ${f.nombre_receptor}</p>
-      <p><strong>Uso CFDI:</strong> ${f.uso_cfdi}</p>
-    </section>
+  <div class="datos-box">
+    <h2>Datos del Emisor</h2>
+    <p><strong>RFC:</strong> ${f.rfc_emisor}</p>
+    <p><strong>Nombre:</strong> ${f.nombre_emisor}</p>
+    <p><strong>Régimen Fiscal:</strong> ${f.regimen_fiscal_emisor}</p>
+  </div>
+
+  <div class="datos-box">
+    <h2>Datos del Receptor</h2>
+    <p><strong>RFC:</strong> ${f.rfc_receptor}</p>
+    <p><strong>Nombre:</strong> ${f.nombre_receptor}</p>
+    <p><strong>Uso CFDI:</strong> ${f.uso_cfdi}</p>
+  </div>
+
+</div>
 
     ${folioHTML}
 
