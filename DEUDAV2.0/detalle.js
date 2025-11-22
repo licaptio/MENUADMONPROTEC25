@@ -118,7 +118,7 @@ function renderFactura(f) {
     <section class="seccion-folio">
       <h3>Folio Tecnopro</h3>
       <div class="folio-row">
-        <input id="folioInput" maxlength="7" value="${f.foliotecnopro ?? ""}">
+        <input id="folioInput" maxlength="8" value="${f.foliotecnopro ?? ""}">
         <button id="btnGuardarFolio">Guardar</button>
       </div>
       <p class="folio-hint">${f.foliotecnopro ? `Actual: ${f.foliotecnopro}` : "Sin folio capturado"}</p>
