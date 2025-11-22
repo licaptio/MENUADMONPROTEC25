@@ -149,3 +149,22 @@ tfoot td {
   z-index: 999;
 }
 .toast.show { opacity: 1; }
+/* ===========================
+   BLOQUE DE DOS COLUMNAS
+   =========================== */
+.datos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.datos-box h2 {
+  margin-top: 0;
+}
+
+.datos-box p {
+  margin: 6px 0;
+  font-size: 15px;
+}
+
