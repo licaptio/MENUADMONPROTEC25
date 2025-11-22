@@ -368,6 +368,29 @@ async function eliminarFoto(url) {
   showToast("Foto eliminada");
   setTimeout(() => location.reload(), 700);
 }
+function obtenerProveedor(detalle) {
+  // 🟦 1) Nuevo formato del XML
+  if (detalle.razon_social_emisor && detalle.razon_social_emisor.trim() !== "") {
+    return detalle.razon_social_emisor.trim();
+  }
+  if (detalle.nombre_emisor && detalle.nombre_emisor.trim() !== "") {
+    return detalle.nombre_emisor.trim();
+  }
+
+  // 🟨 2) Formato viejo — ARREGLO
+  if (Array.isArray(detalle.factura) && detalle.factura.length >= 3) {
+    return detalle.factura[2].trim();
+  }
+
+  // 🟨 3) Formato viejo — TEXTO con guiones (ejemplo "SERIE-FOLIO-NOMBRE")
+  if (typeof detalle.factura === "string" && detalle.factura.includes("-")) {
+    const partes = detalle.factura.split("-");
+    return partes[2] ? partes[2].trim() : "SIN NOMBRE";
+  }
+
+  // 🟥 4) Nada encontrado
+  return "SIN NOMBRE";
+}
 
 // ============================================================
 // TOAST
@@ -384,3 +407,4 @@ $("btnSubirFoto").addEventListener("click", subirFoto);
 
 // INICIO
 cargarCFDI();
+
