@@ -58,6 +58,9 @@ function renderFactura(f) {
   let totalIEPS = 0;
   let filas = "";
 
+  // ========================
+  //  CONCEPTOS
+  // ========================
   if (Array.isArray(f.conceptos_detalle)) {
     for (const c of f.conceptos_detalle) {
       const qty = Number(c.cantidad);
@@ -90,61 +93,28 @@ function renderFactura(f) {
     }
   }
 
-  // GALERÍA DE FOTOS
-  function renderGaleria() {
-    const galeria = $("galeriaFotos");
-    galeria.innerHTML = "";
+  // ========================
+  // RENDER DEL HTML COMPLETO
+  // ========================
+  contenedor.innerHTML = `
+    <div class="datos-grid">
 
-    const fotos = f.fotos || [];
+      <div class="datos-box">
+        <h2>Datos del Emisor</h2>
+        <p><strong>RFC:</strong> ${f.rfc_emisor}</p>
+        <p><strong>Nombre:</strong> ${f.nombre_emisor}</p>
+        <p><strong>Régimen Fiscal:</strong> ${f.regimen_fiscal_emisor}</p>
+      </div>
 
-    if (!fotos.length) {
-      galeria.innerHTML = `<p style="color:#666">No hay fotos registradas.</p>`;
-      return;
-    }
+      <div class="datos-box">
+        <h2>Datos del Receptor</h2>
+        <p><strong>RFC:</strong> ${f.rfc_receptor}</p>
+        <p><strong>Nombre:</strong> ${f.nombre_receptor}</p>
+        <p><strong>Uso CFDI:</strong> ${f.uso_cfdi}</p>
+      </div>
 
-    fotos.forEach(url => {
-      galeria.innerHTML += `
-        <div class="foto-item">
-          <img src="${url}" />
-          <button onclick="eliminarFoto('${url}')">Eliminar</button>
-        </div>`;
-    });
-  }
-  renderGaleria();
+    </div>
 
-  // TIMBRE
-  let timbreHTML = `<p>No hay datos de timbrado</p>`;
-  if (Array.isArray(f.complementos) && f.complementos.length) {
-    const t = f.complementos[0].atributos || [];
-    const busca = x => t.find(a => a.nombre === x)?.valor || "";
-
-    timbreHTML = `
-      <div class="timbre-box">
-        <h3>Timbre Fiscal Digital</h3>
-        <p><strong>UUID:</strong> ${f.uuid_cfdi}</p>
-        <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
-        <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
-        <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
-      </div>`;
-  }
-
-  // IMPUESTOS GLOBALES
-  let impGlobalHTML = "";
-  let impGlobal = f.impuestos_globales || { detalles: [] };
-
-  if (Array.isArray(impGlobal.detalles)) {
-    impGlobal.detalles.forEach(d => {
-      impGlobalHTML += `
-        <tr>
-          <td>${d.tipo}</td>
-          <td>${(d.tasa * 100).toFixed(2)}%</td>
-          <td>${formatoMX(d.importe)}</td>
-        </tr>`;
-    });
-  }
-
-  // FOLIO
-  const folioHTML = `
     <section class="seccion-folio">
       <h3>Folio Tecnopro</h3>
       <div class="folio-row">
@@ -152,27 +122,7 @@ function renderFactura(f) {
         <button id="btnGuardarFolio">Guardar</button>
       </div>
       <p class="folio-hint">${f.foliotecnopro ? `Actual: ${f.foliotecnopro}` : "Sin folio capturado"}</p>
-    </section>`;
-
-<div class="datos-grid">
-
-  <div class="datos-box">
-    <h2>Datos del Emisor</h2>
-    <p><strong>RFC:</strong> ${f.rfc_emisor}</p>
-    <p><strong>Nombre:</strong> ${f.nombre_emisor}</p>
-    <p><strong>Régimen Fiscal:</strong> ${f.regimen_fiscal_emisor}</p>
-  </div>
-
-  <div class="datos-box">
-    <h2>Datos del Receptor</h2>
-    <p><strong>RFC:</strong> ${f.rfc_receptor}</p>
-    <p><strong>Nombre:</strong> ${f.nombre_receptor}</p>
-    <p><strong>Uso CFDI:</strong> ${f.uso_cfdi}</p>
-  </div>
-
-</div>
-
-    ${folioHTML}
+    </section>
 
     <section class="seccion">
       <h2>Conceptos</h2>
@@ -194,26 +144,96 @@ function renderFactura(f) {
             <tr><td colspan="6" style="text-align:right">Subtotal</td><td>${formatoMX(subtotal)}</td></tr>
             <tr><td colspan="6" style="text-align:right">IVA</td><td>${formatoMX(totalIVA)}</td></tr>
             <tr><td colspan="6" style="text-align:right">IEPS</td><td>${formatoMX(totalIEPS)}</td></tr>
-            <tr><td colspan="6" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-                <td style="background:#003366;color:#fff">${formatoMX(subtotal + totalIVA + totalIEPS)}</td></tr>
+            <tr>
+              <td colspan="6" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
+              <td style="background:#003366;color:#fff">${formatoMX(subtotal + totalIVA + totalIEPS)}</td>
+            </tr>
           </tfoot>
         </table>
       </div>
     </section>
 
-    <section class="seccion">
-      ${timbreHTML}
-    </section>
+    ${renderTimbre(f)}
 
+    ${renderImpuestosGlobales(f)}
+  `;
+
+  initFolioTecnopro(f.uuid_cfdi);
+  renderGaleria(f);
+}
+
+// ============================================================
+// TIMBRE
+// ============================================================
+function renderTimbre(f) {
+  if (!Array.isArray(f.complementos) || !f.complementos.length)
+    return `<p>No hay datos de timbrado</p>`;
+
+  const t = f.complementos[0].atributos || [];
+  const busca = x => t.find(a => a.nombre === x)?.valor || "";
+
+  return `
+    <section class="seccion">
+      <div class="timbre-box">
+        <h3>Timbre Fiscal Digital</h3>
+        <p><strong>UUID:</strong> ${f.uuid_cfdi}</p>
+        <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
+        <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
+        <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
+      </div>
+    </section>`;
+}
+
+// ============================================================
+// IMPUESTOS GLOBALES
+// ============================================================
+function renderImpuestosGlobales(f) {
+  const ig = f.impuestos_globales || { detalles: [] };
+  let rows = "";
+
+  if (Array.isArray(ig.detalles)) {
+    ig.detalles.forEach(d => {
+      rows += `
+        <tr>
+          <td>${d.tipo}</td>
+          <td>${(d.tasa * 100).toFixed(2)}%</td>
+          <td>${formatoMX(d.importe)}</td>
+        </tr>`;
+    });
+  }
+
+  return `
     <section class="seccion">
       <h2>Impuestos Globales</h2>
       <table>
         <thead><tr><th>Tipo</th><th>Tasa</th><th>Importe</th></tr></thead>
-        <tbody>${impGlobalHTML}</tbody>
+        <tbody>${rows}</tbody>
       </table>
     </section>`;
+}
 
-  initFolioTecnopro(f.uuid_cfdi);
+// ============================================================
+// GALERÍA DE FOTOS
+// ============================================================
+function renderGaleria(f) {
+  const galeria = $("galeriaFotos");
+  galeria.innerHTML = "";
+
+  const fotos = f.fotos || [];
+
+  if (!fotos.length) {
+    galeria.innerHTML = `<p style="color:#666">No hay fotos registradas.</p>`;
+    return;
+  }
+
+  fotos.forEach(url => {
+    galeria.innerHTML += `
+      <div class="foto-item">
+        <img src="${url}" />
+        <button onclick="eliminarFoto('${url}')">Eliminar</button>
+      </div>
+    `;
+  });
 }
 
 // ============================================================
@@ -270,7 +290,6 @@ async function subirFoto() {
   });
 
   const actuales = (await fotosRes.json())[0]?.fotos || [];
-
   const nuevas = [...actuales, url];
 
   const up = await fetch(`${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}`, {
@@ -310,7 +329,6 @@ async function eliminarFoto(url) {
   });
 
   const actuales = (await fotosRes.json())[0]?.fotos || [];
-
   const filtradas = actuales.filter(f => f !== url);
 
   await fetch(`${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}`, {
@@ -338,6 +356,7 @@ function showToast(msg, error = false) {
   setTimeout(() => toast.classList.remove("show"), 2000);
 }
 
+// LISTENER
 $("btnSubirFoto").addEventListener("click", subirFoto);
 
 // INICIO
