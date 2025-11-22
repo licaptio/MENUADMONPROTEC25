@@ -72,38 +72,66 @@
 
     cargarRFCs();
 
-    async function cargarRFCs() {
-      const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
+async function cargarRFCs() {
+  const { data, error } = await supabase
+    .from(tabla)
+    .select("rfc_emisor, razon_social_emisor, nombre_emisor, factura");
 
-      if (error) {
-        console.error("❌ Error al obtener RFCs:", error);
-        alert("Error al obtener datos únicos");
-        return;
-      }
+  if (error) {
+    console.error("❌ Error cargando datos:", error);
+    alert("Error al obtener datos iniciales");
+    return;
+  }
 
-      const selectRFC = document.getElementById("rfcFiltro");
-      const selectNombre = document.getElementById("nombreFiltro");
+  const mapa = new Map();
 
-      // Rellenar RFCs
-      for (const fila of data) {
-        const opt1 = document.createElement("option");
-        opt1.value = fila.rfc;
-        opt1.textContent = fila.rfc;
-        selectRFC.appendChild(opt1);
-      }
+  for (const f of data) {
+    const rfc = f.rfc_emisor;
+    if (!rfc) continue;
 
-      // Rellenar nombres ordenados alfabéticamente
-      const ordenadoPorNombre = [...data].sort((a, b) => {
-        return a.nombre.localeCompare(b.nombre);
-      });
+    // ---- Determinar nombre unificado ----
+    let nombre = "";
 
-      for (const fila of ordenadoPorNombre) {
-        const opt2 = document.createElement("option");
-        opt2.value = fila.rfc;
-        opt2.textContent = fila.nombre;
-        selectNombre.appendChild(opt2);
-      }
+    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+      nombre = f.razon_social_emisor.trim();
+    } else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+      nombre = f.nombre_emisor.trim();
+    } else if (Array.isArray(f.factura) && f.factura.length >= 3) {
+      nombre = f.factura[2].trim();
+    } else if (typeof f.factura === "string" && f.factura.includes("-")) {
+      nombre = f.factura.split("-")[0].trim();
+    } else {
+      nombre = "(SIN NOMBRE)";
     }
+
+    // Solo guardar si no existe aún
+    if (!mapa.has(rfc)) {
+      mapa.set(rfc, nombre);
+    }
+  }
+
+  // Llenar selects
+  const selectRFC = document.getElementById("rfcFiltro");
+  const selectNombre = document.getElementById("nombreFiltro");
+
+  // RFCs
+  for (const [rfc] of mapa) {
+    const opt = document.createElement("option");
+    opt.value = rfc;
+    opt.textContent = rfc;
+    selectRFC.appendChild(opt);
+  }
+
+  // Nombres ordenados
+  [...mapa.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .forEach(([rfc, nombre]) => {
+      const opt = document.createElement("option");
+      opt.value = rfc;
+      opt.textContent = nombre;
+      selectNombre.appendChild(opt);
+    });
+}
 
     async function consultarPorRFC() {
       const rfc = document.getElementById("rfcFiltro").value;
