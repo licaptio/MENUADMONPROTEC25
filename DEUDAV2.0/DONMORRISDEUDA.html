@@ -180,7 +180,7 @@
         </a>
       </td>
       <td>${f.rfc_emisor || "-"}</td>
-      <td>${nombreMostrado}</td>
+      <td>${nombreProveedor(f)}</td>
       <td>${folioProveedor(f)}</td>
       <td style="text-align:right;">
         ${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -233,6 +233,29 @@ function folioProveedor(f) {
 
   // 4) Si no hay nada
   return "-";
+}
+function nombreProveedor(f) {
+  // 1) Nuevo nombre cargado del XML
+  if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+    return f.razon_social_emisor.trim();
+  }
+
+  // 2) Segundo nombre nuevo del XML (campo "nombre_emisor")
+  if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+    return f.nombre_emisor.trim();
+  }
+
+  // 3) Formato viejo — ARREGLO de 3 posiciones
+  if (Array.isArray(f.factura) && f.factura.length >= 3) {
+    return f.factura[2].trim();   // ← El proveedor iba en la posición 3
+  }
+
+  // 4) Formato viejo — TEXTO con guiones
+  if (typeof f.factura === "string" && f.factura.includes("-")) {
+    return f.factura.split("-")[0].trim();
+  }
+
+  return "SIN NOMBRE";
 }
 
   </script>
