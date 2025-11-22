@@ -77,12 +77,13 @@ tfoot td {
   margin-top: 10px;
 }
 .folio-row input {
-  flex: 1;
+  width: 150px;       /* 🔥 Campo más corto */
   padding: 10px;
   border: 1px solid #9bb6d3;
   border-radius: 6px;
   font-size: 16px;
 }
+
 .folio-row button {
   background: #0c6cbd;
   color: #fff;
