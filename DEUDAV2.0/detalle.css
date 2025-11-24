@@ -232,3 +232,42 @@ tfoot td.desc-total {
   margin-bottom: 10px;
   cursor: pointer;
 }
+
+/* --- Caja compacta para Folio Tecnopro --- */
+.seccion-folio.compacto {
+  margin-top: 5px;
+  padding: 8px 0;
+}
+
+.compacto-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.folio-input {
+  width: 150px !important;   /* 🔥 Más chico, como lo quieres */
+  padding: 6px 10px;
+  border: 1px solid #b2c4dd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.btn-guardar-folio {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-guardar-folio:hover {
+  background: #004d99;
+}
+
+/* Quitamos espacio extra */
+.folio-hint {
+  display: none !important;
+}
