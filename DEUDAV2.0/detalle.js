@@ -254,7 +254,7 @@ if (conceptos.length > 0) {
           </thead>
           <tbody>${filas}</tbody>
           <tfoot>
-            <tr><td colspan="7" style="text-align:right">Subtotal</td><td>${formatoMX(subtotal)}</td></tr>
+            <tr><td colspan="7" style="text-align:right">Subtotal</td><td>${formatoMX(window.__sub || 0)}</td></tr>
             <tr><td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td><td class="desc-total">${formatoMX(totalDescuentos)}</td></tr>
             <tr><td colspan="7" style="text-align:right">IVA</td><td>${formatoMX(totalIVA)}</td></tr>
             <tr><td colspan="7" style="text-align:right">IEPS</td><td>${formatoMX(totalIEPS)}</td></tr>
