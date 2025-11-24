@@ -19,17 +19,18 @@
        2.0 — AUTOCOMPLETE
   ======================================*/
 .autocomplete-list {
-  position: fixed !important;
+  position: absolute;
   background: white;
   border: 1px solid #ccc;
-  width: calc(100% - 40px) !important;
-  left: 20px !important;
-  top: 120px !important;
-  max-height: 220px;
+  width: 250px;
+  max-height: 180px;
   overflow-y: auto;
   display: none;
   border-radius: 6px;
-  z-index: 9999 !important;
+  z-index: 10;
+
+  /* 🔥 ESTA LÍNEA LA AGREGA: BAJA LA LISTA */
+  margin-top: 38px; 
 }
 
 
