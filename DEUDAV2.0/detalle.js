@@ -4,6 +4,26 @@
 const SUPA_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
 const TABLA = "deuda_limpia_pdd";
+function formatFechaBonita(fechaRaw) {
+  if (!fechaRaw) return "";
+
+  const fecha = new Date(fechaRaw);
+
+  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+  let dia   = fecha.getDate();
+  let mes   = meses[fecha.getMonth()];
+  let año   = fecha.getFullYear();
+
+  let horas = fecha.getHours();
+  let mins  = fecha.getMinutes().toString().padStart(2,"0");
+
+  let ampm = horas >= 12 ? "PM" : "AM";
+  horas = horas % 12;
+  horas = horas === 0 ? 12 : horas;
+
+  return `${dia} ${mes} ${año} – ${horas}:${mins} ${ampm}`;
+}
 
 // ============================================================
 // UTILIDADES
@@ -268,20 +288,7 @@ const folioHTML = `
       <p><strong>Folio:</strong> ${safe(f.folio)}</p>
     </div>
 
-    <div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
-      <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
-
-      <button id="btnCopiarUUID" class="btn-copiar">
-        📋 Copiar
-      </button>
-    </div>
-    <div class="seriefolio-grid" style="margin-top:5px;">
-  <p><strong>Fecha:</strong> ${safe(f.fecha)}</p>
-</div>
-
-<div class="seriefolio-grid" style="margin-top:5px;">
-  <p><strong>Total Factura:</strong> ${formatoMX(f.total)}</p>
-</div>
+<div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
 
   </section>
 
