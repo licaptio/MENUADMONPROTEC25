@@ -285,10 +285,6 @@ const folioHTML = `
         <p><strong>RFC:</strong> ${safe(f.rfc_receptor)}</p>
         <p><strong>Nombre:</strong> ${safe(f.nombre_receptor)}</p>
         <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
-<p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
-<p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
-<p><strong>Condiciones de Pago:</strong> ${safe(f.condiciones_pago)}</p>
-
       </div>
 
     </div>
