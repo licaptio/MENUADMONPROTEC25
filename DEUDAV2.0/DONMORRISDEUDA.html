@@ -122,18 +122,7 @@ async function cargarRFCs() {
     });
 }
 
-  // Nombres ordenados
-  [...mapa.entries()]
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .forEach(([rfc, nombre]) => {
-      const opt = document.createElement("option");
-      opt.value = rfc;
-      opt.textContent = nombre;
-      selectNombre.appendChild(opt);
-    });
-}
-
-    async function consultarPorRFC() {
+   async function consultarPorRFC() {
       const rfc = document.getElementById("rfcFiltro").value;
       if (!rfc) {
         alert("Selecciona un RFC válido");
