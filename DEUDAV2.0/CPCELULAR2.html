@@ -262,7 +262,7 @@ function autocompleteNombre() {
   }
 
   listaBusqueda
-    .filter(x => x.nombre.includes(txt))
+    .filter(x => x.nombre.includes(txt) || x.nombre.startsWith(txt) )
     .forEach(x => {
       let div = document.createElement("div");
       div.textContent = `${x.nombre} — ${x.rfc}`;
