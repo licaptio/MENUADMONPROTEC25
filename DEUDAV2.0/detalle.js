@@ -460,3 +460,19 @@ $("btnSubirFoto").addEventListener("click", subirFoto);
 
 // INICIO
 cargarCFDI();
+// ============================================================
+// COPIAR UUID
+// ============================================================
+document.addEventListener("click", e => {
+  if (e.target.id === "btnCopiarUUID") {
+    const texto = document.getElementById("uuidText").textContent;
+
+    navigator.clipboard.writeText(texto)
+      .then(() => {
+        showToast("UUID copiado");
+      })
+      .catch(() => {
+        showToast("No se pudo copiar", true);
+      });
+  }
+});
