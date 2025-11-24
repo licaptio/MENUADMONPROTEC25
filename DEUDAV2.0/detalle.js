@@ -208,14 +208,25 @@ if (conceptos.length > 0) {
     const t = f.complementos[0].atributos || [];
     const busca = x => t.find(a => a.nombre === x)?.valor || "";
 
-    timbreHTML = `
-      <div class="timbre-box">
-        <h3>Timbre Fiscal Digital</h3>
-        <p><strong>UUID:</strong> ${f.uuid_cfdi}</p>
-        <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
-        <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
-        <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
-      </div>`;
+timbreHTML = `
+  <div class="timbre-box timbre-grid">
+    
+    <div class="timbre-col">
+      <p><strong>UUID:</strong> ${safe(f.uuid_cfdi)}</p>
+      <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
+      <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
+      <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
+    </div>
+
+    <div class="timbre-col">
+      <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
+      <p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
+      <p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
+      <p><strong>Tipo de Pago:</strong> ${safe(f.tipo_comprobante)}</p>
+    </div>
+
+  </div>`;
+
   }
 
   // ============================================================
