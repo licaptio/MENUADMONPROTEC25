@@ -253,16 +253,35 @@ if (conceptos.length > 0) {
             </tr>
           </thead>
           <tbody>${filas}</tbody>
-          <tfoot>
-            <tr><td colspan="7" style="text-align:right">Subtotal</td><td>${formatoMX(window.__sub || 0)}</td></tr>
-            <tr><td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td><td class="desc-total">${formatoMX(totalDescuentos)}</td></tr>
-            <tr><td colspan="7" style="text-align:right">IVA</td><td>${formatoMX(totalIVA)}</td></tr>
-            <tr><td colspan="7" style="text-align:right">IEPS</td><td>${formatoMX(totalIEPS)}</td></tr>
-            <tr>
-              <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-              <td style="background:#003366;color:#fff">${formatoMX(subtotal - totalDescuentos + totalIVA + totalIEPS)}</td>
-            </tr>
-          </tfoot>
+<tfoot>
+  <tr>
+    <td colspan="7" style="text-align:right">Subtotal</td>
+    <td>${formatoMX(window.__sub || 0)}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+    <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" style="text-align:right">IVA</td>
+    <td>${formatoMX(window.__iva || 0)}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" style="text-align:right">IEPS</td>
+    <td>${formatoMX(window.__ieps || 0)}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
+    <td style="background:#003366;color:#fff">
+      ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
+    </td>
+  </tr>
+</tfoot>
+
         </table>
       </div>
     </section>
