@@ -252,11 +252,15 @@ if (conceptos.length > 0) {
 
     </div>
 <section class="seccion-seriefolio">
-  <h3>Serie y Folio</h3>
+  <h3>Serie, Folio y UUID</h3>
 
   <div class="seriefolio-grid">
     <p><strong>Serie:</strong> ${safe(f.serie)}</p>
     <p><strong>Folio:</strong> ${safe(f.folio)}</p>
+  </div>
+
+  <div class="seriefolio-grid" style="margin-top:10px;">
+    <p><strong>UUID:</strong> ${safe(f.uuid_cfdi)}</p>
   </div>
 </section>
 
