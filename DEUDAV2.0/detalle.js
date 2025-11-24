@@ -251,6 +251,14 @@ if (conceptos.length > 0) {
       </div>
 
     </div>
+<section class="seccion-seriefolio">
+  <h3>Serie y Folio</h3>
+
+  <div class="seriefolio-grid">
+    <p><strong>Serie:</strong> ${safe(f.serie)}</p>
+    <p><strong>Folio:</strong> ${safe(f.folio)}</p>
+  </div>
+</section>
 
     ${folioHTML}
 
