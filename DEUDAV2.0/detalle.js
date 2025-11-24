@@ -482,5 +482,3 @@ document.addEventListener("click", e => {
       });
   }
 });
-
-
