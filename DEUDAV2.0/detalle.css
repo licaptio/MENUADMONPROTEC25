@@ -195,3 +195,16 @@ tfoot td.desc-total {
   gap: 40px;
   padding-top: 5px;
 }
+.btn-copiar {
+  background: #0c6cbd;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-copiar:hover {
+  background: #004c8f;
+}
