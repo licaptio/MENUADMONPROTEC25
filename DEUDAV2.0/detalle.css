@@ -278,3 +278,40 @@ tfoot td.desc-total {
   gap: 20px;
   margin: 15px 0;
 }
+
+/* ============================================
+   🔥 Sección Serie / Folio / UUID ULTRA COMPACTA
+   ============================================ */
+
+.seccion-seriefolio {
+  margin: 6px 0 !important;      /* menos separación */
+  padding: 8px 12px !important;  /* menos padding interno */
+  background: #f3f5f8;
+  border-radius: 8px;
+  border: 1px solid #c8d8ee;
+}
+
+.seccion-seriefolio h3 {
+  margin: 0 0 6px 0 !important;   /* más pegado */
+  font-size: 17px;
+}
+
+.seriefolio-grid {
+  display: flex;
+  gap: 12px !important;          /* antes 20–40px, ahora compacto */
+  margin: 2px 0 !important;
+  padding: 0 !important;
+  align-items: center;
+}
+
+.seriefolio-grid p {
+  margin: 0 !important;
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+#btnCopiarUUID {
+  padding: 4px 10px !important;
+  font-size: 13px !important;
+  margin-left: 10px;
+}
