@@ -73,9 +73,11 @@
     cargarRFCs();
 
 async function cargarRFCs() {
+
+  // 🔥 LECTURA CORRECTA DESDE LA VISTA
   const { data, error } = await supabase
-    .from(tabla)
-    .select("rfc_emisor, razon_social_emisor, nombre_emisor, factura");
+    .from("v_deuda_proveedores")
+    .select("rfc_emisor, razon_social_emisor");
 
   if (error) {
     console.error("❌ Error cargando datos:", error);
@@ -89,28 +91,15 @@ async function cargarRFCs() {
     const rfc = f.rfc_emisor;
     if (!rfc) continue;
 
-    // ---- Determinar nombre unificado ----
-    let nombre = "";
+    let nombre = f.razon_social_emisor?.trim() || "(SIN NOMBRE)";
 
-    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-      nombre = f.razon_social_emisor.trim();
-    } else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-      nombre = f.nombre_emisor.trim();
-    } else if (Array.isArray(f.factura) && f.factura.length >= 3) {
-      nombre = f.factura[2].trim();
-    } else if (typeof f.factura === "string" && f.factura.includes("-")) {
-      nombre = f.factura.split("-")[0].trim();
-    } else {
-      nombre = "(SIN NOMBRE)";
-    }
-
-    // Solo guardar si no existe aún
+    // solo guardar una vez por RFC
     if (!mapa.has(rfc)) {
       mapa.set(rfc, nombre);
     }
   }
 
-  // Llenar selects
+  // rellenar selects
   const selectRFC = document.getElementById("rfcFiltro");
   const selectNombre = document.getElementById("nombreFiltro");
 
@@ -121,6 +110,17 @@ async function cargarRFCs() {
     opt.textContent = rfc;
     selectRFC.appendChild(opt);
   }
+
+  // Nombres ordenados
+  [...mapa.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .forEach(([rfc, nombre]) => {
+      const opt = document.createElement("option");
+      opt.value = rfc;
+      opt.textContent = nombre;
+      selectNombre.appendChild(opt);
+    });
+}
 
   // Nombres ordenados
   [...mapa.entries()]
