@@ -141,7 +141,82 @@ const { data, error } = await _supabase
   .neq('factura_pagada', 'SI');
       if (error) return alert("Error cargando datos");
 
-      const pendientes = data.filter(f => (f.factura_pagada || "").toUpperCase().trim() !== "SI");
+      //-------------------------------------------------------
+// 1) PÉGAS AQUÍ TU ARREGLO VIEJO (DE PRECIOS, FACTURAS, ETC.)
+//-------------------------------------------------------
+const datosViejos = [
+  // Ejemplo:
+  // {fecha:"2024-06-10", total:"1200", razon_social_emisor:"ALGO", uuid_cfdi:"---", ...}
+  // PÉGAME AQUÍ TODO TU ARREGLO VIEJO
+];
+
+
+//-------------------------------------------------------
+// 2) NORMALIZADOR UNIVERSAL PARA UNIR VIEJO + NUEVO
+//-------------------------------------------------------
+function normalizarFactura(f) {
+  return {
+    uuid_cfdi: (f.uuid_cfdi || f.uuid || "").trim(),
+    fecha: f.fecha ? new Date(f.fecha) : null,
+    rfc_emisor: f.rfc_emisor || "",
+    razon_social_emisor: f.razon_social_emisor || "",
+    factura: f.factura || "",
+    serie: f.serie || "",
+    total: parseFloat(f.total || 0),
+    factura_pagada: (f.factura_pagada || "").toUpperCase().trim(),
+    factura_fisicamente: (f.factura_fisicamente || "").toUpperCase().trim(),
+    fotos: Array.isArray(f.fotos) ? f.fotos : [],
+    // mantener el resto sin afectar
+    ...f
+  };
+}
+
+
+//-------------------------------------------------------
+// 3) FILTRO DE NO PAGADAS DEL SUPABASE (NUEVO)
+//-------------------------------------------------------
+const noPagadasSupabase = data.filter(f =>
+  (f.factura_pagada || "NO").toUpperCase().trim() !== "SI"
+);
+
+
+//-------------------------------------------------------
+// 4) UNIR AMBAS FUENTES (VIEJO + NUEVO) NORMALIZADAS
+//-------------------------------------------------------
+const unidas = [
+  ...datosViejos.map(normalizarFactura),
+  ...noPagadasSupabase.map(normalizarFactura)
+];
+
+
+//-------------------------------------------------------
+// 5) QUITAR DUPLICADOS POR uuid_cfdi
+//-------------------------------------------------------
+const unicas = Object.values(
+  unidas.reduce((acc, f) => {
+    const key = f.uuid_cfdi || crypto.randomUUID();
+    if (!acc[key]) acc[key] = f;
+    return acc;
+  }, {})
+);
+
+
+//-------------------------------------------------------
+// 6) ORDENAR POR RFC → FECHA
+//-------------------------------------------------------
+const ordenadosFinal = unicas.sort((a, b) => {
+  const rfcA = (a.rfc_emisor || "").toLowerCase();
+  const rfcB = (b.rfc_emisor || "").toLowerCase();
+  if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
+  return new Date(a.fecha) - new Date(b.fecha);
+});
+
+
+//-------------------------------------------------------
+// 7) YA PUEDES USAR ESTE: ordenadosFinal
+//-------------------------------------------------------
+mostrarTabla(ordenadosFinal);
+
       const sumaTotal = pendientes.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
 
       document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
