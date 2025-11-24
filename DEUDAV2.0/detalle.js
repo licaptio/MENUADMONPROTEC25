@@ -218,17 +218,23 @@ if (conceptos.length > 0) {
   // ============================================================
   // FOLIO TECNOPRO
   // ============================================================
-  const folioHTML = `
-    <section class="seccion-folio">
-      <h3>Folio Tecnopro</h3>
-      <div class="folio-row">
-        <input id="folioInput" maxlength="8" value="${safe(f.foliotecnopro)}">
-        <button id="btnGuardarFolio">Guardar</button>
-      </div>
-      <p class="folio-hint">
-        ${f.foliotecnopro ? `Actual: ${f.foliotecnopro}` : "Sin folio capturado"}
-      </p>
-    </section>`;
+const folioHTML = `
+  <section class="seccion-folio compacto">
+    <h3>Folio Tecnopro</h3>
+
+    <div class="folio-row compacto-row">
+      <input id="folioInput" maxlength="8"
+        class="folio-input"
+        placeholder="Folio"
+        value="${safe(f.foliotecnopro)}">
+
+      <button id="btnGuardarFolio" class="btn-guardar-folio">
+        Guardar
+      </button>
+    </div>
+  </section>
+`;
+
 
   // ============================================================
   // HTML FINAL
