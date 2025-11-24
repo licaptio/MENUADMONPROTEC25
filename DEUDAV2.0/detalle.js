@@ -64,67 +64,78 @@ function renderFactura(f) {
   let totalIEPS = 0;
   let totalDescuentos = 0;
 
-  let filas = "";
+let filas = "";
+let conceptos = [];
 
-  // ============================================================
-  // CFDI NUEVO (tiene conceptos_detalle)
-  // ============================================================
-  if (!esViejo) {
+if (Array.isArray(f.conceptos_detalle) && f.conceptos_detalle.length > 0) {
+  // 🟦 Formato nuevo
+  conceptos = f.conceptos_detalle.map(c => ({
+    cantidad: Number(c.cantidad || 0),
+    clave: c.claveProdServ || "",
+    descripcion: c.descripcion || "",
+    unitario: Number(c.valorUnitario || 0),
+    descuento: Number(c.descuento || 0),
+    iva: Array.isArray(c.traslados) ? 
+         Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0) : 0,
+    ieps: Array.isArray(c.traslados) ? 
+          Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0) : 0,
+  }));
+}
 
-    for (const c of f.conceptos_detalle) {
+else if (Array.isArray(f.conceptos) && f.conceptos.length > 0) {
+  // 🟨 Formato intermedio — tus CFDI viejos
+  conceptos = f.conceptos.map(c => ({
+    cantidad: Number(c.cantidad || 0),
+    clave: c.claveProdServ || "",
+    descripcion: c.descripcion || "",
+    unitario: Number(c.valorUnitario || 0),
+    descuento: Number(c.descuento || 0),
+    iva: Number(c.iva || 0),
+    ieps: Number(c.ieps || 0)
+  }));
+}
 
-      const qty = Number(c.cantidad);
-      const unit = Number(c.valorUnitario);
-      const desc = Number(c.descuento || 0);
+else {
+  // 🟥 CFDI muy viejo — sin conceptos
+  filas = `
+    <tr>
+      <td colspan="8" style="text-align:center;color:#777;padding:20px">
+        CFDI antiguo. No contiene desglose de conceptos.
+      </td>
+    </tr>`;
+}
 
-      subtotal += qty * unit;
-      totalDescuentos += desc;
+// SI HAY CONCEPTOS GENERAMOS FILAS
+if (conceptos.length > 0) {
+  let subtotal = 0, totalDescuentos = 0, totalIVA = 0, totalIEPS = 0;
 
-      let iva = 0, ieps = 0;
+  conceptos.forEach(c => {
+    const importe = c.cantidad * c.unitario - c.descuento;
 
-      if (Array.isArray(c.traslados)) {
-        for (const t of c.traslados) {
-          if (t.impuesto === "002") iva += Number(t.importe);
-          if (t.impuesto === "003") ieps += Number(t.importe);
-        }
-      }
+    subtotal += c.cantidad * c.unitario;
+    totalDescuentos += c.descuento;
+    totalIVA += c.iva;
+    totalIEPS += c.ieps;
 
-      totalIVA += iva;
-      totalIEPS += ieps;
-
-      filas += `
-        <tr>
-          <td>${qty}</td>
-          <td>${c.claveProdServ ?? ""}</td>
-          <td style="text-align:left">${c.descripcion ?? ""}</td>
-          <td>${formatoMX(unit)}</td>
-          <td class="descuento-cell">${formatoMX(desc)}</td>
-          <td>${formatoMX(iva)}</td>
-          <td>${formatoMX(ieps)}</td>
-          <td>${formatoMX(qty * unit - desc)}</td>
-        </tr>`;
-    }
-
-  }
-  // ============================================================
-  // CFDI VIEJO (NO tiene conceptos_detalle)
-  // ============================================================
-  else {
-
-    // Solo mostramos un aviso y usamos el total real del CFDI
-    filas = `
+    filas += `
       <tr>
-        <td colspan="8" style="text-align:center;color:#777;padding:20px">
-          CFDI antiguo. Este documento no trae desglose de conceptos.
-        </td>
-      </tr>
-    `;
+        <td>${c.cantidad}</td>
+        <td>${c.clave}</td>
+        <td style="text-align:left">${c.descripcion}</td>
+        <td>${formatoMX(c.unitario)}</td>
+        <td>${formatoMX(c.descuento)}</td>
+        <td>${formatoMX(c.iva)}</td>
+        <td>${formatoMX(c.ieps)}</td>
+        <td>${formatoMX(importe)}</td>
+      </tr>`;
+  });
 
-    subtotal = Number(f.total || 0);
-    totalIVA = 0;
-    totalIEPS = 0;
-    totalDescuentos = 0;
-  }
+  // Mandamos estos totales al ámbito exterior
+  window.__sub = subtotal;
+  window.__desc = totalDescuentos;
+  window.__iva = totalIVA;
+  window.__ieps = totalIEPS;
+}
 
   // ============================================================
   // GALERÍA DE FOTOS
