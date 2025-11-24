@@ -10,6 +10,10 @@ const TABLA = "deuda_limpia_pdd";
 // ============================================================
 function $(id) { return document.getElementById(id); }
 
+function safe(v) {
+  return (v === null || v === undefined || v === "null") ? "" : v;
+}
+
 function formatoMX(n) {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
@@ -53,6 +57,8 @@ async function cargarCFDI() {
 // ============================================================
 function renderFactura(f) {
 
+  const esViejo = !Array.isArray(f.conceptos_detalle);
+
   let subtotal = 0;
   let totalIVA = 0;
   let totalIEPS = 0;
@@ -60,7 +66,11 @@ function renderFactura(f) {
 
   let filas = "";
 
-  if (Array.isArray(f.conceptos_detalle)) {
+  // ============================================================
+  // CFDI NUEVO (tiene conceptos_detalle)
+  // ============================================================
+  if (!esViejo) {
+
     for (const c of f.conceptos_detalle) {
 
       const qty = Number(c.cantidad);
@@ -94,6 +104,26 @@ function renderFactura(f) {
           <td>${formatoMX(qty * unit - desc)}</td>
         </tr>`;
     }
+
+  }
+  // ============================================================
+  // CFDI VIEJO (NO tiene conceptos_detalle)
+  // ============================================================
+  else {
+
+    // Solo mostramos un aviso y usamos el total real del CFDI
+    filas = `
+      <tr>
+        <td colspan="8" style="text-align:center;color:#777;padding:20px">
+          CFDI antiguo. Este documento no trae desglose de conceptos.
+        </td>
+      </tr>
+    `;
+
+    subtotal = Number(f.total || 0);
+    totalIVA = 0;
+    totalIEPS = 0;
+    totalDescuentos = 0;
   }
 
   // ============================================================
@@ -149,8 +179,8 @@ function renderFactura(f) {
     impGlobal.detalles.forEach(d => {
       impGlobalHTML += `
         <tr>
-          <td>${d.tipo}</td>
-          <td>${(d.tasa * 100).toFixed(2)}%</td>
+          <td>${safe(d.tipo)}</td>
+          <td>${((d.tasa || 0) * 100).toFixed(2)}%</td>
           <td>${formatoMX(d.importe)}</td>
         </tr>`;
     });
@@ -163,7 +193,7 @@ function renderFactura(f) {
     <section class="seccion-folio">
       <h3>Folio Tecnopro</h3>
       <div class="folio-row">
-        <input id="folioInput" maxlength="8" value="${f.foliotecnopro ?? ""}">
+        <input id="folioInput" maxlength="8" value="${safe(f.foliotecnopro)}">
         <button id="btnGuardarFolio">Guardar</button>
       </div>
       <p class="folio-hint">
@@ -172,23 +202,23 @@ function renderFactura(f) {
     </section>`;
 
   // ============================================================
-  // ARMADO FINAL HTML
+  // HTML FINAL
   // ============================================================
   contenedor.innerHTML = `
     <div class="datos-grid">
 
       <div class="datos-box">
         <h2>Datos del Emisor</h2>
-        <p><strong>RFC:</strong> ${f.rfc_emisor}</p>
-        <p><strong>Nombre:</strong> ${f.nombre_emisor}</p>
-        <p><strong>Régimen Fiscal:</strong> ${f.regimen_fiscal_emisor}</p>
+        <p><strong>RFC:</strong> ${safe(f.rfc_emisor)}</p>
+        <p><strong>Nombre:</strong> ${safe(f.nombre_emisor)}</p>
+        <p><strong>Régimen Fiscal:</strong> ${safe(f.regimen_fiscal_emisor)}</p>
       </div>
 
       <div class="datos-box">
         <h2>Datos del Receptor</h2>
-        <p><strong>RFC:</strong> ${f.rfc_receptor}</p>
-        <p><strong>Nombre:</strong> ${f.nombre_receptor}</p>
-        <p><strong>Uso CFDI:</strong> ${f.uso_cfdi}</p>
+        <p><strong>RFC:</strong> ${safe(f.rfc_receptor)}</p>
+        <p><strong>Nombre:</strong> ${safe(f.nombre_receptor)}</p>
+        <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
       </div>
 
     </div>
@@ -213,43 +243,25 @@ function renderFactura(f) {
           </thead>
           <tbody>${filas}</tbody>
           <tfoot>
-            <tr>
-              <td colspan="7" style="text-align:right">Subtotal</td>
-              <td>${formatoMX(subtotal)}</td>
-            </tr>
-            <tr>
-              <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
-              <td class="desc-total">${formatoMX(totalDescuentos)}</td>
-            </tr>
-            <tr>
-              <td colspan="7" style="text-align:right">IVA</td>
-              <td>${formatoMX(totalIVA)}</td>
-            </tr>
-            <tr>
-              <td colspan="7" style="text-align:right">IEPS</td>
-              <td>${formatoMX(totalIEPS)}</td>
-            </tr>
+            <tr><td colspan="7" style="text-align:right">Subtotal</td><td>${formatoMX(subtotal)}</td></tr>
+            <tr><td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td><td class="desc-total">${formatoMX(totalDescuentos)}</td></tr>
+            <tr><td colspan="7" style="text-align:right">IVA</td><td>${formatoMX(totalIVA)}</td></tr>
+            <tr><td colspan="7" style="text-align:right">IEPS</td><td>${formatoMX(totalIEPS)}</td></tr>
             <tr>
               <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-              <td style="background:#003366;color:#fff">
-                ${formatoMX(subtotal - totalDescuentos + totalIVA + totalIEPS)}
-              </td>
+              <td style="background:#003366;color:#fff">${formatoMX(subtotal - totalDescuentos + totalIVA + totalIEPS)}</td>
             </tr>
           </tfoot>
         </table>
       </div>
     </section>
 
-    <section>
-      ${timbreHTML}
-    </section>
+    <section>${timbreHTML}</section>
 
     <section>
       <h2>Impuestos Globales</h2>
       <table>
-        <thead>
-          <tr><th>Tipo</th><th>Tasa</th><th>Importe</th></tr>
-        </thead>
+        <thead><tr><th>Tipo</th><th>Tasa</th><th>Importe</th></tr></thead>
         <tbody>${impGlobalHTML}</tbody>
       </table>
     </section>
@@ -368,29 +380,6 @@ async function eliminarFoto(url) {
   showToast("Foto eliminada");
   setTimeout(() => location.reload(), 700);
 }
-function obtenerProveedor(detalle) {
-  // 🟦 1) Nuevo formato del XML
-  if (detalle.razon_social_emisor && detalle.razon_social_emisor.trim() !== "") {
-    return detalle.razon_social_emisor.trim();
-  }
-  if (detalle.nombre_emisor && detalle.nombre_emisor.trim() !== "") {
-    return detalle.nombre_emisor.trim();
-  }
-
-  // 🟨 2) Formato viejo — ARREGLO
-  if (Array.isArray(detalle.factura) && detalle.factura.length >= 3) {
-    return detalle.factura[2].trim();
-  }
-
-  // 🟨 3) Formato viejo — TEXTO con guiones (ejemplo "SERIE-FOLIO-NOMBRE")
-  if (typeof detalle.factura === "string" && detalle.factura.includes("-")) {
-    const partes = detalle.factura.split("-");
-    return partes[2] ? partes[2].trim() : "SIN NOMBRE";
-  }
-
-  // 🟥 4) Nada encontrado
-  return "SIN NOMBRE";
-}
 
 // ============================================================
 // TOAST
@@ -407,4 +396,3 @@ $("btnSubirFoto").addEventListener("click", subirFoto);
 
 // INICIO
 cargarCFDI();
-
