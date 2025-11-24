@@ -222,7 +222,7 @@ const folioHTML = `
   <section class="seccion-folio compacto">
     <h3>Folio Tecnopro</h3>
 
-    <div class="folio-row compacto-row">
+    <div class="compacto-row">
       <input id="folioInput" maxlength="8"
         class="folio-input"
         placeholder="Folio"
@@ -346,7 +346,6 @@ const folioHTML = `
 function initFolioTecnopro(uuid_cfdi) {
   const input = $("folioInput");
   const btn = $("btnGuardarFolio");
-  const hint = document.querySelector(".folio-hint");
 
   btn.addEventListener("click", async () => {
     const val = input.value.trim().substring(0, 8);
@@ -363,7 +362,6 @@ function initFolioTecnopro(uuid_cfdi) {
 
     if (!res.ok) return alert("Error al guardar folio");
 
-    hint.textContent = `Actual: ${val}`;
     alert("Folio guardado");
   });
 }
