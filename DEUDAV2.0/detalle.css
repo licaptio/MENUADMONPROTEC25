@@ -208,3 +208,24 @@ tfoot td.desc-total {
 .btn-copiar:hover {
   background: #004c8f;
 }
+
+.footer-regresar {
+  background: #00416A;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+.footer-regresar h2 {
+  margin: 10px 0 0 0;
+  color: #fff;
+}
+
+.footer-regresar .btn-back {
+  background: #002740;
+  padding: 10px 18px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
