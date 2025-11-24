@@ -257,24 +257,43 @@ const folioHTML = `
       </div>
 
     </div>
-<section class="seccion-seriefolio">
-  <h3>Serie, Folio y UUID</h3>
+<div class="seriefolio-grid-master">
 
-  <div class="seriefolio-grid">
-    <p><strong>Serie:</strong> ${safe(f.serie)}</p>
-    <p><strong>Folio:</strong> ${safe(f.folio)}</p>
-  </div>
+  <!-- IZQUIERDA: Serie, Folio, UUID -->
+  <section class="seccion-seriefolio">
+    <h3>Serie, Folio y UUID</h3>
 
-  <div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
-    <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
+    <div class="seriefolio-grid">
+      <p><strong>Serie:</strong> ${safe(f.serie)}</p>
+      <p><strong>Folio:</strong> ${safe(f.folio)}</p>
+    </div>
 
-    <button id="btnCopiarUUID" class="btn-copiar">
-      📋 Copiar
-    </button>
-  </div>
-</section>
+    <div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
+      <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
 
-    ${folioHTML}
+      <button id="btnCopiarUUID" class="btn-copiar">
+        📋 Copiar
+      </button>
+    </div>
+  </section>
+
+  <!-- DERECHA: Folio Tecnopro -->
+  <section class="seccion-folio compacto">
+    <h3>Folio Tecnopro</h3>
+
+    <div class="compacto-row">
+      <input id="folioInput" maxlength="8"
+        class="folio-input"
+        placeholder="Folio"
+        value="${safe(f.foliotecnopro)}">
+
+      <button id="btnGuardarFolio" class="btn-guardar-folio">
+        Guardar
+      </button>
+    </div>
+  </section>
+
+</div>
 
     <section>
       <h2>Conceptos</h2>
