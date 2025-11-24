@@ -182,3 +182,16 @@ tfoot td.desc-total {
 
 .datos-box h2 { margin-top: 0; }
 .datos-box p { margin: 6px 0; font-size: 15px; }
+
+.seccion-seriefolio {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.seriefolio-grid {
+  display: flex;
+  gap: 40px;
+  padding-top: 5px;
+}
