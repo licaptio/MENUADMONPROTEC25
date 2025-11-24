@@ -67,36 +67,53 @@ function renderFactura(f) {
 let filas = "";
 let conceptos = [];
 
-if (Array.isArray(f.conceptos_detalle) && f.conceptos_detalle.length > 0) {
-  // 🟦 Formato nuevo
+// ---------------------------------------------
+// 🟦 CASO NUEVO – tiene valorUnitario y traslados
+// ---------------------------------------------
+if (
+  Array.isArray(f.conceptos_detalle) &&
+  f.conceptos_detalle.length > 0 &&
+  (f.conceptos_detalle[0].valorUnitario !== undefined ||
+   f.conceptos_detalle[0].traslados !== undefined)
+) {
   conceptos = f.conceptos_detalle.map(c => ({
     cantidad: Number(c.cantidad || 0),
     clave: c.claveProdServ || "",
     descripcion: c.descripcion || "",
     unitario: Number(c.valorUnitario || 0),
     descuento: Number(c.descuento || 0),
-    iva: Array.isArray(c.traslados) ? 
-         Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0) : 0,
-    ieps: Array.isArray(c.traslados) ? 
-          Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0) : 0,
+    iva: Array.isArray(c.traslados)
+      ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
+      : 0,
+    ieps: Array.isArray(c.traslados)
+      ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
+      : 0,
   }));
 }
 
-else if (Array.isArray(f.conceptos) && f.conceptos.length > 0) {
-  // 🟨 Formato intermedio — tus CFDI viejos
-  conceptos = f.conceptos.map(c => ({
+// ---------------------------------------------
+// 🟥 CASO VIEJO – NO tiene valorUnitario
+// ---------------------------------------------
+else if (
+  Array.isArray(f.conceptos_detalle) &&
+  f.conceptos_detalle.length > 0 &&
+  f.conceptos_detalle[0].costoUnitario !== undefined
+) {
+  conceptos = f.conceptos_detalle.map(c => ({
     cantidad: Number(c.cantidad || 0),
-    clave: c.claveProdServ || "",
+    clave: c.codigoSAT || "",
     descripcion: c.descripcion || "",
-    unitario: Number(c.valorUnitario || 0),
-    descuento: Number(c.descuento || 0),
-    iva: Number(c.iva || 0),
-    ieps: Number(c.ieps || 0)
+    unitario: Number(c.costoUnitario || 0),
+    descuento: 0,
+    iva: 0,
+    ieps: 0
   }));
 }
 
+// ---------------------------------------------
+// 🟧 SI NO TIENE NADA
+// ---------------------------------------------
 else {
-  // 🟥 CFDI muy viejo — sin conceptos
   filas = `
     <tr>
       <td colspan="8" style="text-align:center;color:#777;padding:20px">
@@ -105,15 +122,17 @@ else {
     </tr>`;
 }
 
-// SI HAY CONCEPTOS GENERAMOS FILAS
+// ---------------------------------------------
+// GENERACIÓN DE TABLA Y TOTALES
+// ---------------------------------------------
 if (conceptos.length > 0) {
-  let subtotal = 0, totalDescuentos = 0, totalIVA = 0, totalIEPS = 0;
+  let subtotal = 0, totalDesc = 0, totalIVA = 0, totalIEPS = 0;
 
   conceptos.forEach(c => {
     const importe = c.cantidad * c.unitario - c.descuento;
 
     subtotal += c.cantidad * c.unitario;
-    totalDescuentos += c.descuento;
+    totalDesc += c.descuento;
     totalIVA += c.iva;
     totalIEPS += c.ieps;
 
@@ -130,10 +149,9 @@ if (conceptos.length > 0) {
       </tr>`;
   });
 
-  // Mandamos estos totales al ámbito exterior
-  window.__sub = subtotal;
-  window.__desc = totalDescuentos;
-  window.__iva = totalIVA;
+  window.__sub  = subtotal;
+  window.__desc = totalDesc;
+  window.__iva  = totalIVA;
   window.__ieps = totalIEPS;
 }
 
