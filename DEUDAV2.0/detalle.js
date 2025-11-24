@@ -289,6 +289,19 @@ const folioHTML = `
     </div>
 
 <div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
+  <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
+
+  <p><strong>Fecha:</strong> ${formatFechaBonita(f.fecha)}</p>
+
+  <p><strong>Total Factura:</strong> ${formatoMX(
+    (window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0)
+  )}</p>
+
+  <button id="btnCopiarUUID" class="btn-copiar">
+    📋 Copiar
+  </button>
+</div>
+
 
   </section>
 
