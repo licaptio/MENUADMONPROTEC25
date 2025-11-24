@@ -275,6 +275,14 @@ const folioHTML = `
         📋 Copiar
       </button>
     </div>
+    <div class="seriefolio-grid" style="margin-top:5px;">
+  <p><strong>Fecha:</strong> ${safe(f.fecha)}</p>
+</div>
+
+<div class="seriefolio-grid" style="margin-top:5px;">
+  <p><strong>Total Factura:</strong> ${formatoMX(f.total)}</p>
+</div>
+
   </section>
 
   <!-- DERECHA: Folio Tecnopro -->
