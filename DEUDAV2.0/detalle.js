@@ -274,6 +274,10 @@ const folioHTML = `
         <p><strong>RFC:</strong> ${safe(f.rfc_receptor)}</p>
         <p><strong>Nombre:</strong> ${safe(f.nombre_receptor)}</p>
         <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
+<p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
+<p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
+<p><strong>Condiciones de Pago:</strong> ${safe(f.condiciones_pago)}</p>
+
       </div>
 
     </div>
@@ -289,12 +293,9 @@ const folioHTML = `
     </div>
 
 <!-- FILA UUID -->
-<div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
+<div class="seriefolio-grid" style="margin-top:10px;">
   <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
-
-  <button id="btnCopiarUUID" class="btn-copiar">
-    📋 Copiar
-  </button>
+  <button id="btnCopiarUUID" class="btn-copiar">📋 Copiar</button>
 </div>
 
 <!-- FILA FECHA -->
@@ -309,7 +310,25 @@ const folioHTML = `
   )}</p>
 </div>
 
+<!-- FILA USO CFDI -->
+<div class="seriefolio-grid">
+  <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
+</div>
 
+<!-- FILA MÉTODO DE PAGO (PUE/PPD) -->
+<div class="seriefolio-grid">
+  <p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
+</div>
+
+<!-- FILA FORMA DE PAGO -->
+<div class="seriefolio-grid">
+  <p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
+</div>
+
+<!-- FILA TIPO (PARCIALIDADES O UNA SOLA EXHIBICIÓN) -->
+<div class="seriefolio-grid">
+  <p><strong>Tipo de Pago:</strong> ${safe(f.tipo_pago)}</p>
+</div>
 
   </section>
 
