@@ -271,3 +271,10 @@ tfoot td.desc-total {
 .folio-hint {
   display: none !important;
 }
+
+.seriefolio-grid-master {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin: 15px 0;
+}
