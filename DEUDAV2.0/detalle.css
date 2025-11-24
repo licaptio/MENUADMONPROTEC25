@@ -31,9 +31,9 @@ header {
   background: #fff;
   max-width: 900px;
   margin: auto;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0,0,0,.12);
+  padding: 12px 18px;   /* MENOS padding */
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,.08);
 }
 
 h2, h3 { color: #00416A; }
@@ -87,10 +87,11 @@ tfoot td.desc-total {
 .folio-seccion {
   background: #f7faff;
   border: 1px solid #c8d8ee;
-  padding: 15px;
+  padding: 12px;
   border-radius: 10px;
-  margin-top: 20px;
+  margin-top: 12px;
 }
+
 .folio-row {
   display: flex;
   gap: 10px;
@@ -176,25 +177,27 @@ tfoot td.desc-total {
 .datos-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-bottom: 25px;
+  gap: 18px;          /* MENOS espacio */
+  margin-bottom: 15px;
 }
 
 .datos-box h2 { margin-top: 0; }
 .datos-box p { margin: 6px 0; font-size: 15px; }
 
 .seccion-seriefolio {
-  margin: 20px 0;
-  padding: 15px;
+  margin: 10px 0;       /* MENOS separación vertical */
+  padding: 12px;        /* MENOS padding */
   background: #f9f9f9;
   border-radius: 8px;
+  border: 1px solid #c8d8ee;
 }
 
 .seriefolio-grid {
   display: flex;
-  gap: 40px;
+  gap: 20px;       /* MENOS espacio entre Serie y Folio */
   padding-top: 5px;
 }
+
 .btn-copiar {
   background: #0c6cbd;
   color: #fff;
