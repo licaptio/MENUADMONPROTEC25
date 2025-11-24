@@ -228,23 +228,28 @@ cargarRFCs();
    5.2 AUTOCOMPLETE RFC
 ======================================*/
 function autocompleteRFC() {
-  const txt = rfcFiltro.value.toUpperCase();
+  const txt = rfcFiltro.value.toUpperCase().trim();
   const lista = document.getElementById("sugerenciasRFC");
 
   lista.innerHTML = "";
   if (txt.length < 1) return lista.style.display = "none";
 
+  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
   listaBusqueda
-    .filter(x => x.rfc.includes(txt))
+    .filter(x => 
+      x.rfc.includes(normalizado) ||
+      x.nombre.includes(normalizado)
+    )
     .forEach(x => {
       let div = document.createElement("div");
       div.textContent = `${x.rfc} — ${x.nombre}`;
-div.onclick = () => {
-  nombreFiltro.value = x.nombre;
-  window.rfcSeleccionado = x.rfc;  // guardamos RFC aunque el input no exista
-  lista.style.display = "none";
-};
-
+      div.onclick = () => {
+        rfcFiltro.value = x.rfc;
+        nombreFiltro.value = x.nombre;
+        window.rfcSeleccionado = x.rfc;
+        lista.style.display = "none";
+      };
       lista.appendChild(div);
     });
 
@@ -259,25 +264,36 @@ function autocompleteNombre() {
   const lista = document.getElementById("sugerenciasNombre");
 
   lista.innerHTML = "";
+
   if (txt.length < 1) {
     lista.style.display = "none";
     return;
   }
 
-  listaBusqueda
-    .filter(x => x.nombre.includes(txt) || x.nombre.startsWith(txt) )
-    .forEach(x => {
-      let div = document.createElement("div");
-      div.textContent = `${x.nombre} — ${x.rfc}`;
+  // Fuzzy-lite: permite errores de letras
+  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      div.onclick = () => {
-        nombreFiltro.value = x.nombre;   // muestra el nombre
-        window.rfcSeleccionado = x.rfc;  // guarda el RFC real
-        lista.style.display = "none";
-      };
+  const resultados = listaBusqueda.filter(x => {
+    const nom = (x.nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const rfc = x.rfc || "";
 
-      lista.appendChild(div);
-    });
+    return (
+      nom.includes(normalizado) ||         // por nombre
+      rfc.includes(normalizado) ||        // por RFC
+      nom.replace(/\s+/g, '').includes(normalizado.replace(/\s+/g, '')) // fuzzy-lite
+    );
+  });
+
+  resultados.forEach(x => {
+    let div = document.createElement("div");
+    div.textContent = `${x.nombre} — ${x.rfc}`;
+    div.onclick = () => {
+      nombreFiltro.value = x.nombre;
+      window.rfcSeleccionado = x.rfc;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
 
   lista.style.display = "block";
 }
@@ -288,7 +304,17 @@ function autocompleteNombre() {
 async function consultarPorRFC() {
 
   // Obtenemos el RFC seleccionado desde autocompleteNombre()
-  const rfc = window.rfcSeleccionado;
+  let rfc = window.rfcSeleccionado;
+
+// Detección automática si el usuario NO clickeó nada:
+if (!rfc) {
+  const txt = nombreFiltro.value.toUpperCase().trim();
+  const encontrado = listaBusqueda.find(x =>
+    x.nombre.includes(txt) || x.rfc.includes(txt)
+  );
+  if (encontrado) rfc = encontrado.rfc;
+}
+
 
   if (!rfc) {
     alert("Selecciona un proveedor válido de la lista");
