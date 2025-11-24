@@ -259,8 +259,12 @@ if (conceptos.length > 0) {
     <p><strong>Folio:</strong> ${safe(f.folio)}</p>
   </div>
 
-  <div class="seriefolio-grid" style="margin-top:10px;">
-    <p><strong>UUID:</strong> ${safe(f.uuid_cfdi)}</p>
+  <div class="seriefolio-grid" style="margin-top:10px; align-items:center;">
+    <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
+
+    <button id="btnCopiarUUID" class="btn-copiar">
+      📋 Copiar
+    </button>
   </div>
 </section>
 
