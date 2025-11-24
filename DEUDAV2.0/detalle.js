@@ -261,7 +261,7 @@ const folioHTML = `
 
   <!-- IZQUIERDA: Serie, Folio, UUID -->
   <section class="seccion-seriefolio">
-    <h3>Serie, Folio y UUID</h3>
+    
 
     <div class="seriefolio-grid">
       <p><strong>Serie:</strong> ${safe(f.serie)}</p>
