@@ -229,22 +229,30 @@ timbreHTML = `
 
   }
 
-  // ============================================================
-  // IMPUESTOS GLOBALES
-  // ============================================================
-  let impGlobalHTML = "";
-  let impGlobal = f.impuestos_globales || { detalles: [] };
+// ============================================================
+// IMPUESTOS GLOBALES (USANDO TOTALES REALES DE LOS CONCEPTOS)
+// ============================================================
+let impGlobalHTML = "";
 
-  if (Array.isArray(impGlobal.detalles)) {
-    impGlobal.detalles.forEach(d => {
-      impGlobalHTML += `
-        <tr>
-          <td>${safe(d.tipo)}</td>
-          <td>${((d.tasa || 0) * 100).toFixed(2)}%</td>
-          <td>${formatoMX(d.importe)}</td>
-        </tr>`;
-    });
-  }
+// IVA REAL calculado por PROVSOFT
+if ((window.__iva || 0) > 0) {
+  impGlobalHTML += `
+    <tr>
+      <td>IVA</td>
+      <td>16.00%</td>
+      <td>${formatoMX(window.__iva)}</td>
+    </tr>`;
+}
+
+// IEPS REAL calculado por PROVSOFT
+if ((window.__ieps || 0) > 0) {
+  impGlobalHTML += `
+    <tr>
+      <td>IEPS</td>
+      <td>-</td>
+      <td>${formatoMX(window.__ieps)}</td>
+    </tr>`;
+}
 
   // ============================================================
   // FOLIO TECNOPRO
