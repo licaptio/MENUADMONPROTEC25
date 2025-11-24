@@ -315,3 +315,13 @@ tfoot td.desc-total {
   font-size: 13px !important;
   margin-left: 10px;
 }
+
+.timbre-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.timbre-col p {
+  margin: 6px 0;
+}
