@@ -328,7 +328,7 @@ if (!rfc) {
   // últimos 60 días
   const hoy = new Date();
   const limite = new Date();
-  limite.setDate(hoy.getDate() - 60);
+  limite.setDate(hoy.getDate() - 99);
   const limiteISO = limite.toISOString().split("T")[0];
 
   // contar registros
