@@ -402,8 +402,7 @@ function mostrarTabla(data) {
        - rfc_emisor
        =========================== */
 // Obtener el nombre correcto del proveedor
-const proveedor = f.proveedor_unificado;
-
+let proveedor = f.proveedor_unificado;
 
 if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
   proveedor = f.razon_social_emisor;
