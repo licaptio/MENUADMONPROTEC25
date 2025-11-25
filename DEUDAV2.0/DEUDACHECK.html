@@ -367,7 +367,7 @@ function filtrarPagadas() {
   const mostrar = document.getElementById("togglePagadas").checked;
   const datos = mostrar
     ? datosCrudos
-    : datosCrudos.filter(f => (f.factura_pagada || "NO") !== "SI");
+    : datosCrudos.filter(f => f.factura_pagada !== "SI");
 
   mostrarTabla(datos);
 }
@@ -375,77 +375,70 @@ function mostrarTabla(data) {
   let html = `<table><thead><tr>
     <th>Fecha</th>
     <th>Días</th>
-<th>UUID</th>
-<th>RFC</th>
-<th>Proveedor</th>
-<th>Total</th>
-<th>Serie/Folio</th>
-<th>Pagada</th>
+    <th>UUID</th>
+    <th>RFC</th>
+    <th>Proveedor</th>
+    <th>Total</th>
+    <th>Serie/Folio</th>
+    <th>Pagada</th>
     <th>Factura Física</th>
     <th>📷 Fotos</th>
   </tr></thead><tbody>`;
 
   data.forEach(f => {
-html += `
-<tr>
-  <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
-  <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
 
-  <td data-label="UUID">
-    <a href="detalle.html?uuid=${f.uuid_cfdi}"
-       style="color:#007bff; text-decoration:underline; cursor:pointer;">
-      ${f.uuid_cfdi}
+    const uuid = f.uuid; // ← ESTE ES EL CORRECTO
+    const proveedor = f.razon_social_emisor || "-";
+
+    // Construir Folio
+    let folioFinal = "-";
+    if (f.serie && f.factura) {
+      folioFinal = `${f.serie}-${f.factura}`;
+    } else if (f.serie) {
+      folioFinal = f.serie;
+    }
+
+    html += `
+<tr>
+  <td>${formatearFecha(f.fecha)}</td>
+  <td>${f.dias}</td>
+
+  <td>
+    <a href="detalle.html?uuid=${uuid}" style="color:#007bff;">
+      ${uuid}
     </a>
   </td>
-<td data-label="RFC">${f.rfc_emisor}</td>
 
-  <td data-label="Proveedor">${f.razon_social_emisor}</td>
+  <td>${f.rfc_emisor}</td>
+  <td>${proveedor}</td>
+  <td>${monedaMXN(f.total)}</td>
+  <td>${folioFinal}</td>
 
-<td data-label="Total">${monedaMXN(f.total || 0)}</td>
-
-<td data-label="Serie/Folio">
-  ${ f.serie && f.serie !== "EMPTY"
-      ? `${f.serie}-${f.factura}`
-      : f.factura }
-</td>
-
-<td data-label="Pagada">
-  <div 
-    class="badge-toggle ${(f.factura_pagada || 'NO') === 'SI' ? 'badge-si' : 'badge-no'}"
-    data-uuid-pagada="${f.uuid_cfdi}"
-    onclick="togglePagada('${f.uuid_cfdi}')">
-    ${f.factura_pagada || "NO"}
-  </div>
-</td>
-
-
-  <td data-label="Factura Física">
-<div 
-  class="badge-toggle ${ (f.factura_fisicamente || 'NO') === 'SI' ? 'badge-si' : 'badge-no' }"
-  data-uuid="${f.uuid_cfdi}"
-  onclick="toggleFisica('${f.uuid_cfdi}')">
-  ${(f.factura_fisicamente || "NO")}
-</div>
-
+  <td>
+    <div class="badge-toggle ${(f.factura_pagada === 'SI') ? 'badge-si' : 'badge-no'}"
+      onclick="togglePagada('${uuid}')"
+      data-uuid-pagada="${uuid}">
+      ${f.factura_pagada}
+    </div>
   </td>
-<td data-label="Fotos">
-  ${
-    (f.fotos && f.fotos.length > 0)
-      ? f.fotos
-          .map(url => 
-            `<a href="${url}" target="_blank"
-                style="margin-right:4px; font-size:18px; text-decoration:none;">
-               📷
-             </a>`
-          )
-          .join('')
-      : `<span style="color:#aaa;">—</span>`
-  }
-</td>
 
+  <td>
+    <div class="badge-toggle ${(f.factura_fisicamente === 'SI') ? 'badge-si' : 'badge-no'}"
+      onclick="toggleFisica('${uuid}')"
+      data-uuid-fisica="${uuid}">
+      ${f.factura_fisicamente}
+    </div>
+  </td>
+
+  <td>
+    ${
+      (f.fotos && f.fotos.length > 0)
+      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join('')
+      : "—"
+    }
+  </td>
 </tr>
 `;
-
   });
 
   html += "</tbody></table>";
