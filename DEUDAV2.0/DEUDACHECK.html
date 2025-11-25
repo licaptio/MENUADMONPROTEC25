@@ -445,7 +445,8 @@ let folioFinal = f.serie_folio || "—";
 
   <td>${monedaMXN(f.total)}</td>
 
-  <td>${folioFinal}</td>
+  <td>${f.serie_folio || "—"}</td>
+
 
   <td>
     <div class="badge-toggle ${(f.factura_pagada === 'SI') ? 'badge-si' : 'badge-no'}"
