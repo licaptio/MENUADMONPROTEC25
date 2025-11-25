@@ -372,6 +372,7 @@ function filtrarPagadas() {
   mostrarTabla(datos);
 }
 function mostrarTabla(data) {
+
   let html = `<table><thead><tr>
     <th>Fecha</th>
     <th>Días</th>
@@ -387,17 +388,55 @@ function mostrarTabla(data) {
 
   data.forEach(f => {
 
-    const uuid = f.uuid; // ← ESTE ES EL CORRECTO
-    const proveedor = f.razon_social_emisor || "-";
+    /* ===========================
+       1. UUID CORRECTO (vista)
+       =========================== */
+    const uuid = f.uuid;  
+    
 
-    // Construir Folio
-    let folioFinal = "-";
-    if (f.serie && f.factura) {
-      folioFinal = `${f.serie}-${f.factura}`;
-    } else if (f.serie) {
-      folioFinal = f.serie;
+    /* ===========================
+       2. PROVEEDOR REAL
+       PRIORIDAD:
+       - razon_social_emisor
+       - nombre_emisor
+       - rfc_emisor
+       =========================== */
+    let proveedor = "-";
+
+    if (f.razon_social_emisor) {
+      proveedor = f.razon_social_emisor;
+    } 
+    else if (f.nombre_emisor) {
+      proveedor = f.nombre_emisor;
+    }
+    else {
+      proveedor = f.rfc_emisor;
     }
 
+
+    /* ===========================
+       3. FOLIO REAL COMPATIBLE
+       Casos posibles:
+       - serie + factura
+       - solo serie
+       - solo factura
+       - ninguno → "—"
+       =========================== */
+    let folioFinal = "—";
+
+    if (f.serie && f.factura) {
+      folioFinal = `${f.serie}-${f.factura}`;
+    } 
+    else if (f.serie && !f.factura) {
+      folioFinal = f.serie;
+    } 
+    else if (!f.serie && f.factura) {
+      folioFinal = f.factura;
+    }
+
+    /* ===========================
+       4. CONSTRUCCIÓN DE LA FILA
+       =========================== */
     html += `
 <tr>
   <td>${formatearFecha(f.fecha)}</td>
@@ -410,8 +449,11 @@ function mostrarTabla(data) {
   </td>
 
   <td>${f.rfc_emisor}</td>
+
   <td>${proveedor}</td>
+
   <td>${monedaMXN(f.total)}</td>
+
   <td>${folioFinal}</td>
 
   <td>
@@ -433,7 +475,7 @@ function mostrarTabla(data) {
   <td>
     ${
       (f.fotos && f.fotos.length > 0)
-      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join('')
+      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
       : "—"
     }
   </td>
