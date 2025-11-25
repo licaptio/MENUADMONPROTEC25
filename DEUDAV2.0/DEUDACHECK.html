@@ -422,17 +422,8 @@ else {
        - solo factura
        - ninguno → "—"
        =========================== */
-    let folioFinal = "—";
+let folioFinal = f.serie_folio || "—";
 
-    if (f.serie && f.factura) {
-      folioFinal = `${f.serie}-${f.factura}`;
-    } 
-    else if (f.serie && !f.factura) {
-      folioFinal = f.serie;
-    } 
-    else if (!f.serie && f.factura) {
-      folioFinal = f.factura;
-    }
 
     /* ===========================
        4. CONSTRUCCIÓN DE LA FILA
