@@ -401,18 +401,18 @@ function mostrarTabla(data) {
        - nombre_emisor
        - rfc_emisor
        =========================== */
-    let proveedor = "-";
+// Proveedor: usar razon_social_emisor -> nombre_emisor -> rfc_emisor
+let proveedor = "-";
 
-    if (f.razon_social_emisor) {
-      proveedor = f.razon_social_emisor;
-    } 
-    else if (f.nombre_emisor) {
-      proveedor = f.nombre_emisor;
-    }
-    else {
-      proveedor = f.rfc_emisor;
-    }
-
+if (f.razon_social_emisor) {
+  proveedor = f.razon_social_emisor;
+} 
+else if (f.nombre_emisor) {
+  proveedor = f.nombre_emisor;
+}
+else {
+  proveedor = f.rfc_emisor;
+}
 
     /* ===========================
        3. FOLIO REAL COMPATIBLE
