@@ -478,61 +478,52 @@ function monedaMXN(valor) {
 
 async function toggleFisica(uuid) {
   try {
-    // Obtener el estado actual
+    // 🔍 1) Obtener el estado actual desde la VISTA usando "uuid"
     const { data, error } = await supabase
-      .from("deuda_limpia_pdd")
+      .from("v_deuda_proveedores")
       .select("factura_fisicamente")
-      .eq("uuid_cfdi", uuid)
+      .eq("uuid", uuid)   // ← Aquí NO es uuid_cfdi
       .single();
 
     if (error) {
       console.error("Error al leer estado actual:", error);
-      alert("Error al leer estado actual de la factura física");
+      alert("Error al leer estado actual de factura física");
       return;
     }
 
-    // Determinar nuevo estado
+    // 🔄 2) Determinar nuevo estado
     const estadoActual = data.factura_fisicamente || "NO";
     const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
-    // Actualizar en la base de datos
+    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
     const { error: updateError } = await supabase
       .from("deuda_limpia_pdd")
-      .update({ 
-        factura_fisicamente: nuevoEstado,
-        fecha_actualizacion: new Date().toISOString() // Opcional: agregar timestamp
-      })
-      .eq("uuid_cfdi", uuid);
+      .update({ factura_fisicamente: nuevoEstado })
+      .eq("uuid_cfdi", uuid); // ← aquí SÍ debe ser uuid_cfdi
 
     if (updateError) {
       console.error("Error al actualizar:", updateError);
-      alert("Error al actualizar el estado de factura física");
+      alert("Error al actualizar el estado físico");
       return;
     }
 
-    // Actualizar en los datos locales
-    const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+    // 🔥 4) Actualizar en los datos locales usando "uuid"
+    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
     if (idx !== -1) {
       datosCrudos[idx].factura_fisicamente = nuevoEstado;
     }
 
-    // Feedback visual inmediato (opcional)
-    const badge = document.querySelector(`[data-uuid-fisica="${uuid}"]`);
-    if (badge) {
-      badge.textContent = nuevoEstado;
-      badge.className = `badge-toggle ${nuevoEstado === 'SI' ? 'badge-si' : 'badge-no'}`;
-    }
-
-    // Redibujar la tabla completa
+    // ✨ 5) Refrescar tabla completa para respetar el filtro
     filtrarPagadas();
 
-    console.log(`Estado físico actualizado: ${uuid} -> ${nuevoEstado}`);
+    console.log(`Factura física actualizada: ${uuid} -> ${nuevoEstado}`);
 
   } catch (err) {
     console.error("Error inesperado:", err);
-    alert("Error inesperado al actualizar el estado físico");
+    alert("Error inesperado al actualizar factura física");
   }
 }
+
 async function togglePagada(uuid) {
   try {
     // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
