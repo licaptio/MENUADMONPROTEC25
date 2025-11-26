@@ -521,13 +521,7 @@ async function toggleFisica(uuid) {
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
   if (idx !== -1) datosCrudos[idx].factura_fisicamente = nuevo;
 
-  // 🔥 ACTUALIZAR TODOS LOS NODOS
-  document.querySelectorAll(`.badge-toggle[data-uuid-fisica="${uuid}"]`).forEach(btn => {
-    btn.textContent = nuevo;
-    btn.classList.remove("badge-si", "badge-no");
-    btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
-  });
-
+  // 🚀 REDIBUJAR TABLA
   filtrarPagadas();
 }
 
@@ -551,18 +545,10 @@ async function togglePagada(uuid) {
 
   if (err2) return alert("Error al actualizar pagada");
 
-  // 1) actualizar arreglo local
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
   if (idx !== -1) datosCrudos[idx].factura_pagada = nuevo;
 
-  // 2) ACTUALIZAR TODOS LOS NODOS (visible y ocultos)
-  document.querySelectorAll(`.badge-toggle[data-uuid-pagada="${uuid}"]`).forEach(btn => {
-    btn.textContent = nuevo;
-    btn.classList.remove("badge-si", "badge-no");
-    btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
-  });
-
-  // 3) aplica filtro otra vez
+  // 🚀 REDIBUJAR TABLA (esto ya actualiza colores y texto)
   filtrarPagadas();
 }
 
