@@ -499,59 +499,119 @@ function monedaMXN(valor) {
 }
 
 async function toggleFisica(uuid) {
+  try {
+    // Obtener el estado actual
+    const { data, error } = await supabase
+      .from("deuda_limpia_pdd")
+      .select("factura_fisicamente")
+      .eq("uuid_cfdi", uuid)
+      .single();
 
-  const { data, error } = await supabase
-    .from("deuda_limpia_pdd")
-    .select("factura_fisicamente")
-    .eq("uuid_cfdi", uuid)
-    .single();
+    if (error) {
+      console.error("Error al leer estado actual:", error);
+      alert("Error al leer estado actual de la factura física");
+      return;
+    }
 
-  if (error) return alert("Error al leer estado actual");
+    // Determinar nuevo estado
+    const estadoActual = data.factura_fisicamente || "NO";
+    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
-  const estadoActual = data.factura_fisicamente || "NO";
-  const nuevo = estadoActual === "SI" ? "NO" : "SI";
+    // Actualizar en la base de datos
+    const { error: updateError } = await supabase
+      .from("deuda_limpia_pdd")
+      .update({ 
+        factura_fisicamente: nuevoEstado,
+        fecha_actualizacion: new Date().toISOString() // Opcional: agregar timestamp
+      })
+      .eq("uuid_cfdi", uuid);
 
-  const { error: err2 } = await supabase
-    .from("deuda_limpia_pdd")
-    .update({ factura_fisicamente: nuevo })
-    .eq("uuid_cfdi", uuid);
+    if (updateError) {
+      console.error("Error al actualizar:", updateError);
+      alert("Error al actualizar el estado de factura física");
+      return;
+    }
 
-  if (err2) return alert("Error al actualizar física");
+    // Actualizar en los datos locales
+    const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+    if (idx !== -1) {
+      datosCrudos[idx].factura_fisicamente = nuevoEstado;
+    }
 
-  const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
-  if (idx !== -1) datosCrudos[idx].factura_fisicamente = nuevo;
+    // Feedback visual inmediato (opcional)
+    const badge = document.querySelector(`[data-uuid-fisica="${uuid}"]`);
+    if (badge) {
+      badge.textContent = nuevoEstado;
+      badge.className = `badge-toggle ${nuevoEstado === 'SI' ? 'badge-si' : 'badge-no'}`;
+    }
 
-  // 🚀 REDIBUJAR TABLA
-  filtrarPagadas();
+    // Redibujar la tabla completa
+    filtrarPagadas();
+
+    console.log(`Estado físico actualizado: ${uuid} -> ${nuevoEstado}`);
+
+  } catch (err) {
+    console.error("Error inesperado:", err);
+    alert("Error inesperado al actualizar el estado físico");
+  }
 }
-
 async function togglePagada(uuid) {
+  try {
+    // Obtener el estado actual
+    const { data, error } = await supabase
+      .from("deuda_limpia_pdd")
+      .select("factura_pagada")
+      .eq("uuid_cfdi", uuid)
+      .single();
 
-  const { data, error } = await supabase
-    .from("deuda_limpia_pdd")
-    .select("factura_pagada")
-    .eq("uuid_cfdi", uuid)
-    .single();
+    if (error) {
+      console.error("Error al leer estado actual:", error);
+      alert("Error al leer estado actual de la factura");
+      return;
+    }
 
-  if (error) return alert("Error al leer estado actual");
+    // Determinar nuevo estado
+    const estadoActual = data.factura_pagada || "NO";
+    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
-  const estadoActual = data.factura_pagada || "NO";
-  const nuevo = estadoActual === "SI" ? "NO" : "SI";
+    // Actualizar en la base de datos
+    const { error: updateError } = await supabase
+      .from("deuda_limpia_pdd")
+      .update({ 
+        factura_pagada: nuevoEstado,
+        fecha_actualizacion: new Date().toISOString() // Opcional: agregar timestamp
+      })
+      .eq("uuid_cfdi", uuid);
 
-  const { error: err2 } = await supabase
-    .from("deuda_limpia_pdd")
-    .update({ factura_pagada: nuevo })
-    .eq("uuid_cfdi", uuid);
+    if (updateError) {
+      console.error("Error al actualizar:", updateError);
+      alert("Error al actualizar el estado de pago");
+      return;
+    }
 
-  if (err2) return alert("Error al actualizar pagada");
+    // Actualizar en los datos locales
+    const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+    if (idx !== -1) {
+      datosCrudos[idx].factura_pagada = nuevoEstado;
+    }
 
-  const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
-  if (idx !== -1) datosCrudos[idx].factura_pagada = nuevo;
+    // Feedback visual inmediato (opcional)
+    const badge = document.querySelector(`[data-uuid-pagada="${uuid}"]`);
+    if (badge) {
+      badge.textContent = nuevoEstado;
+      badge.className = `badge-toggle ${nuevoEstado === 'SI' ? 'badge-si' : 'badge-no'}`;
+    }
 
-  // 🚀 REDIBUJAR TABLA (esto ya actualiza colores y texto)
-  filtrarPagadas();
+    // Redibujar la tabla completa para asegurar consistencia
+    filtrarPagadas();
+
+    console.log(`Estado de pago actualizado: ${uuid} -> ${nuevoEstado}`);
+
+  } catch (err) {
+    console.error("Error inesperado:", err);
+    alert("Error inesperado al actualizar el estado");
+  }
 }
-
 </script>
 
 </body>
