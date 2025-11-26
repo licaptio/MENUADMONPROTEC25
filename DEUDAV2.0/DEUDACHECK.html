@@ -500,17 +500,13 @@ function monedaMXN(valor) {
 
 async function toggleFisica(uuid) {
 
-  // leer valor actual
   const { data, error } = await supabase
     .from("deuda_limpia_pdd")
     .select("factura_fisicamente")
     .eq("uuid_cfdi", uuid)
     .single();
 
-  if (error) {
-    alert("Error al leer estado actual");
-    return;
-  }
+  if (error) return alert("Error al leer estado actual");
 
   const estadoActual = data.factura_fisicamente || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
@@ -520,69 +516,54 @@ async function toggleFisica(uuid) {
     .update({ factura_fisicamente: nuevo })
     .eq("uuid_cfdi", uuid);
 
-  if (err2) {
-    alert("Error al actualizar: " + err2.message);
-    return;
-  }
+  if (err2) return alert("Error al actualizar física");
 
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
-  if (idx !== -1) {
-    datosCrudos[idx].factura_fisicamente = nuevo;
-  }
+  if (idx !== -1) datosCrudos[idx].factura_fisicamente = nuevo;
 
-  const btn = document.querySelector(`.badge-toggle[data-uuid-fisica="${uuid}"]`);
-  if (btn) {
+  // 🔥 ACTUALIZAR TODOS LOS NODOS
+  document.querySelectorAll(`.badge-toggle[data-uuid-fisica="${uuid}"]`).forEach(btn => {
     btn.textContent = nuevo;
     btn.classList.remove("badge-si", "badge-no");
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
-  }
+  });
+
+  filtrarPagadas();
 }
 
 async function togglePagada(uuid) {
 
-  // leer valor actual desde la TABLA REAL
   const { data, error } = await supabase
     .from("deuda_limpia_pdd")
     .select("factura_pagada")
     .eq("uuid_cfdi", uuid)
     .single();
 
-  if (error) {
-    alert("Error al leer estado actual de pagada");
-    return;
-  }
+  if (error) return alert("Error al leer estado actual");
 
   const estadoActual = data.factura_pagada || "NO";
   const nuevo = estadoActual === "SI" ? "NO" : "SI";
 
-  // actualizar en la TABLA REAL
   const { error: err2 } = await supabase
     .from("deuda_limpia_pdd")
     .update({ factura_pagada: nuevo })
     .eq("uuid_cfdi", uuid);
 
-  if (err2) {
-    alert("Error al actualizar pagada: " + err2.message);
-    return;
-  }
+  if (err2) return alert("Error al actualizar pagada");
 
-  // 🔥 actualizar arreglo local
+  // 1) actualizar arreglo local
   const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
-  if (idx !== -1) {
-    datosCrudos[idx].factura_pagada = nuevo;
-  }
+  if (idx !== -1) datosCrudos[idx].factura_pagada = nuevo;
 
-  // 🔥 actualizar DOM sin recargar
-  const btn = document.querySelector(`.badge-toggle[data-uuid-pagada="${uuid}"]`);
-  if (btn) {
+  // 2) ACTUALIZAR TODOS LOS NODOS (visible y ocultos)
+  document.querySelectorAll(`.badge-toggle[data-uuid-pagada="${uuid}"]`).forEach(btn => {
     btn.textContent = nuevo;
     btn.classList.remove("badge-si", "badge-no");
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
-  }
+  });
 
-// 🔥 siempre actualizar tabla después del cambio
-filtrarPagadas();
-
+  // 3) aplica filtro otra vez
+  filtrarPagadas();
 }
 
 </script>
