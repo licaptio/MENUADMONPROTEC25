@@ -371,8 +371,8 @@ function filtrarPagadas() {
 
   mostrarTabla(datos);
 }
+  
 function mostrarTabla(data) {
-
   let html = `<table><thead><tr>
     <th>Fecha</th>
     <th>Días</th>
@@ -387,46 +387,29 @@ function mostrarTabla(data) {
   </tr></thead><tbody>`;
 
   data.forEach(f => {
-
     /* ===========================
-       1. UUID CORRECTO (vista)
+       1. UUID CORRECTO - USAR EL MISMO QUE EN LA TABLA BASE
        =========================== */
-    const uuid = f.uuid;  
+    // 🔥 CAMBIAR ESTO: usar uuid_cfdi en lugar de uuid
+    const uuid = f.uuid_cfdi || f.uuid;  
     
 
     /* ===========================
        2. PROVEEDOR REAL
-       PRIORIDAD:
-       - razon_social_emisor
-       - nombre_emisor
-       - rfc_emisor
        =========================== */
-// Obtener el nombre correcto del proveedor
-let proveedor = f.proveedor_unificado;
-
-if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-  proveedor = f.razon_social_emisor;
-}
-else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-  proveedor = f.nombre_emisor;
-}
-else {
-  proveedor = f.rfc_emisor; // último recurso
-}
+    let proveedor = f.proveedor_unificado;
+    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+      proveedor = f.razon_social_emisor;
+    }
+    else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+      proveedor = f.nombre_emisor;
+    }
+    else {
+      proveedor = f.rfc_emisor;
+    }
 
     /* ===========================
-       3. FOLIO REAL COMPATIBLE
-       Casos posibles:
-       - serie + factura
-       - solo serie
-       - solo factura
-       - ninguno → "—"
-       =========================== */
-let folioFinal = f.serie_folio || "—";
-
-
-    /* ===========================
-       4. CONSTRUCCIÓN DE LA FILA
+       3. CONSTRUCCIÓN DE LA FILA
        =========================== */
     html += `
 <tr>
@@ -440,13 +423,9 @@ let folioFinal = f.serie_folio || "—";
   </td>
 
   <td>${f.rfc_emisor}</td>
-
   <td>${proveedor}</td>
-
   <td>${monedaMXN(f.total)}</td>
-
   <td>${f.serie_folio || "—"}</td>
-
 
   <td>
     <div class="badge-toggle ${(f.factura_pagada === 'SI') ? 'badge-si' : 'badge-no'}"
@@ -478,7 +457,6 @@ let folioFinal = f.serie_folio || "—";
   html += "</tbody></table>";
   document.getElementById("tablaResultados").innerHTML = html;
 }
-
 function calcDiasDesdeHoy(iso){
   const f = new Date(iso);
   const h = new Date();
@@ -557,11 +535,11 @@ async function toggleFisica(uuid) {
 }
 async function togglePagada(uuid) {
   try {
-    // Obtener el estado actual
+    // Obtener el estado actual desde la vista
     const { data, error } = await supabase
-      .from("deuda_limpia_pdd")
+      .from("v_deuda_proveedores")
       .select("factura_pagada")
-      .eq("uuid_cfdi", uuid)
+      .eq("uuid_cfdi", uuid) // 🔥 USAR uuid_cfdi aquí también
       .single();
 
     if (error) {
@@ -578,31 +556,23 @@ async function togglePagada(uuid) {
     const { error: updateError } = await supabase
       .from("deuda_limpia_pdd")
       .update({ 
-        factura_pagada: nuevoEstado,
-        fecha_actualizacion: new Date().toISOString() // Opcional: agregar timestamp
+        factura_pagada: nuevoEstado
       })
       .eq("uuid_cfdi", uuid);
 
     if (updateError) {
       console.error("Error al actualizar:", updateError);
-      alert("Error al actualizar el estado de pago");
+      alert("Error al actualizar el estado de pago: " + updateError.message);
       return;
     }
 
-    // Actualizar en los datos locales
+    // Actualizar en los datos locales - BUSCAR POR uuid_cfdi
     const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
     if (idx !== -1) {
       datosCrudos[idx].factura_pagada = nuevoEstado;
     }
 
-    // Feedback visual inmediato (opcional)
-    const badge = document.querySelector(`[data-uuid-pagada="${uuid}"]`);
-    if (badge) {
-      badge.textContent = nuevoEstado;
-      badge.className = `badge-toggle ${nuevoEstado === 'SI' ? 'badge-si' : 'badge-no'}`;
-    }
-
-    // Redibujar la tabla completa para asegurar consistencia
+    // Redibujar la tabla completa
     filtrarPagadas();
 
     console.log(`Estado de pago actualizado: ${uuid} -> ${nuevoEstado}`);
