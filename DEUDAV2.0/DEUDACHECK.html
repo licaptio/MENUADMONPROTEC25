@@ -530,7 +530,7 @@ async function toggleFisica(uuid) {
     datosCrudos[idx].factura_fisicamente = nuevo;
   }
 
-  const btn = document.querySelector(`.badge-toggle[data-uuid="${uuid}"]`);
+  const btn = document.querySelector(`.badge-toggle[data-uuid-fisica="${uuid}"]`);
   if (btn) {
     btn.textContent = nuevo;
     btn.classList.remove("badge-si", "badge-no");
