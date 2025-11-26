@@ -535,11 +535,11 @@ async function toggleFisica(uuid) {
 }
 async function togglePagada(uuid) {
   try {
-    // Obtener el estado actual desde la vista
+    // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
     const { data, error } = await supabase
       .from("v_deuda_proveedores")
       .select("factura_pagada")
-      .eq("uuid_cfdi", uuid) // 🔥 USAR uuid_cfdi aquí también
+      .eq("uuid", uuid)   // ← CORRECTO
       .single();
 
     if (error) {
@@ -548,17 +548,15 @@ async function togglePagada(uuid) {
       return;
     }
 
-    // Determinar nuevo estado
+    // 🔄 2) Determinar nuevo estado
     const estadoActual = data.factura_pagada || "NO";
     const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
-    // Actualizar en la base de datos
+    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
     const { error: updateError } = await supabase
       .from("deuda_limpia_pdd")
-      .update({ 
-        factura_pagada: nuevoEstado
-      })
-      .eq("uuid_cfdi", uuid);
+      .update({ factura_pagada: nuevoEstado })
+      .eq("uuid_cfdi", uuid);  // ← CORRECTO
 
     if (updateError) {
       console.error("Error al actualizar:", updateError);
@@ -566,22 +564,21 @@ async function togglePagada(uuid) {
       return;
     }
 
-    // Actualizar en los datos locales - BUSCAR POR uuid_cfdi
-    const idx = datosCrudos.findIndex(f => f.uuid_cfdi === uuid);
+    // 🔥 4) Actualizar en el arreglo local
+    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
     if (idx !== -1) {
       datosCrudos[idx].factura_pagada = nuevoEstado;
     }
 
-    // Redibujar la tabla completa
+    // 🔁 5) Redibujar tabla
     filtrarPagadas();
 
-    console.log(`Estado de pago actualizado: ${uuid} -> ${nuevoEstado}`);
-
-  } catch (err) {
+  } catch(err) {
     console.error("Error inesperado:", err);
     alert("Error inesperado al actualizar el estado");
   }
 }
+
 </script>
 
 </body>
