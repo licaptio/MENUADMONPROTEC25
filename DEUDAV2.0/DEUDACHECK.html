@@ -580,10 +580,9 @@ async function togglePagada(uuid) {
     btn.classList.add(nuevo === "SI" ? "badge-si" : "badge-no");
   }
 
-  // 🔥 aplicar filtro si es necesario
-  if (!document.getElementById("togglePagadas").checked && nuevo === "SI") {
-    filtrarPagadas();
-  }
+// 🔥 siempre actualizar tabla después del cambio
+filtrarPagadas();
+
 }
 
 </script>
