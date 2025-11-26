@@ -136,9 +136,9 @@ const proveedoresContado = [
 
     async function cargar() {
 const { data, error } = await _supabase
-  .from(tabla)
+  .from("v_deuda_proveedores")
   .select("*")
-  .neq('factura_pagada', 'SI');
+  .neq("factura_pagada", "SI");
       if (error) return alert("Error cargando datos");
 
       //-------------------------------------------------------
@@ -266,45 +266,64 @@ resumenTelegram =
   
     }
 
-    function mostrarTabla(data) {
-      const sumaTotal = data.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
-      let html = `<table><thead><tr>
-        <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th>
-        <th>Factura</th><th>Total</th><th>Física</th><th>Fotos</th>
-      </tr></thead><tbody>`;
+function mostrarTabla(data) {
 
-      for (const f of data) {
-        const dias = calcularDias(f.fecha);
-        const razon = (f.razon_social_emisor || "").toUpperCase().trim();
-let clase = obtenerClaseVencimiento(dias);
-if (proveedoresContado.includes(razon)) {
-  clase = "proveedor-contado";
-}
-        if (proveedoresEspeciales[razon]) {
-  const limite = proveedoresEspeciales[razon];
-  if (dias >= limite && dias < 30) {
-    clase = "proveedor-especial-vencido"; // Morado claro y parpadeo
-  }
-}
+  let html = `<table><thead><tr>
+    <th>Fecha</th>
+    <th>Días</th>
+    <th>UUID</th>
+    <th>RFC</th>
+    <th>Proveedor</th>
+    <th>Serie/Folio</th>
+    <th>Total</th>
+    <th>Física</th>
+    <th>Fotos</th>
+  </tr></thead><tbody>`;
 
-        html += `<tr class="${clase}">
-          <td>${f.fecha}</td>
-          <td>${dias}</td>
-          <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
-          <td>${f.rfc_emisor || '-'}</td>
-          <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
-          <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
-          <td class="numero">${parseFloat(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-          <td style="text-align:center">${(f.factura_fisicamente || '').toUpperCase() === 'SI' ? '✅' : ''}</td>
-          <td style="text-align:center">
-            ${(Array.isArray(f.fotos) && f.fotos.length)
-              ? f.fotos.map(url => `<a href="${url}" target="_blank" title="Ver foto">📷</a>`).join(' ')
-              : ''}
-          </td>
-        </tr>`;
-      }
-      document.getElementById("tabla").innerHTML = html;
+  for (const f of data) {
+
+    const dias = calcularDias(f.fecha);
+
+    // === PROVEEDOR REAL ===
+    let proveedor = f.proveedor_unificado;
+
+    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+      proveedor = f.razon_social_emisor;
     }
+    else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+      proveedor = f.nombre_emisor;
+    }
+    else {
+      proveedor = f.rfc_emisor;
+    }
+
+    // === FOLIO REAL ===
+    const folioFinal = f.serie_folio || "—";
+
+    html += `
+      <tr>
+        <td>${f.fecha}</td>
+        <td>${dias}</td>
+        <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
+        <td>${f.rfc_emisor}</td>
+        <td class="proveedor-destacado">${proveedor}</td>
+        <td>${folioFinal}</td>
+        <td class="numero">${Number(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+        <td style="text-align:center">${(f.factura_fisicamente || "") === "SI" ? "✅" : ""}</td>
+        <td style="text-align:center">
+          ${
+            (f.fotos && f.fotos.length > 0)
+            ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
+            : ""
+          }
+        </td>
+      </tr>
+    `;
+  }
+
+  html += "</tbody></table>";
+  document.getElementById("tabla").innerHTML = html;
+}
 
     function calcularDias(fecha) {
       const hoy = new Date();
