@@ -4,277 +4,573 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Facturas por RFC</title>
+
+  <!-- ================================
+       [1] LIBRERÍAS
+  =================================-->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- ================================
+       [2] ESTILOS CSS
+  =================================-->
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 1rem;
+
+  /* =====================================
+       2.0 — AUTOCOMPLETE
+  ======================================*/
+.autocomplete-list {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  width: 250px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: none;
+  border-radius: 6px;
+  z-index: 10;
+
+  /* 🔥 ESTA LÍNEA LA AGREGA: BAJA LA LISTA */
+  margin-top: 18px; 
+}
+
+
+  .autocomplete-list div {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .autocomplete-list div:hover {
+    background: #007bff;
+    color: white;
+  }
+
+  /* =====================================
+       2.1 — REGLAS BASE
+  ======================================*/
+  body {
+    font-family: sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  button {
+    margin: 1rem 0;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover { background: #218838; }
+
+  /* =====================================
+       2.2 — TABLAS (PC)
+  ======================================*/
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  th, td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-size: 0.9em;
+    text-align: left;
+  }
+  th {
+    background-color: #007bff;
+    color: white;
+  }
+
+  /* =====================================
+       2.3 — TARJETAS MÓVIL
+  ======================================*/
+  @media (max-width: 768px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+
+    tr {
+      margin-bottom: 18px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.08);
+      padding: 12px 15px;
+      border: 1px solid #e0e0e0;
     }
-    button {
-      margin: 1rem 0;
-      padding: 10px 20px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #218838;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      font-size: 0.9em;
-    }
-    th {
-      background-color: #007bff;
-      color: white;
-    }
+
     td {
-      background-color: #fff;
+      border: none;
+      border-bottom: 1px dashed #ddd;
+      padding: 10px 6px;
+      font-size: 0.95rem;
     }
-  </style>
+
+    td:last-child { border-bottom: none; }
+  }
+@media (max-width: 768px) {
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    text-align: right;
+    position: relative;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-transform: capitalize;
+    color: #555;
+    flex-basis: 50%;
+    text-align: left;
+  }
+}
+
+  /* =====================================
+       2.4 — TARJETA DETALLE
+  ======================================*/
+  .card {
+    background: #fff;
+    margin: 12px 0;
+    padding: 14px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e0e0e0;
+    font-size: 0.95rem;
+  }
+#rfcFiltro,
+label[for="rfcFiltro"],
+#sugerenciasRFC {
+  display: none !important;
+}
+.badge-toggle {
+  display: inline-block;
+  padding: 6px 14px;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  user-select: none;
+}
+
+.badge-si {
+  background: #28a745;
+}
+
+.badge-no {
+  background: #dc3545;
+}
+
+</style>
 </head>
 <body>
-  <h2>🔍 Consulta de Facturas por RFC</h2>
 
-  <label for="rfcFiltro"><strong>RFC:</strong></label>
-  <select id="rfcFiltro" onchange="sincronizarNombre()">
-    <option value="">-- Selecciona uno --</option>
-  </select>
+<h2>🔍 Consulta de Facturas por RFC</h2>
 
-  <label for="nombreFiltro" style="margin-left: 1rem;"><strong>Nombre:</strong></label>
-  <select id="nombreFiltro" onchange="sincronizarRFC()">
-    <option value="">-- Selecciona uno --</option>
-  </select>
+<!-- =====================================
+     [3] INPUT RFC + AUTOCOMPLETE
+======================================-->
+<label><strong>RFC:</strong></label>
+<input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
+<div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-  <button onclick="consultarPorRFC()">🔎 Consultar</button>
+<!-- =====================================
+     [4] INPUT NOMBRE + AUTOCOMPLETE
+======================================-->
+<label style="margin-left:1rem;"><strong>Nombre:</strong></label>
+<input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
+<div id="sugerenciasNombre" class="autocomplete-list"></div>
 
-  <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
-  <div id="tablaResultados"></div>
+<button onclick="consultarPorRFC()">🔎 Consultar</button>
 
-  <script>
-    const supabase = window.supabase.createClient(
-      'https://cvpbtjlupswbyxenugpz.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
-    );
+<label style="margin-left:1rem;">
+  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
+  Mostrar pagadas
+</label>
 
-    const tabla = "deuda_limpia_pdd";
-    let datosCrudos = [];
+<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
+<div id="tablaResultados"></div>
 
-    cargarRFCs();
+<!-- =====================================
+     [5] LÓGICA JAVASCRIPT
+======================================-->
+<script>
 
+const supabase = window.supabase.createClient(
+  "https://cvpbtjlupswbyxenugpz.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+);
+
+const tabla = "deuda_limpia_pdd";
+let datosCrudos = [];
+let listaBusqueda = [];
+
+/* =====================================
+   5.1 CARGAR RFC + NOMBRE
+======================================*/
 async function cargarRFCs() {
+  const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
+  if (error) { alert("Error al cargar RFCs"); return; }
 
-  // 🔥 LECTURA CORRECTA DESDE LA VISTA
-  const { data, error } = await supabase
-    .from("v_deuda_proveedores")
-    .select("rfc_emisor, razon_social_emisor");
+  // 🔥 AQUÍ SÍ VA — TU ERROR ESTABA EN ESTO
+listaBusqueda = data.map(x => ({
+  rfc: x.rfc,
+  nombre: (x.nombre || "").toUpperCase().trim()
+}));
+}
 
-  if (error) {
-    console.error("❌ Error cargando datos:", error);
-    alert("Error al obtener datos iniciales");
+cargarRFCs();
+
+/* =====================================
+   5.2 AUTOCOMPLETE RFC
+======================================*/
+function autocompleteRFC() {
+  const txt = rfcFiltro.value.toUpperCase().trim();
+  const lista = document.getElementById("sugerenciasRFC");
+
+  lista.innerHTML = "";
+  if (txt.length < 1) return lista.style.display = "none";
+
+  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  listaBusqueda
+    .filter(x => 
+      x.rfc.includes(normalizado) ||
+      x.nombre.includes(normalizado)
+    )
+    .forEach(x => {
+      let div = document.createElement("div");
+      div.textContent = `${x.rfc} — ${x.nombre}`;
+      div.onclick = () => {
+        rfcFiltro.value = x.rfc;
+        nombreFiltro.value = x.nombre;
+        window.rfcSeleccionado = x.rfc;
+        lista.style.display = "none";
+      };
+      lista.appendChild(div);
+    });
+
+  lista.style.display = "block";
+}
+
+/* =====================================
+   5.3 AUTOCOMPLETE NOMBRE
+======================================*/
+function autocompleteNombre() {
+  const txt = nombreFiltro.value.toUpperCase().trim();
+  const lista = document.getElementById("sugerenciasNombre");
+
+  lista.innerHTML = "";
+
+  if (txt.length < 1) {
+    lista.style.display = "none";
     return;
   }
 
-  const mapa = new Map();
+  // Fuzzy-lite: permite errores de letras
+  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  for (const f of data) {
-    const rfc = f.rfc_emisor;
-    if (!rfc) continue;
+  const resultados = listaBusqueda.filter(x => {
+    const nom = (x.nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const rfc = x.rfc || "";
 
-    let nombre = f.razon_social_emisor?.trim() || "(SIN NOMBRE)";
+    return (
+      nom.includes(normalizado) ||         // por nombre
+      rfc.includes(normalizado) ||        // por RFC
+      nom.replace(/\s+/g, '').includes(normalizado.replace(/\s+/g, '')) // fuzzy-lite
+    );
+  });
 
-    // solo guardar una vez por RFC
-    if (!mapa.has(rfc)) {
-      mapa.set(rfc, nombre);
-    }
-  }
+  resultados.forEach(x => {
+    let div = document.createElement("div");
+    div.textContent = `${x.nombre} — ${x.rfc}`;
+    div.onclick = () => {
+      nombreFiltro.value = x.nombre;
+      window.rfcSeleccionado = x.rfc;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
 
-  // rellenar selects
-  const selectRFC = document.getElementById("rfcFiltro");
-  const selectNombre = document.getElementById("nombreFiltro");
-
-  // RFCs
-  for (const [rfc] of mapa) {
-    const opt = document.createElement("option");
-    opt.value = rfc;
-    opt.textContent = rfc;
-    selectRFC.appendChild(opt);
-  }
-
-  // Nombres ordenados
-  [...mapa.entries()]
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .forEach(([rfc, nombre]) => {
-      const opt = document.createElement("option");
-      opt.value = rfc;
-      opt.textContent = nombre;
-      selectNombre.appendChild(opt);
-    });
+  lista.style.display = "block";
 }
 
-   async function consultarPorRFC() {
-      const rfc = document.getElementById("rfcFiltro").value;
-      if (!rfc) {
-        alert("Selecciona un RFC válido");
-        return;
-      }
+/* =====================================
+   5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
+======================================*/
+async function consultarPorRFC() {
 
-      document.getElementById("resumenConteo").innerText = "";
-      document.getElementById("tablaResultados").innerHTML = "";
+  // Obtenemos el RFC seleccionado desde autocompleteNombre()
+  let rfc = window.rfcSeleccionado;
 
-      const { count, error: errorConteo } = await supabase
-        .from(tabla)
-        .select("*", { count: "exact", head: true })
-        .eq("rfc_emisor", rfc);
+// Detección automática si el usuario NO clickeó nada:
+if (!rfc) {
+  const txt = nombreFiltro.value.toUpperCase().trim();
+  const encontrado = listaBusqueda.find(x =>
+    x.nombre.includes(txt) || x.rfc.includes(txt)
+  );
+  if (encontrado) rfc = encontrado.rfc;
+}
 
-      if (errorConteo) {
-        console.error("❌ Error al contar registros:", errorConteo);
-        alert("Error al contar registros");
-        return;
-      }
 
-      const { data, error } = await supabase
-        .from(tabla)
-        .select("*")
-        .eq("rfc_emisor", rfc)
-        .order("fecha", { ascending: true })
-        .range(0, 9999);
-
-      if (error) {
-        console.error("❌ Error al traer datos:", error);
-        alert("Error al traer datos");
-        return;
-      }
-
-      datosCrudos = data;
-
-      let mensaje = `🔢 Total en Supabase para ${rfc}: ${count} registros\n📄 Mostrados en pantalla: ${data.length}`;
-      if (data.length < count) {
-        mensaje += `\n⚠️ Solo se muestran los primeros ${data.length} registros (de ${count})`;
-      }
-
-      document.getElementById("resumenConteo").innerText = mensaje;
-      mostrarTabla(data);
-    }
-
-  function mostrarTabla(data) {
-  let html = `<table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>UUID</th>
-        <th>RFC Emisor</th>
-        <th>Nombre Emisor</th>
-        <th>Factura</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>`;
-
-  for (const f of data) {
-
-    // 1️⃣ Nombre emisor automático
-    const nombreMostrado =
-      f.razon_social_emisor && f.razon_social_emisor.trim() !== ""
-        ? f.razon_social_emisor
-        : (f.nombre_emisor || "-");
-
-    html += `<tr>
-      <td>${f.fecha || "-"}</td>
-      <td>
-        <a href="detalle.html?uuid=${encodeURIComponent(f.uuid_cfdi)}" target="_blank">
-          ${f.uuid_cfdi || "-"}
-        </a>
-      </td>
-      <td>${f.rfc_emisor || "-"}</td>
-      <td>${nombreProveedor(f)}</td>
-      <td>${folioProveedor(f)}</td>
-      <td style="text-align:right;">
-        ${(f.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </td>
-    </tr>`;
+  if (!rfc) {
+    alert("Selecciona un proveedor válido de la lista");
+    return;
   }
 
-  html += `</tbody></table>`;
+  document.getElementById("tablaResultados").innerHTML = "";
+  document.getElementById("resumenConteo").innerText = "";
+
+  // últimos 60 días
+  const hoy = new Date();
+  const limite = new Date();
+  limite.setDate(hoy.getDate() - 99);
+  const limiteISO = limite.toISOString().split("T")[0];
+
+  // contar registros
+const { count, error: errorConteo } = await supabase
+  .from("v_deuda_proveedores")
+  .select("*", { count: "exact", head: true })
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO);
+
+  if (errorConteo) {
+    alert("Error al contar registros");
+    return;
+  }
+
+  // consultar facturas
+const { data: facturas, error } = await supabase
+  .from("v_deuda_proveedores")
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO)
+  .order("fecha", { ascending: true });
+
+  if (error) {
+    alert("Error al traer facturas");
+    return;
+  }
+
+  datosCrudos = facturas;
+
+  document.getElementById("resumenConteo").innerText =
+    `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
+
+  filtrarPagadas();
+}
+function filtrarPagadas() {
+  const mostrar = document.getElementById("togglePagadas").checked;
+  const datos = mostrar
+    ? datosCrudos
+    : datosCrudos.filter(f => f.factura_pagada !== "SI");
+
+  mostrarTabla(datos);
+}
+  
+function mostrarTabla(data) {
+  let html = `<table><thead><tr>
+    <th>Fecha</th>
+    <th>Días</th>
+    <th>UUID</th>
+    <th>RFC</th>
+    <th>Proveedor</th>
+    <th>Total</th>
+    <th>Serie/Folio</th>
+    <th>Pagada</th>
+    <th>Factura Física</th>
+    <th>📷 Fotos</th>
+  </tr></thead><tbody>`;
+
+  data.forEach(f => {
+    /* ===========================
+       1. UUID CORRECTO - USAR EL MISMO QUE EN LA TABLA BASE
+       =========================== */
+    // 🔥 CAMBIAR ESTO: usar uuid_cfdi en lugar de uuid
+    const uuid = f.uuid_cfdi || f.uuid;  
+    
+
+    /* ===========================
+       2. PROVEEDOR REAL
+       =========================== */
+    let proveedor = f.proveedor_unificado;
+    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+      proveedor = f.razon_social_emisor;
+    }
+    else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+      proveedor = f.nombre_emisor;
+    }
+    else {
+      proveedor = f.rfc_emisor;
+    }
+
+    /* ===========================
+       3. CONSTRUCCIÓN DE LA FILA
+       =========================== */
+    html += `
+<tr>
+  <td>${formatearFecha(f.fecha)}</td>
+  <td>${f.dias}</td>
+
+  <td>
+    <a href="detalle.html?uuid=${uuid}" style="color:#007bff;">
+      ${uuid}
+    </a>
+  </td>
+
+  <td>${f.rfc_emisor}</td>
+  <td>${proveedor}</td>
+  <td>${monedaMXN(f.total)}</td>
+  <td>${f.serie_folio || "—"}</td>
+
+  <td>
+    <div class="badge-toggle ${(f.factura_pagada === 'SI') ? 'badge-si' : 'badge-no'}"
+      onclick="togglePagada('${uuid}')"
+      data-uuid-pagada="${uuid}">
+      ${f.factura_pagada}
+    </div>
+  </td>
+
+  <td>
+    <div class="badge-toggle ${(f.factura_fisicamente === 'SI') ? 'badge-si' : 'badge-no'}"
+      onclick="toggleFisica('${uuid}')"
+      data-uuid-fisica="${uuid}">
+      ${f.factura_fisicamente}
+    </div>
+  </td>
+
+  <td>
+    ${
+      (f.fotos && f.fotos.length > 0)
+      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
+      : "—"
+    }
+  </td>
+</tr>
+`;
+  });
+
+  html += "</tbody></table>";
   document.getElementById("tablaResultados").innerHTML = html;
 }
-
-    function sincronizarNombre() {
-      const rfc = document.getElementById("rfcFiltro").value;
-      const selectNombre = document.getElementById("nombreFiltro");
-      for (const opt of selectNombre.options) {
-        if (opt.value === rfc) {
-          selectNombre.value = rfc;
-          return;
-        }
-      }
-      selectNombre.value = "";
-    }
-
-    function sincronizarRFC() {
-      const rfc = document.getElementById("nombreFiltro").value;
-      const selectRFC = document.getElementById("rfcFiltro");
-      for (const opt of selectRFC.options) {
-        if (opt.value === rfc) {
-          selectRFC.value = rfc;
-          return;
-        }
-      }
-      selectRFC.value = "";
-    }
-function folioProveedor(f) {
-  // 1) Si existe serie y folio (nuevo formato)
-  if (f.serie && f.serie.trim() !== "" && f.folio && f.folio.trim() !== "") {
-    return `${f.serie}-${f.folio}`;
-  }
-
-  // 2) Si factura es arreglo viejo
-  if (Array.isArray(f.factura) && f.factura.length >= 2) {
-    return `${f.factura[0]}-${f.factura[1]}`;
-  }
-
-  // 3) Si factura es texto viejo
-  if (typeof f.factura === "string" && f.factura.trim() !== "") {
-    return f.factura;
-  }
-
-  // 4) Si no hay nada
-  return "-";
+function calcDiasDesdeHoy(iso){
+  const f = new Date(iso);
+  const h = new Date();
+  return Math.floor((h - f) / 1000 / 60 / 60 / 24);
 }
-function nombreProveedor(f) {
-  // 1) Nuevo nombre cargado del XML
-  if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-    return f.razon_social_emisor.trim();
-  }
-
-  // 2) Segundo nombre nuevo del XML (campo "nombre_emisor")
-  if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-    return f.nombre_emisor.trim();
-  }
-
-  // 3) Formato viejo — ARREGLO de 3 posiciones
-  if (Array.isArray(f.factura) && f.factura.length >= 3) {
-    return f.factura[2].trim();   // ← El proveedor iba en la posición 3
-  }
-
-  // 4) Formato viejo — TEXTO con guiones
-  if (typeof f.factura === "string" && f.factura.includes("-")) {
-    return f.factura.split("-")[0].trim();
-  }
-
-  return "SIN NOMBRE";
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const año = fecha.getFullYear();
+  return `${dia}/${mes}/${año}`;
+}
+function monedaMXN(valor) {
+  return Number(valor).toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  });
 }
 
-  </script>
+async function toggleFisica(uuid) {
+  try {
+    // 🔍 1) Obtener el estado actual desde la VISTA usando "uuid"
+    const { data, error } = await supabase
+      .from("v_deuda_proveedores")
+      .select("factura_fisicamente")
+      .eq("uuid", uuid)   // ← Aquí NO es uuid_cfdi
+      .single();
+
+    if (error) {
+      console.error("Error al leer estado actual:", error);
+      alert("Error al leer estado actual de factura física");
+      return;
+    }
+
+    // 🔄 2) Determinar nuevo estado
+    const estadoActual = data.factura_fisicamente || "NO";
+    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
+
+    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
+    const { error: updateError } = await supabase
+      .from("deuda_limpia_pdd")
+      .update({ factura_fisicamente: nuevoEstado })
+      .eq("uuid_cfdi", uuid); // ← aquí SÍ debe ser uuid_cfdi
+
+    if (updateError) {
+      console.error("Error al actualizar:", updateError);
+      alert("Error al actualizar el estado físico");
+      return;
+    }
+
+    // 🔥 4) Actualizar en los datos locales usando "uuid"
+    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
+    if (idx !== -1) {
+      datosCrudos[idx].factura_fisicamente = nuevoEstado;
+    }
+
+    // ✨ 5) Refrescar tabla completa para respetar el filtro
+    filtrarPagadas();
+
+    console.log(`Factura física actualizada: ${uuid} -> ${nuevoEstado}`);
+
+  } catch (err) {
+    console.error("Error inesperado:", err);
+    alert("Error inesperado al actualizar factura física");
+  }
+}
+
+async function togglePagada(uuid) {
+  try {
+    // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
+    const { data, error } = await supabase
+      .from("v_deuda_proveedores")
+      .select("factura_pagada")
+      .eq("uuid", uuid)   // ← CORRECTO
+      .single();
+
+    if (error) {
+      console.error("Error al leer estado actual:", error);
+      alert("Error al leer estado actual de la factura");
+      return;
+    }
+
+    // 🔄 2) Determinar nuevo estado
+    const estadoActual = data.factura_pagada || "NO";
+    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
+
+    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
+    const { error: updateError } = await supabase
+      .from("deuda_limpia_pdd")
+      .update({ factura_pagada: nuevoEstado })
+      .eq("uuid_cfdi", uuid);  // ← CORRECTO
+
+    if (updateError) {
+      console.error("Error al actualizar:", updateError);
+      alert("Error al actualizar el estado de pago: " + updateError.message);
+      return;
+    }
+
+    // 🔥 4) Actualizar en el arreglo local
+    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
+    if (idx !== -1) {
+      datosCrudos[idx].factura_pagada = nuevoEstado;
+    }
+
+    // 🔁 5) Redibujar tabla
+    filtrarPagadas();
+
+  } catch(err) {
+    console.error("Error inesperado:", err);
+    alert("Error inesperado al actualizar el estado");
+  }
+}
+
+</script>
+
 </body>
 </html>
