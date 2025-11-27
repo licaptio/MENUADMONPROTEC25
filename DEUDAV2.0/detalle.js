@@ -57,8 +57,7 @@ if (!uuid) {
 // CONSULTA PRINCIPAL A SUPABASE
 // ============================================================
 async function cargarCFDI() {
- const url = `${SUPA_URL}/rest/v1/${TABLA}?or=(uuid.eq.${uuid},uuid_cfdi.eq.${uuid})&select=*`;
-
+const url = `${SUPA_URL}/rest/v1/${TABLA}?uuid=eq.${uuid}&select=*`;
   const res = await fetch(url, {
     headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
   });
