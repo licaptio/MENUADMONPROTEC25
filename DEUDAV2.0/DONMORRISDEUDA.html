@@ -381,36 +381,22 @@ function mostrarTabla(data) {
     <th>Proveedor</th>
     <th>Total</th>
     <th>Serie/Folio</th>
-    <th>Pagada</th>
-    <th>Factura Física</th>
     <th>📷 Fotos</th>
   </tr></thead><tbody>`;
 
   data.forEach(f => {
-    /* ===========================
-       1. UUID CORRECTO - USAR EL MISMO QUE EN LA TABLA BASE
-       =========================== */
-    // 🔥 CAMBIAR ESTO: usar uuid_cfdi en lugar de uuid
-    const uuid = f.uuid_cfdi || f.uuid;  
-    
 
-    /* ===========================
-       2. PROVEEDOR REAL
-       =========================== */
+    const uuid = f.uuid_cfdi || f.uuid;
+
     let proveedor = f.proveedor_unificado;
     if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
       proveedor = f.razon_social_emisor;
-    }
-    else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+    } else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
       proveedor = f.nombre_emisor;
-    }
-    else {
+    } else {
       proveedor = f.rfc_emisor;
     }
 
-    /* ===========================
-       3. CONSTRUCCIÓN DE LA FILA
-       =========================== */
     html += `
 <tr>
   <td>${formatearFecha(f.fecha)}</td>
@@ -428,25 +414,9 @@ function mostrarTabla(data) {
   <td>${f.serie_folio || "—"}</td>
 
   <td>
-    <div class="badge-toggle ${(f.factura_pagada === 'SI') ? 'badge-si' : 'badge-no'}"
-      onclick="togglePagada('${uuid}')"
-      data-uuid-pagada="${uuid}">
-      ${f.factura_pagada}
-    </div>
-  </td>
-
-  <td>
-    <div class="badge-toggle ${(f.factura_fisicamente === 'SI') ? 'badge-si' : 'badge-no'}"
-      onclick="toggleFisica('${uuid}')"
-      data-uuid-fisica="${uuid}">
-      ${f.factura_fisicamente}
-    </div>
-  </td>
-
-  <td>
     ${
       (f.fotos && f.fotos.length > 0)
-      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
+      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(" ")
       : "—"
     }
   </td>
@@ -457,6 +427,7 @@ function mostrarTabla(data) {
   html += "</tbody></table>";
   document.getElementById("tablaResultados").innerHTML = html;
 }
+
 function calcDiasDesdeHoy(iso){
   const f = new Date(iso);
   const h = new Date();
