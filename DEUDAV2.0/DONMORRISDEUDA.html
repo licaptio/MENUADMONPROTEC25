@@ -181,16 +181,10 @@ label[for="rfcFiltro"],
 <!-- =====================================
      [4] INPUT NOMBRE + AUTOCOMPLETE
 ======================================-->
-<label style="margin-left:1rem;"><strong>Nombre:</strong></label>
 <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
 <div id="sugerenciasNombre" class="autocomplete-list"></div>
 
 <button onclick="consultarPorRFC()">🔎 Consultar</button>
-
-<label style="margin-left:1rem;">
-  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
-  Mostrar pagadas
-</label>
 
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
@@ -361,16 +355,9 @@ const { data: facturas, error } = await supabase
   document.getElementById("resumenConteo").innerText =
     `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
 
-  filtrarPagadas();
+  mostrarTabla(datosCrudos);
 }
-function filtrarPagadas() {
-  const mostrar = document.getElementById("togglePagadas").checked;
-  const datos = mostrar
-    ? datosCrudos
-    : datosCrudos.filter(f => f.factura_pagada !== "SI");
 
-  mostrarTabla(datos);
-}
   
 function mostrarTabla(data) {
   let html = `<table><thead><tr>
@@ -446,101 +433,6 @@ function monedaMXN(valor) {
     currency: 'MXN'
   });
 }
-
-async function toggleFisica(uuid) {
-  try {
-    // 🔍 1) Obtener el estado actual desde la VISTA usando "uuid"
-    const { data, error } = await supabase
-      .from("v_deuda_proveedores")
-      .select("factura_fisicamente")
-      .eq("uuid", uuid)   // ← Aquí NO es uuid_cfdi
-      .single();
-
-    if (error) {
-      console.error("Error al leer estado actual:", error);
-      alert("Error al leer estado actual de factura física");
-      return;
-    }
-
-    // 🔄 2) Determinar nuevo estado
-    const estadoActual = data.factura_fisicamente || "NO";
-    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
-
-    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
-    const { error: updateError } = await supabase
-      .from("deuda_limpia_pdd")
-      .update({ factura_fisicamente: nuevoEstado })
-      .eq("uuid_cfdi", uuid); // ← aquí SÍ debe ser uuid_cfdi
-
-    if (updateError) {
-      console.error("Error al actualizar:", updateError);
-      alert("Error al actualizar el estado físico");
-      return;
-    }
-
-    // 🔥 4) Actualizar en los datos locales usando "uuid"
-    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
-    if (idx !== -1) {
-      datosCrudos[idx].factura_fisicamente = nuevoEstado;
-    }
-
-    // ✨ 5) Refrescar tabla completa para respetar el filtro
-    filtrarPagadas();
-
-    console.log(`Factura física actualizada: ${uuid} -> ${nuevoEstado}`);
-
-  } catch (err) {
-    console.error("Error inesperado:", err);
-    alert("Error inesperado al actualizar factura física");
-  }
-}
-
-async function togglePagada(uuid) {
-  try {
-    // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
-    const { data, error } = await supabase
-      .from("v_deuda_proveedores")
-      .select("factura_pagada")
-      .eq("uuid", uuid)   // ← CORRECTO
-      .single();
-
-    if (error) {
-      console.error("Error al leer estado actual:", error);
-      alert("Error al leer estado actual de la factura");
-      return;
-    }
-
-    // 🔄 2) Determinar nuevo estado
-    const estadoActual = data.factura_pagada || "NO";
-    const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
-
-    // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
-    const { error: updateError } = await supabase
-      .from("deuda_limpia_pdd")
-      .update({ factura_pagada: nuevoEstado })
-      .eq("uuid_cfdi", uuid);  // ← CORRECTO
-
-    if (updateError) {
-      console.error("Error al actualizar:", updateError);
-      alert("Error al actualizar el estado de pago: " + updateError.message);
-      return;
-    }
-
-    // 🔥 4) Actualizar en el arreglo local
-    const idx = datosCrudos.findIndex(f => f.uuid === uuid);
-    if (idx !== -1) {
-      datosCrudos[idx].factura_pagada = nuevoEstado;
-    }
-
-    // 🔁 5) Redibujar tabla
-    filtrarPagadas();
-
-  } catch(err) {
-    console.error("Error inesperado:", err);
-    alert("Error inesperado al actualizar el estado");
-  }
-}
-
 </script>
 
 </body>
