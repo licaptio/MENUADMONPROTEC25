@@ -373,6 +373,8 @@ function mostrarTabla(data) {
 
   data.forEach(f => {
 
+    const uuid = f.uuid_cfdi || f.uuid;
+
     let proveedor = f.proveedor_unificado;
     if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
       proveedor = f.razon_social_emisor;
@@ -388,9 +390,9 @@ function mostrarTabla(data) {
   <td>${f.dias}</td>
 
   <td>
-<a href="detalle.html?uuid=${f.uuid_cfdi}" style="color:#007bff;">
-  ${f.uuid_cfdi}
-</a>
+    <a href="detalle.html?uuid=${uuid}" style="color:#007bff;">
+      ${uuid}
+    </a>
   </td>
 
   <td>${f.rfc_emisor}</td>
