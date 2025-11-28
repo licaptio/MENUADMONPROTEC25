@@ -234,24 +234,22 @@ timbreHTML = `
 // ============================================================
 let impGlobalHTML = "";
 
-// IVA REAL calculado por PROVSOFT
-if ((window.__iva || 0) > 0) {
-  impGlobalHTML += `
-    <tr>
-      <td>IVA</td>
-      <td>16.00%</td>
-      <td>${formatoMX(window.__iva)}</td>
-    </tr>`;
-}
+if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
+  f.impuestos_globales.detalles.forEach(det => {
+    let tasa = "";
 
-// IEPS REAL calculado por PROVSOFT
-if ((window.__ieps || 0) > 0) {
-  impGlobalHTML += `
-    <tr>
-      <td>IEPS</td>
-      <td>-</td>
-      <td>${formatoMX(window.__ieps)}</td>
-    </tr>`;
+    // Mostrar tasa solo si es mayor que 0
+    if (det.tasa && det.tasa > 0) {
+      tasa = (det.tasa * 100).toFixed(2) + "%";
+    }
+
+    impGlobalHTML += `
+      <tr>
+        <td>${det.tipo}</td>
+        <td>${tasa}</td>
+        <td>${formatoMX(det.importe)}</td>
+      </tr>`;
+  });
 }
 
   // ============================================================
