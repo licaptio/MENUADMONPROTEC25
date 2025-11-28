@@ -230,10 +230,7 @@ timbreHTML = `
   }
 
 // ============================================================
-// IMPUESTOS GLOBALES (USANDO TOTAL REAL DE PROVSOFT)
-// ============================================================
-// ============================================================
-// IMPUESTOS GLOBALES – TASA REAL (IVA fijo y IEPS dinámico)
+// IMPUESTOS GLOBALES – DINÁMICOS + TOTAL DE IMPUESTOS
 // ============================================================
 let impGlobalHTML = "";
 
@@ -248,21 +245,21 @@ impGlobalHTML += `
 // ---- IEPS: detectar tasas reales ----
 let iepsTasas = new Set();
 
-// Revisar conceptos y extraer tasas únicas
 if (Array.isArray(f.conceptos_detalle)) {
   f.conceptos_detalle.forEach(c => {
     if (Array.isArray(c.traslados)) {
       c.traslados
-        .filter(t => t.impuesto === "003" && t.tasa > 0) // IEPS
+        .filter(t => t.impuesto === "003" && t.tasa > 0)
         .forEach(t => iepsTasas.add((t.tasa * 100).toFixed(2)));
     }
   });
 }
 
-// Convertir set a arreglo
 iepsTasas = [...iepsTasas];
 
-// Si solo hay una tasa IEPS → mostrar esa
+// ---- Mostrar IEPS dependiendo del número de tasas ----
+
+// Solo una tasa IEPS
 if (iepsTasas.length === 1) {
   impGlobalHTML += `
     <tr>
@@ -272,7 +269,7 @@ if (iepsTasas.length === 1) {
     </tr>`;
 }
 
-// Si hay varias tasas IEPS → listarlas
+// Varias tasas IEPS
 else if (iepsTasas.length > 1) {
   iepsTasas.forEach(tasa => {
     impGlobalHTML += `
@@ -283,7 +280,6 @@ else if (iepsTasas.length > 1) {
       </tr>`;
   });
 
-  // Último renglón con el total sumado
   impGlobalHTML += `
     <tr>
       <td>IEPS Total</td>
@@ -292,7 +288,7 @@ else if (iepsTasas.length > 1) {
     </tr>`;
 }
 
-// Si NO hubo IEPS
+// Sin IEPS
 else {
   impGlobalHTML += `
     <tr>
@@ -301,6 +297,14 @@ else {
       <td>${formatoMX(0)}</td>
     </tr>`;
 }
+
+// ---- TOTAL DE IMPUESTOS (IVA + IEPS) ----
+impGlobalHTML += `
+  <tr style="background:#003366;color:white;font-weight:bold">
+    <td>Total Impuestos</td>
+    <td></td>
+    <td>${formatoMX((window.__iva || 0) + (window.__ieps || 0))}</td>
+  </tr>`;
 
 
   // ============================================================
