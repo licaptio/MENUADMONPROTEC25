@@ -230,14 +230,11 @@ timbreHTML = `
   }
 
 // ============================================================
-// IMPUESTOS GLOBALES (USANDO TOTALES REALES DE LOS CONCEPTOS)
-// ============================================================
-// ============================================================
 // IMPUESTOS GLOBALES (USANDO TOTAL REAL DE PROVSOFT)
 // ============================================================
 let impGlobalHTML = "";
 
-// IVA REAL
+// IVA GLOBAL
 impGlobalHTML += `
   <tr>
     <td>IVA</td>
@@ -245,13 +242,14 @@ impGlobalHTML += `
     <td>${formatoMX(window.__iva || 0)}</td>
   </tr>`;
 
-// IEPS REAL
+// IEPS GLOBAL (8% porque ya viene en cada concepto)
 impGlobalHTML += `
   <tr>
     <td>IEPS</td>
-    <td></td>
+    <td>8.00%</td>
     <td>${formatoMX(window.__ieps || 0)}</td>
   </tr>`;
+
 
   // ============================================================
   // FOLIO TECNOPRO
