@@ -232,9 +232,12 @@ timbreHTML = `
 // ============================================================
 // IMPUESTOS GLOBALES (USANDO TOTAL REAL DE PROVSOFT)
 // ============================================================
+// ============================================================
+// IMPUESTOS GLOBALES – TASA REAL (IVA fijo y IEPS dinámico)
+// ============================================================
 let impGlobalHTML = "";
 
-// IVA GLOBAL
+// ---- IVA (siempre 16%) ----
 impGlobalHTML += `
   <tr>
     <td>IVA</td>
@@ -242,13 +245,62 @@ impGlobalHTML += `
     <td>${formatoMX(window.__iva || 0)}</td>
   </tr>`;
 
-// IEPS GLOBAL (8% porque ya viene en cada concepto)
-impGlobalHTML += `
-  <tr>
-    <td>IEPS</td>
-    <td>8.00%</td>
-    <td>${formatoMX(window.__ieps || 0)}</td>
-  </tr>`;
+// ---- IEPS: detectar tasas reales ----
+let iepsTasas = new Set();
+
+// Revisar conceptos y extraer tasas únicas
+if (Array.isArray(f.conceptos_detalle)) {
+  f.conceptos_detalle.forEach(c => {
+    if (Array.isArray(c.traslados)) {
+      c.traslados
+        .filter(t => t.impuesto === "003" && t.tasa > 0) // IEPS
+        .forEach(t => iepsTasas.add((t.tasa * 100).toFixed(2)));
+    }
+  });
+}
+
+// Convertir set a arreglo
+iepsTasas = [...iepsTasas];
+
+// Si solo hay una tasa IEPS → mostrar esa
+if (iepsTasas.length === 1) {
+  impGlobalHTML += `
+    <tr>
+      <td>IEPS</td>
+      <td>${iepsTasas[0]}%</td>
+      <td>${formatoMX(window.__ieps || 0)}</td>
+    </tr>`;
+}
+
+// Si hay varias tasas IEPS → listarlas
+else if (iepsTasas.length > 1) {
+  iepsTasas.forEach(tasa => {
+    impGlobalHTML += `
+      <tr>
+        <td>IEPS</td>
+        <td>${tasa}%</td>
+        <td>${formatoMX(0)}</td>
+      </tr>`;
+  });
+
+  // Último renglón con el total sumado
+  impGlobalHTML += `
+    <tr>
+      <td>IEPS Total</td>
+      <td></td>
+      <td>${formatoMX(window.__ieps || 0)}</td>
+    </tr>`;
+}
+
+// Si NO hubo IEPS
+else {
+  impGlobalHTML += `
+    <tr>
+      <td>IEPS</td>
+      <td>0%</td>
+      <td>${formatoMX(0)}</td>
+    </tr>`;
+}
 
 
   // ============================================================
