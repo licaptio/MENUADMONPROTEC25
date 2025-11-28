@@ -416,11 +416,12 @@ function mostrarTabla(data) {
   <td>${formatearFecha(f.fecha)}</td>
   <td>${f.dias}</td>
 
-  <td>
-    <a href="detalle.html?uuid=${uuid}" style="color:#007bff;">
-      ${uuid}
-    </a>
-  </td>
+<td>
+  <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
+    ${uuid}
+  </a>
+</td>
+
 
   <td>${f.rfc_emisor}</td>
   <td>${proveedor}</td>
