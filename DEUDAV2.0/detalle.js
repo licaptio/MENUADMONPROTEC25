@@ -232,25 +232,26 @@ timbreHTML = `
 // ============================================================
 // IMPUESTOS GLOBALES (USANDO TOTALES REALES DE LOS CONCEPTOS)
 // ============================================================
+// ============================================================
+// IMPUESTOS GLOBALES (USANDO TOTAL REAL DE PROVSOFT)
+// ============================================================
 let impGlobalHTML = "";
 
-if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
-  f.impuestos_globales.detalles.forEach(det => {
-    let tasa = "";
+// IVA REAL
+impGlobalHTML += `
+  <tr>
+    <td>IVA</td>
+    <td>16.00%</td>
+    <td>${formatoMX(window.__iva || 0)}</td>
+  </tr>`;
 
-    // Mostrar tasa solo si es mayor que 0
-    if (det.tasa && det.tasa > 0) {
-      tasa = (det.tasa * 100).toFixed(2) + "%";
-    }
-
-    impGlobalHTML += `
-      <tr>
-        <td>${det.tipo}</td>
-        <td>${tasa}</td>
-        <td>${formatoMX(det.importe)}</td>
-      </tr>`;
-  });
-}
+// IEPS REAL
+impGlobalHTML += `
+  <tr>
+    <td>IEPS</td>
+    <td></td>
+    <td>${formatoMX(window.__ieps || 0)}</td>
+  </tr>`;
 
   // ============================================================
   // FOLIO TECNOPRO
