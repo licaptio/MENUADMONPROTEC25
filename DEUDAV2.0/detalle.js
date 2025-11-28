@@ -548,3 +548,56 @@ document.addEventListener("click", e => {
       });
   }
 });
+// ============================================================
+// FOOTER DINÁMICO (IVA, IEPS, TASAS, CUOTAS, ETC.)
+// ============================================================
+let footerHTML = "";
+
+// Subtotal y descuento — ya calculados
+footerHTML += `
+  <tr>
+    <td colspan="7" style="text-align:right">Subtotal</td>
+    <td>${formatoMX(window.__sub || 0)}</td>
+  </tr>
+
+  <tr>
+    <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+    <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
+  </tr>
+`;
+
+// === Impuestos globales dinámicos ===
+if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
+  f.impuestos_globales.detalles.forEach(det => {
+    let tasaTxt = "";
+
+    if (det.tasa && det.tasa > 0) {
+      tasaTxt = (det.tasa * 100).toFixed(2) + "%";
+    } else {
+      tasaTxt = ""; // cuota fija o IVA exento
+    }
+
+    footerHTML += `
+      <tr>
+        <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
+        <td>${formatoMX(det.importe)}</td>
+      </tr>
+    `;
+  });
+}
+
+// === TOTAL GENERAL ===
+footerHTML += `
+  <tr>
+    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
+    <td style="background:#003366;color:#fff">
+      ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
+    </td>
+  </tr>
+`;
+
+// Se inserta en el <tfoot>
+setTimeout(() => {
+  const tfoot = document.querySelector("#footerImpuestos");
+  if (tfoot) tfoot.innerHTML = footerHTML;
+}, 10);
