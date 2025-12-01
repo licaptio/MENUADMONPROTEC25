@@ -220,7 +220,7 @@ async function cargarRFCs() {
   const mapa = new Map();
 
   data.forEach(x => {
-    const nombre = 
+    const nombre =
       x.proveedor_unificado ||
       x.razon_social_emisor ||
       x.nombre_emisor ||
@@ -239,8 +239,6 @@ async function cargarRFCs() {
 
   console.log("LISTA OK:", listaBusqueda);
 }
-
-
 cargarRFCs();   // ✔ CORRECTO
 
 
