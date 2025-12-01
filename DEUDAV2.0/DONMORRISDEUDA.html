@@ -205,39 +205,61 @@ async function cargarRFCs() {
   const { data, error } = await supabase
     .from("v_deuda_proveedores")
     .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
-    .not("rfc_emisor", "is", null);
+    .not("rfc_emisor", "is", null)
+    .order("rfc_emisor");
 
   if (error) {
     alert("Error al cargar lista de proveedores");
     return;
   }
 
-  const mapa = new Map();
+  console.log("Total de registros obtenidos:", data.length);
+  
+  // DEBUG: Mostrar el RFC específico
+  const rfcEspecifico = data.filter(x => 
+    x.rfc_emisor && x.rfc_emisor.includes("PPC0311111KA")
+  );
+  console.log("DEBUG - RFC PPC0311111KA encontrado:", rfcEspecifico);
+
+  // Usar Map para evitar duplicados
+  const mapaUnico = new Map();
 
   data.forEach(x => {
-    const nombre =
-      x.proveedor_unificado ||
-      x.razon_social_emisor ||
-      x.nombre_emisor ||
-      x.rfc_emisor;
+    if (!x.rfc_emisor) return;
 
-if (!mapa.has(x.rfc_emisor)) {
-  mapa.set(x.rfc_emisor, []);
-}
+    const rfc = x.rfc_emisor.toUpperCase().trim();
+    
+    // Determinar el mejor nombre disponible
+    let nombre = "";
+    if (x.proveedor_unificado && x.proveedor_unificado.trim() !== "") {
+      nombre = x.proveedor_unificado;
+    } else if (x.razon_social_emisor && x.razon_social_emisor.trim() !== "") {
+      nombre = x.razon_social_emisor;
+    } else if (x.nombre_emisor && x.nombre_emisor.trim() !== "") {
+      nombre = x.nombre_emisor;
+    } else {
+      nombre = rfc;
+    }
 
-mapa.get(x.rfc_emisor).push(
-  nombre.toUpperCase().trim()
-);
-
+    // Solo guardar si no existe o si el nombre es más completo
+    if (!mapaUnico.has(rfc) || nombre.length > mapaUnico.get(rfc).length) {
+      mapaUnico.set(rfc, nombre.toUpperCase().trim());
+    }
   });
 
-listaBusqueda = Array.from(mapa, ([rfc, nombres]) => ({
-  rfc,
-  nombre: nombres.join(" ").toUpperCase()
-}));
+  // Convertir a array
+  listaBusqueda = Array.from(mapaUnico, ([rfc, nombre]) => ({
+    rfc: rfc,
+    nombre: nombre
+  }));
 
+  // Ordenar alfabéticamente por RFC
+  listaBusqueda.sort((a, b) => a.rfc.localeCompare(b.rfc));
 
-  console.log("LISTA OK:", listaBusqueda);
+  console.log("Lista de búsqueda creada con:", listaBusqueda.length, "proveedores únicos");
+  
+  // DEBUG: Mostrar los primeros 5
+  console.log("Primeros 5 RFCs:", listaBusqueda.slice(0, 5));
 }
 cargarRFCs();   // ✔ CORRECTO
 
@@ -246,34 +268,58 @@ cargarRFCs();   // ✔ CORRECTO
    5.2 AUTOCOMPLETE RFC
 ======================================*/
 function autocompleteRFC() {
-  const txt = rfcFiltro.value.toUpperCase().trim();
+  const txt = rfcFiltro.value.trim().toUpperCase();
   const lista = document.getElementById("sugerenciasRFC");
 
   lista.innerHTML = "";
-  if (txt.length < 1) return lista.style.display = "none";
+  
+  if (txt.length < 2) {
+    lista.style.display = "none";
+    return;
+  }
 
-  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  console.log("Buscando:", txt);
+  console.log("En lista de", listaBusqueda.length, "proveedores");
 
-  listaBusqueda
-    .filter(x => 
-      x.rfc.includes(normalizado) ||
-      x.nombre.includes(normalizado)
-    )
-    .forEach(x => {
-      let div = document.createElement("div");
-      div.textContent = `${x.rfc} — ${x.nombre}`;
-      div.onclick = () => {
-        rfcFiltro.value = x.rfc;
-        nombreFiltro.value = x.nombre;
-        window.rfcSeleccionado = x.rfc;
-        lista.style.display = "none";
-      };
-      lista.appendChild(div);
-    });
+  // Búsqueda simple y directa
+  const resultados = listaBusqueda.filter(x => {
+    // Buscar en RFC (exacto o parcial)
+    if (x.rfc && x.rfc.includes(txt)) return true;
+    
+    // Buscar en nombre (sin normalizar para mantener tildes)
+    if (x.nombre && x.nombre.includes(txt)) return true;
+    
+    // Buscar sin acentos en nombre (opcional)
+    const nombreSinAcentos = x.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (nombreSinAcentos.includes(txt.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
+      return true;
+    }
+    
+    return false;
+  });
+
+  console.log("Resultados encontrados:", resultados.length);
+
+  if (resultados.length === 0) {
+    lista.style.display = "none";
+    return;
+  }
+
+  // Mostrar resultados
+  resultados.slice(0, 15).forEach(x => {
+    const div = document.createElement("div");
+    div.textContent = `${x.rfc} — ${x.nombre}`;
+    div.onclick = () => {
+      rfcFiltro.value = x.rfc;
+      nombreFiltro.value = x.nombre;
+      window.rfcSeleccionado = x.rfc;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
 
   lista.style.display = "block";
 }
-
 /* =====================================
    5.3 AUTOCOMPLETE NOMBRE
 ======================================*/
