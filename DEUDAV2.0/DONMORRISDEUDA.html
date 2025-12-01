@@ -207,9 +207,9 @@ let listaBusqueda = [];
    5.1 CARGAR RFC + NOMBRE
 ======================================*/
 async function cargarRFCs() {
-  const { data, error } = await supabase
-    .from("v_deuda_proveedores")
-    .select("rfc_emisor, proveedor_unificado")
+const { data, error } = await supabase
+  .from("v_deuda_proveedores")
+  .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor");
     .not("rfc_emisor", "is", null);
 
   if (error) {
@@ -226,10 +226,14 @@ async function cargarRFCs() {
     );
   });
 
-  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
-    rfc,
-    nombre
-  }));
+listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
+  rfc,
+  nombre:
+    (nombre ||
+    x.razon_social_emisor ||
+    x.nombre_emisor ||
+    rfc).toUpperCase().trim()
+}));
 
   console.log("LISTA LISTA:", listaBusqueda);
 }
