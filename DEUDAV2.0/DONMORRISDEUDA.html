@@ -202,68 +202,78 @@ let listaBusqueda = [];
    5.1 CARGAR RFC + NOMBRE
 ======================================*/
 async function cargarRFCs() {
+  console.log("🚀 Cargando RFCs con el mismo filtro que el app exitoso...");
+  
+  // ¡MISMA CONSULTA QUE EL APP QUE SÍ FUNCIONA!
   const { data, error } = await supabase
     .from("v_deuda_proveedores")
     .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
+    .neq("factura_pagada", "SI")  // ← ¡ESTE FILTRO FALTABA!
     .not("rfc_emisor", "is", null)
-    .order("rfc_emisor");
+    .order("rfc_emisor", { ascending: true });
 
   if (error) {
+    console.error("❌ Error:", error);
     alert("Error al cargar lista de proveedores");
     return;
   }
 
-  console.log("Total de registros obtenidos:", data.length);
+  console.log(`✅ ${data.length} registros con facturas NO PAGADAS`);
   
-  // DEBUG: Mostrar el RFC específico
-  const rfcEspecifico = data.filter(x => 
+  // DEBUG: Confirmar que SÍ está nuestro RFC
+  const nuestroRFC = data.filter(x => 
     x.rfc_emisor && x.rfc_emisor.includes("PPC0311111KA")
   );
-  console.log("DEBUG - RFC PPC0311111KA encontrado:", rfcEspecifico);
+  console.log("🔍 PPC0311111KA en datos filtrados:", nuestroRFC);
 
-  // Usar Map para evitar duplicados
-  const mapaUnico = new Map();
-
-  data.forEach(x => {
-    if (!x.rfc_emisor) return;
-
-    const rfc = x.rfc_emisor.toUpperCase().trim();
+  // Crear mapa único por RFC
+  const mapa = new Map();
+  
+  data.forEach(item => {
+    if (!item.rfc_emisor) return;
     
-    // Determinar el mejor nombre disponible
+    const rfc = item.rfc_emisor.toUpperCase().trim();
+    
+    // Usar el mismo orden de prioridad para nombres
     let nombre = "";
-    if (x.proveedor_unificado && x.proveedor_unificado.trim() !== "") {
-      nombre = x.proveedor_unificado;
-    } else if (x.razon_social_emisor && x.razon_social_emisor.trim() !== "") {
-      nombre = x.razon_social_emisor;
-    } else if (x.nombre_emisor && x.nombre_emisor.trim() !== "") {
-      nombre = x.nombre_emisor;
+    if (item.proveedor_unificado && item.proveedor_unificado.trim() !== "") {
+      nombre = item.proveedor_unificado;
+    } else if (item.razon_social_emisor && item.razon_social_emisor.trim() !== "") {
+      nombre = item.razon_social_emisor;
+    } else if (item.nombre_emisor && item.nombre_emisor.trim() !== "") {
+      nombre = item.nombre_emisor;
     } else {
       nombre = rfc;
     }
-
-    // Solo guardar si no existe o si el nombre es más completo
-    if (!mapaUnico.has(rfc) || nombre.length > mapaUnico.get(rfc).length) {
-      mapaUnico.set(rfc, nombre.toUpperCase().trim());
-    }
+    
+    mapa.set(rfc, nombre.toUpperCase().trim());
   });
 
   // Convertir a array
-  listaBusqueda = Array.from(mapaUnico, ([rfc, nombre]) => ({
-    rfc: rfc,
-    nombre: nombre
+  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ 
+    rfc, 
+    nombre 
   }));
 
-  // Ordenar alfabéticamente por RFC
+  // Ordenar alfabéticamente
   listaBusqueda.sort((a, b) => a.rfc.localeCompare(b.rfc));
-
-  console.log("Lista de búsqueda creada con:", listaBusqueda.length, "proveedores únicos");
   
-  // DEBUG: Mostrar los primeros 5
-  console.log("Primeros 5 RFCs:", listaBusqueda.slice(0, 5));
+  console.log(`📊 ${listaBusqueda.length} RFCs únicos en listaBusqueda`);
+  
+  // VERIFICAR FINAL
+  const encontrado = listaBusqueda.find(x => x.rfc === "PPC0311111KA");
+  console.log("🎯 PPC0311111KA encontrado en listaBusqueda:", encontrado);
+  
+  if (encontrado) {
+    console.log("✅ ¡LISTO! El autocomplete ahora debería funcionar.");
+  } else {
+    console.warn("⚠️  Aún no aparece. Mostrando primeros 10:");
+    console.log(listaBusqueda.slice(0, 10));
+  }
 }
-cargarRFCs();   // ✔ CORRECTO
 
-
+// Recargar inmediatamente después de cambiar
+cargarRFCs();
 /* =====================================
    5.2 AUTOCOMPLETE RFC
 ======================================*/
