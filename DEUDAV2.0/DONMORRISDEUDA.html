@@ -217,7 +217,6 @@ async function cargarRFCs() {
     return;
   }
 
-  // Limpiar duplicados por RFC
   const mapa = new Map();
 
   data.forEach(x => {
@@ -227,7 +226,6 @@ async function cargarRFCs() {
     );
   });
 
-  // Pasar a lista usable para autocomplete
   listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
     rfc,
     nombre
@@ -236,9 +234,8 @@ async function cargarRFCs() {
   console.log("LISTA LISTA:", listaBusqueda);
 }
 
+cargarRFCs();   // ✔ CORRECTO
 
-};
-cargarRFCs();
 
 /* =====================================
    5.2 AUTOCOMPLETE RFC
