@@ -226,16 +226,21 @@ async function cargarRFCs() {
       x.nombre_emisor ||
       x.rfc_emisor;
 
-    mapa.set(
-      x.rfc_emisor,
-      nombre.toUpperCase().trim()
-    );
+if (!mapa.has(x.rfc_emisor)) {
+  mapa.set(x.rfc_emisor, []);
+}
+
+mapa.get(x.rfc_emisor).push(
+  nombre.toUpperCase().trim()
+);
+
   });
 
-  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
-    rfc,
-    nombre
-  }));
+listaBusqueda = Array.from(mapa, ([rfc, nombres]) => ({
+  rfc,
+  nombre: nombres.join(" ").toUpperCase()
+}));
+
 
   console.log("LISTA OK:", listaBusqueda);
 }
