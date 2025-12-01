@@ -207,10 +207,10 @@ let listaBusqueda = [];
    5.1 CARGAR RFC + NOMBRE
 ======================================*/
 async function cargarRFCs() {
-const { data, error } = await supabase
-  .from("v_deuda_proveedores")
-  .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor");
-    .not("rfc_emisor", "is", null);
+  const { data, error } = await supabase
+    .from("v_deuda_proveedores")
+    .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
+    .not("rfc_emisor", "is", null);  // ← YA SIN EL PUNTO BASURA
 
   if (error) {
     alert("Error al cargar lista de proveedores");
@@ -222,21 +222,19 @@ const { data, error } = await supabase
   data.forEach(x => {
     mapa.set(
       x.rfc_emisor,
-      (x.proveedor_unificado || x.rfc_emisor).toUpperCase().trim()
+      (x.proveedor_unificado ||
+       x.razon_social_emisor ||
+       x.nombre_emisor ||
+       x.rfc_emisor
+      ).toUpperCase().trim()
     );
   });
 
-listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
-  rfc,
-  nombre:
-    (nombre ||
-    x.razon_social_emisor ||
-    x.nombre_emisor ||
-    rfc).toUpperCase().trim()
-}));
+  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }));
 
   console.log("LISTA LISTA:", listaBusqueda);
 }
+
 
 cargarRFCs();   // ✔ CORRECTO
 
