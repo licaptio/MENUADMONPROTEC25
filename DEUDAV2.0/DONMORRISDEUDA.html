@@ -210,21 +210,11 @@ async function cargarRFCs() {
   const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
   if (error) { alert("Error al cargar RFCs"); return; }
 
-listaBusqueda = data.map(x => {
-  // Nombre que viene del RPC
-  let nom = (x.nombre || "").toUpperCase().trim();
+listaBusqueda = data.map(x => ({
+  rfc: x.rfc,
+  nombre: (x.nombre || x.rfc).toUpperCase().trim()
+}));
 
-  // si el RPC no trae nombre verdadero, lo reemplazamos por el del CFDI
-  const factura = datosCrudos.find(f => f.rfc_emisor === x.rfc);
-  if (factura) {
-    nom = (factura.razon_social_emisor || factura.nombre_emisor || nom || x.rfc).toUpperCase().trim();
-  }
-
-  return {
-    rfc: x.rfc,
-    nombre: nom
-  };
-});
 
 cargarRFCs();
 
