@@ -210,7 +210,7 @@ async function cargarRFCs() {
   const { data, error } = await supabase
     .from("v_deuda_proveedores")
     .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
-    .not("rfc_emisor", "is", null);  // ← YA SIN EL PUNTO BASURA
+    .not("rfc_emisor", "is", null);
 
   if (error) {
     alert("Error al cargar lista de proveedores");
@@ -220,19 +220,24 @@ async function cargarRFCs() {
   const mapa = new Map();
 
   data.forEach(x => {
+    const nombre = 
+      x.proveedor_unificado ||
+      x.razon_social_emisor ||
+      x.nombre_emisor ||
+      x.rfc_emisor;
+
     mapa.set(
       x.rfc_emisor,
-      (x.proveedor_unificado ||
-       x.razon_social_emisor ||
-       x.nombre_emisor ||
-       x.rfc_emisor
-      ).toUpperCase().trim()
+      nombre.toUpperCase().trim()
     );
   });
 
-  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }));
+  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({
+    rfc,
+    nombre
+  }));
 
-  console.log("LISTA LISTA:", listaBusqueda);
+  console.log("LISTA OK:", listaBusqueda);
 }
 
 
