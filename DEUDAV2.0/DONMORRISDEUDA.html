@@ -211,12 +211,11 @@ async function cargarRFCs() {
   console.log("🚀 Cargando RFCs con el mismo filtro que el app exitoso...");
   
   // ¡MISMA CONSULTA QUE EL APP QUE SÍ FUNCIONA!
-  const { data, error } = await supabase
-    .from("v_deuda_proveedores")
-    .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
-    .neq("factura_pagada", "SI")  // ← ¡ESTE FILTRO FALTABA!
-    .not("rfc_emisor", "is", null)
-    .order("rfc_emisor", { ascending: true });
+const { data, error } = await supabase
+  .from("v_deuda_proveedores")
+  .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
+  .not("rfc_emisor", "is", null)
+  .order("rfc_emisor", { ascending: true });
 
   if (error) {
     console.error("❌ Error:", error);
@@ -224,7 +223,8 @@ async function cargarRFCs() {
     return;
   }
 
-  console.log(`✅ ${data.length} registros con facturas NO PAGADAS`);
+  console.log(`✅ ${data.length} registros cargados (pagadas + no pagadas)`);
+
   
   // DEBUG: Confirmar que SÍ está nuestro RFC
   const nuestroRFC = data.filter(x => 
@@ -233,27 +233,27 @@ async function cargarRFCs() {
   console.log("🔍 PPC0311111KA en datos filtrados:", nuestroRFC);
 
   // Crear mapa único por RFC
-  const mapa = new Map();
-  
-  data.forEach(item => {
-    if (!item.rfc_emisor) return;
-    
-    const rfc = item.rfc_emisor.toUpperCase().trim();
-    
-    // Usar el mismo orden de prioridad para nombres
-    let nombre = "";
-    if (item.proveedor_unificado && item.proveedor_unificado.trim() !== "") {
-      nombre = item.proveedor_unificado;
-    } else if (item.razon_social_emisor && item.razon_social_emisor.trim() !== "") {
-      nombre = item.razon_social_emisor;
-    } else if (item.nombre_emisor && item.nombre_emisor.trim() !== "") {
-      nombre = item.nombre_emisor;
-    } else {
-      nombre = rfc;
-    }
-    
-    mapa.set(rfc, nombre.toUpperCase().trim());
-  });
+const mapa = new Map();
+
+data.forEach(item => {
+  if (!item.rfc_emisor) return;
+
+  const rfc = item.rfc_emisor.toUpperCase().trim();
+
+  let nombre = "";
+  if (item.proveedor_unificado?.trim()) {
+    nombre = item.proveedor_unificado;
+  } else if (item.razon_social_emisor?.trim()) {
+    nombre = item.razon_social_emisor;
+  } else if (item.nombre_emisor?.trim()) {
+    nombre = item.nombre_emisor;
+  } else {
+    nombre = rfc; // 🔥 mata el bug
+  }
+
+  mapa.set(rfc, nombre.toUpperCase().trim());
+});
+
 
   // Convertir a array
   listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ 
@@ -460,14 +460,16 @@ function mostrarTabla(data) {
 
     const uuid = f.uuid_cfdi || f.uuid;
 
-    let proveedor = f.proveedor_unificado;
-    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-      proveedor = f.razon_social_emisor;
-    } else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-      proveedor = f.nombre_emisor;
-    } else {
-      proveedor = f.rfc_emisor;
-    }
+let proveedor = "";
+if (f.proveedor_unificado && f.proveedor_unificado.trim() !== "") {
+  proveedor = f.proveedor_unificado;
+} else if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+  proveedor = f.razon_social_emisor;
+} else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+  proveedor = f.nombre_emisor;
+} else {
+  proveedor = f.rfc_emisor;
+}
 
     html += `
 <tr>
