@@ -213,7 +213,8 @@ async function cargarRFCs() {
   // ¡MISMA CONSULTA QUE EL APP QUE SÍ FUNCIONA!
 const { data, error } = await supabase
   .from("v_deuda_proveedores")
-  .select("*")
+  .select("*", { count: 'exact' })
+.range(0, 4999)       // <-- tráete hasta 5000 proveedores
   .not("rfc_emisor", "is", null)
   .order("rfc_emisor", { ascending: true });
 
