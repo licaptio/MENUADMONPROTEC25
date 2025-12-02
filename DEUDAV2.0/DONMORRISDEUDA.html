@@ -214,9 +214,9 @@ async function cargarRFCs() {
 const { data, error } = await supabase
   .from("v_deuda_proveedores")
   .select("*", { count: 'exact' })
-.range(0, 4999)       // <-- tráete hasta 5000 proveedores
   .not("rfc_emisor", "is", null)
-  .order("rfc_emisor", { ascending: true });
+  .order("rfc_emisor", { ascending: true })
+  .range(0, 4999);
 
 
   if (error) {
