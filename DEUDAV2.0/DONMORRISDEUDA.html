@@ -216,7 +216,7 @@ const { data, error } = await supabase
   .select("*", { count: 'exact' })
   .not("rfc_emisor", "is", null)
   .order("rfc_emisor", { ascending: true })
-  .range(0, 4999);
+  .range(0, 999999);
 
 
   if (error) {
