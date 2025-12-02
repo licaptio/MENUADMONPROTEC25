@@ -340,9 +340,14 @@ function autocompleteRFC() {
    5.3 AUTOCOMPLETE NOMBRE
 ======================================*/
 function autocompleteNombre() {
-  const txt = nombreFiltro.value.toUpperCase().trim();
-  const lista = document.getElementById("sugerenciasNombre");
+  const txt = nombreFiltro.value
+    .toUpperCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " "); // limpia dobles espacios
 
+  const lista = document.getElementById("sugerenciasNombre");
   lista.innerHTML = "";
 
   if (txt.length < 1) {
@@ -350,17 +355,20 @@ function autocompleteNombre() {
     return;
   }
 
-  // Fuzzy-lite: permite errores de letras
-  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
   const resultados = listaBusqueda.filter(x => {
-    const nom = (x.nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const rfc = x.rfc || "";
+    const nom = (x.nombre || "")
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+    const rfc = (x.rfc || "").toUpperCase();
 
     return (
-      nom.includes(normalizado) ||         // por nombre
-      rfc.includes(normalizado) ||        // por RFC
-      nom.replace(/\s+/g, '').includes(normalizado.replace(/\s+/g, '')) // fuzzy-lite
+      nom.includes(txt) ||                 // MINERVA → coincide
+      nom.startsWith(txt) ||               // inicio coincide
+      rfc.includes(txt) ||                 // busca por RFC
+      nom.replace(/\s+/g, '').includes(txt.replace(/\s+/g, '')) // fuzzy
     );
   });
 
@@ -377,6 +385,7 @@ function autocompleteNombre() {
 
   lista.style.display = "block";
 }
+
 
 /* =====================================
    5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
