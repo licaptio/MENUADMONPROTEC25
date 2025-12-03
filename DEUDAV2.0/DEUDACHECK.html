@@ -183,41 +183,25 @@ label[for="rfcFiltro"],
 </head>
 <body>
 
-<h2>🔍 Consulta de Facturas por RFC</h2>
+<h2>🔍 Consulta de Facturas por RFC O NOMBRE DE PROVEEDOR </h2>
 
 <!-- =====================================
-     [3] FILA DE FILTROS ALINEADA
+     [3] INPUT RFC + AUTOCOMPLETE
 ======================================-->
+<label><strong>RFC O NOMBRE:</strong></label>
+<input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
+<div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-<div class="fila-filtros">
-
-  <div class="campo-autocomplete">
-    <label><strong>RFC:</strong></label>
-    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" 
-           oninput="autocompleteRFC()" autocomplete="off">
-    <div id="sugerenciasRFC" class="autocomplete-list"></div>
-  </div>
-
-  <div class="campo-autocomplete">
-    <label><strong>Nombre:</strong></label>
-    <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" 
-           oninput="autocompleteNombre()" autocomplete="off">
-    <div id="sugerenciasNombre" class="autocomplete-list"></div>
-  </div>
-
-</div>
+<!-- =====================================
+     [4] INPUT NOMBRE + AUTOCOMPLETE
+======================================-->
+<input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
+<div id="sugerenciasNombre" class="autocomplete-list"></div>
 
 <button onclick="consultarPorRFC()">🔎 Consultar</button>
 
-
-<label style="margin-left:1rem;">
-  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
-  Mostrar pagadas
-</label>
-
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
-
 <!-- =====================================
      [5] LÓGICA JAVASCRIPT
 ======================================-->
@@ -233,60 +217,134 @@ let datosCrudos = [];
 let listaBusqueda = [];
 
 /* =====================================
-   5.1 CARGAR RFC + NOMBRE
+   5.1 CARGAR RFCs SIN LÍMITE (Paginación real)
 ======================================*/
 async function cargarRFCs() {
-  const { data, error } = await supabase.rpc("obtener_rfc_y_nombre_unicos");
-  if (error) { alert("Error al cargar RFCs"); return; }
+  console.log("🚀 Cargando TODOS los RFCs (paginado)...");
 
-listaBusqueda = data.map(x => ({
-  rfc: x.rfc,
-  nombre: (x.nombre || x.rfc).toUpperCase().trim()
-}));
+  let todos = [];
+  let desde = 0;
+  let pagina = [];
 
+  do {
+    const { data, error } = await supabase
+      .from("v_deuda_proveedores")
+      .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
+      .not("rfc_emisor", "is", null)
+      .order("rfc_emisor", { ascending: true })
+      .range(desde, desde + 999);   // ← Pide bloques de 1000
+
+    if (error) {
+      console.error("❌ Error cargando página:", error);
+      break;
+    }
+
+    pagina = data;
+    todos = todos.concat(data);  // ← Acumula
+    desde += 1000;               // ← Avanza a la siguiente página
+
+    console.log(`📥 Página cargada: ${pagina.length} registros`);
+  } while (pagina.length === 1000); // ← Repetir mientras venga llena
+
+  console.log(`🏁 TOTAL FINAL TRAÍDO: ${todos.length} registros`);
+
+  // --------------------------------------------
+  // 🔍 CREAR LISTA ÚNICA DE RFCs + NOMBRES
+  // --------------------------------------------
+
+  const mapa = new Map();
+
+  todos.forEach(item => {
+    if (!item.rfc_emisor) return;
+
+    const rfc = item.rfc_emisor.toUpperCase().trim();
+
+    let nombre = "";
+    if (item.proveedor_unificado?.trim()) nombre = item.proveedor_unificado;
+    else if (item.razon_social_emisor?.trim()) nombre = item.razon_social_emisor;
+    else if (item.nombre_emisor?.trim()) nombre = item.nombre_emisor;
+    else nombre = rfc;
+
+    mapa.set(rfc, nombre.toUpperCase().trim());
+  });
+
+  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }))
+    .sort((a, b) => a.rfc.localeCompare(b.rfc));
+
+  console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
+  console.log("🎯 Ejemplo:", listaBusqueda.slice(0, 5));
 }
 
+// Recargar inmediatamente después de cambiar
 cargarRFCs();
-
 /* =====================================
    5.2 AUTOCOMPLETE RFC
 ======================================*/
 function autocompleteRFC() {
-  const txt = rfcFiltro.value.toUpperCase().trim();
+  const txt = rfcFiltro.value.trim().toUpperCase();
   const lista = document.getElementById("sugerenciasRFC");
 
   lista.innerHTML = "";
-  if (txt.length < 1) return lista.style.display = "none";
+  
+  if (txt.length < 2) {
+    lista.style.display = "none";
+    return;
+  }
 
-  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  console.log("Buscando:", txt);
+  console.log("En lista de", listaBusqueda.length, "proveedores");
 
-  listaBusqueda
-    .filter(x => 
-      x.rfc.includes(normalizado) ||
-      x.nombre.includes(normalizado)
-    )
-    .forEach(x => {
-      let div = document.createElement("div");
-      div.textContent = `${x.rfc} — ${x.nombre}`;
-      div.onclick = () => {
-        rfcFiltro.value = x.rfc;
-        nombreFiltro.value = x.nombre;
-        window.rfcSeleccionado = x.rfc;
-        lista.style.display = "none";
-      };
-      lista.appendChild(div);
-    });
+  // Búsqueda simple y directa
+  const resultados = listaBusqueda.filter(x => {
+    // Buscar en RFC (exacto o parcial)
+    if (x.rfc && x.rfc.includes(txt)) return true;
+    
+    // Buscar en nombre (sin normalizar para mantener tildes)
+    if (x.nombre && x.nombre.includes(txt)) return true;
+    
+    // Buscar sin acentos en nombre (opcional)
+    const nombreSinAcentos = x.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (nombreSinAcentos.includes(txt.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
+      return true;
+    }
+    
+    return false;
+  });
+
+  console.log("Resultados encontrados:", resultados.length);
+
+  if (resultados.length === 0) {
+    lista.style.display = "none";
+    return;
+  }
+
+  // Mostrar resultados
+  resultados.slice(0, 15).forEach(x => {
+    const div = document.createElement("div");
+    div.textContent = `${x.rfc} — ${x.nombre}`;
+    div.onclick = () => {
+      rfcFiltro.value = x.rfc;
+      nombreFiltro.value = x.nombre;
+      window.rfcSeleccionado = x.rfc;
+      lista.style.display = "none";
+    };
+    lista.appendChild(div);
+  });
 
   lista.style.display = "block";
 }
-
 /* =====================================
    5.3 AUTOCOMPLETE NOMBRE
 ======================================*/
 function autocompleteNombre() {
-  const txt = nombreFiltro.value.toUpperCase().trim();
-  const lista = document.getElementById("sugerenciasNombre");
+  const txt = nombreFiltro.value
+    .toUpperCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " "); // limpia dobles espacios
 
+  const lista = document.getElementById("sugerenciasNombre");
   lista.innerHTML = "";
 
   if (txt.length < 1) {
@@ -294,17 +352,20 @@ function autocompleteNombre() {
     return;
   }
 
-  // Fuzzy-lite: permite errores de letras
-  const normalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
   const resultados = listaBusqueda.filter(x => {
-    const nom = (x.nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const rfc = x.rfc || "";
+    const nom = (x.nombre || "")
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+    const rfc = (x.rfc || "").toUpperCase();
 
     return (
-      nom.includes(normalizado) ||         // por nombre
-      rfc.includes(normalizado) ||        // por RFC
-      nom.replace(/\s+/g, '').includes(normalizado.replace(/\s+/g, '')) // fuzzy-lite
+      nom.includes(txt) ||                 // MINERVA → coincide
+      nom.startsWith(txt) ||               // inicio coincide
+      rfc.includes(txt) ||                 // busca por RFC
+      nom.replace(/\s+/g, '').includes(txt.replace(/\s+/g, '')) // fuzzy
     );
   });
 
