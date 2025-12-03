@@ -199,6 +199,10 @@ label[for="rfcFiltro"],
 <div id="sugerenciasNombre" class="autocomplete-list"></div>
 
 <button onclick="consultarPorRFC()">🔎 Consultar</button>
+<label style="display:block; margin-top:1rem;">
+  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
+  Mostrar pagadas
+</label>
 
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
