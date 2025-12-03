@@ -164,6 +164,19 @@ label[for="rfcFiltro"],
 .badge-no {
   background: #dc3545;
 }
+/* FILA QUE CONTIENE RFC + NOMBRE */
+.fila-filtros {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start; /* 🔥 Esto alinea perfectamente las cajas */
+  flex-wrap: wrap;         /* Para que en móvil caigan uno debajo del otro */
+}
+
+/* CONTENEDOR DE CADA INPUT CON SU AUTOCOMPLETE */
+.campo-autocomplete {
+  position: relative; /* 🔥 NECESARIO para que la lista se alinee */
+  width: 250px;       /* Igual al ancho del dropdown */
+}
 
 </style>
 </head>
@@ -172,20 +185,29 @@ label[for="rfcFiltro"],
 <h2>🔍 Consulta de Facturas por RFC</h2>
 
 <!-- =====================================
-     [3] INPUT RFC + AUTOCOMPLETE
+     [3] FILA DE FILTROS ALINEADA
 ======================================-->
-<label><strong>RFC:</strong></label>
-<input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
-<div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-<!-- =====================================
-     [4] INPUT NOMBRE + AUTOCOMPLETE
-======================================-->
-<label style="margin-left:1rem;"><strong>Nombre:</strong></label>
-<input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
-<div id="sugerenciasNombre" class="autocomplete-list"></div>
+<div class="fila-filtros">
+
+  <div class="campo-autocomplete">
+    <label><strong>RFC:</strong></label>
+    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" 
+           oninput="autocompleteRFC()" autocomplete="off">
+    <div id="sugerenciasRFC" class="autocomplete-list"></div>
+  </div>
+
+  <div class="campo-autocomplete">
+    <label><strong>Nombre:</strong></label>
+    <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" 
+           oninput="autocompleteNombre()" autocomplete="off">
+    <div id="sugerenciasNombre" class="autocomplete-list"></div>
+  </div>
+
+</div>
 
 <button onclick="consultarPorRFC()">🔎 Consultar</button>
+
 
 <label style="margin-left:1rem;">
   <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
