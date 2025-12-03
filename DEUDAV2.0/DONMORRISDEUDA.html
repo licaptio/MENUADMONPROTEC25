@@ -216,7 +216,7 @@ const { data, error } = await supabase
   .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
   .not("rfc_emisor", "is", null)
   .order("rfc_emisor", { ascending: true })
-  .range(0, 20000)
+  .range(0, 5000);  // 👈🔥 aquí ya no corta nada
 ;   // ⚡ ESTA SÍ FUNCIONA
 
 
