@@ -205,79 +205,62 @@ let datosCrudos = [];
 let listaBusqueda = [];
 
 /* =====================================
-   5.1 CARGAR RFC + NOMBRE
+   5.1 CARGAR RFCs SIN LÍMITE (Paginación real)
 ======================================*/
 async function cargarRFCs() {
-  console.log("🚀 Cargando RFCs (proveedores pagados + no pagados)...");
-  
-  // ¡MISMA CONSULTA QUE EL APP QUE SÍ FUNCIONA!
-const { data, error } = await supabase
-  .from("v_deuda_proveedores")
-  .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
-  .not("rfc_emisor", "is", null)
-  .order("rfc_emisor", { ascending: true })
-  .range(0, 5000);  // 👈🔥 aquí ya no corta nada
-;   // ⚡ ESTA SÍ FUNCIONA
+  console.log("🚀 Cargando TODOS los RFCs (paginado)...");
 
+  let todos = [];
+  let desde = 0;
+  let pagina = [];
 
-  if (error) {
-    console.error("❌ Error:", error);
-    alert("Error al cargar lista de proveedores");
-    return;
-  }
+  do {
+    const { data, error } = await supabase
+      .from("v_deuda_proveedores")
+      .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
+      .not("rfc_emisor", "is", null)
+      .order("rfc_emisor", { ascending: true })
+      .range(desde, desde + 999);   // ← Pide bloques de 1000
 
-  console.log(`✅ ${data.length} registros cargados (pagadas + no pagadas)`);
+    if (error) {
+      console.error("❌ Error cargando página:", error);
+      break;
+    }
 
-  
-  // DEBUG: Confirmar que SÍ está nuestro RFC
-  const nuestroRFC = data.filter(x => 
-    x.rfc_emisor && x.rfc_emisor.includes("PPC0311111KA")
-  );
+    pagina = data;
+    todos = todos.concat(data);  // ← Acumula
+    desde += 1000;               // ← Avanza a la siguiente página
 
-  // Crear mapa único por RFC
-const mapa = new Map();
+    console.log(`📥 Página cargada: ${pagina.length} registros`);
+  } while (pagina.length === 1000); // ← Repetir mientras venga llena
 
-data.forEach(item => {
-  if (!item.rfc_emisor) return;
+  console.log(`🏁 TOTAL FINAL TRAÍDO: ${todos.length} registros`);
 
-  const rfc = item.rfc_emisor.toUpperCase().trim();
+  // --------------------------------------------
+  // 🔍 CREAR LISTA ÚNICA DE RFCs + NOMBRES
+  // --------------------------------------------
 
-  let nombre = "";
-  if (item.proveedor_unificado?.trim()) {
-    nombre = item.proveedor_unificado;
-  } else if (item.razon_social_emisor?.trim()) {
-    nombre = item.razon_social_emisor;
-  } else if (item.nombre_emisor?.trim()) {
-    nombre = item.nombre_emisor;
-  } else {
-    nombre = rfc; // 🔥 mata el bug
-  }
+  const mapa = new Map();
 
-  mapa.set(rfc, nombre.toUpperCase().trim());
-});
+  todos.forEach(item => {
+    if (!item.rfc_emisor) return;
 
+    const rfc = item.rfc_emisor.toUpperCase().trim();
 
-  // Convertir a array
-  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ 
-    rfc, 
-    nombre 
-  }));
+    let nombre = "";
+    if (item.proveedor_unificado?.trim()) nombre = item.proveedor_unificado;
+    else if (item.razon_social_emisor?.trim()) nombre = item.razon_social_emisor;
+    else if (item.nombre_emisor?.trim()) nombre = item.nombre_emisor;
+    else nombre = rfc;
 
-  // Ordenar alfabéticamente
-  listaBusqueda.sort((a, b) => a.rfc.localeCompare(b.rfc));
-  
-  console.log(`📊 ${listaBusqueda.length} RFCs únicos en listaBusqueda`);
-  
-  // VERIFICAR FINAL
-  const encontrado = listaBusqueda.find(x => x.rfc === "PPC0311111KA");
-  
-  
-  if (encontrado) {
-    console.log("✅ ¡LISTO! El autocomplete ahora debería funcionar.");
-  } else {
-    
-  
-  }
+    mapa.set(rfc, nombre.toUpperCase().trim());
+  });
+
+  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }))
+    .sort((a, b) => a.rfc.localeCompare(b.rfc));
+
+  console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
+  console.log("🎯 Ejemplo:", listaBusqueda.slice(0, 5));
 }
 
 // Recargar inmediatamente después de cambiar
