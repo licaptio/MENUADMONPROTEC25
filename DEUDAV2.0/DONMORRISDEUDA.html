@@ -214,9 +214,9 @@ async function cargarRFCs() {
 const { data, error } = await supabase
   .from("v_deuda_proveedores")
   .select("*", { count: 'exact' })
+  .range(0, 999999)            // 👈 DEBE IR AQUÍ
   .not("rfc_emisor", "is", null)
-  .order("rfc_emisor", { ascending: true })
-  .range(0, 999999);
+  .order("rfc_emisor", { ascending: true });
 
 
   if (error) {
@@ -232,7 +232,6 @@ const { data, error } = await supabase
   const nuestroRFC = data.filter(x => 
     x.rfc_emisor && x.rfc_emisor.includes("PPC0311111KA")
   );
-  console.log("🔍 PPC0311111KA en datos filtrados:", nuestroRFC);
 
   // Crear mapa único por RFC
 const mapa = new Map();
@@ -270,13 +269,13 @@ data.forEach(item => {
   
   // VERIFICAR FINAL
   const encontrado = listaBusqueda.find(x => x.rfc === "PPC0311111KA");
-  console.log("🎯 PPC0311111KA encontrado en listaBusqueda:", encontrado);
+  
   
   if (encontrado) {
     console.log("✅ ¡LISTO! El autocomplete ahora debería funcionar.");
   } else {
-    console.warn("⚠️  Aún no aparece. Mostrando primeros 10:");
-    console.log(listaBusqueda.slice(0, 10));
+    
+  
   }
 }
 
