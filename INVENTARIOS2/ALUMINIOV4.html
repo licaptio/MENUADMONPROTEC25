@@ -246,28 +246,24 @@ const PAGE_ID = location.pathname.split("/").pop().replace(".html", "");
 const STORAGE_KEY = "inventariosData_" + PAGE_ID;
 
 const inventarios = [
-  { 
-    nombre:"📦 INIX", 
-items:[
-const inventarios = [
-{ nombre:"📦 Aluminios y encerados", items:[
-  ["ALUMINIO 5 MTS BONALUM","",30,""],
-  ["ALUMINIO 7 MTS BONALUM","",30,""],
-  ["ALUMINIO 10 MTS BONALUM","",20,""],
-  ["ALUMINIO 50 MTS CARO BONALUM","",10,""],
-  ["STAR FOIL 500GR C/12 BONALUM","",2,""],
-  ["ALUMINIO 3 KG C/4PZ BONALUM","",2,""],
-  ["PAPEL PARA ESTUFA","",50,""],
-  ["ALUMINIO 10 MTS ALUMSTAR","",20,""],
-  ["ALUMINIO 10 MTS ALUMSTAR","",20,""],
-  ["ALUMINIO 10 MTS ALUMSTAR","",5,""],
-  ["ENCERADO 10 MTS","",5,""],
-  ["ENCERADO 20 MTS","",5,""],
-  ["ROLLO ENCERADO 3 KG","",2,""],
-  ["PAPEL HOJAS CORTADO","",10,""]
-   ]
-  }
-];  //<---- ESTE ERA EL QUE FALTABA
+  { nombre:"📦 Aluminios y encerados", items:[
+    ["ALUMINIO 5 MTS BONALUM","",30,""],
+    ["ALUMINIO 7 MTS BONALUM","",30,""],
+    ["ALUMINIO 10 MTS BONALUM","",20,""],
+    ["ALUMINIO 50 MTS CARO BONALUM","",10,""],
+    ["STAR FOIL 500GR C/12 BONALUM","",2,""],
+    ["ALUMINIO 3 KG C/4PZ BONALUM","",2,""],
+    ["PAPEL PARA ESTUFA","",50,""],
+    ["ALUMINIO 10 MTS ALUMSTAR","",20,""],
+    ["ALUMINIO 10 MTS ALUMSTAR","",20,""],
+    ["ALUMINIO 10 MTS ALUMSTAR","",5,""],
+    ["ENCERADO 10 MTS","",5,""],
+    ["ENCERADO 20 MTS","",5,""],
+    ["ROLLO ENCERADO 3 KG","",2,""],
+    ["PAPEL HOJAS CORTADO","",10,""]
+  ]}
+];
+
 
 /* ===================== GUARDADO LOCAL ===================== */
 function saveData() {
