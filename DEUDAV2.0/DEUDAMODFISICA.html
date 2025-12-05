@@ -305,8 +305,13 @@ if (proveedoresContado.includes(razon)) {
           <td>${dias}</td>
           <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
           <td>${f.rfc_emisor || '-'}</td>
-          <td class="proveedor-destacado">${f.razon_social_emisor || '-'}</td>
-          <td>${f.serie ? f.serie + ' - ' : ''}${f.factura || '-'}</td>
+<!-- PROVEEDOR FINAL -->
+<td class="proveedor-destacado">
+  ${f.proveedor_unificado || f.razon_social_emisor || f.nombre_emisor || f.rfc_emisor}
+</td>
+
+<!-- SERIE / FOLIO FINAL -->
+<td>${f.serie_folio || (f.serie ? f.serie + "-" + f.factura : f.factura) || "—"}</td>
           <td class="numero">${parseFloat(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
 <td 
   class="${(f.factura_fisicamente === 'SI' ? 'fisica-si' : 'fisica-no')}"
