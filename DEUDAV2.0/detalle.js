@@ -716,3 +716,27 @@ setTimeout(() => {
   80% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+// Al presionar el botón verde, abrir la cámara
+document.getElementById("btnCapturar").addEventListener("click", () => {
+  document.getElementById("fotoInput").click();
+});
+
+// Mostrar barra "cargando" al subir foto
+document.getElementById("btnSubirFoto").addEventListener("click", async () => {
+  const archivo = document.getElementById("fotoInput").files[0];
+  if (!archivo) {
+    alert("Primero toma o selecciona una foto.");
+    return;
+  }
+
+  // Mostrar la barra temporal
+  const barra = document.getElementById("barraCargando");
+  barra.classList.remove("oculto");
+
+  // Simulación de subida (aquí va tu Supabase upload)
+  setTimeout(() => {
+    barra.classList.add("oculto");
+    alert("Foto subida correctamente ✔️");
+  }, 1500);
+});
