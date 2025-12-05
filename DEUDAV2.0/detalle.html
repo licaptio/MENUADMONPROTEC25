@@ -10,6 +10,7 @@
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 <body>
 
@@ -18,13 +19,28 @@
   <div id="contenedor" class="tarjeta-principal"></div>
 
   <!-- PANEL DE FOTOS -->
-  <section class="panel-fotos">
-    <h3>Fotos de factura</h3>
-    <input type="file" accept="image/*" capture="environment" id="fotoInput">
-    <button id="btnSubirFoto">📤 Subir Foto</button>
+<!-- PANEL DE FOTOS -->
+<section class="panel-fotos">
+  <h3>Fotos de factura</h3>
 
-    <div id="galeriaFotos"></div>
-  </section>
+  <div class="fila-botones">
+    <!-- BOTÓN VERDE CIRCULAR DE CAPTURAR -->
+    <button id="btnCapturar" class="btn-capturar">📸</button>
+
+    <!-- INPUT OCULTO DE ARCHIVO -->
+    <input type="file" accept="image/*" capture="environment" id="fotoInput" style="display:none">
+
+    <!-- BOTÓN AZUL SUBIR -->
+    <button id="btnSubirFoto" class="btn-subir">📤 Subir</button>
+  </div>
+
+  <!-- BARRA/MENSAJE CARGANDO -->
+  <div id="barraCargando" class="barra-cargando oculto">
+    ⏳ Cargando fotografía...
+  </div>
+
+  <div id="galeriaFotos"></div>
+</section>
 
   <!-- TOAST -->
   <div id="toast" class="toast">Listo</div>
