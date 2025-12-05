@@ -7,6 +7,13 @@ const TABLA = "deuda_limpia_pdd";
 
 function $(id) { return document.getElementById(id); }
 
+function formatoMX(n) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN"
+  }).format(Number(n || 0));
+}
+
 // ============================================================
 // INICIO – CARGAR CFDI
 // ============================================================
