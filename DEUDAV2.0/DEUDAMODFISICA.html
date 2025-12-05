@@ -149,7 +149,7 @@ const proveedoresContado = [
 
     async function cargar() {
 const { data, error } = await _supabase
-  .from(tabla)
+  .from("v_deuda_proveedores")
   .select("*")
   .neq('factura_pagada', 'SI');
       if (error) return alert("Error cargando datos");
