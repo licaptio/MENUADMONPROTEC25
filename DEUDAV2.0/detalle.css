@@ -439,5 +439,80 @@ tfoot td.desc-total {
   50% { width: 70%; }
   100% { width: 0%; }
 }
+/* ============================
+   BOTONES DE FOTOS
+   ============================ */
 
+.foto-botones {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
 
+/* Botón verde circular (cámara) */
+.btn-capturar {
+  width: 60px;
+  height: 60px;
+  background: #1eb640;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+  cursor: pointer;
+}
+.btn-capturar img {
+  width: 30px;
+}
+
+/* Botón azul subir foto */
+.btn-upload {
+  background: #0c6cbd;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.btn-upload img {
+  width: 22px;
+}
+
+/* Barra de carga */
+#barraCargando {
+  margin-top: 10px;
+  padding: 8px;
+  background: #003366;
+  color: white;
+  border-radius: 6px;
+  text-align: center;
+}
+.oculto {
+  display: none;
+}
+
+/* Galería */
+.foto-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.foto-item img {
+  width: 100%;
+  border-radius: 10px;
+}
+.foto-item button {
+  background: #b91c1c;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
