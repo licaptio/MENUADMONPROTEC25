@@ -76,7 +76,7 @@ async function cargarCFDI() {
 // RENDER PRINCIPAL
 // ============================================================
 function renderFactura(f) {
-
+window.__FACTURA = f;   // ← SOLUCIÓN PRINCIPAL
   const esViejo = !Array.isArray(f.conceptos_detalle);
 
   let subtotal = 0;
@@ -608,50 +608,50 @@ document.addEventListener("click", e => {
 // ============================================================
 let footerHTML = "";
 
-// Subtotal y descuento — ya calculados
-footerHTML += `
-  <tr>
-    <td colspan="7" style="text-align:right">Subtotal</td>
-    <td>${formatoMX(window.__sub || 0)}</td>
-  </tr>
+// Usar la factura global
+const f2 = window.__FACTURA;
 
-  <tr>
-    <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
-    <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
-  </tr>
-`;
+// Si aún no existe, esperar
+if (!f2) {
+  console.warn("Factura no cargada aún");
+} else {
 
-// === Impuestos globales dinámicos ===
-if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
-  f.impuestos_globales.detalles.forEach(det => {
-    let tasaTxt = "";
+  // Subtotal y descuento
+  footerHTML += `
+    <tr>
+      <td colspan="7" style="text-align:right">Subtotal</td>
+      <td>${formatoMX(window.__sub || 0)}</td>
+    </tr>
 
-    if (det.tasa && det.tasa > 0) {
-      tasaTxt = (det.tasa * 100).toFixed(2) + "%";
-    } else {
-      tasaTxt = ""; // cuota fija o IVA exento
-    }
+    <tr>
+      <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+      <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
+    </tr>
+  `;
 
-    footerHTML += `
-      <tr>
-        <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
-        <td>${formatoMX(det.importe)}</td>
-      </tr>
-    `;
-  });
+  // Impuestos globales dinámicos (arreglado)
+  if (f2.impuestos_globales && Array.isArray(f2.impuestos_globales.detalles)) {
+    f2.impuestos_globales.detalles.forEach(det => {
+      const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
+      footerHTML += `
+        <tr>
+          <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
+          <td>${formatoMX(det.importe)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  footerHTML += `
+    <tr>
+      <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
+      <td style="background:#003366;color:#fff">
+        ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
+      </td>
+    </tr>
+  `;
 }
 
-// === TOTAL GENERAL ===
-footerHTML += `
-  <tr>
-    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-    <td style="background:#003366;color:#fff">
-      ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
-    </td>
-  </tr>
-`;
-
-// Se inserta en el <tfoot>
 setTimeout(() => {
   const tfoot = document.querySelector("#footerImpuestos");
   if (tfoot) tfoot.innerHTML = footerHTML;
