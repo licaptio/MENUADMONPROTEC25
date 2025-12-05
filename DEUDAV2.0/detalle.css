@@ -325,3 +325,48 @@ tfoot td.desc-total {
 .timbre-col p {
   margin: 6px 0;
 }
+
+.fila-botones {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.btn-capturar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-size: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-subir {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #0d6efd;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.barra-cargando {
+  background: #222;
+  color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.oculto {
+  display: none;
+}
+  
