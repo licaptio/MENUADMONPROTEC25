@@ -656,3 +656,63 @@ setTimeout(() => {
   const tfoot = document.querySelector("#footerImpuestos");
   if (tfoot) tfoot.innerHTML = footerHTML;
 }, 10);
+
+/* CONTENEDOR DE BOTONES */
+.fila-botones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* BOTÓN VERDE CIRCULAR */
+.btn-capturar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: #16a34a; /* verde */
+  color: white;
+  font-size: 26px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* BOTÓN AZUL SUBIR */
+.btn-subir {
+  flex: 1;
+  padding: 15px;
+  background: #007bff;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* BARRA DE CARGA */
+.barra-cargando {
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 10px;
+  animation: fadeInOut 1.5s ease;
+}
+
+/* Oculto por defecto */
+.oculto {
+  display: none;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
