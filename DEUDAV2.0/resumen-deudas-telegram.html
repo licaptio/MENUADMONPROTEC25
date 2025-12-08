@@ -223,29 +223,31 @@ const ordenadosFinal = unicas.sort((a, b) => {
 //-------------------------------------------------------
 mostrarTabla(ordenadosFinal);
 
-      const sumaTotal = pendientes.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
+//-------------------------------------------------------
+// 7) YA PUEDES USAR ESTE: ordenadosFinal
+//-------------------------------------------------------
 
-      document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div>
-            <strong>Total en Supabase:</strong> ${data.length} registros<br>
-            <strong>No pagados:</strong> ${pendientes.length} registros
-          </div>
-          <div style="text-align: right;">
-            <strong style="display: block;">Total $ pendiente:</strong>
-            <span style="font-size: 1.3em; color: darkgreen;">$${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
-          </div>
-        </div>
-      `);
+// SUMA GLOBAL FINAL
+const sumaGlobal = ordenadosFinal.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
 
-      const ordenados = pendientes.sort((a, b) => {
-        const rfcA = (a.rfc_emisor || "").toLowerCase();
-        const rfcB = (b.rfc_emisor || "").toLowerCase();
-        if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
-        return new Date(a.fecha) - new Date(b.fecha);
-      });
+// Insertar el total arriba
+document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
+  <div style="
+    background:#fff;
+    padding:15px;
+    margin-bottom:12px;
+    border-radius:8px;
+    box-shadow:0 2px 4px rgba(0,0,0,0.15);
+  ">
+    <strong style="font-size:1.1em;">💰 TOTAL GLOBAL PENDIENTE:</strong><br>
+    <span style="font-size:1.6em; font-weight:bold; color:#0a6c21;">
+      $${sumaGlobal.toLocaleString("es-MX",{ minimumFractionDigits:2 })}
+    </span>
+  </div>
+`);
 
-      mostrarTabla(ordenados);
+mostrarTabla(ordenadosFinal);
+
 const vencidas30 = ordenados.filter(f => calcularDias(f.fecha) > 30);
 
 // Detectar vencimientos especiales
