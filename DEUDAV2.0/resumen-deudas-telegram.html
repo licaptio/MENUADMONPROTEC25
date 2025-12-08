@@ -325,11 +325,24 @@ function mostrarTabla(data) {
   document.getElementById("tabla").innerHTML = html;
 }
 
-    function calcularDias(fecha) {
-      const hoy = new Date();
-      const f = new Date(fecha);
-      return Math.floor((hoy - f) / (1000 * 60 * 60 * 24));
-    }
+function calcularDias(fechaStr) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0); // normalizar a medianoche local
+
+  if (!fechaStr) return 0;
+
+  // Si Supabase manda "2024-12-08" o "2024-12-08T00:00:00+00:00"
+  const fechaLimpia = fechaStr.split("T")[0]; // nos quedamos solo con YYYY-MM-DD
+  const [y, m, d] = fechaLimpia.split("-").map(Number);
+
+  // Crear fecha EN HORA LOCAL (Linares, UTC-6)
+  const f = new Date(y, m - 1, d);
+  f.setHours(0, 0, 0, 0);
+
+  const diff = hoy - f;
+  return Math.floor(diff / 86400000);
+}
+
 
     function obtenerClaseVencimiento(d) {
       if (d > 90) return "vencida-mas";
