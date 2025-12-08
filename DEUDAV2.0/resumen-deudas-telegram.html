@@ -248,28 +248,27 @@ document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
 
 mostrarTabla(ordenadosFinal);
 
-const vencidas30 = ordenados.filter(f => calcularDias(f.fecha) > 30);
-
-// Detectar vencimientos especiales
-const vencidasEspeciales = ordenados.filter(f => {
+// =========================
+// ESPECIALES QUE YA VENCIERON
+// =========================
+const vencidasEspeciales = ordenadosFinal.filter(f => {
   const razon = (f.razon_social_emisor || "").toUpperCase().trim();
   const dias = calcularDias(f.fecha);
   return proveedoresEspeciales[razon] && dias > proveedoresEspeciales[razon];
 });
 
-// Quitar duplicados (que ya están en vencidas30)
 const especialesUnicas = vencidasEspeciales.filter(esp => {
   const diasEsp = calcularDias(esp.fecha);
-  return diasEsp <= 30; // Solo incluir si aún no está en los de 30+
+  return diasEsp <= 30;
 });
 
-// Unir textos
+// TEXTO PARA TELEGRAM
 resumenTelegram =
   generarResumenTextoEspeciales(especialesUnicas) +
   "\n\n" +
   generarResumenTexto(vencidas30) +
   "\n\n" +
-  generarResumenTextoContado(ordenados) +
+  generarResumenTextoContado(ordenadosFinal) +
   "\n\n📩 Reporte generado por *Loba | IA y BOT de Operaciones*";
   
     }
