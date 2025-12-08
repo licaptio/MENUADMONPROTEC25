@@ -306,29 +306,28 @@ function mostrarTabla(data) {
     // === FOLIO REAL ===
     const folioFinal = f.serie_folio || "—";
 
-    const clase30 = dias >= 30 ? "dias-30-morado" : "";
+const clase30 = dias >= 30 ? "dias-30-morado" : "";
 
 html += `
   <tr class="${clase30}">
+    <td>${f.fecha}</td>
+    <td>${dias}</td>
+    <td><a href="detalle.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
+    <td>${f.rfc_emisor}</td>
+    <td class="proveedor-destacado">${proveedor}</td>
+    <td>${folioFinal}</td>
+    <td class="numero">${Number(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+    <td style="text-align:center">${(f.factura_fisicamente || "") === "SI" ? "✅" : ""}</td>
+    <td style="text-align:center">
+      ${
+        (f.fotos && f.fotos.length > 0)
+        ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
+        : ""
+      }
+    </td>
+  </tr>
 `;
 
-        <td>${f.fecha}</td>
-        <td>${dias}</td>
-        <td><a href="detalle.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
-        <td>${f.rfc_emisor}</td>
-        <td class="proveedor-destacado">${proveedor}</td>
-        <td>${folioFinal}</td>
-        <td class="numero">${Number(f.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-        <td style="text-align:center">${(f.factura_fisicamente || "") === "SI" ? "✅" : ""}</td>
-        <td style="text-align:center">
-          ${
-            (f.fotos && f.fotos.length > 0)
-            ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join("")
-            : ""
-          }
-        </td>
-      </tr>
-    `;
   }
 
   html += "</tbody></table>";
