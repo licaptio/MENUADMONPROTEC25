@@ -75,6 +75,12 @@
   50% { opacity: 0.4; }
   100% { opacity: 1; }
 }
+.dias-30-morado {
+  background-color: #ede7f6 !important; /* Morado claro */
+  animation: parpadeo-morado 1.6s infinite;
+  font-weight: bold;
+  color: #4a148c;
+}
 
   </style>
 </head>
@@ -300,8 +306,12 @@ function mostrarTabla(data) {
     // === FOLIO REAL ===
     const folioFinal = f.serie_folio || "—";
 
-    html += `
-      <tr>
+    const clase30 = dias >= 30 ? "dias-30-morado" : "";
+
+html += `
+  <tr class="${clase30}">
+`;
+
         <td>${f.fecha}</td>
         <td>${dias}</td>
         <td><a href="detalle.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
