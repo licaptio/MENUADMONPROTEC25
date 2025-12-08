@@ -223,10 +223,6 @@ const ordenadosFinal = unicas.sort((a, b) => {
 //-------------------------------------------------------
 mostrarTabla(ordenadosFinal);
 
-//-------------------------------------------------------
-// 7) YA PUEDES USAR ESTE: ordenadosFinal
-//-------------------------------------------------------
-
 // SUMA GLOBAL FINAL
 const sumaGlobal = ordenadosFinal.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
 
@@ -247,6 +243,11 @@ document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
 `);
 
 mostrarTabla(ordenadosFinal);
+
+// =========================
+// FACTURAS VENCIDAS 30+
+// =========================
+const vencidas30 = ordenadosFinal.filter(f => calcularDias(f.fecha) > 30);
 
 // =========================
 // ESPECIALES QUE YA VENCIERON
@@ -270,8 +271,8 @@ resumenTelegram =
   "\n\n" +
   generarResumenTextoContado(ordenadosFinal) +
   "\n\n📩 Reporte generado por *Loba | IA y BOT de Operaciones*";
-  
-    }
+
+}
 
 function mostrarTabla(data) {
 
