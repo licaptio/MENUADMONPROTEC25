@@ -579,21 +579,29 @@ function monedaMXN(valor) {
     currency: 'MXN'
   });
 }
-function copiarFila(fila) {
-  const texto = `
-Fecha: ${formatearFecha(fila.fecha)}
-Días: ${calcDiasDesdeHoy(fila.fecha)}
-UUID: ${fila.uuid_cfdi || fila.uuid}
-RFC: ${fila.rfc_emisor}
-Proveedor: ${fila.proveedor_unificado || fila.razon_social_emisor || fila.nombre_emisor}
-Total: ${fila.total}
-Serie/Folio: ${fila.serie_folio}
-Pagada: ${fila.factura_pagada}
-Factura Física: ${fila.factura_fisicamente}
-`;
+function copiarFila(f) {
+  const uuid = f.uuid_cfdi || f.uuid;
+
+  const proveedor = f.proveedor_unificado 
+    || f.razon_social_emisor
+    || f.nombre_emisor 
+    || "";
+
+  const texto = [
+    formatearFecha(f.fecha),
+    calcDiasDesdeHoy(f.fecha),
+    uuid,
+    f.rfc_emisor,
+    proveedor,
+    f.total,
+    f.serie_folio || "",
+    f.factura_pagada,
+    f.factura_fisicamente,
+    (f.fotos && f.fotos.length > 0) ? f.fotos.join(",") : "—"
+  ].join("\t");   // ← SEPARADOR TAB (Excel lo entiende perfecto)
 
   navigator.clipboard.writeText(texto).then(() => {
-    alert("Copiado al portapapeles");
+    alert("Fila copiada (lista para Excel)");
   });
 }
 
