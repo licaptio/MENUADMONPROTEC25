@@ -502,7 +502,7 @@ function mostrarTabla(data) {
     html += `
 <tr>
   <td>${formatearFecha(f.fecha)}</td>
-  <td>${f.dias}</td>
+  <td>${calcDiasDesdeHoy(f.fecha)}</td>
 
 <td>
   <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
@@ -547,14 +547,15 @@ function mostrarTabla(data) {
   document.getElementById("tablaResultados").innerHTML = html;
 }
 function calcDiasDesdeHoy(iso) {
-  const partes = iso.split("-");
-  const fecha = new Date(partes[0], partes[1]-1, partes[2]); // sin UTC
+  const partes = iso.split("-"); 
+  const fecha = new Date(partes[0], partes[1]-1, partes[2]);
 
   const hoy = new Date();
   hoy.setHours(0,0,0,0);
+  fecha.setHours(0,0,0,0);
 
   const diff = hoy - fecha;
-  return Math.floor(diff / 86400000);  // 24h
+  return Math.floor(diff / 86400000);
 }
 function formatearFecha(fechaISO) {
   const fecha = new Date(fechaISO);
