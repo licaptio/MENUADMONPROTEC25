@@ -547,16 +547,21 @@ function mostrarTabla(data) {
   document.getElementById("tablaResultados").innerHTML = html;
 }
 function calcDiasDesdeHoy(iso) {
-  const partes = iso.split("-"); 
-  const fecha = new Date(partes[0], partes[1]-1, partes[2]);
+  // iso puede venir como "2025-11-20" o "2025-11-20T00:00:00Z"
+  const soloFecha = iso.split("T")[0]; // <-- aquí arreglamos todo
+
+  const [anio, mes, dia] = soloFecha.split("-").map(Number);
+
+  const fecha = new Date(anio, mes - 1, dia);
 
   const hoy = new Date();
-  hoy.setHours(0,0,0,0);
-  fecha.setHours(0,0,0,0);
+  hoy.setHours(0, 0, 0, 0);
+  fecha.setHours(0, 0, 0, 0);
 
   const diff = hoy - fecha;
   return Math.floor(diff / 86400000);
 }
+
 function formatearFecha(fechaISO) {
   const fecha = new Date(fechaISO);
   const dia = String(fecha.getDate()).padStart(2, '0');
