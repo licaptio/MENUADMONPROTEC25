@@ -501,6 +501,9 @@ function mostrarTabla(data) {
        =========================== */
     html += `
 <tr>
+  <td>
+  <button onclick='copiarFila(${JSON.stringify(f)})'>📋</button>
+</td>
   <td>${formatearFecha(f.fecha)}</td>
   <td>${calcDiasDesdeHoy(f.fecha)}</td>
 
@@ -573,6 +576,23 @@ function monedaMXN(valor) {
   return Number(valor).toLocaleString('es-MX', {
     style: 'currency',
     currency: 'MXN'
+  });
+}
+function copiarFila(fila) {
+  const texto = `
+Fecha: ${formatearFecha(fila.fecha)}
+Días: ${calcDiasDesdeHoy(fila.fecha)}
+UUID: ${fila.uuid_cfdi || fila.uuid}
+RFC: ${fila.rfc_emisor}
+Proveedor: ${fila.proveedor_unificado || fila.razon_social_emisor || fila.nombre_emisor}
+Total: ${fila.total}
+Serie/Folio: ${fila.serie_folio}
+Pagada: ${fila.factura_pagada}
+Factura Física: ${fila.factura_fisicamente}
+`;
+
+  navigator.clipboard.writeText(texto).then(() => {
+    alert("Copiado al portapapeles");
   });
 }
 
