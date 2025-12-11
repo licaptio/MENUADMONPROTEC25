@@ -587,23 +587,30 @@ function copiarFila(f) {
     || f.nombre_emisor 
     || "";
 
+  // Total en formato moneda MXN como se ve en tu tabla
+  const totalMoneda = Number(f.total).toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  });
+
   const texto = [
     formatearFecha(f.fecha),
     calcDiasDesdeHoy(f.fecha),
     uuid,
     f.rfc_emisor,
     proveedor,
-    f.total,
+    totalMoneda,        // ← AQUÍ VA EN FORMATO $10,979.23
     f.serie_folio || "",
     f.factura_pagada,
     f.factura_fisicamente,
     (f.fotos && f.fotos.length > 0) ? f.fotos.join(",") : "—"
-  ].join("\t");   // ← SEPARADOR TAB (Excel lo entiende perfecto)
+  ].join("\t");   // TAB para que Excel lo ponga en columnas
 
   navigator.clipboard.writeText(texto).then(() => {
-    alert("Fila copiada (lista para Excel)");
+    alert("Fila copiada en formato Excel 🟩💚");
   });
 }
+
 
 async function toggleFisica(uuid) {
   try {
