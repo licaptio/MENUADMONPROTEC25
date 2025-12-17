@@ -373,35 +373,52 @@ function autocompleteNombre() {
     );
   });
 
-  resultados.forEach(x => {
-    let div = document.createElement("div");
-    div.textContent = `${x.nombre} — ${x.rfc}`;
-    div.onclick = () => {
-      nombreFiltro.value = x.nombre;
-      window.rfcSeleccionado = x.rfc;
-      lista.style.display = "none";
-    };
-    lista.appendChild(div);
-  });
+resultados.forEach(x => {
+  let div = document.createElement("div");
+  div.textContent = `${x.nombre} — ${x.rfc}`;
+  div.onclick = () => {
+    nombreFiltro.value = x.nombre;
+    window.rfcSeleccionado = x.rfc;
+    lista.style.display = "none";
 
-  lista.style.display = "block";
-}
-
+    // 🔥 FIX ANDROID: cerrar teclado y forzar selección
+    nombreFiltro.blur();
+  };
+  lista.appendChild(div);
+});
+  
 /* =====================================
    5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
 ======================================*/
 async function consultarPorRFC() {
 
-  // Obtenemos el RFC seleccionado desde autocompleteNombre()
-  let rfc = window.rfcSeleccionado;
+let rfc = window.rfcSeleccionado || null;
 
-// Detección automática si el usuario NO clickeó nada:
+const texto = nombreFiltro.value
+  .toUpperCase()
+  .trim()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "");
+
 if (!rfc) {
-  const txt = nombreFiltro.value.toUpperCase().trim();
-  const encontrado = listaBusqueda.find(x =>
-    x.nombre.includes(txt) || x.rfc.includes(txt)
-  );
-  if (encontrado) rfc = encontrado.rfc;
+  const match = listaBusqueda.find(x => {
+    const nom = (x.nombre || "")
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    return (
+      nom.includes(texto) ||
+      x.rfc.includes(texto)
+    );
+  });
+
+  if (match) rfc = match.rfc;
+}
+
+if (!rfc) {
+  alert("Escribe y selecciona un proveedor válido");
+  return;
 }
 
 
