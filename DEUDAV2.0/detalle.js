@@ -583,8 +583,6 @@ function showToast(msg, error = false) {
   setTimeout(() => toast.classList.remove("show"), 2000);
 }
 
-$("btnSubirFoto").addEventListener("click", subirFoto);
-
 // INICIO
 cargarCFDI();
 // ============================================================
@@ -656,3 +654,41 @@ setTimeout(() => {
   const tfoot = document.querySelector("#footerImpuestos");
   if (tfoot) tfoot.innerHTML = footerHTML;
 }, 10);
+
+
+
+// ============================================================
+// FOTOS — CONTROL CENTRAL (FIX DEFINITIVO)
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+
+  const btnCapturar = $("btnCapturar");
+  const btnSubirFoto = $("btnSubirFoto");
+  const fotoInput = $("fotoInput");
+
+  if (!btnCapturar || !btnSubirFoto || !fotoInput) {
+    console.error("❌ Módulo de fotos incompleto");
+    return;
+  }
+
+  // 📸 Abrir cámara
+  btnCapturar.onclick = () => {
+    fotoInput.value = ""; // reset
+    fotoInput.setAttribute("capture", "environment");
+    fotoInput.click();
+  };
+
+  // 📤 Abrir galería
+  btnSubirFoto.onclick = () => {
+    fotoInput.value = ""; // reset
+    fotoInput.removeAttribute("capture");
+    fotoInput.click();
+  };
+
+  // ⬆️ Subida REAL ocurre aquí
+  fotoInput.onchange = async () => {
+    if (!fotoInput.files || !fotoInput.files.length) return;
+    await subirFoto();
+  };
+
+});
