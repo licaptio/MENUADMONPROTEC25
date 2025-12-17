@@ -8,7 +8,8 @@
   <!-- ================================
        [1] LIBRERÍAS
   =================================-->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
 
   <!-- ================================
        [2] ESTILOS CSS
@@ -211,7 +212,7 @@ label[for="rfcFiltro"],
 ======================================-->
 <script>
 
-const supabase = window.supabase.createClient(
+const supa = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
 );
@@ -231,7 +232,7 @@ async function cargarRFCs() {
   let pagina = [];
 
   do {
-    const { data, error } = await supabase
+    const { data, error } = await supa
       .from("v_deuda_proveedores")
       .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
       .not("rfc_emisor", "is", null)
@@ -420,7 +421,7 @@ if (!rfc) {
   const limiteISO = limite.toISOString().split("T")[0];
 
   // contar registros
-const { count, error: errorConteo } = await supabase
+const { count, error: errorConteo } = await supa
   .from("v_deuda_proveedores")
   .select("*", { count: "exact", head: true })
   .eq("rfc_emisor", rfc)
@@ -432,7 +433,7 @@ const { count, error: errorConteo } = await supabase
   }
 
   // consultar facturas
-const { data: facturas, error } = await supabase
+const { data: facturas, error } = await supa
   .from("v_deuda_proveedores")
   .select("*")
   .eq("rfc_emisor", rfc)
@@ -615,7 +616,7 @@ function copiarFila(f) {
 async function toggleFisica(uuid) {
   try {
     // 🔍 1) Obtener el estado actual desde la VISTA usando "uuid"
-    const { data, error } = await supabase
+    const { data, error } = await supa
       .from("v_deuda_proveedores")
       .select("factura_fisicamente")
       .eq("uuid", uuid)   // ← Aquí NO es uuid_cfdi
@@ -632,7 +633,7 @@ async function toggleFisica(uuid) {
     const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
     // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supa
       .from("deuda_limpia_pdd")
       .update({ factura_fisicamente: nuevoEstado })
       .eq("uuid_cfdi", uuid); // ← aquí SÍ debe ser uuid_cfdi
@@ -663,7 +664,7 @@ async function toggleFisica(uuid) {
 async function togglePagada(uuid) {
   try {
     // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
-    const { data, error } = await supabase
+    const { data, error } = await supa
       .from("v_deuda_proveedores")
       .select("factura_pagada")
       .eq("uuid", uuid)   // ← CORRECTO
@@ -680,7 +681,7 @@ async function togglePagada(uuid) {
     const nuevoEstado = estadoActual === "SI" ? "NO" : "SI";
 
     // 💾 3) Actualizar en la TABLA REAL usando "uuid_cfdi"
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supa
       .from("deuda_limpia_pdd")
       .update({ factura_pagada: nuevoEstado })
       .eq("uuid_cfdi", uuid);  // ← CORRECTO
