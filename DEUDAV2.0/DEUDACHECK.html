@@ -217,6 +217,13 @@ label[for="rfcFiltro"],
   padding: 0 16px;
   font-weight: bold;
 }
+.filtro-pagadas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
 
 </style>
 </head>
@@ -249,7 +256,12 @@ label[for="rfcFiltro"],
   </button>
 
 </div>
+<label class="filtro-pagadas">
+  <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
+  Mostrar pagadas
+</label>
 
+<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 
   
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
