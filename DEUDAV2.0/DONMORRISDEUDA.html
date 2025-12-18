@@ -195,7 +195,7 @@
 ======================================-->
 <script>
 
-const supabase = window.supabase.createClient(
+const supa = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
 );
@@ -215,7 +215,7 @@ async function cargarRFCs() {
   let pagina = [];
 
   do {
-    const { data, error } = await supabase
+    const { data, error } = await supa
       .from("v_deuda_proveedores")
       .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
       .not("rfc_emisor", "is", null)
@@ -405,7 +405,7 @@ if (!rfc) {
   const limiteISO = limite.toISOString().split("T")[0];
 
   // contar registros
-const { count, error: errorConteo } = await supabase
+const { count, error: errorConteo } = await supa
   .from("v_deuda_proveedores")
   .select("*", { count: "exact", head: true })
   .eq("rfc_emisor", rfc)
@@ -417,7 +417,7 @@ const { count, error: errorConteo } = await supabase
   }
 
   // consultar facturas
-const { data: facturas, error } = await supabase
+const { data: facturas, error } = await supa
   .from("v_deuda_proveedores")
   .select("*")
   .eq("rfc_emisor", rfc)
