@@ -204,7 +204,12 @@ label[for="rfcFiltro"],
   <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
   Mostrar pagadas
 </label>
+<button onclick="seleccionarFiltro()" 
+        style="background:#dc3545; color:white;">
+  ✂️ Cambiar proveedor
+</button>
 
+  
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
 <!-- =====================================
@@ -706,7 +711,12 @@ async function togglePagada(uuid) {
     alert("Error inesperado al actualizar el estado");
   }
 }
+function seleccionarFiltro() {
+  const input = document.getElementById("nombreFiltro");
 
+  input.focus();        // pone el cursor
+  input.select();       // selecciona TODO el texto
+}
 </script>
 
 </body>
