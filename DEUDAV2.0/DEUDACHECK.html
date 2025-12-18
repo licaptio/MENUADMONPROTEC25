@@ -240,12 +240,18 @@ label[for="rfcFiltro"],
     <strong>RFC O NOMBRE:</strong>
   </label>
 
+<div class="campo-autocomplete">
+
   <input type="text"
          id="nombreFiltro"
          placeholder="Escribe Nombre…"
          oninput="autocompleteNombre()"
          autocomplete="off"
          class="input-filtro">
+
+  <div id="sugerenciasNombre" class="autocomplete-list"></div>
+
+</div>
 
   <button onclick="consultarPorRFC()" class="btn-consultar">
     🔎 Consultar
