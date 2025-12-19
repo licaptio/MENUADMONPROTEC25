@@ -111,17 +111,25 @@
       dropZone.classList.remove('hover');
     });
 
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('hover');
-      const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.xml'));
-      if (files.length === 0) {
-        msg.textContent = '⚠️ Solo se permiten archivos .xml';
-        return;
-      }
-      msg.textContent = '';
-      files.forEach(file => procesarXML(file));
-    });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('hover');
+
+  const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.xml'));
+  if (files.length === 0) {
+    msg.textContent = '⚠️ Solo se permiten archivos .xml';
+    return;
+  }
+
+  msg.textContent = '';
+
+  // 🔥 RESET CORRECTO
+  impactoTotalGlobal = 0;
+  impactoTotalSpan.textContent = '$0.00';
+  tbody.innerHTML = '';
+
+  files.forEach(file => procesarXML(file));
+});
 
     document.getElementById('excelInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
@@ -153,11 +161,30 @@
       reader.readAsArrayBuffer(file);
     });
 
-    function procesarXML(file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(e.target.result, 'application/xml');
+function procesarXML(file) {
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+
+  // ===============================
+  // 🔥 LIMPIEZA XML CRÍTICA
+  // ===============================
+  let xmlText = e.target.result;
+
+  // Quitar espacios, BOM, basura antes del <
+  xmlText = xmlText.trim();
+  xmlText = xmlText.replace(/^[^\<]*/, '');
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, 'application/xml');
+
+  // ===============================
+  // 🚨 VALIDACIÓN XML
+  // ===============================
+  if (xml.getElementsByTagName('parsererror').length > 0) {
+    msg.textContent = `❌ XML inválido o corrupto: ${file.name}`;
+    return;
+  }
 
         const emisor = xml.getElementsByTagNameNS('http://www.sat.gob.mx/cfd/4', 'Emisor')[0];
         const rfc = emisor?.getAttribute('Rfc') || '';
@@ -230,3 +257,4 @@
   </script>
 </body>
 </html>
+
