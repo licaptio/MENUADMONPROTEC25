@@ -70,7 +70,7 @@ async function obtenerIngresos(anio){
   const limit = 5000;
   let rows = [];
 
-  while(true){
+  while (offset === 0) {
 const { data, error } = await sb.rpc(
   "descargar_ingresos_paginado",
   {
