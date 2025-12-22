@@ -105,69 +105,26 @@ function totalConImpuestos(lista){
 // 📊 GRAFICAR
 // ========================================
 async function cargarGrafica(){
-  const ingresos2023 = await obtenerIngresos(2023);
-  const ingresos2024 = await obtenerIngresos(2024);
-  const ingresos2025 = await obtenerIngresos(2025);
+  const { data, error } = await sb.rpc("ingresos_anuales_consolidados");
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-  const totales = [
-    totalConImpuestos(ingresos2023),
-    totalConImpuestos(ingresos2024),
-    totalConImpuestos(ingresos2025)
-  ];
+  const labels = data.map(r => r.anio);
+  const totales = data.map(r => Number(r.total_con_impuestos));
 
   new Chart(document.getElementById("graficaAnual"), {
     type: "bar",
     data: {
-      labels: ["2023", "2024", "2025"],
+      labels,
       datasets: [{
         data: totales,
         backgroundColor: ["#2E75B6","#FFC000","#C0504D"],
         barThickness: 90,
         borderRadius: 6
       }]
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: ctx => `Año ${ctx[0].label}`,
-            label: ctx =>
-              "$" + ctx.raw.toLocaleString("es-MX", { minimumFractionDigits: 2 }),
-            afterLabel: () => "Datos acumulados del año"
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: v => (v / 1_000_000).toFixed(0) + " M"
-          }
-        }
-      }
-    },
-    plugins: [{
-      id: "etiquetaVertical",
-      afterDatasetsDraw(chart) {
-        const { ctx } = chart;
-        const meta = chart.getDatasetMeta(0);
-
-        ctx.save();
-        meta.data.forEach((bar, i) => {
-          const valor = chart.data.datasets[0].data[i];
-          const texto = (valor / 1_000_000).toFixed(1) + " M";
-
-          ctx.translate(bar.x, bar.y - 14);
-          ctx.rotate(-Math.PI / 2);
-          ctx.fillStyle = "#333";
-          ctx.font = "bold 13px Poppins";
-          ctx.fillText(texto, 0, 0);
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-        });
-        ctx.restore();
-      }
-    }]
+    }
   });
 }
 
