@@ -153,7 +153,7 @@ async function cargarGrafica(){
           const valor = chart.data.datasets[0].data[i];
           const texto = (valor / 1_000_000).toFixed(1) + " M";
 
-          ctx.translate(bar.x, bar.y - 10);
+          ctx.translate(bar.x, bar.y - 14);
           ctx.rotate(-Math.PI / 2);
           ctx.fillStyle = "#333";
           ctx.font = "bold 13px Poppins";
