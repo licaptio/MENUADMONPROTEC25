@@ -84,10 +84,11 @@ async function procesarArchivo(){
     const c = linea.split("~");
     if(c.length < 2) continue;
 
-    const rfcEmisor = c[1]?.trim();
-    if(rfcEmisor !== RFC_PERMITIDO){
-      rfcInvalidos.add(rfcEmisor || "(vacío)");
-    }
+const rfcReceptor = c[3]?.trim();
+if (rfcReceptor !== RFC_PERMITIDO){
+  rfcInvalidos.add(rfcReceptor || "(vacío)");
+}
+
   }
 
   if(rfcInvalidos.size > 0){
