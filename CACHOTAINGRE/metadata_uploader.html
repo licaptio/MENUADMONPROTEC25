@@ -55,7 +55,9 @@ button{
 
 <script>
 // ================= CONFIGURACIÓN =================
-const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
+const SUPABASE_URL =
+  "https://cvpbtjlupswbyxenugpz.supabase.co/rest/v1/metadata_ingresos";
+
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
 
 // ===============================================
@@ -116,10 +118,14 @@ alert(
 
   let enviados = 0;
 
-  for(const linea of lineas){
-    const c = linea.split("~"); // SAT usa ~
+for (const linea of lineas) {
 
-    if(c.length < 11) continue;
+  // ⛔ IGNORAR ENCABEZADO DEL SAT
+  if (linea.startsWith("Uuid~")) continue;
+
+  const c = linea.split("~");
+  if (c.length < 11) continue;
+
 
     const payload = {
       uuid_cfdi: c[0],
