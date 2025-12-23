@@ -95,12 +95,12 @@ if (rfcReceptor !== RFC_PERMITIDO){
     log("❌ VALIDACIÓN FALLIDA");
     log("Se detectaron RFC emisores no permitidos:");
     rfcInvalidos.forEach(rfc => log(" - " + rfc));
-    alert(
-      "ERROR DE SEGURIDAD\n\n" +
-      "El archivo contiene CFDI que NO pertenecen a:\n" +
-      RFC_PERMITIDO + "\n\n" +
-      "Carga cancelada."
-    );
+alert(
+  "ERROR DE SEGURIDAD\n\n" +
+  "El archivo contiene CFDI cuyo RFC RECEPTOR NO es:\n" +
+  RFC_PERMITIDO + "\n\n" +
+  "Carga cancelada."
+);
     return;
   }
 
