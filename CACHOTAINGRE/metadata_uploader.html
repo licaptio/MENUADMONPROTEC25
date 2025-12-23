@@ -136,12 +136,12 @@ async function procesarArchivo(){
 
     const res = await fetch(SUPABASE_URL, {
       method: "POST",
-      headers: {
-        "apikey": SERVICE_ROLE_KEY,
-        "Authorization": "Bearer " + SERVICE_ROLE_KEY,
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates"
-      },
+headers: {
+  "apikey": ANON_KEY,
+  "Authorization": "Bearer " + ANON_KEY,
+  "Content-Type": "application/json",
+  "Prefer": "resolution=merge-duplicates"
+},
       body: JSON.stringify(payload)
     });
 
