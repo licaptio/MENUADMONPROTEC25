@@ -141,7 +141,9 @@ for (const linea of lineas) {
     raw_line: linea
   };
 
-  const res = await fetch(SUPABASE_URL, {
+const res = await fetch(
+  SUPABASE_URL + "?on_conflict=uuid_cfdi",
+  {
     method: "POST",
     headers: {
       "apikey": ANON_KEY,
@@ -150,7 +152,8 @@ for (const linea of lineas) {
       "Prefer": "resolution=merge-duplicates"
     },
     body: JSON.stringify(payload)
-  });
+  }
+);
 
   if (res.ok) enviados++;
 
