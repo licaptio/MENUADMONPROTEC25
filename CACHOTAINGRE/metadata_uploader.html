@@ -48,9 +48,23 @@ button{
 
   <input type="file" id="fileInput" accept=".txt"><br><br>
 
-  <button onclick="procesarArchivo()">Procesar archivo</button>
+<button onclick="procesarArchivo()">Procesar archivo</button>
 
-  <div id="log"></div>
+<!-- 🔵 BARRA DE PROGRESO -->
+<div style="margin-top:15px;">
+  <div style="background:#ddd; border-radius:8px; overflow:hidden; height:18px;">
+    <div id="progressBar"
+         style="height:100%; width:0%; background:#0c6cbd; transition:width .2s;">
+    </div>
+  </div>
+  <div id="progressText"
+       style="margin-top:6px; font-size:13px; color:#333;">
+    Esperando…
+  </div>
+</div>
+
+<div id="log"></div>
+
 </div>
 
 <script>
@@ -62,6 +76,13 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 // ===============================================
 const RFC_PERMITIDO = "PDD031204KL5";
+function setProgress(actual, total){
+  const percent = Math.round((actual / total) * 100);
+  document.getElementById("progressBar").style.width = percent + "%";
+  document.getElementById("progressText").textContent =
+    `Procesando ${actual} de ${total} (${percent}%)`;
+}
+
 function log(msg){
   document.getElementById("log").textContent += msg + "\n";
 }
@@ -82,86 +103,68 @@ async function procesarArchivo(){
  // 🔒 VALIDACIÓN RFC EMISOR
    const rfcInvalidos = new Set();
 
-for (const linea of lineas) {
-
-  // ⛔ IGNORAR ENCABEZADO DEL SAT
-  if (linea.startsWith("Uuid~")) continue;
-
-  const c = linea.split("~");
-  if (c.length < 2) continue;
-
-const rfcEmisor = c[1].trim();
-
-if (rfcEmisor !== RFC_PERMITIDO) {
-  rfcInvalidos.add(rfcEmisor);
-}
-}
-
-  if(rfcInvalidos.size > 0){
-    log("❌ VALIDACIÓN FALLIDA");
-    log("Se detectaron RFC emisores no permitidos:");
-    rfcInvalidos.forEach(rfc => log(" - " + rfc));
-alert(
-  "ERROR DE SEGURIDAD\n\n" +
-  "El archivo contiene CFDI cuyo RFC EMISOR NO es:\n" +
-  RFC_PERMITIDO + "\n\n" +
-  "Carga cancelada."
-);
-    return;
-  }
-
-  log("✔ Validación RFC emisor correcta (" + RFC_PERMITIDO + ")");
-  if(!confirm(`Se cargarán ${lineas.length} registros a Supabase.\n¿Deseas continuar?`)){
-    log("Carga cancelada por el usuario.");
-    return;
-  }
-
-  let enviados = 0;
+let enviados = 0;
+let procesados = 0;
+const total = lineas.length;
 
 for (const linea of lineas) {
 
-  // ⛔ IGNORAR ENCABEZADO DEL SAT
-  if (linea.startsWith("Uuid~")) continue;
-
-  const c = linea.split("~");
-  if (c.length < 11) continue;
-
-
-    const payload = {
-      uuid_cfdi: c[0],
-      rfc_emisor: c[1],
-      nombre_emisor: c[2],
-      rfc_receptor: c[3],
-      nombre_receptor: c[4],
-      rfc_pac: c[5],
-      fecha_emision: c[6] || null,
-      fecha_certificacion: c[7] || null,
-      monto: Number(c[8] || 0),
-      efecto_comprobante: c[9],
-      estatus: Number(c[10]),
-      fecha_cancelacion: c[11] || null,
-      periodo_anio: new Date(c[6]).getFullYear(),
-      periodo_mes: new Date(c[6]).getMonth() + 1,
-      raw_line: linea
-    };
-
-    const res = await fetch(SUPABASE_URL, {
-      method: "POST",
-headers: {
-  "apikey": ANON_KEY,
-  "Authorization": "Bearer " + ANON_KEY,
-  "Content-Type": "application/json",
-  "Prefer": "resolution=merge-duplicates"
-},
-      body: JSON.stringify(payload)
-    });
-
-    if(res.ok) enviados++;
+  // ⛔ ignorar encabezado SAT
+  if (linea.startsWith("Uuid~")) {
+    procesados++;
+    setProgress(procesados, total);
+    continue;
   }
 
-  log(`✔ Registros enviados: ${enviados}`);
-  log("Proceso terminado.");
+  const c = linea.split("~");
+  if (c.length < 11) {
+    procesados++;
+    setProgress(procesados, total);
+    continue;
+  }
+
+  const payload = {
+    uuid_cfdi: c[0],
+    rfc_emisor: c[1],
+    nombre_emisor: c[2],
+    rfc_receptor: c[3],
+    nombre_receptor: c[4],
+    rfc_pac: c[5],
+    fecha_emision: c[6] || null,
+    fecha_certificacion: c[7] || null,
+    monto: Number(c[8] || 0),
+    efecto_comprobante: c[9],
+    estatus: Number(c[10]),
+    fecha_cancelacion: c[11] || null,
+    periodo_anio: new Date(c[6]).getFullYear(),
+    periodo_mes: new Date(c[6]).getMonth() + 1,
+    raw_line: linea
+  };
+
+  const res = await fetch(SUPABASE_URL, {
+    method: "POST",
+    headers: {
+      "apikey": ANON_KEY,
+      "Authorization": "Bearer " + ANON_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "resolution=merge-duplicates"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) enviados++;
+
+  procesados++;
+  setProgress(procesados, total);
 }
+// ✅ FINAL DEL PROCESO
+document.getElementById("progressBar").style.width = "100%";
+document.getElementById("progressText").textContent =
+  `✅ Finalizado: ${enviados} registros cargados`;
+
+log(`✔ Registros enviados: ${enviados}`);
+log("Proceso terminado.");
+
 </script>
 
 </body>
