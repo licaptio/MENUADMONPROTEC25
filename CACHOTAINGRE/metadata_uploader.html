@@ -88,7 +88,7 @@ for (const linea of lineas) {
   if (linea.startsWith("Uuid~")) continue;
 
   const c = linea.split("~");
-  if (c.length < 4) continue;
+  if (c.length < 2) continue;
 
 const rfcEmisor = c[1].trim();
 
@@ -103,14 +103,14 @@ if (rfcEmisor !== RFC_PERMITIDO) {
     rfcInvalidos.forEach(rfc => log(" - " + rfc));
 alert(
   "ERROR DE SEGURIDAD\n\n" +
-  "El archivo contiene CFDI cuyo RFC RECEPTOR NO es:\n" +
+  "El archivo contiene CFDI cuyo RFC EMISOR NO es:\n"
   RFC_PERMITIDO + "\n\n" +
   "Carga cancelada."
 );
     return;
   }
 
-  log("✔ Validación RFC receptor correcta (" + RFC_PERMITIDO + ")");
+  log("✔ Validación RFC emisor correcta (" + RFC_PERMITIDO + ")");
   if(!confirm(`Se cargarán ${lineas.length} registros a Supabase.\n¿Deseas continuar?`)){
     log("Carga cancelada por el usuario.");
     return;
