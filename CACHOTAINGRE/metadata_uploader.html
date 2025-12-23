@@ -90,11 +90,11 @@ for (const linea of lineas) {
   const c = linea.split("~");
   if (c.length < 4) continue;
 
-  const rfcReceptor = c[3].trim();
+const rfcEmisor = c[1].trim();
 
-  if (rfcReceptor !== RFC_PERMITIDO) {
-    rfcInvalidos.add(rfcReceptor);
-  }
+if (rfcEmisor !== RFC_PERMITIDO) {
+  rfcInvalidos.add(rfcEmisor);
+}
 }
 
   if(rfcInvalidos.size > 0){
