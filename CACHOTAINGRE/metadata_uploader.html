@@ -80,16 +80,20 @@ async function procesarArchivo(){
  // 🔒 VALIDACIÓN RFC EMISOR
    const rfcInvalidos = new Set();
 
-  for(const linea of lineas){
-    const c = linea.split("~");
-    if(c.length < 2) continue;
+for (const linea of lineas) {
 
-const rfcReceptor = c[3]?.trim();
-if (rfcReceptor !== RFC_PERMITIDO){
-  rfcInvalidos.add(rfcReceptor || "(vacío)");
-}
+  // ⛔ IGNORAR ENCABEZADO DEL SAT
+  if (linea.startsWith("Uuid~")) continue;
 
+  const c = linea.split("~");
+  if (c.length < 4) continue;
+
+  const rfcReceptor = c[3].trim();
+
+  if (rfcReceptor !== RFC_PERMITIDO) {
+    rfcInvalidos.add(rfcReceptor);
   }
+}
 
   if(rfcInvalidos.size > 0){
     log("❌ VALIDACIÓN FALLIDA");
@@ -104,7 +108,7 @@ alert(
     return;
   }
 
-  log("✔ Validación RFC emisor correcta (" + RFC_PERMITIDO + ")");
+  log("✔ Validación RFC receptor correcta (" + RFC_PERMITIDO + ")");
   if(!confirm(`Se cargarán ${lineas.length} registros a Supabase.\n¿Deseas continuar?`)){
     log("Carga cancelada por el usuario.");
     return;
