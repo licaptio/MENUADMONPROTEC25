@@ -39,22 +39,31 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 
   for (const file of this.files) {
     try {
-      const xml = new DOMParser()
-        .parseFromString(await file.text(), "application/xml");
+const xml = new DOMParser().parseFromString(await file.text(), "application/xml");
 
-      const ns = "http://www.sat.gob.mx/cfd/4";
-      const c = xml.getElementsByTagNameNS(ns, "Comprobante")[0];
-      const e = xml.getElementsByTagNameNS(ns, "Emisor")[0];
-      const t = [...xml.getElementsByTagName("*")]
-        .find(n => n.localName === "TimbreFiscalDigital");
+if (xml.getElementsByTagName("parsererror").length) {
+  throw new Error("XML mal formado");
+}
 
-      const uuid = t?.getAttribute("UUID");
-      if (!uuid || c.getAttribute("TipoDeComprobante") !== "E") continue;
+const nodos = [...xml.getElementsByTagName("*")];
 
-      const fecha = new Date(c.getAttribute("Fecha"));
+const c = nodos.find(n => n.localName === "Comprobante");
+const e = nodos.find(n => n.localName === "Emisor");
+const r = nodos.find(n => n.localName === "Receptor");
+const t = nodos.find(n => n.localName === "TimbreFiscalDigital");
+
+if (!c || !e || !t) {
+  throw new Error("CFDI incompleto");
+}
+
+if (c.getAttribute("TipoDeComprobante") !== "E") {
+  throw new Error("No es Nota de Crédito");
+}
+
+const fecha = new Date(c.getAttribute("Fecha"));
 
 archivosDatos.push({
-  uuid_cfdi: uuid,
+  uuid_cfdi: t.getAttribute("UUID"),
   rfc_emisor: e.getAttribute("Rfc"),
   rfc_receptor: r ? r.getAttribute("Rfc") : null,
   fecha_emision: c.getAttribute("Fecha"),
@@ -69,10 +78,11 @@ archivosDatos.push({
   raw_line: file.name
 });
 
-      const li = document.createElement("li");
-      li.dataset.uuid = uuid;
-      li.innerHTML = `<b>${uuid}</b> <span class="pending">→ Lista</span>`;
-      lista.appendChild(li);
+const li = document.createElement("li");
+li.dataset.uuid = t.getAttribute("UUID");
+li.innerHTML = `<b>${t.getAttribute("UUID")}</b> <span class="pending">→ Lista</span>`;
+lista.appendChild(li);
+
 
     } catch {
       lista.innerHTML += `<li class="err">${file.name} error</li>`;
