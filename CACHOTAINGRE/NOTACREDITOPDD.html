@@ -45,7 +45,6 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
       const ns = "http://www.sat.gob.mx/cfd/4";
       const c = xml.getElementsByTagNameNS(ns, "Comprobante")[0];
       const e = xml.getElementsByTagNameNS(ns, "Emisor")[0];
-
       const t = [...xml.getElementsByTagName("*")]
         .find(n => n.localName === "TimbreFiscalDigital");
 
@@ -80,8 +79,7 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
     }
   }
 });
-</script>
-<script>
+
 async function procesarArchivos() {
   const bar = document.getElementById("progreso");
   const total = archivosDatos.length;
@@ -124,9 +122,7 @@ async function procesarArchivos() {
 }
 </script>
 
-
-
-  <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
+<footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
     ⚙️ POWERED BY <b>PROVSOFT</b> · 2025 · Sistema de integración CFDI 4.0
   </footer>
 </body>
