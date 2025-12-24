@@ -55,8 +55,10 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 
       archivosDatos.push({
         uuid_cfdi: uuid,
-        rfc_emisor: e.getAttribute("Rfc"),
-        rfc_receptor: e.getAttribute("Rfc"),
+const r = xml.getElementsByTagNameNS(ns, "Receptor")[0];
+
+rfc_emisor: e.getAttribute("Rfc"),
+rfc_receptor: r.getAttribute("Rfc"),
         fecha_emision: c.getAttribute("Fecha"),
         fecha_certificacion: t.getAttribute("FechaTimbrado"),
         fecha_cancelacion: null,
@@ -83,39 +85,53 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 async function procesarArchivos() {
   const bar = document.getElementById("progreso");
   const total = archivosDatos.length;
+  const LOTE = 5;
+  let procesados = 0;
 
-  for (let i = 0; i < total; i++) {
-    const d = archivosDatos[i];
-    const li = document.querySelector(`li[data-uuid="${d.uuid_cfdi}"]`);
-    const pct = Math.round(((i + 1) / total) * 100);
+  for (let i = 0; i < total; i += LOTE) {
+    const bloque = archivosDatos.slice(i, i + LOTE);
 
-    bar.style.width = pct + "%";
-    li.querySelector("span").textContent = `⏳ ${pct}%`;
+    // deja respirar la UI
+    await new Promise(r => setTimeout(r, 0));
 
-    const existe = await fetch(
-      `${SUPABASE_URL}/rest/v1/notas_credito_sat?uuid_cfdi=eq.${d.uuid_cfdi}`,
-      { headers:{ apikey:API_KEY, Authorization:`Bearer ${API_KEY}` } }
-    ).then(r=>r.json());
+    await Promise.all(
+      bloque.map(async d => {
+        const li = document.querySelector(`li[data-uuid="${d.uuid_cfdi}"]`);
+        li.querySelector("span").textContent = "⏳ Subiendo...";
+        li.querySelector("span").className = "pending";
 
-    if (existe.length) {
-      li.querySelector("span").textContent = "⚠️ Existe";
-      li.querySelector("span").className = "warn";
-      continue;
-    }
+        try {
+          const r = await fetch(
+            `${SUPABASE_URL}/rest/v1/notas_credito_sat`,
+            {
+              method: "POST",
+              headers: {
+                apikey: API_KEY,
+                Authorization: `Bearer ${API_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates"
+              },
+              body: JSON.stringify(d)
+            }
+          );
 
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/notas_credito_sat`,{
-      method:"POST",
-      headers:{
-        apikey:API_KEY,
-        Authorization:`Bearer ${API_KEY}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify(d)
-    });
+          if (r.ok) {
+            li.querySelector("span").textContent = "✅ OK";
+            li.querySelector("span").className = "ok";
+          } else {
+            li.querySelector("span").textContent = "❌ Error";
+            li.querySelector("span").className = "err";
+          }
 
-    li.querySelector("span").textContent = r.ok ? "✅ Subido" : "❌ Error";
-    li.querySelector("span").className = r.ok ? "ok" : "err";
-    await new Promise(r=>setTimeout(r,250));
+        } catch (e) {
+          li.querySelector("span").textContent = "❌ Red";
+          li.querySelector("span").className = "err";
+        }
+
+        procesados++;
+        bar.style.width = Math.round((procesados / total) * 100) + "%";
+      })
+    );
   }
 
   bar.style.width = "100%";
