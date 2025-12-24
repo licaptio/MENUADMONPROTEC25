@@ -103,43 +103,75 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 });
 </script>
 <script>
+<script>
 async function procesarArchivos() {
   const progreso = document.getElementById("progreso");
   const total = archivosDatos.length;
 
+  logBitacora(`🚀 Iniciando carga de ${total} notas de crédito`);
+
   for (let i = 0; i < total; i++) {
     const data = archivosDatos[i];
-    progreso.style.width = `${((i + 1) / total) * 100}%`;
-
-    const existe = await fetch(
-      `${SUPABASE_URL}/rest/v1/notas_credito_sat?uuid_cfdi=eq.${data.uuid_cfdi}`,
-      { headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` } }
+    const item = document.querySelector(
+      `#archivoList li[data-uuid="${data.uuid_cfdi}"]`
     );
-    const yaExiste = await existe.json();
-    if (yaExiste.length > 0) continue;
 
-    await fetch(`${SUPABASE_URL}/rest/v1/notas_credito_sat`, {
-      method: "POST",
-      headers: {
-        apikey: API_KEY,
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
+    // 🔵 Progreso visual
+    const porcentaje = Math.round(((i + 1) / total) * 100);
+    progreso.style.width = `${porcentaje}%`;
+    item.querySelector("span").textContent = `⏳ Subiendo (${porcentaje}%)`;
+    item.querySelector("span").className = "pending";
+
+    try {
+      // 🔍 Validar duplicado
+      const existe = await fetch(
+        `${SUPABASE_URL}/rest/v1/notas_credito_sat?uuid_cfdi=eq.${data.uuid_cfdi}`,
+        { headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` } }
+      );
+      const yaExiste = await existe.json();
+
+      if (yaExiste.length > 0) {
+        item.querySelector("span").textContent = "⚠️ Ya existe";
+        item.querySelector("span").className = "warn";
+        continue;
+      }
+
+      // 📤 Insert
+      const insert = await fetch(
+        `${SUPABASE_URL}/rest/v1/notas_credito_sat`,
+        {
+          method: "POST",
+          headers: {
+            apikey: API_KEY,
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        }
+      );
+
+      if (insert.ok) {
+        item.querySelector("span").textContent = "✅ Subido";
+        item.querySelector("span").className = "ok";
+      } else {
+        const err = await insert.text();
+        item.querySelector("span").textContent = `❌ ${err}`;
+        item.querySelector("span").className = "err";
+      }
+
+    } catch (e) {
+      item.querySelector("span").textContent = "❌ Error red";
+      item.querySelector("span").className = "err";
+    }
 
     await new Promise(r => setTimeout(r, 300));
   }
 
   progreso.style.width = "100%";
-  logBitacora("✅ Notas de crédito cargadas");
-}
-
-function logBitacora(msg) {
-  const log = document.getElementById("bitacora");
-  log.textContent += msg + "\n";
+  logBitacora("✅ Proceso terminado. Todas las NC procesadas.");
 }
 </script>
+
 
   <footer style="margin-top:40px;padding:10px;text-align:center;font-size:13px;color:#555;border-top:1px solid #ccc;">
     ⚙️ POWERED BY <b>PROVSOFT</b> · 2025 · Sistema de integración CFDI 4.0
