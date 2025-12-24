@@ -84,9 +84,10 @@ li.innerHTML = `<b>${t.getAttribute("UUID")}</b> <span class="pending">→ Lista
 lista.appendChild(li);
 
 
-    } catch {
-      lista.innerHTML += `<li class="err">${file.name} error</li>`;
-    }
+} catch (err) {
+  console.error(file.name, err);
+  lista.innerHTML += `<li class="err">${file.name} → ${err.message}</li>`;
+}
   }
 });
 
