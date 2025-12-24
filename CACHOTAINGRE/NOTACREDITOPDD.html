@@ -2,37 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Carga de XML – Ingresos PDD (Depurado)</title>
+  <title>Carga de Notas de Crédito – SAT</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; color:#111; }
-    h2 { color: #00416A; }
-    ul { padding: 0; list-style: none; }
-    li { margin-bottom: 6px; font-size: 14px; }
+    body { font-family: Arial; padding: 20px; background:#f9f9f9; }
+    li { font-size: 14px; margin-bottom: 4px; }
     .ok { color: green; }
     .warn { color: orange; }
     .err { color: red; }
     .pending { color: blue; }
-    pre { background:#eee; padding:10px; max-height:240px; overflow:auto; font-size:13px; }
-    .progress-bar { width:100%; background:#ddd; border-radius:4px; overflow:hidden; height:16px; margin-top:6px; }
-    .progress-bar div { height:100%; width:0%; background:#0c6cbd; transition:width 0.3s ease; }
+    .progress-bar { width:100%; height:16px; background:#ddd; border-radius:6px; }
+    .progress-bar div { height:100%; width:0%; background:#0c6cbd; }
+    pre { background:#eee; padding:10px; max-height:200px; overflow:auto; }
   </style>
 </head>
 <body>
-  <h2>Subir NOTAS DE CRÉDITO (CFDI tipo E) – SAT</h2>
-  <input type="file" id="xmlInput" accept=".xml" multiple>
-  <button onclick="procesarArchivos()">Procesar y Subir</button>
 
-  <div class="progress-bar"><div id="progreso"></div></div>
-  <h3>Archivos</h3>
-  <ul id="archivoList"></ul>
-  <h3>Bitácora</h3>
-  <pre id="bitacora"></pre>
+<h2>Subir NOTAS DE CRÉDITO (CFDI tipo E) – SAT</h2>
+<input type="file" id="xmlInput" accept=".xml" multiple>
+<button onclick="procesarArchivos()">Procesar y Subir</button>
+
+<div class="progress-bar"><div id="progreso"></div></div>
+
+<ul id="archivoList"></ul>
+<pre id="bitacora"></pre>
+
 
 <script>
-    const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
-    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
-    let archivosDatos = [];
-  
+const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
+const API_KEY = "TU_API_KEY";
+let archivosDatos = [];
+
 document.getElementById("xmlInput").addEventListener("change", async function () {
   const lista = document.getElementById("archivoList");
   lista.innerHTML = "";
@@ -40,64 +39,44 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 
   for (const file of this.files) {
     try {
-      const text = await file.text();
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, "application/xml");
+      const xml = new DOMParser()
+        .parseFromString(await file.text(), "application/xml");
 
-      const cfdiNS = "http://www.sat.gob.mx/cfd/4";
-      const comprobante = xml.getElementsByTagNameNS(cfdiNS, "Comprobante")[0];
-      const emisor = xml.getElementsByTagNameNS(cfdiNS, "Emisor")[0];
+      const ns = "http://www.sat.gob.mx/cfd/4";
+      const c = xml.getElementsByTagNameNS(ns, "Comprobante")[0];
+      const e = xml.getElementsByTagNameNS(ns, "Emisor")[0];
 
-      let timbre = null;
-      for (const n of xml.getElementsByTagName("*")) {
-        if (n.localName === "TimbreFiscalDigital") {
-          timbre = n;
-          break;
-        }
-      }
+      let t = [...xml.getElementsByTagName("*")]
+        .find(n => n.localName === "TimbreFiscalDigital");
 
-      const uuid = timbre?.getAttribute("UUID")?.toUpperCase() || "";
-      const tipo = comprobante?.getAttribute("TipoDeComprobante") || "";
-      const emisorRFC = emisor?.getAttribute("Rfc") || "";
+      const uuid = t?.getAttribute("UUID") || "";
+      if (!uuid || c.getAttribute("TipoDeComprobante") !== "E") continue;
 
-      if (!uuid || tipo !== "E" || emisorRFC !== "PDD031204KL5") {
-        const li = document.createElement("li");
-        li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Rechazado</span>`;
-        lista.appendChild(li);
-        continue;
-      }
+      const f = new Date(c.getAttribute("Fecha"));
 
-      const fecha = comprobante.getAttribute("Fecha");
-      const total = parseFloat(comprobante.getAttribute("Total")) || 0;
-      const fechaObj = new Date(fecha);
-
-      const notaCredito = {
+      archivosDatos.push({
         uuid_cfdi: uuid,
-        rfc_emisor: emisorRFC,
-        rfc_receptor: "PDD031204KL5",
-        fecha_emision: fecha,
-        fecha_certificacion: timbre.getAttribute("FechaTimbrado"),
+        rfc_emisor: e.getAttribute("Rfc"),
+        rfc_receptor: e.getAttribute("Rfc"),
+        fecha_emision: c.getAttribute("Fecha"),
+        fecha_certificacion: t.getAttribute("FechaTimbrado"),
         fecha_cancelacion: null,
-        monto: total,
-        moneda: comprobante.getAttribute("Moneda"),
+        monto: parseFloat(c.getAttribute("Total")),
+        moneda: c.getAttribute("Moneda"),
         efecto_comprobante: "E",
         estatus: 1,
-        periodo_anio: fechaObj.getFullYear(),
-        periodo_mes: fechaObj.getMonth() + 1,
+        periodo_anio: f.getFullYear(),
+        periodo_mes: f.getMonth() + 1,
         raw_line: file.name
-      };
-
-      archivosDatos.push(notaCredito);
+      });
 
       const li = document.createElement("li");
       li.dataset.uuid = uuid;
-      li.innerHTML = `📄 <b>${uuid}</b> <span class="pending">→ Nota lista</span>`;
+      li.innerHTML = `<b>${uuid}</b> <span class="pending">→ Lista</span>`;
       lista.appendChild(li);
 
-    } catch (e) {
-      const li = document.createElement("li");
-      li.innerHTML = `❌ <b>${file.name}</b> <span class="err">→ Error</span>`;
-      lista.appendChild(li);
+    } catch {
+      lista.innerHTML += `<li class="err">${file.name} error</li>`;
     }
   }
 });
@@ -105,70 +84,44 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
 
 <script>
 async function procesarArchivos() {
-  const progreso = document.getElementById("progreso");
+  const bar = document.getElementById("progreso");
   const total = archivosDatos.length;
 
-  logBitacora(`🚀 Iniciando carga de ${total} notas de crédito`);
-
   for (let i = 0; i < total; i++) {
-    const data = archivosDatos[i];
-    const item = document.querySelector(
-      `#archivoList li[data-uuid="${data.uuid_cfdi}"]`
-    );
+    const d = archivosDatos[i];
+    const li = document.querySelector(`li[data-uuid="${d.uuid_cfdi}"]`);
+    const pct = Math.round(((i + 1) / total) * 100);
 
-    // 🔵 Progreso visual
-    const porcentaje = Math.round(((i + 1) / total) * 100);
-    progreso.style.width = `${porcentaje}%`;
-    item.querySelector("span").textContent = `⏳ Subiendo (${porcentaje}%)`;
-    item.querySelector("span").className = "pending";
+    bar.style.width = pct + "%";
+    li.querySelector("span").textContent = `⏳ ${pct}%`;
 
-    try {
-      // 🔍 Validar duplicado
-      const existe = await fetch(
-        `${SUPABASE_URL}/rest/v1/notas_credito_sat?uuid_cfdi=eq.${data.uuid_cfdi}`,
-        { headers: { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` } }
-      );
-      const yaExiste = await existe.json();
+    const existe = await fetch(
+      `${SUPABASE_URL}/rest/v1/notas_credito_sat?uuid_cfdi=eq.${d.uuid_cfdi}`,
+      { headers:{ apikey:API_KEY, Authorization:`Bearer ${API_KEY}` } }
+    ).then(r=>r.json());
 
-      if (yaExiste.length > 0) {
-        item.querySelector("span").textContent = "⚠️ Ya existe";
-        item.querySelector("span").className = "warn";
-        continue;
-      }
-
-      // 📤 Insert
-      const insert = await fetch(
-        `${SUPABASE_URL}/rest/v1/notas_credito_sat`,
-        {
-          method: "POST",
-          headers: {
-            apikey: API_KEY,
-            Authorization: `Bearer ${API_KEY}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data)
-        }
-      );
-
-      if (insert.ok) {
-        item.querySelector("span").textContent = "✅ Subido";
-        item.querySelector("span").className = "ok";
-      } else {
-        const err = await insert.text();
-        item.querySelector("span").textContent = `❌ ${err}`;
-        item.querySelector("span").className = "err";
-      }
-
-    } catch (e) {
-      item.querySelector("span").textContent = "❌ Error red";
-      item.querySelector("span").className = "err";
+    if (existe.length) {
+      li.querySelector("span").textContent = "⚠️ Existe";
+      li.querySelector("span").className = "warn";
+      continue;
     }
 
-    await new Promise(r => setTimeout(r, 300));
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/notas_credito_sat`,{
+      method:"POST",
+      headers:{
+        apikey:API_KEY,
+        Authorization:`Bearer ${API_KEY}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify(d)
+    });
+
+    li.querySelector("span").textContent = r.ok ? "✅ Subido" : "❌ Error";
+    li.querySelector("span").className = r.ok ? "ok" : "err";
+    await new Promise(r=>setTimeout(r,250));
   }
 
-  progreso.style.width = "100%";
-  logBitacora("✅ Proceso terminado. Todas las NC procesadas.");
+  bar.style.width = "100%";
 }
 </script>
 
