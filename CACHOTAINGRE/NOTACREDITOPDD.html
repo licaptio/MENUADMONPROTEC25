@@ -60,7 +60,7 @@ const r = xml.getElementsByTagNameNS(ns, "Receptor")[0];
 archivosDatos.push({
   uuid_cfdi: uuid,
   rfc_emisor: e.getAttribute("Rfc"),
-  rfc_receptor: r.getAttribute("Rfc"),
+  rfc_receptor: r ? r.getAttribute("Rfc") : null,
   fecha_emision: c.getAttribute("Fecha"),
   fecha_certificacion: t.getAttribute("FechaTimbrado"),
   fecha_cancelacion: null,
