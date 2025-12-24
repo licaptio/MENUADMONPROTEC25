@@ -145,8 +145,8 @@ async function cargarIngresos() {
   tabla.innerHTML = '';
   alerta.style.display = 'none';
 
-  const { data, error } = await supabase
-    .from('ingresos_sat_api')
+const { data, error } = await supabaseClient
+  .from('ingresos_sat_api')
     .select('*')
     .eq('periodo_anio', selectAnio.value)
     .eq('periodo_mes', selectMes.value)
