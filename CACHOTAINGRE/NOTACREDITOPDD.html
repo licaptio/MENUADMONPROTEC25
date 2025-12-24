@@ -111,7 +111,7 @@ async function procesarArchivos() {
 
         try {
           const r = await fetch(
-            `${SUPABASE_URL}/rest/v1/notas_credito_sat`,
+            `${SUPABASE_URL}/rest/v1/notas_credito_sat?on_conflict=uuid_cfdi`,
             {
               method: "POST",
               headers: {
@@ -124,14 +124,17 @@ async function procesarArchivos() {
             }
           );
 
-if (r.ok) {
-  li.querySelector("span").textContent = "✔ Ya existe / OK";
+if (r.status === 201) {
+  li.querySelector("span").textContent = "✅ Insertado";
   li.querySelector("span").className = "ok";
+} else if (r.status === 204) {
+  li.querySelector("span").textContent = "✔ Ya existía";
+  li.querySelector("span").className = "warn";
+} else {
+  li.querySelector("span").textContent = `❌ Error (${r.status})`;
+  li.querySelector("span").className = "err";
 }
- else {
-            li.querySelector("span").textContent = "❌ Error";
-            li.querySelector("span").className = "err";
-          }
+
 
         } catch (e) {
           li.querySelector("span").textContent = "❌ Red";
