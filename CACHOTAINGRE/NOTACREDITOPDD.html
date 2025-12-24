@@ -124,10 +124,11 @@ async function procesarArchivos() {
             }
           );
 
-          if (r.ok) {
-            li.querySelector("span").textContent = "✅ OK";
-            li.querySelector("span").className = "ok";
-          } else {
+if (r.ok) {
+  li.querySelector("span").textContent = "✔ Ya existe / OK";
+  li.querySelector("span").className = "ok";
+}
+ else {
             li.querySelector("span").textContent = "❌ Error";
             li.querySelector("span").className = "err";
           }
