@@ -29,7 +29,7 @@
 
 <script>
 const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
-const API_KEY = "TU_API_KEY";
+const API_KEY = "TU_API_KEY_REAL";
 let archivosDatos = [];
 
 document.getElementById("xmlInput").addEventListener("change", async function () {
@@ -46,13 +46,13 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
       const c = xml.getElementsByTagNameNS(ns, "Comprobante")[0];
       const e = xml.getElementsByTagNameNS(ns, "Emisor")[0];
 
-      let t = [...xml.getElementsByTagName("*")]
+      const t = [...xml.getElementsByTagName("*")]
         .find(n => n.localName === "TimbreFiscalDigital");
 
-      const uuid = t?.getAttribute("UUID") || "";
+      const uuid = t?.getAttribute("UUID");
       if (!uuid || c.getAttribute("TipoDeComprobante") !== "E") continue;
 
-      const f = new Date(c.getAttribute("Fecha"));
+      const fecha = new Date(c.getAttribute("Fecha"));
 
       archivosDatos.push({
         uuid_cfdi: uuid,
@@ -65,8 +65,8 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
         moneda: c.getAttribute("Moneda"),
         efecto_comprobante: "E",
         estatus: 1,
-        periodo_anio: f.getFullYear(),
-        periodo_mes: f.getMonth() + 1,
+        periodo_anio: fecha.getFullYear(),
+        periodo_mes: fecha.getMonth() + 1,
         raw_line: file.name
       });
 
@@ -81,8 +81,6 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
   }
 });
 </script>
-
-<script>
 <script>
 async function procesarArchivos() {
   const bar = document.getElementById("progreso");
