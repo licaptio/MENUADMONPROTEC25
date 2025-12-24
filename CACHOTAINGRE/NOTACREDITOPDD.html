@@ -127,9 +127,15 @@ async function procesarArchivos() {
 if (r.status === 201) {
   li.querySelector("span").textContent = "✅ Insertado";
   li.querySelector("span").className = "ok";
+
 } else if (r.status === 204) {
   li.querySelector("span").textContent = "✔ Ya existía";
   li.querySelector("span").className = "warn";
+
+} else if (r.status === 200) {
+  li.querySelector("span").textContent = "✔ Procesado";
+  li.querySelector("span").className = "ok";
+
 } else {
   li.querySelector("span").textContent = `❌ Error (${r.status})`;
   li.querySelector("span").className = "err";
