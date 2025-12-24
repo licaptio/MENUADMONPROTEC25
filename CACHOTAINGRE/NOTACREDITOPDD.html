@@ -57,19 +57,21 @@ document.getElementById("xmlInput").addEventListener("change", async function ()
         uuid_cfdi: uuid,
 const r = xml.getElementsByTagNameNS(ns, "Receptor")[0];
 
-rfc_emisor: e.getAttribute("Rfc"),
-rfc_receptor: r.getAttribute("Rfc"),
-        fecha_emision: c.getAttribute("Fecha"),
-        fecha_certificacion: t.getAttribute("FechaTimbrado"),
-        fecha_cancelacion: null,
-        monto: parseFloat(c.getAttribute("Total")),
-        moneda: c.getAttribute("Moneda"),
-        efecto_comprobante: "E",
-        estatus: 1,
-        periodo_anio: fecha.getFullYear(),
-        periodo_mes: fecha.getMonth() + 1,
-        raw_line: file.name
-      });
+archivosDatos.push({
+  uuid_cfdi: uuid,
+  rfc_emisor: e.getAttribute("Rfc"),
+  rfc_receptor: r.getAttribute("Rfc"),
+  fecha_emision: c.getAttribute("Fecha"),
+  fecha_certificacion: t.getAttribute("FechaTimbrado"),
+  fecha_cancelacion: null,
+  monto: parseFloat(c.getAttribute("Total")),
+  moneda: c.getAttribute("Moneda"),
+  efecto_comprobante: "E",
+  estatus: 1,
+  periodo_anio: fecha.getFullYear(),
+  periodo_mes: fecha.getMonth() + 1,
+  raw_line: file.name
+});
 
       const li = document.createElement("li");
       li.dataset.uuid = uuid;
