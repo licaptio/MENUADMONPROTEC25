@@ -51,6 +51,8 @@ const c = nodos.find(n => n.localName === "Comprobante");
 const e = nodos.find(n => n.localName === "Emisor");
 const r = nodos.find(n => n.localName === "Receptor");
 const t = nodos.find(n => n.localName === "TimbreFiscalDigital");
+const rel = nodos.find(n => n.localName === "CfdiRelacionado");
+const uuidRelacionado = rel ? rel.getAttribute("UUID") : null;
 
 if (!c || !e || !t) {
   throw new Error("CFDI incompleto");
@@ -64,6 +66,7 @@ const fecha = new Date(c.getAttribute("Fecha"));
 
 archivosDatos.push({
   uuid_cfdi: t.getAttribute("UUID"),
+  uuid_ingreso_relacionado: uuidRelacionado, // 🔥 CLAVE
   rfc_emisor: e.getAttribute("Rfc"),
   rfc_receptor: r ? r.getAttribute("Rfc") : null,
   fecha_emision: c.getAttribute("Fecha"),
