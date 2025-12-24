@@ -147,10 +147,11 @@ async function cargarIngresos() {
 
 const { data, error } = await supabaseClient
   .from('ingresos_sat_api')
-    .select('*')
-    .eq('periodo_anio', selectAnio.value)
-    .eq('periodo_mes', selectMes.value)
-    .order('fecha', { ascending: false });
+  .select('uuid_cfdi, fecha, total, estado_sat')
+  .eq('periodo_anio', selectAnio.value)
+  .eq('periodo_mes', selectMes.value)
+  .order('fecha', { ascending: false })
+  .limit(100);
 
   if (error) {
     console.error(error);
