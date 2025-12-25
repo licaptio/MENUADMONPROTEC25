@@ -71,6 +71,18 @@ for (const tImp of traslados) {
 }
 
 const c = nodos.find(n => n.localName === "Comprobante");
+// =====================================
+// IMPUESTOS GLOBALES (SAT manda aquí)
+// =====================================
+const nodoImpuestos = nodos.find(n => n.localName === "Impuestos");
+
+let totalImpuestosSAT = 0;
+if (nodoImpuestos) {
+  totalImpuestosSAT = parseFloat(
+    nodoImpuestos.getAttribute("TotalImpuestosTrasladados") || 0
+  );
+}
+
 const e = nodos.find(n => n.localName === "Emisor");
 const r = nodos.find(n => n.localName === "Receptor");
 const t = nodos.find(n => n.localName === "TimbreFiscalDigital");
@@ -100,9 +112,9 @@ archivosDatos.push({
   fecha_cancelacion: null,
 
   subtotal: parseFloat(c.getAttribute("SubTotal")),
-  total_iva: totalIVA,
-  total_ieps: totalIEPS,
-  monto_total: parseFloat(c.getAttribute("Total")),
+total_iva: totalIVA,          // solo si hay IVA
+total_ieps: totalImpuestosSAT, // 🔥 VALOR SAT REAL
+monto_total: parseFloat(c.getAttribute("Total")),
 
   impuestos_json: impuestosDetalle,
 
