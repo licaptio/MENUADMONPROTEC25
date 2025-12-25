@@ -46,6 +46,29 @@ if (xml.getElementsByTagName("parsererror").length) {
 }
 
 const nodos = [...xml.getElementsByTagName("*")];
+// ===============================
+// PARSEO DE IMPUESTOS (IVA / IEPS)
+// ===============================
+let totalIVA = 0;
+let totalIEPS = 0;
+let impuestosDetalle = [];
+
+const traslados = nodos.filter(n => n.localName === "Traslado");
+
+for (const tImp of traslados) {
+  const impuesto = tImp.getAttribute("Impuesto");
+  const importe = parseFloat(tImp.getAttribute("Importe") || 0);
+  const tasa = tImp.getAttribute("TasaOCuota");
+
+  if (impuesto === "002") totalIVA += importe;   // IVA
+  if (impuesto === "003") totalIEPS += importe;  // IEPS
+
+  impuestosDetalle.push({
+    impuesto,
+    importe,
+    tasa
+  });
+}
 
 const c = nodos.find(n => n.localName === "Comprobante");
 const e = nodos.find(n => n.localName === "Emisor");
@@ -64,22 +87,38 @@ if (c.getAttribute("TipoDeComprobante") !== "E") {
 
 const fecha = new Date(c.getAttribute("Fecha"));
 
+if (!uuidRelacionado) {
+  throw new Error("NC sin CFDI de ingreso relacionado");
+}
+
 archivosDatos.push({
   uuid_cfdi: t.getAttribute("UUID"),
-  uuid_ingreso_relacionado: uuidRelacionado, // 🔥 CLAVE
-  rfc_emisor: e.getAttribute("Rfc"),
-  rfc_receptor: r ? r.getAttribute("Rfc") : null,
+  uuid_ingreso_relacionado: uuidRelacionado,
+
   fecha_emision: c.getAttribute("Fecha"),
   fecha_certificacion: t.getAttribute("FechaTimbrado"),
   fecha_cancelacion: null,
-  monto: parseFloat(c.getAttribute("Total")),
+
+  subtotal: parseFloat(c.getAttribute("SubTotal")),
+  total_iva: totalIVA,
+  total_ieps: totalIEPS,
+  monto_total: parseFloat(c.getAttribute("Total")),
+
+  impuestos_json: impuestosDetalle,
+
   moneda: c.getAttribute("Moneda"),
-  efecto_comprobante: "E",
+  tipo_comprobante: "E",
   estatus: 1,
+
   periodo_anio: fecha.getFullYear(),
   periodo_mes: fecha.getMonth() + 1,
-  raw_line: file.name
+
+  rfc_emisor: e.getAttribute("Rfc"),
+  rfc_receptor: r ? r.getAttribute("Rfc") : null,
+
+  archivo_xml: file.name
 });
+
 
 const li = document.createElement("li");
 li.dataset.uuid = t.getAttribute("UUID");
@@ -114,7 +153,7 @@ async function procesarArchivos() {
 
         try {
           const r = await fetch(
-            `${SUPABASE_URL}/rest/v1/notas_credito_sat?on_conflict=uuid_cfdi`,
+            `${SUPABASE_URL}/rest/v1/notas_credito_pdd_v2?on_conflict=uuid_cfdi`,
             {
               method: "POST",
               headers: {
