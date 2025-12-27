@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acceso PROVSOFT</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: radial-gradient(circle at top, #0c6cbd, #001f3f);
+  color:#fff;
+}
+
+.card{
+  background:rgba(0,0,0,.75);
+  padding:32px;
+  border-radius:16px;
+  width:100%;
+  max-width:380px;
+  box-shadow:0 12px 35px rgba(0,0,0,.6);
+  text-align:center;
+}
+
+h2{
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
+  outline:none;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
+  font-weight:700;
+  background:#16a34a;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{opacity:.9}
+
+.error{
+  margin-top:12px;
+  color:#ffb4b4;
+  display:none;
+}
+
+footer{
+  margin-top:18px;
+  font-size:13px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>🔐 Acceso PROVSOFT</h2>
+
+  <input type="password" id="password" placeholder="Contraseña">
+  <button onclick="login()">Entrar</button>
+
+  <div id="error" class="error">Contraseña incorrecta</div>
+
+  <footer>Powered by PROVSOFT</footer>
+</div>
+
+<script>
+/* ===============================
+   CONFIGURACIÓN
+================================ */
+const PASSWORD = "PROVSOFT2025"; // 👈 CAMBIA ESTA CONTRASEÑA
+const DURACION_MINUTOS = 60;     // ⏱️ tiempo de sesión
+
+/* ===============================
+   LOGIN
+================================ */
+function login(){
+  const pass = document.getElementById("password").value;
+
+  if(pass === PASSWORD){
+    const ahora = Date.now();
+    const expira = ahora + (DURACION_MINUTOS * 60 * 1000);
+
+    localStorage.setItem("provsoft_auth","ok");
+    localStorage.setItem("provsoft_expira", expira);
+
+    window.location.href = "index.html";
+  }else{
+    document.getElementById("error").style.display = "block";
+  }
+}
+
+/* ===============================
+   ENTER PARA ENTRAR
+================================ */
+document.addEventListener("keydown", e=>{
+  if(e.key === "Enter") login();
+});
+</script>
+
+</body>
+</html>
