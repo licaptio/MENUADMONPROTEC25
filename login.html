@@ -6,7 +6,6 @@
 <title>Acceso PROVSOFT</title>
 
 <style>
-*{box-sizing:border-box}
 body{
   margin:0;
   font-family:'Segoe UI',sans-serif;
@@ -17,105 +16,73 @@ body{
   background: radial-gradient(circle at top, #0c6cbd, #001f3f);
   color:#fff;
 }
-
 .card{
   background:rgba(0,0,0,.75);
-  padding:32px;
+  padding:30px;
   border-radius:16px;
   width:100%;
   max-width:380px;
-  box-shadow:0 12px 35px rgba(0,0,0,.6);
+  box-shadow:0 12px 30px rgba(0,0,0,.6);
   text-align:center;
 }
-
-h2{
-  margin-bottom:20px;
-}
-
-input{
+input,button{
   width:100%;
   padding:14px;
   margin:10px 0;
   border-radius:10px;
   border:none;
   font-size:16px;
-  outline:none;
 }
-
 button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border-radius:10px;
-  border:none;
-  font-size:16px;
-  font-weight:700;
   background:#16a34a;
   color:white;
+  font-weight:700;
   cursor:pointer;
 }
-
 button:hover{opacity:.9}
-
-.error{
-  margin-top:12px;
-  color:#ffb4b4;
-  display:none;
-}
-
-footer{
-  margin-top:18px;
-  font-size:13px;
-  opacity:.8;
-}
+.error{color:#ffb4b4;display:none}
 </style>
 </head>
 
 <body>
-
 <div class="card">
   <h2>🔐 Acceso PROVSOFT</h2>
 
+  <input type="email" id="email" placeholder="Correo">
   <input type="password" id="password" placeholder="Contraseña">
   <button onclick="login()">Entrar</button>
 
-  <div id="error" class="error">Contraseña incorrecta</div>
-
-  <footer>Powered by PROVSOFT</footer>
+  <div id="error" class="error">Credenciales incorrectas</div>
 </div>
 
-<script>
-/* ===============================
-   CONFIGURACIÓN
-================================ */
-const PASSWORD = "PROVSOFT2025"; // 👈 CAMBIA ESTA CONTRASEÑA
-const DURACION_MINUTOS = 60;     // ⏱️ tiempo de sesión
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* ===============================
-   LOGIN
-================================ */
-function login(){
-  const pass = document.getElementById("password").value;
+/* 🔧 PEGA AQUÍ TU CONFIGURACIÓN FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyCK5nb6u2CGRJ8AB1aPlRn54b97bdeAFeM",
+  authDomain: "inventariopv-643f1.firebaseapp.com",
+  projectId: "inventariopv-643f1",
+  storageBucket: "inventariopv-643f1.firebasestorage.app",
+  messagingSenderId: "96242533231",
+  appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
+};
 
-  if(pass === PASSWORD){
-    const ahora = Date.now();
-    const expira = ahora + (DURACION_MINUTOS * 60 * 1000);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-    localStorage.setItem("provsoft_auth","ok");
-    localStorage.setItem("provsoft_expira", expira);
+window.login = async ()=>{
+  const email = document.getElementById("email").value;
+  const pass  = document.getElementById("password").value;
 
+  try{
+    await signInWithEmailAndPassword(auth, email, pass);
     window.location.href = "index.html";
-  }else{
-    document.getElementById("error").style.display = "block";
+  }catch(e){
+    document.getElementById("error").style.display="block";
   }
-}
-
-/* ===============================
-   ENTER PARA ENTRAR
-================================ */
-document.addEventListener("keydown", e=>{
-  if(e.key === "Enter") login();
-});
+};
 </script>
 
 </body>
