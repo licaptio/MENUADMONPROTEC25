@@ -90,7 +90,7 @@ th{
   <th>UUID</th>
   <th>RFC Receptor</th>
   <th>Nombre Receptor</th>
-  <th>Serie</th>
+  <th>Serie / Sucursal</th>
   <th>Folio</th>
   <th>Subtotal</th>
   <th>IVA</th>
@@ -204,8 +204,9 @@ function render(rows){
           ${cut(r.razon_social_receptor, 25)}
         </td>
 
-        <!-- SERIE -->
-        <td>${r.serie ?? ''}</td>
+<td>
+  <strong>${sucursalPorSerie(r.serie)}</strong>
+</td>
 
         <!-- FOLIO -->
         <td>${r.folio ?? ''}</td>
@@ -247,6 +248,20 @@ function cut(txt, max){
   return txt.length > max
     ? txt.substring(0, max) + '…'
     : txt;
+}
+function sucursalPorSerie(serie){
+  if(!serie) return 'SIN SUCURSAL';
+
+  const mapa = {
+    'LMN': 'MATRIZ',
+    'GM':  'BODEGA 41',
+    'SAN': 'ALLENDE II',
+    'AM':  'ALLENDE I',
+    'MM':  'MONTEMORELOS'
+  };
+
+  const s = serie.toUpperCase();
+  return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
 }
 
 </script>
