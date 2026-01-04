@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Facturas por Fecha – PROVSOFT</title>
+<title>Factura – PROVSOFT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -10,263 +10,154 @@
 <style>
 body{
   font-family: 'Poppins', Arial, sans-serif;
-  background:#eef1f5;
-  margin:0;
+  background:#f2f2f2;
   padding:30px;
 }
-
-h2{
-  margin-bottom:12px;
-}
-
-.controls{
+.factura{
+  max-width:900px;
+  margin:auto;
   background:#fff;
-  padding:15px;
-  border-radius:14px;
-  box-shadow:0 6px 18px rgba(0,0,0,.1);
+  padding:30px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+.header{
   display:flex;
-  gap:12px;
-  align-items:center;
-  margin-bottom:20px;
+  gap:20px;
 }
-
-button{
-  padding:10px 18px;
-  border:none;
-  border-radius:10px;
-  background:#0c6cbd;
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
+.logo img{
+  max-width:180px;
 }
-
-table{
+.titulo{
+  flex:1;
+}
+.box{
+  border:1px solid #ddd;
+  padding:12px;
+  margin-top:15px;
+}
+.table{
   width:100%;
   border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
+  margin-top:10px;
 }
-
-th, td{
-  padding:10px;
+.table th,.table td{
+  border:1px solid #ddd;
+  padding:8px;
   font-size:14px;
-  border-bottom:1px solid #eee;
-  text-align:left;
 }
-
-th{
-  background:#f0f3f9;
+.right{text-align:right}
+.footer{
+  margin-top:25px;
+  text-align:center;
+  font-size:13px;
+  color:#666;
 }
-
-.pagination{
-  margin-top:18px;
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-.monto {
-  text-align: left;
-  font-weight: 600;
-}
-
 </style>
 </head>
 
 <body>
 
-<h2>📄 Facturas por Fecha</h2>
+<div class="factura">
 
-<div class="controls">
-  <input type="date" id="fecha">
-  <button onclick="buscar()">Ejecutar</button>
-</div>
-<p id="loading" style="display:none;font-weight:600;">⏳ Cargando facturas…</p>
-<table>
-<thead>
-<tr>
-  <th>Fecha</th>
-  <th>UUID</th>
-  <th>RFC Receptor</th>
-  <th>Nombre Receptor</th>
-  <th>Serie / Sucursal</th>
-  <th>Folio</th>
-  <th>Subtotal</th>
-  <th>IVA</th>
-  <th>IEPS</th>
-  <th>Total</th>
-</tr>
-</thead>
-<tbody id="tabla"></tbody>
-</table>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <img src="logo_pdd.png">
+    </div>
+    <div class="titulo">
+      <strong>PROVEEDORA DE DULCES Y DESECHABLES</strong><br>
+      RFC: PDD031204KL5<br>
+      Linares, Nuevo León
+    </div>
+  </div>
 
-<div class="pagination">
-  <button onclick="prev()">⬅ Anterior</button>
-  <span id="pagina">Página 1</span>
-  <button onclick="next()">Siguiente ➡</button>
+  <!-- DATOS FACTURA -->
+  <div class="box" id="datosFactura"></div>
+
+  <!-- CLIENTE -->
+  <div class="box" id="cliente"></div>
+
+  <!-- CONCEPTOS -->
+  <table class="table" id="conceptos">
+    <thead>
+      <tr>
+        <th>Cant</th>
+        <th>Descripción</th>
+        <th class="right">Importe</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- TOTALES -->
+  <table class="table" style="width:40%; margin-left:auto">
+    <tr><td>Subtotal</td><td class="right" id="sub"></td></tr>
+    <tr><td>IVA</td><td class="right" id="iva"></td></tr>
+    <tr><td>IEPS</td><td class="right" id="ieps"></td></tr>
+    <tr><td><strong>Total</strong></td><td class="right"><strong id="total"></strong></td></tr>
+  </table>
+
+  <div class="footer">
+    POWERED BY <strong>PROVSOFT</strong> 2026
+  </div>
+
 </div>
 
 <script>
-/* ================= SUPABASE ================= */
 const db = supabase.createClient(
   'https://cvpbtjlupswbyxenugpz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+  'PUBLIC_KEY'
 );
 
-/* ================= PAGINACIÓN ================= */
-let page = 0;
-const limit = 50;
+const uuid = new URLSearchParams(location.search).get('uuid');
 
-/* ================= FUNCIONES ================= */
-async function buscar(){
-  page = 0;
-  await cargar();
-}
+const SUCURSALES = {
+  LMN:'MATRIZ', GM:'BODEGA 41', SAN:'ALLENDE II',
+  AM:'ALLENDE I', MM:'MONTEMORELOS',
+  LO:'OSITO', LP:'CENTRAL', RVN:'RIO VERDE', LV:'PROVILEON'
+};
 
-async function cargar(){
-  const loading = document.getElementById('loading');
-  loading.style.display = 'block';
-
-  const fecha = document.getElementById('fecha').value;
-  if(!fecha){
-    alert("Selecciona una fecha");
-    loading.style.display = 'none';
-    return;
-  }
-
-function rangoUTCDesdeFechaLocal(fechaLocal) {
-  // fechaLocal = '2026-01-03'
-  const inicioLocal = new Date(`${fechaLocal}T00:00:00`);
-  const finLocal    = new Date(`${fechaLocal}T23:59:59`);
-
-  return {
-    inicioUTC: inicioLocal.toISOString(),
-    finUTC: finLocal.toISOString()
-  };
-}
-
-  const from = page * limit;
-  const to   = from + limit - 1;
-  const { inicioUTC, finUTC } = rangoUTCDesdeFechaLocal(fecha);
-  const { data, error } = await db
+(async()=>{
+  const { data } = await db
     .from('ingresos_pdd')
-.select(`
-  fecha,
-  uuid_cfdi,
-  rfc_receptor,
-  razon_social_receptor,
-  serie,
-  folio,
-  subtotal,
-  total_iva,
-  total_ieps,
-  total
-`)
-.gte('fecha', inicioUTC)
-.lte('fecha', finUTC)
-    .order('fecha', { ascending: false })
-    .range(from, to);
+    .select('*')
+    .eq('uuid_cfdi', uuid)
+    .single();
 
-  loading.style.display = 'none';
+  document.getElementById('datosFactura').innerHTML = `
+    <strong>Factura:</strong> ${data.serie}-${data.folio}<br>
+    <strong>Fecha:</strong> ${data.fecha.replace('T',' ').replace('+00:00','')}<br>
+    <strong>Sucursal:</strong> ${data.serie} - ${SUCURSALES[data.serie] || 'DESCONOCIDA'}<br>
+    <strong>UUID:</strong> ${data.uuid_cfdi}
+  `;
 
-  if(error){
-    console.error(error);
-    alert(error.message);
-    return;
-  }
+  document.getElementById('cliente').innerHTML = `
+    <strong>Cliente:</strong> ${data.razon_social_receptor}<br>
+    <strong>RFC:</strong> ${data.rfc_receptor}
+  `;
 
-  render(data);
-  document.getElementById('pagina').innerText = `Página ${page + 1}`;
-}
+  const conceptos = JSON.parse(data.conceptos || '[]');
+  const tb = document.querySelector('#conceptos tbody');
 
-function render(rows){
-  const tbody = document.getElementById('tabla');
-  tbody.innerHTML = "";
-
-  rows.forEach(r=>{
-    tbody.innerHTML += `
+  conceptos.forEach(c=>{
+    tb.innerHTML += `
       <tr>
-        <!-- FECHA -->
-        <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
-
-<td>
-  <a href="factura_detalle.html?uuid=${r.uuid_cfdi}" target="_blank">
-    ${cut(r.uuid_cfdi, 16)}
-  </a>
-</td>
-
-        <!-- RFC RECEPTOR -->
-        <td>${r.rfc_receptor ?? ''}</td>
-
-        <!-- NOMBRE RECEPTOR -->
-        <td title="${r.razon_social_receptor ?? ''}">
-          ${cut(r.razon_social_receptor, 25)}
-        </td>
-
-<td>
-  <strong>${sucursalPorSerie(r.serie)}</strong>
-</td>
-
-        <!-- FOLIO -->
-        <td>${r.folio ?? ''}</td>
-
-        <!-- MONTOS -->
-        <td class="monto">${fmt(r.subtotal)}</td>
-        <td class="monto">${fmt(r.total_iva)}</td>
-        <td class="monto">${fmt(r.total_ieps)}</td>
-        <td class="monto"><strong>${fmt(r.total)}</strong></td>
+        <td>${c.cantidad}</td>
+        <td>${c.descripcion}</td>
+        <td class="right">$${Number(c.importe).toFixed(2)}</td>
       </tr>
     `;
   });
-}
 
+  document.getElementById('sub').innerText   = money(data.subtotal);
+  document.getElementById('iva').innerText   = money(data.total_iva);
+  document.getElementById('ieps').innerText  = money(data.total_ieps);
+  document.getElementById('total').innerText = money(data.total);
+})();
 
-function fmt(n){
-  if(n === null || n === undefined) return '$ 0.00';
-  return Number(n).toLocaleString('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2
-  });
+function money(n){
+  return Number(n).toLocaleString('es-MX',{style:'currency',currency:'MXN'});
 }
-  
-
-function next(){
-  page++;
-  cargar();
-}
-
-function prev(){
-  if(page > 0){
-    page--;
-    cargar();
-  }
-}
-function cut(txt, max){
-  if(!txt) return '';
-  return txt.length > max
-    ? txt.substring(0, max) + '…'
-    : txt;
-}
-function sucursalPorSerie(serie){
-  if(!serie) return 'SIN SUCURSAL';
-
-const mapa = {
-  'LMN': 'MATRIZ',
-  'GM':  'BODEGA 41',
-  'SAN': 'ALLENDE II',
-  'AM':  'ALLENDE I',
-  'MM':  'MONTEMORELOS',
-  'LO':  'OSITO',
-  'LP':  'CENTRAL',
-  'RVN': 'RIO VERDE',
-  'LV':  'PROVILEON'
-};
-  const s = serie.toUpperCase();
-  return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
-}
-
 </script>
 
 </body>
