@@ -187,24 +187,38 @@ function render(rows){
   rows.forEach(r=>{
     tbody.innerHTML += `
       <tr>
+        <!-- FECHA -->
         <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
-<td title="${r.uuid_cfdi ?? ''}">
-  ${cut(r.uuid_cfdi, 16)}
-</td>
-<td title="${r.razon_social_receptor ?? ''}">
-  ${cut(r.razon_social_receptor, 25)}
-</td>
-        <td>${(r.razon_social_receptor ?? '').substring(0,25)}</td>
+
+        <!-- UUID -->
+        <td title="${r.uuid_cfdi ?? ''}">
+          ${cut(r.uuid_cfdi, 16)}
+        </td>
+
+        <!-- RFC RECEPTOR -->
+        <td>${r.rfc_receptor ?? ''}</td>
+
+        <!-- NOMBRE RECEPTOR -->
+        <td title="${r.razon_social_receptor ?? ''}">
+          ${cut(r.razon_social_receptor, 25)}
+        </td>
+
+        <!-- SERIE -->
         <td>${r.serie ?? ''}</td>
+
+        <!-- FOLIO -->
         <td>${r.folio ?? ''}</td>
-<td class="monto">${fmt(r.subtotal)}</td>
-<td class="monto">${fmt(r.total_iva)}</td>
-<td class="monto">${fmt(r.total_ieps)}</td>
-<td class="monto"><strong>${fmt(r.total)}</strong></td>
+
+        <!-- MONTOS -->
+        <td class="monto">${fmt(r.subtotal)}</td>
+        <td class="monto">${fmt(r.total_iva)}</td>
+        <td class="monto">${fmt(r.total_ieps)}</td>
+        <td class="monto"><strong>${fmt(r.total)}</strong></td>
       </tr>
     `;
   });
 }
+
 
 function fmt(n){
   if(n === null || n === undefined) return '$ 0.00';
