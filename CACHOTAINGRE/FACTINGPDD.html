@@ -66,6 +66,11 @@ th{
   gap:12px;
   align-items:center;
 }
+.monto {
+  text-align: left;
+  font-weight: 600;
+}
+
 </style>
 </head>
 
@@ -188,19 +193,24 @@ function render(rows){
         <td>${(r.razon_social_receptor ?? '').substring(0,25)}</td>
         <td>${r.serie ?? ''}</td>
         <td>${r.folio ?? ''}</td>
-        <td>${fmt(r.subtotal)}</td>
-        <td>${fmt(r.total_iva)}</td>
-        <td>${fmt(r.total_ieps)}</td>
-        <td><strong>${fmt(r.total)}</strong></td>
+<td class="monto">${fmt(r.subtotal)}</td>
+<td class="monto">${fmt(r.total_iva)}</td>
+<td class="monto">${fmt(r.total_ieps)}</td>
+<td class="monto"><strong>${fmt(r.total)}</strong></td>
       </tr>
     `;
   });
 }
 
 function fmt(n){
-  if(n === null || n === undefined) return '';
-  return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+  if(n === null || n === undefined) return '$ 0.00';
+  return Number(n).toLocaleString('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 2
+  });
 }
+  
 
 function next(){
   page++;
