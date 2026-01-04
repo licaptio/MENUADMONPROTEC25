@@ -145,17 +145,18 @@ function rangoUTCDesdeFechaLocal(fechaLocal) {
   const { inicioUTC, finUTC } = rangoUTCDesdeFechaLocal(fecha);
   const { data, error } = await db
     .from('ingresos_pdd')
-    .select(`
-      fecha,
-      uuid_cfdi,
-      rfc_receptor,
-      subtotal,
-      total_iva,
-      total_ieps,
-      total,
-      serie,
-      folio
-    `)
+.select(`
+  fecha,
+  uuid_cfdi,
+  rfc_receptor,
+  razon_social_receptor,
+  serie,
+  folio,
+  subtotal,
+  total_iva,
+  total_ieps,
+  total
+`)
 .gte('fecha', inicioUTC)
 .lte('fecha', finUTC)
     .order('fecha', { ascending: false })
@@ -184,7 +185,7 @@ function render(rows){
   timeZone: 'America/Monterrey',
   hour12: true
 })}</td>
-        <td>${r.uuid_cfdi ?? ''}</td>
+        <td>$(r.uuid_cfdi ?? '').substring(0, 16)</td>
         <td>${r.rfc_receptor ?? ''}</td>
         <td>${fmt(r.subtotal)}</td>
         <td>${fmt(r.total_iva)}</td>
