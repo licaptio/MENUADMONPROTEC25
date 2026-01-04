@@ -185,7 +185,7 @@ function render(rows){
         <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
         <td>${(r.uuid_cfdi ?? '').substring(0,16)}</td>
         <td>${r.rfc_receptor ?? ''}</td>
-        <td>${r.razon_social_receptor ?? ''}</td>
+        <td>${(r.razon_social_receptor ?? '').substring(0,25)}</td>
         <td>${r.serie ?? ''}</td>
         <td>${r.folio ?? ''}</td>
         <td>${fmt(r.subtotal)}</td>
