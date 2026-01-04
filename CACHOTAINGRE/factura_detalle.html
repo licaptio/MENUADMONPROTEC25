@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Representación Impresa CFDI – PROVSOFT</title>
+<title>Representación CFDI – PROVSOFT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -10,24 +10,29 @@
 <style>
 body{
   font-family: Arial, sans-serif;
-  background:#eaeaea;
+  background:#e5e5e5;
   padding:30px;
 }
 
 .cfdi{
   background:#fff;
-  max-width:950px;
+  max-width:980px;
   margin:auto;
   padding:30px;
-  border:1px solid #ccc;
+  border:1px solid #999;
 }
 
+/* ===== HEADER ===== */
 .header{
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 180px 1fr 300px;
   gap:20px;
   border-bottom:2px solid #000;
-  padding-bottom:10px;
+  padding-bottom:12px;
+}
+
+.logo img{
+  width:160px;
 }
 
 .box{
@@ -42,16 +47,19 @@ body{
   text-align:right;
 }
 
+/* ===== SECTIONS ===== */
 .section{
-  margin-top:18px;
+  margin-top:20px;
 }
 
 .section h3{
-  margin:6px 0;
+  margin:6px 0 8px;
   font-size:14px;
   border-bottom:1px solid #000;
+  padding-bottom:4px;
 }
 
+/* ===== TABLES ===== */
 table{
   width:100%;
   border-collapse:collapse;
@@ -64,27 +72,38 @@ th,td{
 }
 
 th{
-  background:#f0f0f0;
+  background:#f2f2f2;
 }
 
+.right-txt{
+  text-align:right;
+}
+
+/* ===== TOTALES ===== */
 .totales{
-  width:320px;
-  float:right;
-  margin-top:10px;
+  width:340px;
+  margin-left:auto;
+  margin-top:16px;
 }
 
+/* ===== FOOTER ===== */
 .footer{
   margin-top:40px;
   font-size:11px;
+  text-align:center;
+  border-top:1px solid #999;
+  padding-top:10px;
+  color:#333;
 }
 </style>
 </head>
 
 <body>
 
-<div class="cfdi" id="cfdi"></div>
+<div class="cfdi" id="cfdi">Cargando CFDI…</div>
 
 <script>
+/* ===== SUPABASE ===== */
 const db = supabase.createClient(
   'https://cvpbtjlupswbyxenugpz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
@@ -92,6 +111,23 @@ const db = supabase.createClient(
 
 const uuid = new URLSearchParams(location.search).get('uuid');
 
+/* ===== SUCURSAL POR SERIE ===== */
+function sucursalPorSerie(serie){
+  const mapa = {
+    'LMN': 'MATRIZ',
+    'GM':  'BODEGA 41',
+    'SAN': 'ALLENDE II',
+    'AM':  'ALLENDE I',
+    'MM':  'MONTEMORELOS',
+    'LO':  'OSITO',
+    'LP':  'CENTRAL',
+    'RVN': 'RIO VERDE',
+    'LV':  'PROVILEON'
+  };
+  return mapa[serie] ? `${serie} – ${mapa[serie]}` : serie;
+}
+
+/* ===== LOAD ===== */
 async function cargar(){
   const { data, error } = await db
     .from('ingresos_pdd')
@@ -107,74 +143,82 @@ async function cargar(){
   render(data);
 }
 
+/* ===== RENDER ===== */
 function render(f){
   document.getElementById('cfdi').innerHTML = `
-    <!-- ENCABEZADO -->
-    <div class="header">
-      <div class="box">
-        <strong>${f.razon_social_emisor}</strong><br>
-        RFC: ${f.rfc_emisor}<br>
-        ${f.periodo_anio ?? ''} ${f.periodo_mes ?? ''}
-      </div>
-      <div class="box right">
-        <strong>FACTURA</strong><br>
-        Serie/Folio: ${f.serie} ${f.folio}<br>
-        UUID: ${f.uuid_cfdi}<br>
-        Fecha emisión: ${f.fecha.replace('T',' ').replace('+00:00','')}
-      </div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <img src="logo_provsoft.png">
     </div>
 
-    <!-- RECEPTOR -->
-    <div class="section">
-      <h3>Datos del Receptor</h3>
-      <div class="box">
-        <strong>${f.razon_social_receptor}</strong><br>
-        RFC: ${f.rfc_receptor}<br>
-        Uso CFDI: ${f.uso_cfdi}
-      </div>
+    <div class="box">
+      <strong>${f.razon_social_emisor}</strong><br>
+      RFC: ${f.rfc_emisor}<br>
+      Régimen: 601 – General de Ley Personas Morales<br>
+      <strong>Sucursal:</strong> ${sucursalPorSerie(f.serie)}
     </div>
 
-    <!-- CONCEPTOS -->
-    <div class="section">
-      <h3>Conceptos</h3>
-      <table>
-        <thead>
+    <div class="box right">
+      <strong>FACTURA</strong><br>
+      Serie / Folio: ${f.serie} ${f.folio}<br>
+      UUID: ${f.uuid_cfdi}<br>
+      Fecha emisión:<br>
+      ${f.fecha.replace('T',' ').replace('+00:00','')}
+    </div>
+  </div>
+
+  <!-- RECEPTOR -->
+  <div class="section">
+    <h3>Datos del Receptor</h3>
+    <strong>${f.razon_social_receptor}</strong><br>
+    RFC: ${f.rfc_receptor}<br>
+    Uso CFDI: ${f.uso_cfdi}
+  </div>
+
+  <!-- CONCEPTOS -->
+  <div class="section">
+    <h3>Conceptos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Cant.</th>
+          <th>Descripción</th>
+          <th class="right-txt">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(f.conceptos ?? []).map(c=>`
           <tr>
-            <th>Cant.</th>
-            <th>Descripción</th>
-            <th>Importe</th>
+            <td>${c.cantidad}</td>
+            <td>${c.descripcion}</td>
+            <td class="right-txt">$ ${fmt(c.importe)}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${(f.conceptos ?? []).map(c=>`
-            <tr>
-              <td>${c.cantidad}</td>
-              <td>${c.descripcion}</td>
-              <td class="right">$ ${Number(c.importe).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- TOTALES -->
-    <table class="totales">
-      <tr><td>Subtotal</td><td class="right">$ ${fmt(f.subtotal)}</td></tr>
-      <tr><td>IVA</td><td class="right">$ ${fmt(f.total_iva)}</td></tr>
-      <tr><td>IEPS</td><td class="right">$ ${fmt(f.total_ieps)}</td></tr>
-      <tr><th>Total</th><th class="right">$ ${fmt(f.total)}</th></tr>
+        `).join('')}
+      </tbody>
     </table>
+  </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-      <strong>Este documento es una representación impresa de un CFDI</strong><br>
-      PAC: ${f.no_certificado_sat}
-    </div>
+  <!-- TOTALES -->
+  <table class="totales">
+    <tr><td>Subtotal</td><td class="right-txt">$ ${fmt(f.subtotal)}</td></tr>
+    <tr><td>IVA</td><td class="right-txt">$ ${fmt(f.total_iva)}</td></tr>
+    <tr><td>IEPS</td><td class="right-txt">$ ${fmt(f.total_ieps)}</td></tr>
+    <tr><th>Total</th><th class="right-txt">$ ${fmt(f.total)}</th></tr>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Este documento es una representación impresa de un CFDI<br>
+    <strong>POWERED BY PROVSOFT · 2026</strong>
+  </div>
   `;
 }
 
 function fmt(n){
-  return Number(n ?? 0).toLocaleString('es-MX',{minimumFractionDigits:2});
+  return Number(n ?? 0).toLocaleString('es-MX',{
+    minimumFractionDigits:2
+  });
 }
 
 cargar();
