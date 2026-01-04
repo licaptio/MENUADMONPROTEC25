@@ -188,8 +188,12 @@ function render(rows){
     tbody.innerHTML += `
       <tr>
         <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
-        <td>${(r.uuid_cfdi ?? '').substring(0,16)}</td>
-        <td>${r.rfc_receptor ?? ''}</td>
+<td title="${r.uuid_cfdi ?? ''}">
+  ${cut(r.uuid_cfdi, 16)}
+</td>
+<td title="${r.razon_social_receptor ?? ''}">
+  ${cut(r.razon_social_receptor, 25)}
+</td>
         <td>${(r.razon_social_receptor ?? '').substring(0,25)}</td>
         <td>${r.serie ?? ''}</td>
         <td>${r.folio ?? ''}</td>
@@ -223,6 +227,13 @@ function prev(){
     cargar();
   }
 }
+function cut(txt, max){
+  if(!txt) return '';
+  return txt.length > max
+    ? txt.substring(0, max) + '…'
+    : txt;
+}
+
 </script>
 
 </body>
