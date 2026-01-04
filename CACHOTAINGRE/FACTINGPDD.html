@@ -190,10 +190,11 @@ function render(rows){
         <!-- FECHA -->
         <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
 
-        <!-- UUID -->
-        <td title="${r.uuid_cfdi ?? ''}">
-          ${cut(r.uuid_cfdi, 16)}
-        </td>
+<td>
+  <a href="factura_detalle.html?uuid=${r.uuid_cfdi}" target="_blank">
+    ${cut(r.uuid_cfdi, 16)}
+  </a>
+</td>
 
         <!-- RFC RECEPTOR -->
         <td>${r.rfc_receptor ?? ''}</td>
