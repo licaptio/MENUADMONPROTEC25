@@ -181,10 +181,7 @@ function render(rows){
   rows.forEach(r=>{
     tbody.innerHTML += `
       <tr>
-        <td>${new Date(r.fecha).toLocaleString('es-MX', {
-  timeZone: 'America/Monterrey',
-  hour12: true
-})}</td>
+        <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
         <td>$(r.uuid_cfdi ?? '').substring(0, 16)</td>
         <td>${r.rfc_receptor ?? ''}</td>
         <td>${fmt(r.subtotal)}</td>
