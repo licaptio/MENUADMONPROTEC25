@@ -22,7 +22,7 @@ body{
   border:1px solid #999;
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 .header{
   display:grid;
   grid-template-columns: 220px 1fr;
@@ -53,7 +53,7 @@ body{
   font-size:15px;
 }
 
-/* SECCIONES */
+/* ===== SECCIONES ===== */
 .section{
   margin-top:20px;
 }
@@ -65,7 +65,7 @@ body{
   padding-bottom:4px;
 }
 
-/* TABLAS */
+/* ===== TABLAS ===== */
 table{
   width:100%;
   border-collapse:collapse;
@@ -85,14 +85,14 @@ th{
   text-align:right;
 }
 
-/* TOTALES */
+/* ===== TOTALES ===== */
 .totales{
   width:340px;
   margin-left:auto;
   margin-top:16px;
 }
 
-/* FOOTER */
+/* ===== FOOTER ===== */
 .footer{
   margin-top:40px;
   font-size:11px;
@@ -102,6 +102,18 @@ th{
   color:#333;
 }
 
+/* ===== PRINT ===== */
+@media print{
+  body{
+    background:#fff;
+    padding:0;
+  }
+  .cfdi{
+    border:none;
+    margin:0;
+    max-width:100%;
+  }
+}
 </style>
 </head>
 
@@ -120,6 +132,8 @@ const uuid = new URLSearchParams(location.search).get('uuid');
 
 /* ===== SUCURSAL POR SERIE ===== */
 function sucursalPorSerie(serie){
+  if(!serie) return 'SIN SUCURSAL';
+
   const mapa = {
     'LMN': 'MATRIZ',
     'GM':  'BODEGA 41',
@@ -131,7 +145,9 @@ function sucursalPorSerie(serie){
     'RVN': 'RIO VERDE',
     'LV':  'PROVILEON'
   };
-  return mapa[serie] ? `${serie} – ${mapa[serie]}` : serie;
+
+  const s = serie.toUpperCase();
+  return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
 }
 
 /* ===== LOAD ===== */
@@ -153,65 +169,34 @@ async function cargar(){
 /* ===== RENDER ===== */
 function render(f){
   document.getElementById('cfdi').innerHTML = `
+  
   <!-- HEADER -->
-<div class="header">
+  <div class="header">
 
-<div class="box">
-
-  <img 
-    src="logo_pdd_2026.png" 
-    class="logo" 
-    alt="Proveedora de Dulces y Desechables 2026"
-    loading="lazy"
-  >
-
-  <strong>${f.razon_social_emisor}</strong><br>
-
-  <span><strong>RFC:</strong> ${f.rfc_emisor}</span><br>
-
-  <span><strong>Régimen Fiscal:</strong> 
-    ${f.regimen_fiscal ?? '601 - General de Ley Personas Morales'}
-  </span><br>
-
-  <span><strong>Sucursal:</strong> 
-    ${sucursalPorSerie(f.serie)}
-  </span><br>
-
-  <span><strong>Domicilio Fiscal:</strong><br>
-    Madero 690, Centro<br>
-    Linares, Nuevo León, C.P. 67700
-  </span>
-
-</div>
-
-
-  <!-- DERECHA: DATOS CFDI -->
-  <div class="box header-right">
-    <strong>FACTURA</strong><br><br>
-    Serie / Folio: <strong>${f.serie} ${f.folio}</strong><br>
-    UUID: ${f.uuid_cfdi}<br>
-    Fecha emisión: ${f.fecha.replace('T',' ').replace('+00:00','')}<br>
-    Tipo CFDI: Ingreso<br>
-    Moneda: MXN
-  </div>
-
-</div>
-
-
+    <!-- EMISOR -->
     <div class="box">
+      <img src="logo_pdd_2026.png" class="logo" alt="Proveedora de Dulces y Desechables 2026">
+
       <strong>${f.razon_social_emisor}</strong><br>
-      RFC: ${f.rfc_emisor}<br>
-      Régimen: 601 – General de Ley Personas Morales<br>
-      <strong>Sucursal:</strong> ${sucursalPorSerie(f.serie)}
+      <strong>RFC:</strong> ${f.rfc_emisor}<br>
+      <strong>Régimen Fiscal:</strong> 601 - General de Ley Personas Morales<br>
+      <strong>Sucursal:</strong> ${sucursalPorSerie(f.serie)}<br>
+      <strong>Domicilio Fiscal:</strong><br>
+      Madero 690, Centro<br>
+      Linares, Nuevo León, C.P. 67700
     </div>
 
-    <div class="box right">
-      <strong>FACTURA</strong><br>
-      Serie / Folio: ${f.serie} ${f.folio}<br>
+    <!-- DATOS CFDI -->
+    <div class="box header-right">
+      <strong>FACTURA</strong><br><br>
+      Serie / Folio: <strong>${f.serie} ${f.folio}</strong><br>
       UUID: ${f.uuid_cfdi}<br>
-      Fecha emisión:<br>
-      ${f.fecha.replace('T',' ').replace('+00:00','')}
+      Fecha de emisión:<br>
+      ${f.fecha.replace('T',' ').replace('+00:00','')}<br>
+      Tipo CFDI: Ingreso<br>
+      Moneda: MXN
     </div>
+
   </div>
 
   <!-- RECEPTOR -->
@@ -254,36 +239,18 @@ function render(f){
   </table>
 
   <!-- FOOTER -->
-<div class="footer">
-  <strong>Este documento es una representación impresa de un CFDI</strong><br>
-  Powered by <strong>PROVSOFT</strong> © 2026
-</div>
-
+  <div class="footer">
+    <strong>Este documento es una representación impresa de un CFDI</strong><br>
+    Powered by <strong>PROVSOFT</strong> © 2026
+  </div>
   `;
 }
 
+/* ===== FORMAT ===== */
 function fmt(n){
   return Number(n ?? 0).toLocaleString('es-MX',{
     minimumFractionDigits:2
   });
-}
-function sucursalPorSerie(serie){
-  if(!serie) return 'SIN SUCURSAL';
-
-  const mapa = {
-    'LMN': 'MATRIZ',
-    'GM':  'BODEGA 41',
-    'SAN': 'ALLENDE II',
-    'AM':  'ALLENDE I',
-    'MM':  'MONTEMORELOS',
-    'LO':  'OSITO',
-    'LP':  'CENTRAL',
-    'RVN': 'RIO VERDE',
-    'LV':  'PROVILEON'
-  };
-
-  const s = serie.toUpperCase();
-  return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
 }
 
 cargar();
