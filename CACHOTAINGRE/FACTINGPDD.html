@@ -252,14 +252,17 @@ function cut(txt, max){
 function sucursalPorSerie(serie){
   if(!serie) return 'SIN SUCURSAL';
 
-  const mapa = {
-    'LMN': 'MATRIZ',
-    'GM':  'BODEGA 41',
-    'SAN': 'ALLENDE II',
-    'AM':  'ALLENDE I',
-    'MM':  'MONTEMORELOS'
-  };
-
+const mapa = {
+  'LMN': 'MATRIZ',
+  'GM':  'BODEGA 41',
+  'SAN': 'ALLENDE II',
+  'AM':  'ALLENDE I',
+  'MM':  'MONTEMORELOS',
+  'LO':  'OSITO',
+  'LP':  'CENTRAL',
+  'RVN': 'RIO VERDE',
+  'LV':  'PROVILEON'
+};
   const s = serie.toUpperCase();
   return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
 }
