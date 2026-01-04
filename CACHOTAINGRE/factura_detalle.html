@@ -2,75 +2,87 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Factura CFDI – PROVSOFT</title>
+<title>Representación Impresa CFDI – PROVSOFT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
-  font-family: 'Poppins', Arial, sans-serif;
-  background:#f4f6f9;
+  font-family: Arial, sans-serif;
+  background:#eaeaea;
   padding:30px;
 }
 
-.factura{
+.cfdi{
   background:#fff;
-  max-width:900px;
+  max-width:950px;
   margin:auto;
   padding:30px;
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  border:1px solid #ccc;
 }
 
-h2,h3{
-  margin:6px 0;
-}
-
-.grid{
+.header{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  margin-bottom:20px;
+  grid-template-columns: 1fr 1fr;
+  gap:20px;
+  border-bottom:2px solid #000;
+  padding-bottom:10px;
 }
 
-.label{
-  font-size:12px;
-  color:#666;
+.box{
+  font-size:13px;
 }
 
-.value{
-  font-weight:600;
+.box strong{
+  font-size:14px;
+}
+
+.right{
+  text-align:right;
+}
+
+.section{
+  margin-top:18px;
+}
+
+.section h3{
+  margin:6px 0;
+  font-size:14px;
+  border-bottom:1px solid #000;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:20px;
+  font-size:13px;
 }
 
 th,td{
-  border-bottom:1px solid #eee;
-  padding:8px;
-  font-size:14px;
+  border:1px solid #000;
+  padding:6px;
 }
 
 th{
-  background:#f0f3f9;
+  background:#f0f0f0;
 }
 
-.right{
-  text-align:right;
+.totales{
+  width:320px;
+  float:right;
+  margin-top:10px;
+}
+
+.footer{
+  margin-top:40px;
+  font-size:11px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="factura">
-  <h2>Factura CFDI</h2>
-  <div id="contenido"></div>
-</div>
+<div class="cfdi" id="cfdi"></div>
 
 <script>
 const db = supabase.createClient(
@@ -78,11 +90,7 @@ const db = supabase.createClient(
   'TU_ANON_KEY'
 );
 
-const uuid = new URLSearchParams(window.location.search).get('uuid');
-
-if(!uuid){
-  document.getElementById('contenido').innerHTML = 'UUID no proporcionado';
-}
+const uuid = new URLSearchParams(location.search).get('uuid');
 
 async function cargar(){
   const { data, error } = await db
@@ -92,7 +100,7 @@ async function cargar(){
     .single();
 
   if(error){
-    document.getElementById('contenido').innerHTML = 'Factura no encontrada';
+    document.getElementById('cfdi').innerHTML = 'CFDI no encontrado';
     return;
   }
 
@@ -100,64 +108,68 @@ async function cargar(){
 }
 
 function render(f){
-  document.getElementById('contenido').innerHTML = `
-    <div class="grid">
-      <div>
-        <div class="label">Emisor</div>
-        <div class="value">${f.razon_social_emisor}</div>
-        <div class="label">RFC</div>
-        <div class="value">${f.rfc_emisor}</div>
+  document.getElementById('cfdi').innerHTML = `
+    <!-- ENCABEZADO -->
+    <div class="header">
+      <div class="box">
+        <strong>${f.razon_social_emisor}</strong><br>
+        RFC: ${f.rfc_emisor}<br>
+        ${f.periodo_anio ?? ''} ${f.periodo_mes ?? ''}
       </div>
-
-      <div>
-        <div class="label">Receptor</div>
-        <div class="value">${f.razon_social_receptor}</div>
-        <div class="label">RFC</div>
-        <div class="value">${f.rfc_receptor}</div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <div class="label">UUID</div>
-        <div class="value">${f.uuid_cfdi}</div>
-        <div class="label">Fecha</div>
-        <div class="value">${f.fecha.replace('T',' ').replace('+00:00','')}</div>
-      </div>
-
-      <div>
-        <div class="label">Serie / Folio</div>
-        <div class="value">${f.serie} ${f.folio}</div>
-        <div class="label">Método / Forma</div>
-        <div class="value">${f.metodo_pago} / ${f.forma_pago}</div>
+      <div class="box right">
+        <strong>FACTURA</strong><br>
+        Serie/Folio: ${f.serie} ${f.folio}<br>
+        UUID: ${f.uuid_cfdi}<br>
+        Fecha emisión: ${f.fecha.replace('T',' ').replace('+00:00','')}
       </div>
     </div>
 
-    <h3>Conceptos</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Descripción</th>
-          <th class="right">Importe</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${ (f.conceptos ?? []).map(c => `
+    <!-- RECEPTOR -->
+    <div class="section">
+      <h3>Datos del Receptor</h3>
+      <div class="box">
+        <strong>${f.razon_social_receptor}</strong><br>
+        RFC: ${f.rfc_receptor}<br>
+        Uso CFDI: ${f.uso_cfdi}
+      </div>
+    </div>
+
+    <!-- CONCEPTOS -->
+    <div class="section">
+      <h3>Conceptos</h3>
+      <table>
+        <thead>
           <tr>
-            <td>${c.descripcion}</td>
-            <td class="right">$${Number(c.importe).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+            <th>Cant.</th>
+            <th>Descripción</th>
+            <th>Importe</th>
           </tr>
-        `).join('') }
-      </tbody>
+        </thead>
+        <tbody>
+          ${(f.conceptos ?? []).map(c=>`
+            <tr>
+              <td>${c.cantidad}</td>
+              <td>${c.descripcion}</td>
+              <td class="right">$ ${Number(c.importe).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOTALES -->
+    <table class="totales">
+      <tr><td>Subtotal</td><td class="right">$ ${fmt(f.subtotal)}</td></tr>
+      <tr><td>IVA</td><td class="right">$ ${fmt(f.total_iva)}</td></tr>
+      <tr><td>IEPS</td><td class="right">$ ${fmt(f.total_ieps)}</td></tr>
+      <tr><th>Total</th><th class="right">$ ${fmt(f.total)}</th></tr>
     </table>
 
-    <h3>Totales</h3>
-    <table>
-      <tr><td>Subtotal</td><td class="right">$${fmt(f.subtotal)}</td></tr>
-      <tr><td>IVA</td><td class="right">$${fmt(f.total_iva)}</td></tr>
-      <tr><td>IEPS</td><td class="right">$${fmt(f.total_ieps)}</td></tr>
-      <tr><th>Total</th><th class="right">$${fmt(f.total)}</th></tr>
-    </table>
+    <!-- FOOTER -->
+    <div class="footer">
+      <strong>Este documento es una representación impresa de un CFDI</strong><br>
+      PAC: ${f.no_certificado_sat}
+    </div>
   `;
 }
 
