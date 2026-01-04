@@ -77,7 +77,7 @@ th{
   <input type="date" id="fecha">
   <button onclick="buscar()">Ejecutar</button>
 </div>
-
+<p id="loading" style="display:none;font-weight:600;">⏳ Cargando facturas…</p>
 <table>
 <thead>
 <tr>
@@ -119,9 +119,13 @@ async function buscar(){
 }
 
 async function cargar(){
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
+
   const fecha = document.getElementById('fecha').value;
   if(!fecha){
     alert("Selecciona una fecha");
+    loading.style.display = 'none';
     return;
   }
 
@@ -148,6 +152,8 @@ async function cargar(){
     .lte('fecha', fin)
     .order('fecha', { ascending: false })
     .range(from, to);
+
+  loading.style.display = 'none';
 
   if(error){
     console.error(error);
