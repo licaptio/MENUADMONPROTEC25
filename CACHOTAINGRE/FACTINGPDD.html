@@ -129,12 +129,20 @@ async function cargar(){
     return;
   }
 
-  const inicio = `${fecha}T00:00:00`;
-  const fin    = `${fecha}T23:59:59`;
+function rangoUTCDesdeFechaLocal(fechaLocal) {
+  // fechaLocal = '2026-01-03'
+  const inicioLocal = new Date(`${fechaLocal}T00:00:00`);
+  const finLocal    = new Date(`${fechaLocal}T23:59:59`);
+
+  return {
+    inicioUTC: inicioLocal.toISOString(),
+    finUTC: finLocal.toISOString()
+  };
+}
 
   const from = page * limit;
   const to   = from + limit - 1;
-
+  const { inicioUTC, finUTC } = rangoUTCDesdeFechaLocal(fecha);
   const { data, error } = await db
     .from('ingresos_pdd')
     .select(`
@@ -148,8 +156,8 @@ async function cargar(){
       serie,
       folio
     `)
-    .gte('fecha', inicio)
-    .lte('fecha', fin)
+.gte('fecha', inicioUTC)
+.lte('fecha', finUTC)
     .order('fecha', { ascending: false })
     .range(from, to);
 
