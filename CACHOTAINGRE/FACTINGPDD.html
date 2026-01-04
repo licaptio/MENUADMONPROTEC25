@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Facturas por Fecha – PROVSOFT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  font-family: 'Poppins', Arial, sans-serif;
+  background:#eef1f5;
+  margin:0;
+  padding:30px;
+}
+
+h2{
+  margin-bottom:12px;
+}
+
+.controls{
+  background:#fff;
+  padding:15px;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.1);
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+button{
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  background:#0c6cbd;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
+}
+
+th, td{
+  padding:10px;
+  font-size:14px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+}
+
+th{
+  background:#f0f3f9;
+}
+
+.pagination{
+  margin-top:18px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📄 Facturas por Fecha</h2>
+
+<div class="controls">
+  <input type="date" id="fecha">
+  <button onclick="buscar()">Ejecutar</button>
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>Fecha</th>
+  <th>UUID</th>
+  <th>RFC Receptor</th>
+  <th>Subtotal</th>
+  <th>IVA</th>
+  <th>IEPS</th>
+  <th>Total</th>
+  <th>Serie</th>
+  <th>Folio</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<div class="pagination">
+  <button onclick="prev()">⬅ Anterior</button>
+  <span id="pagina">Página 1</span>
+  <button onclick="next()">Siguiente ➡</button>
+</div>
+
+<script>
+// ================= SUPABASE =================
+const supabase = supabase.createClient(
+  'https://SUPABASE_URL.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
+);
+
+// ================= PAGINACIÓN =================
+let page = 0;
+const limit = 50;
+
+// ================= FUNCIONES =================
+async function buscar(){
+  page = 0;
+  await cargar();
+}
+
+async function cargar(){
+  const fecha = document.getElementById('fecha').value;
+  if(!fecha){
+    alert("Selecciona una fecha");
+    return;
+  }
+
+  const inicio = `${fecha}T00:00:00`;
+  const fin    = `${fecha}T23:59:59`;
+
+  const from = page * limit;
+  const to   = from + limit - 1;
+
+  const { data, error } = await supabase
+    .from('ingresos_pdd')
+    .select(`
+      fecha,
+      uuid_cfdi,
+      rfc_receptor,
+      subtotal,
+      total_iva,
+      total_ieps,
+      total,
+      serie,
+      folio
+    `)
+    .gte('fecha', inicio)
+    .lte('fecha', fin)
+    .order('fecha', { ascending: false })
+    .range(from, to);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  render(data);
+  document.getElementById('pagina').innerText = `Página ${page + 1}`;
+}
+
+function render(rows){
+  const tbody = document.getElementById('tabla');
+  tbody.innerHTML = "";
+
+  rows.forEach(r=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${new Date(r.fecha).toLocaleString()}</td>
+        <td>${r.uuid_cfdi ?? ''}</td>
+        <td>${r.rfc_receptor ?? ''}</td>
+        <td>${fmt(r.subtotal)}</td>
+        <td>${fmt(r.total_iva)}</td>
+        <td>${fmt(r.total_ieps)}</td>
+        <td><strong>${fmt(r.total)}</strong></td>
+        <td>${r.serie ?? ''}</td>
+        <td>${r.folio ?? ''}</td>
+      </tr>
+    `;
+  });
+}
+
+function fmt(n){
+  if(n === null || n === undefined) return '';
+  return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+}
+
+function next(){
+  page++;
+  cargar();
+}
+
+function prev(){
+  if(page > 0){
+    page--;
+    cargar();
+  }
+}
+</script>
+
+</body>
+</html>
