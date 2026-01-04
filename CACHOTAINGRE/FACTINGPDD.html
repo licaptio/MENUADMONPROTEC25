@@ -84,12 +84,13 @@ th{
   <th>Fecha</th>
   <th>UUID</th>
   <th>RFC Receptor</th>
+  <th>Nombre Receptor</th>
+  <th>Serie</th>
+  <th>Folio</th>
   <th>Subtotal</th>
   <th>IVA</th>
   <th>IEPS</th>
   <th>Total</th>
-  <th>Serie</th>
-  <th>Folio</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -182,14 +183,15 @@ function render(rows){
     tbody.innerHTML += `
       <tr>
         <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
-        <td>$(r.uuid_cfdi ?? '').substring(0, 16)</td>
+        <td>${(r.uuid_cfdi ?? '').substring(0,16)}</td>
         <td>${r.rfc_receptor ?? ''}</td>
+        <td>${r.razon_social_receptor ?? ''}</td>
+        <td>${r.serie ?? ''}</td>
+        <td>${r.folio ?? ''}</td>
         <td>${fmt(r.subtotal)}</td>
         <td>${fmt(r.total_iva)}</td>
         <td>${fmt(r.total_ieps)}</td>
         <td><strong>${fmt(r.total)}</strong></td>
-        <td>${r.serie ?? ''}</td>
-        <td>${r.folio ?? ''}</td>
       </tr>
     `;
   });
