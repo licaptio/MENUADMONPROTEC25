@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura CFDI – PROVSOFT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  font-family: 'Poppins', Arial, sans-serif;
+  background:#f4f6f9;
+  padding:30px;
+}
+
+.factura{
+  background:#fff;
+  max-width:900px;
+  margin:auto;
+  padding:30px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+h2,h3{
+  margin:6px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:20px;
+}
+
+.label{
+  font-size:12px;
+  color:#666;
+}
+
+.value{
+  font-weight:600;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th,td{
+  border-bottom:1px solid #eee;
+  padding:8px;
+  font-size:14px;
+}
+
+th{
+  background:#f0f3f9;
+}
+
+.right{
+  text-align:right;
+}
+</style>
+</head>
+
+<body>
+
+<div class="factura">
+  <h2>Factura CFDI</h2>
+  <div id="contenido"></div>
+</div>
+
+<script>
+const db = supabase.createClient(
+  'https://cvpbtjlupswbyxenugpz.supabase.co',
+  'TU_ANON_KEY'
+);
+
+const uuid = new URLSearchParams(window.location.search).get('uuid');
+
+if(!uuid){
+  document.getElementById('contenido').innerHTML = 'UUID no proporcionado';
+}
+
+async function cargar(){
+  const { data, error } = await db
+    .from('ingresos_pdd')
+    .select('*')
+    .eq('uuid_cfdi', uuid)
+    .single();
+
+  if(error){
+    document.getElementById('contenido').innerHTML = 'Factura no encontrada';
+    return;
+  }
+
+  render(data);
+}
+
+function render(f){
+  document.getElementById('contenido').innerHTML = `
+    <div class="grid">
+      <div>
+        <div class="label">Emisor</div>
+        <div class="value">${f.razon_social_emisor}</div>
+        <div class="label">RFC</div>
+        <div class="value">${f.rfc_emisor}</div>
+      </div>
+
+      <div>
+        <div class="label">Receptor</div>
+        <div class="value">${f.razon_social_receptor}</div>
+        <div class="label">RFC</div>
+        <div class="value">${f.rfc_receptor}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="label">UUID</div>
+        <div class="value">${f.uuid_cfdi}</div>
+        <div class="label">Fecha</div>
+        <div class="value">${f.fecha.replace('T',' ').replace('+00:00','')}</div>
+      </div>
+
+      <div>
+        <div class="label">Serie / Folio</div>
+        <div class="value">${f.serie} ${f.folio}</div>
+        <div class="label">Método / Forma</div>
+        <div class="value">${f.metodo_pago} / ${f.forma_pago}</div>
+      </div>
+    </div>
+
+    <h3>Conceptos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th class="right">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ (f.conceptos ?? []).map(c => `
+          <tr>
+            <td>${c.descripcion}</td>
+            <td class="right">$${Number(c.importe).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+          </tr>
+        `).join('') }
+      </tbody>
+    </table>
+
+    <h3>Totales</h3>
+    <table>
+      <tr><td>Subtotal</td><td class="right">$${fmt(f.subtotal)}</td></tr>
+      <tr><td>IVA</td><td class="right">$${fmt(f.total_iva)}</td></tr>
+      <tr><td>IEPS</td><td class="right">$${fmt(f.total_ieps)}</td></tr>
+      <tr><th>Total</th><th class="right">$${fmt(f.total)}</th></tr>
+    </table>
+  `;
+}
+
+function fmt(n){
+  return Number(n ?? 0).toLocaleString('es-MX',{minimumFractionDigits:2});
+}
+
+cargar();
+</script>
+
+</body>
+</html>
