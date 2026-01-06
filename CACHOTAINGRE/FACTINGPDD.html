@@ -96,6 +96,8 @@ th{
   <th>IVA</th>
   <th>IEPS</th>
   <th>Total</th>
+  <th>Forma Pago</th>
+  <th>Método Pago</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -161,8 +163,11 @@ function rangoUTCDesdeFechaLocal(fechaLocal) {
   subtotal,
   total_iva,
   total_ieps,
-  total
+  total,
+  forma_pago,
+  metodo_pago
 `)
+
 .gte('fecha', inicioUTC)
 .lte('fecha', finUTC)
     .order('fecha', { ascending: false })
@@ -186,37 +191,44 @@ function render(rows){
 
   rows.forEach(r=>{
     tbody.innerHTML += `
-      <tr>
-        <!-- FECHA -->
-        <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
+<tr>
+  <!-- FECHA -->
+  <td>${r.fecha.replace('T', ' ').replace('+00:00','')}</td>
 
-<td>
-  <a href="factura_detalle.html?uuid=${r.uuid_cfdi}" target="_blank">
-    ${cut(r.uuid_cfdi, 16)}
-  </a>
-</td>
+  <!-- UUID -->
+  <td>
+    <a href="factura_detalle.html?uuid=${r.uuid_cfdi}" target="_blank">
+      ${cut(r.uuid_cfdi, 16)}
+    </a>
+  </td>
 
-        <!-- RFC RECEPTOR -->
-        <td>${r.rfc_receptor ?? ''}</td>
+  <!-- RFC RECEPTOR -->
+  <td>${r.rfc_receptor ?? ''}</td>
 
-        <!-- NOMBRE RECEPTOR -->
-        <td title="${r.razon_social_receptor ?? ''}">
-          ${cut(r.razon_social_receptor, 25)}
-        </td>
+  <!-- NOMBRE RECEPTOR -->
+  <td title="${r.razon_social_receptor ?? ''}">
+    ${cut(r.razon_social_receptor, 25)}
+  </td>
 
-<td>
-  <strong>${sucursalPorSerie(r.serie)}</strong>
-</td>
+  <!-- SERIE / SUCURSAL -->
+  <td>
+    <strong>${sucursalPorSerie(r.serie)}</strong>
+  </td>
 
-        <!-- FOLIO -->
-        <td>${r.folio ?? ''}</td>
+  <!-- FOLIO -->
+  <td>${r.folio ?? ''}</td>
 
-        <!-- MONTOS -->
-        <td class="monto">${fmt(r.subtotal)}</td>
-        <td class="monto">${fmt(r.total_iva)}</td>
-        <td class="monto">${fmt(r.total_ieps)}</td>
-        <td class="monto"><strong>${fmt(r.total)}</strong></td>
-      </tr>
+  <!-- MONTOS -->
+  <td class="monto">${fmt(r.subtotal)}</td>
+  <td class="monto">${fmt(r.total_iva)}</td>
+  <td class="monto">${fmt(r.total_ieps)}</td>
+  <td class="monto"><strong>${fmt(r.total)}</strong></td>
+
+  <!-- ANEXOS SAT -->
+  <td>${etiquetaFormaPago(r.forma_pago)}</td>
+  <td><strong>${etiquetaMetodoPago(r.metodo_pago)}</strong></td>
+</tr>
+
     `;
   });
 }
@@ -265,6 +277,27 @@ const mapa = {
 };
   const s = serie.toUpperCase();
   return mapa[s] ? `${s} - ${mapa[s]}` : `${s} - DESCONOCIDA`;
+}
+/* ================= ETIQUETAS SAT ================= */
+
+function etiquetaFormaPago(fp){
+  const map = {
+    '01': 'Efectivo',
+    '02': 'Cheque nominativo',
+    '03': 'Transferencia electrónica',
+    '04': 'Tarjeta de crédito',
+    '28': 'Tarjeta de débito',
+    '99': 'Por definir'
+  };
+  return map[fp] ?? fp ?? '';
+}
+
+function etiquetaMetodoPago(mp){
+  const map = {
+    'PUE': 'Pago en una sola exhibición',
+    'PPD': 'Pago en parcialidades o diferido'
+  };
+  return map[mp] ?? mp ?? '';
 }
 
 </script>
