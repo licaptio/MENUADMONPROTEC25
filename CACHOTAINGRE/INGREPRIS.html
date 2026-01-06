@@ -65,11 +65,15 @@ th{background:#f0f3f9}
 <body>
 
 <h2>📄 Facturas por Rango</h2>
+<div id="clientesLoading" style="font-weight:600;color:#555;">
+  ⏳ Cargando clientes…
+</div>
 
 <div class="controls">
-  <select id="cliente">
-    <option value="">— Todos los clientes —</option>
-  </select>
+<select id="cliente" disabled>
+  <option value="">— Todos los clientes —</option>
+</select>
+
 
   <select id="sucursal">
     <option value="">— Todas las sucursales —</option>
