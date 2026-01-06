@@ -129,20 +129,28 @@ const limit=50;
 
 /* ===== CARGA CLIENTES ===== */
 (async()=>{
-  const {data}=await db
+  const { data, error } = await db
     .from('ingresos_pdd')
     .select('razon_social_receptor')
-    .order('razon_social_receptor',{ascending:true});
+    .neq('razon_social_receptor', null)
+    .order('razon_social_receptor', { ascending: true });
 
-  const únicos=[...new Set(data.map(d=>d.razon_social_receptor))];
-  const sel=document.getElementById('cliente');
-  únicos.forEach(c=>{
-    if(c){
-      const o=document.createElement('option');
-      o.value=c;
-      o.textContent=c;
-      sel.appendChild(o);
-    }
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  const únicos = [...new Set(
+    data.map(d => d.razon_social_receptor.trim())
+  )];
+
+  const sel = document.getElementById('cliente');
+
+  únicos.forEach(nombre => {
+    const opt = document.createElement('option');
+    opt.value = nombre;
+    opt.textContent = nombre;
+    sel.appendChild(opt);
   });
 })();
 
