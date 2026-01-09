@@ -483,17 +483,24 @@ if (footerImpuestos) {
     </tr>
   `;
 
-  if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
-    f.impuestos_globales.detalles.forEach(det => {
-      const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
-      footerHTML += `
-        <tr>
-          <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
-          <td>${formatoMX(det.importe)}</td>
-        </tr>
-      `;
-    });
-  }
+if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
+  f.impuestos_globales.detalles.forEach(det => {
+    const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
+    const esRetencion = det.es_retencion === true || det.importe < 0;
+
+    footerHTML += `
+      <tr>
+        <td colspan="7" style="text-align:right">
+          ${esRetencion ? "Retención " : ""}${det.tipo} ${tasaTxt}
+        </td>
+        <td style="color:${esRetencion ? "#b00020" : "#1e8e3e"}">
+          ${esRetencion ? "-" : ""}${formatoMX(Math.abs(det.importe))}
+        </td>
+      </tr>
+    `;
+  });
+}
+
 
   footerHTML += `
     <tr style="background:#003366;color:#fff">
