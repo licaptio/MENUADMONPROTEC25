@@ -373,9 +373,8 @@ const folioHTML = `
 
 <!-- FILA TOTAL -->
 <div class="seriefolio-grid">
-  <p><strong>Total Factura:</strong> ${formatoMX(
-    (window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0)
-  )}</p>
+<p><strong>Total Factura:</strong> ${formatoMX(Number(f.total || 0))}</p>
+
 </div>
 
 
@@ -439,9 +438,9 @@ const folioHTML = `
 
   <tr>
     <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-    <td style="background:#003366;color:#fff">
-      ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
-    </td>
+<td style="background:#003366;color:#fff">
+  ${formatoMX(Number(f.total || 0))}
+</td>
   </tr>
 </tfoot>
 
@@ -643,9 +642,10 @@ if (!f2) {
   footerHTML += `
     <tr>
       <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-      <td style="background:#003366;color:#fff">
-        ${formatoMX((window.__sub || 0) - (window.__desc || 0) + (window.__iva || 0) + (window.__ieps || 0))}
-      </td>
+<td style="background:#003366;color:#fff">
+  ${formatoMX(Number(f2.total || 0))}
+</td>
+
     </tr>
   `;
 }
