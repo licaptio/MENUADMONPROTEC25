@@ -464,56 +464,6 @@ const folioHTML = `
       </table>
     </section>
   `;
-// ============================================================
-// FOOTER DINÁMICO (EJECUTADO CUANDO YA EXISTE f)
-// ============================================================
-const footerImpuestos = document.querySelector("#footerImpuestos");
-
-if (footerImpuestos) {
-
-  let footerHTML = `
-    <tr>
-      <td colspan="7" style="text-align:right">Subtotal</td>
-      <td>${formatoMX(window.__sub || 0)}</td>
-    </tr>
-
-    <tr>
-      <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
-      <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
-    </tr>
-  `;
-
-if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
-  f.impuestos_globales.detalles.forEach(det => {
-    const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
-    const esRetencion = det.es_retencion === true || det.importe < 0;
-
-    footerHTML += `
-      <tr>
-        <td colspan="7" style="text-align:right">
-          ${esRetencion ? "Retención " : ""}${det.tipo} ${tasaTxt}
-        </td>
-        <td style="color:${esRetencion ? "#b00020" : "#1e8e3e"}">
-          ${esRetencion ? "-" : ""}${formatoMX(Math.abs(det.importe))}
-        </td>
-      </tr>
-    `;
-  });
-}
-
-
-  footerHTML += `
-    <tr style="background:#003366;color:#fff">
-      <td colspan="7">TOTAL</td>
-      <td>${formatoMX(Number(f.total || 0))}</td>
-    </tr>
-  `;
-
-  footerImpuestos.innerHTML = footerHTML;
-}
-
-  initFolioTecnopro(f.uuid_cfdi);
-}
 
 // ============================================================
 // GUARDAR FOLIO TECNOPRO
