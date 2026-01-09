@@ -441,9 +441,22 @@ const folioHTML = `
     <td colspan="7" style="text-align:right">IEPS</td>
     <td>${formatoMX(window.__ieps || 0)}</td>
   </tr>
+<tr>
+  <td colspan="7" style="text-align:right;color:#b00020">
+    IVA Retenido
+  </td>
+  <td>${formatoMX(Math.abs(f.impuestos_retenidos?.iva || 0))}</td>
+</tr>
+
+<tr>
+  <td colspan="7" style="text-align:right;color:#b00020">
+    ISR Retenido
+  </td>
+  <td>${formatoMX(Math.abs(f.impuestos_retenidos?.isr || 0))}</td>
+</tr>
 
   <tr>
-    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
+    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL NETO A PAGAR</td>
 <td style="background:#003366;color:#fff">
   ${formatoMX(Number(f.total || 0))}
 </td>
