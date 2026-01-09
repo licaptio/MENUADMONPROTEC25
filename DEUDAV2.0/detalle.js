@@ -40,6 +40,12 @@ function formatoMX(n) {
     currency: "MXN"
   }).format(Number(n || 0));
 }
+// ============================================================
+// TOTAL AUTORITATIVO CFDI (NO SE CALCULA, SE RESPETA)
+// ============================================================
+function totalCFDI(f) {
+  return Number(f?.total || 0);
+}
 
 // ============================================================
 // UUID de la URL
@@ -458,6 +464,46 @@ const folioHTML = `
       </table>
     </section>
   `;
+// ============================================================
+// FOOTER DINÁMICO (EJECUTADO CUANDO YA EXISTE f)
+// ============================================================
+const footerImpuestos = document.querySelector("#footerImpuestos");
+
+if (footerImpuestos) {
+
+  let footerHTML = `
+    <tr>
+      <td colspan="7" style="text-align:right">Subtotal</td>
+      <td>${formatoMX(window.__sub || 0)}</td>
+    </tr>
+
+    <tr>
+      <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+      <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
+    </tr>
+  `;
+
+  if (f.impuestos_globales && Array.isArray(f.impuestos_globales.detalles)) {
+    f.impuestos_globales.detalles.forEach(det => {
+      const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
+      footerHTML += `
+        <tr>
+          <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
+          <td>${formatoMX(det.importe)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  footerHTML += `
+    <tr style="background:#003366;color:#fff">
+      <td colspan="7">TOTAL</td>
+      <td>${formatoMX(Number(f.total || 0))}</td>
+    </tr>
+  `;
+
+  footerImpuestos.innerHTML = footerHTML;
+}
 
   initFolioTecnopro(f.uuid_cfdi);
 }
@@ -600,63 +646,6 @@ document.addEventListener("click", e => {
       });
   }
 });
-// ============================================================
-// FOOTER DINÁMICO (IVA, IEPS, TASAS, CUOTAS, ETC.)
-// ============================================================
-let footerHTML = "";
-
-// Usar la factura global
-const f2 = window.__FACTURA;
-
-// Si aún no existe, esperar
-if (!f2) {
-  console.warn("Factura no cargada aún");
-} else {
-
-  // Subtotal y descuento
-  footerHTML += `
-    <tr>
-      <td colspan="7" style="text-align:right">Subtotal</td>
-      <td>${formatoMX(window.__sub || 0)}</td>
-    </tr>
-
-    <tr>
-      <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
-      <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
-    </tr>
-  `;
-
-  // Impuestos globales dinámicos (arreglado)
-  if (f2.impuestos_globales && Array.isArray(f2.impuestos_globales.detalles)) {
-    f2.impuestos_globales.detalles.forEach(det => {
-      const tasaTxt = det.tasa ? `${(det.tasa * 100).toFixed(2)}%` : "";
-      footerHTML += `
-        <tr>
-          <td colspan="7" style="text-align:right">${det.tipo} ${tasaTxt}</td>
-          <td>${formatoMX(det.importe)}</td>
-        </tr>
-      `;
-    });
-  }
-
-  footerHTML += `
-    <tr>
-      <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL</td>
-<td style="background:#003366;color:#fff">
-  ${formatoMX(Number(f2.total || 0))}
-</td>
-
-    </tr>
-  `;
-}
-
-setTimeout(() => {
-  const tfoot = document.querySelector("#footerImpuestos");
-  if (tfoot) tfoot.innerHTML = footerHTML;
-}, 10);
-
-
-
 // ============================================================
 // FOTOS — CONTROL CENTRAL (FIX DEFINITIVO)
 // ============================================================
