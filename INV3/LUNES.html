@@ -287,6 +287,16 @@ button.action{
     border-radius:12px;
   }
 }
+.section-header{
+  margin:18px 0 10px;
+  padding:12px;
+  background:#1f2937;
+  color:#fff;
+  font-weight:800;
+  border-radius:12px;
+  text-align:center;
+  letter-spacing:.5px;
+}
 
 </style>
 
@@ -613,59 +623,67 @@ window.addEventListener("DOMContentLoaded", () => {
 function renderMobile(){
   const cont = document.getElementById("mobile-list");
   cont.innerHTML = "";
-  const data = inventarios[pagina];
 
-  data.items.forEach((row)=>{
-    const card = document.createElement("div");
-    card.className = "product-card";
+  inventarios.forEach((grupo)=>{
 
-card.innerHTML = `
-  <div class="product-name">${row[0]}</div>
+    // 🔷 ENCABEZADO DE SECCIÓN
+    const header = document.createElement("div");
+    header.className = "section-header";
+    header.textContent = grupo.seccion;
+    cont.appendChild(header);
 
-  <div class="row">
-    <label>📦 Stock</label>
-    <strong style="font-size:1.2rem; color:#111">${row[2] ?? 0}</strong>
-  </div>
+    // 🔽 PRODUCTOS DE LA SECCIÓN
+    grupo.items.forEach((row)=>{
+      const card = document.createElement("div");
+      card.className = "product-card";
 
-  <div class="row">
-    <label>Inventario manual</label>
-    <input type="number" placeholder="+" />
-  </div>
+      card.innerHTML = `
+        <div class="product-name">${row[0]}</div>
 
-  <div class="row">
-    <label>Pedido</label>
-    <input type="number" value="${row[3]||""}" />
-  </div>
+        <div class="row">
+          <label>📦 Stock</label>
+          <strong style="font-size:1.2rem">${row[2] ?? 0}</strong>
+        </div>
 
-  <div class="row acumulado">
-    <label>Acumulado</label>
-    <button>-</button>
-    <span>${row[4]||0}</span>
-    <button>+</button>
-  </div>
-`;
+        <div class="row">
+          <label>Inventario manual</label>
+          <input type="number" placeholder="+" />
+        </div>
 
+        <div class="row">
+          <label>Pedido</label>
+          <input type="number" value="${row[3]||""}" />
+        </div>
 
-    const [invInput, pedInput] = card.querySelectorAll("input");
-    const [btnMenos, btnMas] = card.querySelectorAll("button");
-    const span = card.querySelector("span");
+        <div class="row acumulado">
+          <label>Acumulado</label>
+          <button>-</button>
+          <span>${row[4]||0}</span>
+          <button>+</button>
+        </div>
+      `;
 
-    invInput.onchange = ()=>{
-      row[4] = (row[4]||0) + (parseInt(invInput.value)||0);
-      span.textContent = row[4];
-      invInput.value="";
-      saveData();
-    };
+      const [invInput, pedInput] = card.querySelectorAll("input");
+      const [btnMenos, btnMas] = card.querySelectorAll("button");
+      const span = card.querySelector("span");
 
-    pedInput.oninput = e=>{
-      row[3] = e.target.value;
-      saveData();
-    };
+      invInput.onchange = ()=>{
+        row[4] = (row[4]||0) + (parseInt(invInput.value)||0);
+        span.textContent = row[4];
+        invInput.value="";
+        saveData();
+      };
 
-    btnMas.onclick = ()=>{ row[4]++; span.textContent=row[4]; saveData(); };
-    btnMenos.onclick = ()=>{ if(row[4]>0){ row[4]--; span.textContent=row[4]; saveData(); } };
+      pedInput.oninput = e=>{
+        row[3] = e.target.value;
+        saveData();
+      };
 
-    cont.appendChild(card);
+      btnMas.onclick = ()=>{ row[4]++; span.textContent=row[4]; saveData(); };
+      btnMenos.onclick = ()=>{ if(row[4]>0){ row[4]--; span.textContent=row[4]; saveData(); } };
+
+      cont.appendChild(card);
+    });
   });
 }
 
