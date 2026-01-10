@@ -340,8 +340,9 @@ button.action{
 // 🔑 LocalStorage único por archivo HTML
 const PAGE_ID = location.pathname.split("/").pop().replace(".html", "");
 const STORAGE_KEY = "inventariosData_" + PAGE_ID;
-
 const inventarios = [
+
+  /* ===================== MOLIENDAS ===================== */
   {
     seccion: "⚙️ MOLIENDAS",
     items: [
@@ -351,11 +352,13 @@ const inventarios = [
       ["AZÚCAR GLASS 6X","",3,""],
       ["FÉCULA DE MAÍZ","",3,""],
       ["AZÚCAR MOSCABADA","",2,""],
-      ["GLUCOSA 19 LTS 27K","",2,""],
+      ["GLUCOSA 19 LTS 27K","",2,""]
     ]
   },
+
+  /* ===================== LÍQUIDOS ===================== */
   {
-    seccion: "🧴 LÍQUIDO",
+    seccion: "🧴 LÍQUIDOS",
     items: [
       ["NUTRILECHE C90 PAQ","",8,""],
       ["KARTAMUS 12 CAMA","",100,""],
@@ -363,7 +366,89 @@ const inventarios = [
       ["CHILE FARO ROD","",100,""],
       ["KLEENEX 80","",100,""]
     ]
+  },
+
+  /* ===================== ALUMINIOS BONALUM ===================== */
+  {
+    seccion: "🧻 ALUMINIOS BONALUM",
+    items: [
+      ["ALUMINIO 5 MTS BONALUM","",30,""],
+      ["ALUMINIO 7 MTS BONALUM","",30,""],
+      ["ALUMINIO 10 MTS BONALUM","",20,""],
+      ["ALUMINIO 50 MTS CARO BONALUM","",10,""],
+      ["STAR FOIL 500GR C/12 BONALUM","",2,""],
+      ["ALUMINIO 3 KG C/4PZ BONALUM","",2,""],
+      ["PAPEL PARA ESTUFA","",50,""],
+      ["ROLLO ENCERADO 3 KG","",2,""],
+      ["PAPEL HOJAS CORTADO","",10,""]
+    ]
+  },
+
+  /* ===================== ALUMINIOS ALUMSTAR ===================== */
+  {
+    seccion: "🧻 ALUMINIOS ALUMSTAR",
+    items: [
+      ["ALUMINIO 5 MTS ALUMSTAR","",20,""],
+      ["ALUMINIO 7 MTS ALUMSTAR","",20,""],
+      ["ALUMINIO 10 MTS ALUMSTAR","",5,""],
+      ["ENCERADO 10 MTS","",5,""],
+      ["ENCERADO 20 MTS","",5,""]
+    ]
+  },
+
+  /* ===================== BOLSA BASURA ===================== */
+  {
+    seccion: "📦 BOLSA BASURA",
+    items: [
+      ["50X70 NEGRA C/25KG","",10,""],
+      ["70X90 NEGRA C/25KG","",20,""],
+      ["90X120 NEGRA C/25KG","",40,""],
+      ["EMPLAYE P/ENTARIMAR","",300,""],
+      ["BOLSA 55X65","",4,""],
+      ["BOLSA 65X65","",4,""],
+      ["VIVERO CHICA","",10,""],
+      ["VIVERO MEDIANA","",10,""],
+      ["VIVERO GRANDE","",10,""],
+      ["ROLLOS NEGROS","",4,""],
+      ["ROLLOS TRANSPARENTE","",4,""]
+    ]
+  },
+
+  /* ===================== PAPEL REVOLUCIÓN ===================== */
+  {
+    seccion: "📄 PAPEL REVOLUCIÓN",
+    items: [
+      ["REVOLUCIÓN CORTO","",50,""],
+      ["REVOLUCIÓN LARGO","",20,""]
+    ]
+  },
+
+  /* ===================== ALMAGUER BOLSA PLANA ===================== */
+  {
+    seccion: "📦 ALMAGUER BOLSA PLANA",
+    items: [
+      ["10X20 BOLLERA C/200","",20,""],
+      ["BOLSA GOURMET","",3,""]
+    ]
+  },
+
+  /* ===================== CACAHUATES ===================== */
+  {
+    seccion: "🥜 CACAHUATES",
+    items: [
+      ["CACAHUATE BLANCO SALADO 10KG","",1,""],
+      ["CACAHUATE ENCHILADO MITADES 10KG","",3,""],
+      ["CACAHUATE GARAPIÑADO 10KG","",20,""],
+      ["CACAHUATE SALADO 10KG","",20,""],
+      ["CANTINERO TOTOPO Y AJO","",15,""],
+      ["MIXTO CON FRITURA 10KG","",10,""],
+      ["JAPONÉS HOT NUT 10KG","",10,""],
+      ["JAPONÉS 10KG","",10,""],
+      ["CHICHARRÓN CERDO KILO","",3,""],
+      ["CHICHARRÓN KRANKY KILO","",3,""]
+    ]
   }
+
 ];
 
 /* ===================== GUARDADO LOCAL ===================== */
