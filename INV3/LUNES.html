@@ -336,9 +336,9 @@ const PAGE_ID = location.pathname.split("/").pop().replace(".html", "");
 const STORAGE_KEY = "inventariosData_" + PAGE_ID;
 
 const inventarios = [
-  { 
-    nombre:"📦 Azúcares y derivados V261225", 
-    items:[
+  {
+    seccion: "⚙️ MOLIENDAS",
+    items: [
       ["AZÚCAR MORENA 25","",100,""],
       ["AZÚCAR BLANCA 25","",20,""],
       ["MORENA SWITEN 907","",50,""],
@@ -346,6 +346,11 @@ const inventarios = [
       ["FÉCULA DE MAÍZ","",3,""],
       ["AZÚCAR MOSCABADA","",2,""],
       ["GLUCOSA 19 LTS 27K","",2,""],
+    ]
+  },
+  {
+    seccion: "🧴 LÍQUIDO",
+    items: [
       ["NUTRILECHE C90 PAQ","",8,""],
       ["KARTAMUS 12 CAMA","",100,""],
       ["HARIMASA C10","",100,""],
