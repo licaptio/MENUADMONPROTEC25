@@ -305,10 +305,7 @@ button.action{
   <div class="container">
     <header>
       <h2><span>📦</span><span id="titulo"></span></h2>
-      <div id="pagination-info" style="text-align:center;margin-bottom:6px;color:#555"></div>
-    </header>
-
-    <div id="indice" class="indice"></div>
+      </header>
 
     <div class="table-container">
       <table id="tabla">
@@ -339,7 +336,6 @@ button.action{
 <!-- Hasta aquí -->
 
 <script>/* ===== Datos ===== */
-let pagina = 0;
 
 // 🔑 LocalStorage único por archivo HTML
 const PAGE_ID = location.pathname.split("/").pop().replace(".html", "");
@@ -400,7 +396,6 @@ function limpiarTodo(){
 
 /* ===================== TELEGRAM ===================== */
 function enviarTelegram() {
-  const data = inventarios[pagina];
   if (!data || !data.items) return;
 
   let hayInventario = false;
@@ -550,10 +545,7 @@ function cerrarModal() {
   document.getElementById("ordenModal").style.display = "none";
 }
 function render(){ 
-  const data = inventarios[pagina];
   document.getElementById("titulo").textContent = data.nombre;
-  document.getElementById("pagination-info").textContent = `${pagina+1} de ${inventarios.length}`;
-
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
 
