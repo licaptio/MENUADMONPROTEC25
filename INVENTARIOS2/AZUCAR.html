@@ -614,26 +614,32 @@ function renderMobile(){
     const card = document.createElement("div");
     card.className = "product-card";
 
-    card.innerHTML = `
-      <div class="product-name">${row[0]}</div>
+card.innerHTML = `
+  <div class="product-name">${row[0]}</div>
 
-      <div class="row">
-        <label>Inventario manual</label>
-        <input type="number" placeholder="+" />
-      </div>
+  <div class="row">
+    <label>📦 Stock</label>
+    <strong style="font-size:1.2rem; color:#111">${row[2] ?? 0}</strong>
+  </div>
 
-      <div class="row">
-        <label>Pedido</label>
-        <input type="number" value="${row[3]||""}" />
-      </div>
+  <div class="row">
+    <label>Inventario manual</label>
+    <input type="number" placeholder="+" />
+  </div>
 
-      <div class="row acumulado">
-        <label>Acumulado</label>
-        <button>-</button>
-        <span>${row[4]||0}</span>
-        <button>+</button>
-      </div>
-    `;
+  <div class="row">
+    <label>Pedido</label>
+    <input type="number" value="${row[3]||""}" />
+  </div>
+
+  <div class="row acumulado">
+    <label>Acumulado</label>
+    <button>-</button>
+    <span>${row[4]||0}</span>
+    <button>+</button>
+  </div>
+`;
+
 
     const [invInput, pedInput] = card.querySelectorAll("input");
     const [btnMenos, btnMas] = card.querySelectorAll("button");
