@@ -902,18 +902,28 @@ function generarOrden() {
 
   let hayPedidos = false;
 
-  inventarios.forEach(g => {
-    g.items.forEach(row => {
-      const pedido = parseInt(row[3]) || 0;
-      if (pedido > 0) {
-        hayPedidos = true;
-        const li = document.createElement("li");
-        li.innerHTML = `📦 ${row[0]} → <strong>${pedido}</strong>`;
-        list.appendChild(li);
-        mensaje += `• ${row[0]} — ${pedido}\n`;
-      }
-    });
+inventarios.forEach(sec => {
+
+  // 🔹 Productos con pedido
+  const itemsConPedido = sec.items.filter(
+    row => (parseInt(row[3]) || 0) > 0
+  );
+
+  // ❌ Si la sección no tiene pedidos, no se imprime
+  if (itemsConPedido.length === 0) return;
+
+  hayPedidos = true;
+
+  // ✅ Sección con pedidos
+  mensaje += `*${sec.seccion}*\n`;
+
+  itemsConPedido.forEach(row => {
+    mensaje += `• ${row[0]} — ${row[3]}\n`;
   });
+
+  mensaje += `\n`;
+});
+
 
   if (!hayPedidos) {
     list.innerHTML = "<li>No hay productos con pedido</li>";
