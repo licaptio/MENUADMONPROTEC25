@@ -831,19 +831,27 @@ function enviarTelegram() {
   let mensaje = `📦 *INVENTARIO GENERAL*\n`;
   mensaje += `📅 ${new Date().toLocaleString("es-MX")}\n\n`;
 
-  inventarios.forEach(sec => {
-    mensaje += `*${sec.seccion}*\n`;
+inventarios.forEach(sec => {
 
-    sec.items.forEach(row => {
-      const acum = parseInt(row[4]) || 0;
-      if (acum > 0) {
-        hayInventario = true;
-        mensaje += `• ${row[0]} — ${acum}\n`;
-      }
-    });
+  // 🔹 Solo productos con inventario
+  const itemsConInventario = sec.items.filter(
+    row => (parseInt(row[4]) || 0) > 0
+  );
 
-    mensaje += `\n`;
+  // ❌ Si la sección está vacía, no se imprime
+  if (itemsConInventario.length === 0) return;
+
+  // ✅ Aquí ya sabemos que sí hay datos
+  mensaje += `*${sec.seccion}*\n`;
+
+  itemsConInventario.forEach(row => {
+    hayInventario = true;
+    mensaje += `• ${row[0]} — ${row[4]}\n`;
   });
+
+  mensaje += `\n`;
+});
+
 
   if (!hayInventario) {
     mensaje += `🚨 *SIN INVENTARIO*\n`;
