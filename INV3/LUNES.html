@@ -477,22 +477,23 @@ const inventarios = [
 
 ];
 
-/* ===================== GUARDADO LOCAL ===================== */
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(inventarios[pagina]));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(inventarios));
 }
 
 function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return; // 🔹 Si no hay datos guardados, deja los de origen
+  if (!raw) return;
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.items && Array.isArray(parsed.items)) {
-      inventarios[pagina].items = parsed.items;
+    if (Array.isArray(parsed)) {
+      inventarios.length = 0;
+      inventarios.push(...parsed);
     }
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    console.error(e);
+  }
 }
-
 
 /* ===================== LIMPIAR TODO ===================== */
 function limpiarTodo(){
@@ -508,27 +509,27 @@ render();
 
 /* ===================== TELEGRAM ===================== */
 function enviarTelegram() {
-  if (!data || !data.items) return;
-
   let hayInventario = false;
 
-  let mensaje = `📦 *${data.nombre}*\n`;
+  let mensaje = `📦 *INVENTARIO GENERAL*\n`;
   mensaje += `📅 ${new Date().toLocaleString("es-MX")}\n\n`;
 
-  mensaje += `*Producto* — *Acumulado*\n`;
+  inventarios.forEach(sec => {
+    mensaje += `*${sec.seccion}*\n`;
 
-  data.items.forEach(row => {
-    const acum = parseInt(row[4]) || 0;
+    sec.items.forEach(row => {
+      const acum = parseInt(row[4]) || 0;
+      if (acum > 0) {
+        hayInventario = true;
+        mensaje += `• ${row[0]} — ${acum}\n`;
+      }
+    });
 
-    if (acum > 0) {
-      hayInventario = true;
-      mensaje += `• ${row[0]} — ${acum}\n`;
-    }
+    mensaje += `\n`;
   });
 
-  // 🚨 SI NO HAY INVENTARIO
   if (!hayInventario) {
-    mensaje += `\n🚨 *SIN INVENTARIO*\n`;
+    mensaje += `🚨 *SIN INVENTARIO*\n`;
     mensaje += `⚠️ No se registraron acumulados.\n`;
     mensaje += `📌 Revisar físicamente almacén.\n`;
   }
@@ -545,23 +546,20 @@ function enviarTelegram() {
       parse_mode: "Markdown"
     })
   })
-  .then(async res => {
-    const respuesta = await res.json();
-    if (!respuesta.ok) {
-      console.error("Error Telegram:", respuesta);
-      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
+  .then(res => res.json())
+  .then(resp => {
+    if (!resp.ok) {
+      alert("❌ Error Telegram: " + resp.description);
       return;
     }
-
-    if (!hayInventario) {
-      alert("⚠️ Alerta enviada: SIN INVENTARIO");
-    } else {
-      alert("✅ Inventario enviado correctamente a Telegram");
-    }
+    alert(hayInventario
+      ? "✅ Inventario enviado correctamente"
+      : "⚠️ Alerta enviada: SIN INVENTARIO"
+    );
   })
   .catch(err => {
-    console.error("Error de red:", err);
-    alert("❌ Error al conectar con Telegram.");
+    console.error(err);
+    alert("❌ Error de red con Telegram");
   });
 }
 
@@ -657,7 +655,6 @@ function cerrarModal() {
   document.getElementById("ordenModal").style.display = "none";
 }
 function render(){ 
-  document.getElementById("titulo").textContent = data.nombre;
   const tbody = document.querySelector("#tabla tbody");
   tbody.innerHTML = "";
 
