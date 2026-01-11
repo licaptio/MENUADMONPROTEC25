@@ -35,19 +35,15 @@ header{
   background:var(--bg);
   padding:8px 0 10px;
 }
-h2{
-  font-size:1.2rem;
+.titulo-simple{
+  font-size:1.1rem;
+  font-weight:600;
   text-align:center;
-  color:var(--primary);
-  background:var(--card);
-  border-radius:12px;
-  padding:10px 12px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
-  margin-bottom:6px;
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  align-items:center;
+  color:#1f2937;
+  margin:6px 0 10px;
+  background:none;
+  box-shadow:none;
+  padding:0;
 }
 
 /* TABLA GENERAL */
@@ -329,7 +325,8 @@ button.action{
 <body>
   <div class="container">
     <header>
-      <h2><span>📦</span><span id="titulo"></span></h2>
+      <h2 class="titulo-simple">INVENTARIOS PDD</h2>
+
       </header>
 
     <div class="table-container">
