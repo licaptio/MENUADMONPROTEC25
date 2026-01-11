@@ -297,6 +297,31 @@ button.action{
   text-align:center;
   letter-spacing:.5px;
 }
+.section-header{
+  margin:18px 0 10px;
+  padding:12px 14px;
+  background:#1f2937;
+  color:#fff;
+  font-weight:800;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+  user-select:none;
+}
+
+.section-header span{
+  font-size:1.2rem;
+}
+
+.section-body{
+  display:none;
+}
+
+.section.open .section-body{
+  display:block;
+}
 
 </style>
 
@@ -340,6 +365,7 @@ button.action{
 // 🔑 LocalStorage único por archivo HTML
 const PAGE_ID = location.pathname.split("/").pop().replace(".html", "");
 const STORAGE_KEY = "inventariosData_" + PAGE_ID;
+const UI_STATE_KEY = STORAGE_KEY + "_ui";
 const inventarios = [
 
   /* ===================== MOLIENDAS ===================== */
@@ -474,8 +500,9 @@ function limpiarTodo(){
   inventarios.forEach(g=>g.items.forEach(r=>{
     r[1] = ""; r[3] = ""; r[4] = 0;
   }));
-  localStorage.removeItem(STORAGE_KEY);
-  render();
+localStorage.removeItem(STORAGE_KEY);
+localStorage.removeItem(UI_STATE_KEY);
+render();
   alert("✅ Inventario y localStorage limpiados");
 }
 
@@ -701,15 +728,44 @@ function renderMobile(){
   const cont = document.getElementById("mobile-list");
   cont.innerHTML = "";
 
+  const uiState = loadUIState();
+
   inventarios.forEach((grupo)=>{
 
-    // 🔷 ENCABEZADO DE SECCIÓN
+    const section = document.createElement("div");
+    section.className = "section";
+
+    // 🔹 HEADER
     const header = document.createElement("div");
     header.className = "section-header";
-    header.textContent = grupo.seccion;
-    cont.appendChild(header);
 
-    // 🔽 PRODUCTOS DE LA SECCIÓN
+    const titulo = document.createElement("div");
+    titulo.textContent = grupo.seccion;
+
+    const toggle = document.createElement("span");
+    toggle.textContent = uiState[grupo.seccion] ? "▾" : "▸";
+
+    header.appendChild(titulo);
+    header.appendChild(toggle);
+
+    // 🔹 BODY
+    const body = document.createElement("div");
+    body.className = "section-body";
+
+    if(uiState[grupo.seccion]){
+      section.classList.add("open");
+    }
+
+    header.onclick = ()=>{
+      section.classList.toggle("open");
+      const abierto = section.classList.contains("open");
+      toggle.textContent = abierto ? "▾" : "▸";
+
+      uiState[grupo.seccion] = abierto;
+      saveUIState(uiState);
+    };
+
+    // 🔽 ITEMS
     grupo.items.forEach((row)=>{
       const card = document.createElement("div");
       card.className = "product-card";
@@ -719,17 +775,12 @@ function renderMobile(){
 
         <div class="row">
           <label>📦 Stock</label>
-          <strong style="font-size:1.2rem">${row[2] ?? 0}</strong>
+          <strong>${row[2] ?? 0}</strong>
         </div>
 
         <div class="row">
-          <label>Inventario manual</label>
+          <label>Inventario</label>
           <input type="number" placeholder="+" />
-        </div>
-
-        <div class="row">
-          <label>Pedido</label>
-          <input type="number" value="${row[3]||""}" />
         </div>
 
         <div class="row acumulado">
@@ -738,8 +789,14 @@ function renderMobile(){
           <span>${row[4]||0}</span>
           <button>+</button>
         </div>
+
+        <div class="row">
+          <label>🧾 Pedido</label>
+          <input type="number" value="${row[3]||""}" />
+        </div>
       `;
 
+      // 🔌 lógica existente
       const [invInput, pedInput] = card.querySelectorAll("input");
       const [btnMenos, btnMas] = card.querySelectorAll("button");
       const span = card.querySelector("span");
@@ -759,9 +816,25 @@ function renderMobile(){
       btnMas.onclick = ()=>{ row[4]++; span.textContent=row[4]; saveData(); };
       btnMenos.onclick = ()=>{ if(row[4]>0){ row[4]--; span.textContent=row[4]; saveData(); } };
 
-      cont.appendChild(card);
+      body.appendChild(card);
     });
+
+    section.appendChild(header);
+    section.appendChild(body);
+    cont.appendChild(section);
   });
+}
+
+function loadUIState(){
+  try{
+    return JSON.parse(localStorage.getItem(UI_STATE_KEY)) || {};
+  }catch{
+    return {};
+  }
+}
+
+function saveUIState(state){
+  localStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
 }
 
 </script>
