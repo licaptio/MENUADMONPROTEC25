@@ -831,28 +831,30 @@ function enviarTelegram() {
   let mensaje = `📦 *INVENTARIO GENERAL*\n`;
   mensaje += `📅 ${new Date().toLocaleString("es-MX")}\n\n`;
 
-inventarios.forEach(sec => {
+  inventarios.forEach(sec => {
 
-  // 🔹 Solo productos con inventario
-  const itemsConInventario = sec.items.filter(
-    row => (parseInt(row[4]) || 0) > 0
-  );
+    // 🔎 La sección se envía solo si al menos un SKU tiene inventario
+    const tieneInventario = sec.items.some(
+      row => (parseInt(row[4]) || 0) > 0
+    );
 
-  // ❌ Si la sección está vacía, no se imprime
-  if (itemsConInventario.length === 0) return;
+    if (!tieneInventario) return;
 
-  // ✅ Aquí ya sabemos que sí hay datos
-  mensaje += `*${sec.seccion}*\n`;
+    // ✅ Encabezado de sección
+    mensaje += `*${sec.seccion}*\n`;
 
-  itemsConInventario.forEach(row => {
+    sec.items.forEach(row => {
+      const stock = parseInt(row[2]) || 0;
+      const inventario = parseInt(row[4]) || 0;
+
+      mensaje += `• ${row[0]} — Stock: ${stock} | Inv: ${inventario}\n`;
+    });
+
+    mensaje += `\n`;
     hayInventario = true;
-    mensaje += `• ${row[0]} — ${row[4]}\n`;
   });
 
-  mensaje += `\n`;
-});
-
-
+  // 🚨 Ninguna sección tuvo inventario
   if (!hayInventario) {
     mensaje += `🚨 *SIN INVENTARIO*\n`;
     mensaje += `⚠️ No se registraron acumulados.\n`;
@@ -877,10 +879,7 @@ inventarios.forEach(sec => {
       alert("❌ Error Telegram: " + resp.description);
       return;
     }
-    alert(hayInventario
-      ? "✅ Inventario enviado correctamente"
-      : "⚠️ Alerta enviada: SIN INVENTARIO"
-    );
+    alert("✅ Inventario enviado correctamente");
   })
   .catch(err => {
     console.error(err);
