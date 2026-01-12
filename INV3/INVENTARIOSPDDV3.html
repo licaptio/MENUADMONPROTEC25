@@ -990,9 +990,16 @@ function cerrarModal() {
 }
 function render(){
   if (window.innerWidth <= 768) {
+    document.querySelector("table").style.display = "none";
+    document.getElementById("mobile-list").style.display = "flex";
     renderMobile();
+  } else {
+    document.querySelector("table").style.display = "table";
+    document.getElementById("mobile-list").style.display = "none";
+    renderDesktop();
   }
 }
+
 window.addEventListener("DOMContentLoaded", () => {
   loadData();
   render();
@@ -1148,6 +1155,63 @@ function saveUIState(state){
     </div>
   </div>
 </div>
+<script>
+function renderDesktop(){
+  const tbody = document.querySelector("#tabla tbody");
+  tbody.innerHTML = "";
+
+  inventarios.forEach(grupo => {
+
+    // 🔹 encabezado de sección
+    const trSec = document.createElement("tr");
+    trSec.innerHTML = `
+      <td colspan="5" style="
+        background:#1f2937;
+        color:#fff;
+        font-weight:bold;
+        padding:8px;
+      ">
+        ${grupo.seccion}
+      </td>
+    `;
+    tbody.appendChild(trSec);
+
+    grupo.items.forEach(row => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="producto">${row[0]}</td>
+        <td>
+          <input type="number" placeholder="+" />
+        </td>
+        <td>${row[2] ?? 0}</td>
+        <td>
+          <input type="number" value="${row[3] || ""}" />
+        </td>
+        <td>${row[4] || 0}</td>
+      `;
+
+      const invInput = tr.querySelectorAll("input")[0];
+      const pedInput = tr.querySelectorAll("input")[1];
+      const acumuladoCell = tr.children[4];
+
+      invInput.onchange = ()=>{
+        row[4] = (row[4]||0) + (parseInt(invInput.value)||0);
+        acumuladoCell.textContent = row[4];
+        invInput.value="";
+        saveData();
+      };
+
+      pedInput.oninput = e=>{
+        row[3] = e.target.value;
+        saveData();
+      };
+
+      tbody.appendChild(tr);
+    });
+  });
+}
+</script>
 
 </body>
 </html>
