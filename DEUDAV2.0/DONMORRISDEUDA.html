@@ -216,7 +216,7 @@ async function cargarRFCs() {
 
   do {
     const { data, error } = await supa
-      .from("v_deuda_proveedores")
+      .from("deuda_limpia_pdd")
       .select("rfc_emisor, proveedor_unificado, razon_social_emisor, nombre_emisor")
       .not("rfc_emisor", "is", null)
       .order("rfc_emisor", { ascending: true })
@@ -406,7 +406,7 @@ if (!rfc) {
 
   // contar registros
 const { count, error: errorConteo } = await supa
-  .from("v_deuda_proveedores")
+  .from("deuda_limpia_pdd")
   .select("*", { count: "exact", head: true })
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO);
@@ -418,7 +418,7 @@ const { count, error: errorConteo } = await supa
 
   // consultar facturas
 const { data: facturas, error } = await supa
-  .from("v_deuda_proveedores")
+ .from("deuda_limpia_pdd")
   .select("*")
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO)
@@ -447,6 +447,7 @@ function mostrarTabla(data) {
     <th>Proveedor</th>
     <th>Total</th>
     <th>Serie/Folio</th>
+    <th>Folio Tecnopro</th>
     <th>📷 Fotos</th>
   </tr></thead><tbody>`;
 
@@ -481,6 +482,15 @@ if (f.proveedor_unificado && f.proveedor_unificado.trim() !== "") {
   <td>${proveedor}</td>
   <td>${monedaMXN(f.total)}</td>
   <td>${f.serie_folio || "—"}</td>
+<td>
+<input
+  type="number"
+  value="${f.foliotecnopro || ''}"
+  ${f.foliotecnopro ? 'disabled' : ''}
+  style="width:90px"
+  onchange="guardarFolioFactura('${f.id}', this.value)"
+>
+</td>
 
   <td>
     ${
@@ -515,6 +525,29 @@ function monedaMXN(valor) {
     currency: 'MXN'
   });
 }
+
+  async function guardarFolioFactura(idFactura, folio) {
+
+  if (!folio) return;
+
+  const folioFormateado = String(folio).padStart(7, "0");
+
+  const { error } = await supa
+    .from("deuda_limpia_pdd")     // 👈 TABLA REAL
+    .update({
+      foliotecnopro: folioFormateado
+    })
+    .eq("id", idFactura);         // 👈 LLAVE REAL
+
+  if (error) {
+    console.error("❌ Error guardando folio:", error);
+    alert("Error al guardar Folio Tecnopro");
+    return;
+  }
+
+  console.log("✅ Folio Tecnopro guardado:", folioFormateado);
+}
+
 </script>
 
 </body>
