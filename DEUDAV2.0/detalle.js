@@ -312,28 +312,6 @@ impGlobalHTML += `
     <td>${formatoMX((window.__iva || 0) + (window.__ieps || 0))}</td>
   </tr>`;
 
-
-  // ============================================================
-  // FOLIO TECNOPRO
-  // ============================================================
-const folioHTML = `
-  <section class="seccion-folio compacto">
-    <h3>Folio Tecnopro</h3>
-
-    <div class="compacto-row">
-      <input id="folioInput" maxlength="7"
-        class="folio-input"
-        placeholder="Folio"
-        value="${safe(f.foliotecnopro)}">
-
-      <button id="btnGuardarFolio" class="btn-guardar-folio">
-        Guardar
-      </button>
-    </div>
-  </section>
-`;
-initFolioTecnopro(f.uuid_cfdi);
-
   // ============================================================
   // HTML FINAL
   // ============================================================
@@ -382,8 +360,6 @@ initFolioTecnopro(f.uuid_cfdi);
 <p><strong>Total Factura:</strong> ${formatoMX(Number(f.total || 0))}</p>
 
 </div>
-
-
   </section>
 
   <!-- DERECHA: Folio Tecnopro -->
@@ -391,7 +367,7 @@ initFolioTecnopro(f.uuid_cfdi);
     <h3>Folio Tecnopro</h3>
 
     <div class="compacto-row">
-      <input id="folioInput" maxlength="8"
+      <input id="folioInput" maxlength="7"
         class="folio-input"
         placeholder="Folio"
         value="${safe(f.foliotecnopro)}">
@@ -477,6 +453,9 @@ initFolioTecnopro(f.uuid_cfdi);
       </table>
     </section>
   `;
+
+  // 🔴 AQUI SE CONECTA EL BOTÓN GUARDAR
+  initFolioTecnopro(f.uuid_cfdi);
 }
 // ============================================================
 // GUARDAR FOLIO TECNOPRO
