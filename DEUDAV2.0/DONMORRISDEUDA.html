@@ -418,7 +418,7 @@ const { count, error: errorConteo } = await supa
 
   // consultar facturas
 const { data: facturas, error } = await supa
-  .from("deuda_limpia_pdd")
+  .from("v_deuda_proveedores")
   .select("*")
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO)
@@ -469,7 +469,8 @@ if (f.proveedor_unificado && f.proveedor_unificado.trim() !== "") {
     html += `
 <tr>
   <td>${formatearFecha(f.fecha)}</td>
-  <td>${f.dias}</td>
+  <td>${calcDiasDesdeHoy(f.fecha)}</td>
+
 
 <td>
   <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
@@ -507,10 +508,17 @@ if (f.proveedor_unificado && f.proveedor_unificado.trim() !== "") {
   document.getElementById("tablaResultados").innerHTML = html;
 }
 
-function calcDiasDesdeHoy(iso){
-  const f = new Date(iso);
-  const h = new Date();
-  return Math.floor((h - f) / 1000 / 60 / 60 / 24);
+function calcDiasDesdeHoy(iso) {
+  const soloFecha = iso.split("T")[0];
+  const [anio, mes, dia] = soloFecha.split("-").map(Number);
+
+  const fecha = new Date(anio, mes - 1, dia);
+  const hoy = new Date();
+
+  hoy.setHours(0,0,0,0);
+  fecha.setHours(0,0,0,0);
+
+  return Math.floor((hoy - fecha) / 86400000);
 }
 function formatearFecha(fechaISO) {
   const fecha = new Date(fechaISO);
