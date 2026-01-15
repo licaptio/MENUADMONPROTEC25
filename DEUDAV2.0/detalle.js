@@ -321,7 +321,7 @@ const folioHTML = `
     <h3>Folio Tecnopro</h3>
 
     <div class="compacto-row">
-      <input id="folioInput" maxlength="8"
+      <input id="folioInput" maxlength="7"
         class="folio-input"
         placeholder="Folio"
         value="${safe(f.foliotecnopro)}">
@@ -482,25 +482,38 @@ const folioHTML = `
 // GUARDAR FOLIO TECNOPRO
 // ============================================================
 function initFolioTecnopro(uuid_cfdi) {
-  const input = $("folioInput");
-  const btn = $("btnGuardarFolio");
+  const input = document.getElementById("folioInput");
+  const btn = document.getElementById("btnGuardarFolio");
+
+  if (!input || !btn) {
+    console.error("❌ No se encontró input o botón de folio");
+    return;
+  }
 
   btn.addEventListener("click", async () => {
-    const val = input.value.trim().substring(0, 8);
+    const val = input.value.trim().substring(0, 7);
 
-    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid_cfdi}`, {
-      method: "PATCH",
-      headers: {
-        apikey: SUPA_KEY,
-        Authorization: `Bearer ${SUPA_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ foliotecnopro: val })
-    });
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid_cfdi}`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: SUPA_KEY,
+          Authorization: `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          foliotecnopro: val
+        })
+      }
+    );
 
-    if (!res.ok) return alert("Error al guardar folio");
+    if (!res.ok) {
+      alert("❌ Error al guardar folio");
+      return;
+    }
 
-    alert("Folio guardado");
+    alert("✅ Folio Tecnopro guardado");
   });
 }
 
