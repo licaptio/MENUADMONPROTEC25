@@ -367,14 +367,15 @@ impGlobalHTML += `
     <h3>Folio Tecnopro</h3>
 
     <div class="compacto-row">
-      <input id="folioInput" maxlength="7"
-        class="folio-input"
-        placeholder="Folio"
-        value="${safe(f.foliotecnopro)}">
+<input data-folio-input maxlength="7"
+  class="folio-input"
+  placeholder="Folio"
+  value="${safe(f.foliotecnopro)}">
 
-      <button id="btnGuardarFolio" class="btn-guardar-folio">
-        Guardar
-      </button>
+<button data-folio-btn class="btn-guardar-folio">
+  Guardar
+</button>
+
     </div>
   </section>
 
@@ -461,16 +462,26 @@ impGlobalHTML += `
 // GUARDAR FOLIO TECNOPRO
 // ============================================================
 function initFolioTecnopro(uuid_cfdi) {
-  const input = document.getElementById("folioInput");
-  const btn = document.getElementById("btnGuardarFolio");
+
+  const input = document.querySelector('[data-folio-input]');
+  const btn   = document.querySelector('[data-folio-btn]');
 
   if (!input || !btn) {
     console.error("❌ No se encontró input o botón de folio");
     return;
   }
 
-  btn.addEventListener("click", async () => {
+  // 🔒 LIMPIA EVENTOS PREVIOS
+  btn.replaceWith(btn.cloneNode(true));
+  const btnClean = document.querySelector('[data-folio-btn]');
+
+  btnClean.addEventListener("click", async () => {
     const val = input.value.trim().substring(0, 7);
+
+    if (!val) {
+      alert("⚠️ Folio vacío");
+      return;
+    }
 
     const res = await fetch(
       `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid_cfdi}`,
@@ -481,13 +492,12 @@ function initFolioTecnopro(uuid_cfdi) {
           Authorization: `Bearer ${SUPA_KEY}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          foliotecnopro: val
-        })
+        body: JSON.stringify({ foliotecnopro: val })
       }
     );
 
     if (!res.ok) {
+      console.error(await res.text());
       alert("❌ Error al guardar folio");
       return;
     }
