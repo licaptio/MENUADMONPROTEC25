@@ -332,7 +332,7 @@ const folioHTML = `
     </div>
   </section>
 `;
-
+initFolioTecnopro(f.uuid_cfdi);
 
   // ============================================================
   // HTML FINAL
