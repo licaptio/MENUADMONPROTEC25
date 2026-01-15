@@ -484,13 +484,7 @@ if (f.proveedor_unificado && f.proveedor_unificado.trim() !== "") {
   <td>${monedaMXN(f.total)}</td>
   <td>${f.serie_folio || "—"}</td>
 <td>
-  <input
-    type="number"
-    value="${f.foliotecnopro || ''}"
-    ${f.foliotecnopro ? 'disabled' : ''}
-    style="width:90px"
-    onchange="guardarFolioFactura('${f.id}', this.value)"
-  >
+  ${f.foliotecnopro ? f.foliotecnopro : "—"}
 </td>
 
   <td>
