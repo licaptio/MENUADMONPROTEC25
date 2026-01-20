@@ -74,3 +74,4 @@ auth.onAuthStateChanged(user => {
   loginBox.style.display = "block";
   menu.style.display = "none";
 }
+});
