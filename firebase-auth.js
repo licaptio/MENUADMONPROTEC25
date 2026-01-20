@@ -15,7 +15,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 // 🔒 Persistencia SOLO mientras la pestaña esté abierta
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .catch(err => console.error("Persistencia error:", err));
 /* =========================================
    ⏱️ CONTROL DE INACTIVIDAD
