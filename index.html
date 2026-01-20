@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menú Principal – PROVSOFT</title>
 
-  <!-- 🔥 Firebase -->
+  <!-- 🔥 Firebase CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -90,7 +90,7 @@
       width: fit-content;
     }
 
-    /* 🔐 Login box (sin romper diseño) */
+    /* 🔐 Login */
     #loginBox {
       background: rgba(0,0,0,0.7);
       padding: 25px;
@@ -168,42 +168,11 @@
   </div>
 
   <button class="logout" onclick="logout()">Cerrar sesión</button>
-
   <footer>📦 Powered by PROVSOFT</footer>
 </div>
 
-<script>
-  // 🔧 CONFIG FIREBASE (PON LA TUYA)
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  function login() {
-    const email = email.value;
-    const password = password.value;
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => document.getElementById('error').innerText = err.message);
-  }
-
-  function logout() {
-    auth.signOut();
-  }
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      loginBox.style.display = 'none';
-      menu.style.display = 'block';
-    } else {
-      loginBox.style.display = 'block';
-      menu.style.display = 'none';
-    }
-  });
-</script>
+<!-- 🔗 Firebase externo -->
+<script src="firebase-auth.js"></script>
 
 </body>
 </html>
