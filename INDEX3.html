@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menú Principal – PROVSOFT</title>
+
+<!-- 🔥 Firebase (CDN clásico, no módulos) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  font-family:'Segoe UI',sans-serif;
+  margin:0;
+  padding:2em 1em;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  background:url('TRILOBAS.png') no-repeat center top fixed;
+  background-size:cover;
+  color:white;
+}
+
+/* 🔐 LOGIN */
+#loginBox{
+  background:rgba(0,0,0,.75);
+  padding:30px;
+  border-radius:14px;
+  width:100%;
+  max-width:380px;
+  box-shadow:0 6px 25px rgba(0,0,0,.6);
+}
+#loginBox h2{text-align:center;margin-bottom:20px}
+input{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border:none;
+  border-radius:8px;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  background:#10b981;
+  color:#000;
+}
+button:hover{opacity:.9}
+#error{color:#f87171;text-align:center;margin-top:10px}
+
+/* 📋 MENU */
+#menu{
+  display:none;
+  width:100%;
+  max-width:900px;
+}
+h1{
+  text-align:center;
+  margin-bottom:1.5em;
+  background:rgba(0,0,0,.7);
+  padding:12px 24px;
+  border-radius:10px;
+}
+.menu-links{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;
+  background:rgba(0,0,0,.6);
+  padding:25px;
+  border-radius:12px;
+}
+.menu-links a{
+  padding:1em;
+  color:white;
+  text-decoration:none;
+  border-radius:10px;
+  font-size:1.1em;
+  font-weight:600;
+  text-align:center;
+  transition:transform .2s,opacity .3s;
+}
+.menu-links a:hover{transform:scale(1.07);opacity:.9}
+
+/* 🎨 BOTONES */
+.btn1{background:#e67e22}
+.btn2{background:#3498db}
+.btn6{background:#f59e0b}
+.btn7{background:#1abc9c}
+.btn8{background:#2c3e50}
+.btn9{background:#e91e63}
+.btn13{background:#ef4444}
+
+footer{
+  margin-top:25px;
+  text-align:center;
+  font-size:14px;
+  background:rgba(0,0,0,.5);
+  padding:10px;
+  border-radius:6px;
+}
+.logout{
+  margin:15px auto 0;
+  display:block;
+  background:#ef4444;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 LOGIN -->
+<div id="loginBox">
+  <h2>🔐 Acceso PROVSOFT</h2>
+  <input type="email" id="email" placeholder="Correo" />
+  <input type="password" id="password" placeholder="Contraseña" />
+  <button onclick="login()">Entrar</button>
+  <div id="error"></div>
+</div>
+
+<!-- 📋 MENU -->
+<div id="menu">
+  <h1>📋 Menú Principal</h1>
+
+  <div class="menu-links">
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/ALIKALOBABOTS/index.html" target="_blank" class="btn1">🦊 AlikaBot</a>
+    <a href="AUDPRECIO/INDEX.html" target="_blank" class="btn2">📑 Auditoría de Precio</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/DEUDAV2.0/index.html" target="_blank" class="btn7">💰 Deuda V2</a>
+    <a href="https://licaptio.github.io/DIARYAPPFOLIO/" target="_blank" class="btn8">📘 Diario</a>
+    <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
+    <a href="CACHOTAINGRE/submenu.html" target="_blank" class="btn6">🐺 Ingresos Clientes</a>
+    <a href="https://licaptio.github.io/pwa-provsoft/index.html" target="_blank" class="btn9">📱 Menú PWA</a>
+  </div>
+
+  <button class="logout" onclick="logout()">Cerrar sesión</button>
+
+  <footer>📦 Powered by PROVSOFT</footer>
+</div>
+
+<script>
+/* 🔥 TU CONFIG FIREBASE */
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROJECT.firebaseapp.com",
+  projectId: "TU_PROJECT",
+  appId: "TU_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+/* 🔐 LOGIN */
+function login(){
+  const email = email.value;
+  const password = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email,password)
+    .catch(e=>error.innerText=e.message);
+}
+
+/* 🔒 SESIÓN */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginBox.style.display="none";
+    menu.style.display="block";
+  }else{
+    loginBox.style.display="block";
+    menu.style.display="none";
+  }
+});
+
+/* 🚪 LOGOUT */
+function logout(){
+  auth.signOut();
+}
+</script>
+
+</body>
+</html>
