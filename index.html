@@ -136,16 +136,75 @@
     }
 
     #menu { display: none; }
+  /* 📱 AJUSTES MOBILE FIRST */
+body.mobile {
+  padding: 1.2em;
+}
+
+/* evita zoom en iOS / Android */
+#loginBox input {
+  font-size: 16px;
+}
+
+/* login más cómodo en celular */
+#loginBox {
+  margin-top: 10vh;
+}
+
+/* botones más grandes para pulgar */
+#loginBox button,
+.logout {
+  padding: 14px;
+  font-size: 17px;
+}
+
+/* menú en una sola columna en celular */
+@media (max-width: 767px) {
+  .menu-links {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .menu-links a {
+    padding: 1.2em;
+    font-size: 1.1em;
+  }
+
+  h1 {
+    font-size: 1.6em;
+  }
+}
+
+/* 🖥️ en PC se queda igual */
+@media (min-width: 768px) {
+  body.mobile {
+    padding: 2em 1em;
+  }
+}
+
   </style>
 </head>
 
-<body>
+<body class="mobile">
+
 
 <!-- 🔐 LOGIN -->
 <div id="loginBox">
   <h2>🔐 Acceso PROVSOFT</h2>
-  <input type="email" id="email" placeholder="Correo" />
-  <input type="password" id="password" placeholder="Contraseña" />
+<input
+  type="email"
+  id="email"
+  placeholder="Correo"
+  autocomplete="username"
+  inputmode="email"
+/>
+
+<input
+  type="password"
+  id="password"
+  placeholder="Contraseña"
+  autocomplete="current-password
+ />
   <button onclick="login()">Entrar</button>
   <div id="error"></div>
 </div>
