@@ -1,17 +1,142 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menú Principal – PROVSOFT</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menú Principal – PROVSOFT</title>
 
-<!-- 🔥 Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- 🔥 Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<style>
-/* === (TU CSS ORIGINAL SIN CAMBIOS) === */
-</style>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2em 1em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: url('TRILOBAS.png') no-repeat center top fixed;
+      background-size: cover;
+      color: white;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 1.5em;
+      font-size: 2em;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 24px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .menu-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      width: 100%;
+      max-width: 900px;
+      background: rgba(0,0,0,0.6);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .menu-links a {
+      padding: 1em;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, opacity 0.3s;
+    }
+
+    .menu-links a:hover {
+      transform: scale(1.07);
+      opacity: 0.9;
+    }
+
+    /* 🎨 Botones */
+    .btn1  { background: #e67e22; }
+    .btn2  { background: #3498db; }
+    .btn3  { background: #16a34a; }
+    .btn4  { background: #9b59b6; }
+    .btn5  { background: #c0392b; }
+    .btn6  { background: #f59e0b; }
+    .btn7  { background: #1abc9c; }
+    .btn8  { background: #2c3e50; }
+    .btn9  { background: #e91e63; }
+    .btn10 { background: #3b82f6; }
+    .btn11 { background: #10b981; }
+    .btn12 { background: #9333ea; }
+    .btn13 { background: #ef4444; }
+    .btn14 { background: #84cc16; }
+    .btn15 { background: #d97706; }
+
+    footer {
+      margin-top: 3em;
+      text-align: center;
+      font-size: 14px;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    /* 🔐 Login box (sin romper diseño) */
+    #loginBox {
+      background: rgba(0,0,0,0.7);
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    #loginBox input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: none;
+      font-size: 15px;
+    }
+
+    #loginBox button,
+    .logout {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #loginBox button:hover,
+    .logout:hover {
+      opacity: 0.9;
+    }
+
+    #error {
+      margin-top: 10px;
+      color: #ff6b6b;
+      font-size: 14px;
+    }
+
+    #menu { display: none; }
+  </style>
 </head>
 
 <body>
@@ -37,14 +162,48 @@
     <a href="https://licaptio.github.io/MENUADMONPROTEC25/LISTAPRECIOSPDD/" target="_blank" class="btn13">📑 Lista Precios PDD</a>
     <a href="CACHOTAINGRE/submenu.html" target="_blank" class="btn6">🐺 Ingresos Clientes</a>
     <a href="https://licaptio.github.io/pwa-provsoft/index.html" target="_blank" class="btn9">📱 Menú PWA</a>
+    <a href="https://lizandrolumbreras.github.io/MENU-MONITOREO/" target="_blank" class="btn9">📊 Monitores</a>
+    <a href="https://licaptio.github.io/PROVEEDORADEDULCES/index.html/" target="_blank" class="btn9">🧾 POS 2026</a>
+    <a href="INV3/INVENTARIOSPDDV3.html" target="_blank" class="btn6">📦 Inventarios Proveedora</a>
   </div>
 
   <button class="logout" onclick="logout()">Cerrar sesión</button>
+
   <footer>📦 Powered by PROVSOFT</footer>
 </div>
 
-<!-- 🔗 TU JS -->
-<script src="firebase-auth.js"></script>
+<script>
+  // 🔧 CONFIG FIREBASE (PON LA TUYA)
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_AUTH_DOMAIN",
+    projectId: "TU_PROJECT_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  function login() {
+    const email = email.value;
+    const password = password.value;
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => document.getElementById('error').innerText = err.message);
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginBox.style.display = 'none';
+      menu.style.display = 'block';
+    } else {
+      loginBox.style.display = 'block';
+      menu.style.display = 'none';
+    }
+  });
+</script>
 
 </body>
 </html>
