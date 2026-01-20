@@ -14,6 +14,27 @@ const firebaseConfig = {
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+// 🔒 Persistencia SOLO mientras la pestaña esté abierta
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .catch(err => console.error("Persistencia error:", err));
+/* =========================================
+   ⏱️ CONTROL DE INACTIVIDAD
+   ========================================= */
+
+const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos
+let inactivityTimer;
+
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    alert("Sesión cerrada por inactividad");
+    auth.signOut();
+  }, INACTIVITY_LIMIT);
+}
+["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(evt => {
+  document.addEventListener(evt, resetInactivityTimer);
+});
+
 
 /* =========================================
    🔐 LOGIN
@@ -46,10 +67,10 @@ auth.onAuthStateChanged(user => {
   const menu = document.getElementById("menu");
 
   if (user) {
-    loginBox.style.display = "none";
-    menu.style.display = "block";
-  } else {
-    loginBox.style.display = "block";
-    menu.style.display = "none";
-  }
-});
+  loginBox.style.display = "none";
+  menu.style.display = "block";
+  resetInactivityTimer(); // ⏱️ empieza conteo
+} else {
+  loginBox.style.display = "block";
+  menu.style.display = "none";
+}
