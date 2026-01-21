@@ -284,6 +284,7 @@ resumenTelegram =
       let html = `<table><thead><tr>
         <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th><th>Proveedor</th>
         <th>Factura</th><th>Total</th><th>Física</th><th>Fotos</th>
+        <th>Pagada</th>
       </tr></thead><tbody>`;
 
       for (const f of data) {
@@ -326,6 +327,15 @@ if (proveedoresContado.includes(razon)) {
               ? f.fotos.map(url => `<a href="${url}" target="_blank" title="Ver foto">📷</a>`).join(' ')
               : ''}
           </td>
+          <td
+  style="cursor:pointer;font-weight:bold;
+         background:${f.factura_pagada === 'SI' ? '#27ae60' : '#c0392b'};
+         color:white;"
+  onclick="togglePagada('${f.uuid_cfdi}', '${f.factura_pagada || 'NO'}')"
+>
+  ${f.factura_pagada === 'SI' ? 'SI' : 'NO'}
+</td>
+
         </tr>`;
       }
       document.getElementById("tabla").innerHTML = html;
