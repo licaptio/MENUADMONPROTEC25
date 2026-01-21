@@ -517,6 +517,23 @@ async function toggleFisica(uuid, valorActual) {
   // Recargar tabla para mostrar el color actualizado
   cargar();
 }
+async function togglePagada(uuid, valorActual) {
+  const nuevoValor = valorActual === "SI" ? "NO" : "SI";
+
+  const { error } = await _supabase
+    .from('deuda_limpia_pdd')
+    .update({ factura_pagada: nuevoValor })
+    .eq('uuid_cfdi', uuid);
+
+  if (error) {
+    alert("Error actualizando factura pagada");
+    console.error(error);
+    return;
+  }
+
+  // 👇 para ti es suficiente refrescar
+  cargar();
+}
 
   </script>
 </body>
