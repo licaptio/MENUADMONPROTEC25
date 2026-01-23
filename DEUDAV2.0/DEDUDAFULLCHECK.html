@@ -1,128 +1,255 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Facturas Pendientes · PROVSOFT</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Facturas Pendientes · FULL 90</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- ✅ UMD correcto (evita HTML en vez de JS) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
-<style>
-body{
-  font-family: Arial, sans-serif;
-  background:#f4f4f4;
-  margin:0;
-  padding:15px;
-}
-h2{margin:0 0 10px}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 14px;
+    }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  font-size:13px;
-  white-space:nowrap;
-}
-th{
-  background:#007bff;
-  color:white;
-  position:sticky;
-  top:0;
-  z-index:5;
-}
+    h2 { margin: 0 0 10px 0; }
 
-td.numero{text-align:right}
-.proveedor-destacado{font-weight:bold}
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
 
-.vencida-30{background:#fff8e1}
-.vencida-60{background:#ffe082}
-.vencida-90{background:#ffca28}
-.vencida-mas{background:#ff7043;color:white}
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #28a745;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
 
-.pagada-reciente{background:#e8f5e9}
+    select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
 
-.fisica-si{background:#2ecc71;color:white;font-weight:bold;cursor:pointer}
-.fisica-no{background:#e74c3c;color:white;font-weight:bold;cursor:pointer}
+    #resumen-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:10px 12px;
+      margin-bottom:10px;
+    }
 
-.pagada-si{background:#27ae60;color:white;font-weight:bold;cursor:pointer}
-.pagada-no{background:#c0392b;color:white;font-weight:bold;cursor:pointer}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
 
-.controls{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin:10px 0;
-}
-button{
-  padding:6px 14px;
-  border:none;
-  border-radius:6px;
-  background:#28a745;
-  color:white;
-  cursor:pointer;
-}
-button:disabled{opacity:.5;cursor:not-allowed}
-</style>
+    th, td {
+      border: 1px solid #ccc;
+      padding: 7px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    td.numero { text-align: right; }
+    .proveedor-destacado { font-weight: bold; color: #2c3e50; }
+
+    .vencida-30 { background: #fff8e1; }
+    .vencida-60 { background: #ffe082; }
+    .vencida-90 { background: #ffca28; }
+    .vencida-mas { background: #ff7043; color: white; }
+
+    .pagada-reciente { background: #e8f5e9 !important; opacity: .92; }
+
+    .fisica-si {
+      background: #2ecc71 !important;
+      color: #fff !important;
+      font-weight: bold;
+      cursor: pointer;
+      text-align:center;
+    }
+    .fisica-no {
+      background: #e74c3c !important;
+      color: #fff !important;
+      font-weight: bold;
+      cursor: pointer;
+      text-align:center;
+    }
+
+    .pagada-si {
+      background: #27ae60 !important;
+      color: #fff !important;
+      font-weight: bold;
+      cursor: pointer;
+      text-align:center;
+    }
+    .pagada-no {
+      background: #c0392b !important;
+      color: #fff !important;
+      font-weight: bold;
+      cursor: pointer;
+      text-align:center;
+    }
+  </style>
 </head>
 
 <body>
 
-<h2>📌 Facturas Pendientes</h2>
+  <h2>📌 Facturas Pendientes</h2>
 
-<div id="resumen-header"></div>
+  <div id="resumen-header">
+    <div>
+      <strong>Total visibles:</strong> …<br>
+      <strong>No pagados:</strong> …
+    </div>
+    <div style="text-align:right;">
+      <strong>Total $ pendiente:</strong><br>
+      <span style="font-size:18px;color:darkgreen;">$0.00</span>
+    </div>
+  </div>
 
-<div class="controls">
-  <button id="prevBtn">◀</button>
-  <span id="pageInfo"></span>
-  <button id="nextBtn">▶</button>
+  <div class="controls">
+    <button id="prevBtn">◀</button>
+    <button id="nextBtn">▶</button>
 
-  <label>Filas:</label>
-  <select id="pageSizeSel">
-    <option value="50">50</option>
-    <option value="100" selected>100</option>
-    <option value="200">200</option>
-  </select>
-</div>
+    <label>Filas:</label>
+    <select id="pageSizeSel">
+      <option value="50">50</option>
+      <option value="100" selected>100</option>
+      <option value="200">200</option>
+    </select>
 
-<div id="tabla"></div>
+    <span id="pageInfo" style="font-weight:bold;"></span>
+  </div>
+
+  <div id="tabla"></div>
 
 <script>
-/* ================== SUPABASE ================== */
-<script>
-
+/* =========================
+   1) SUPABASE
+========================= */
 const supa = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
 );
+/* =========================
+   2) UI refs
+========================= */
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const pageSizeSel = document.getElementById("pageSizeSel");
+const pageInfo = document.getElementById("pageInfo");
+const tablaDiv = document.getElementById("tabla");
+const resumenDiv = document.getElementById("resumen-header");
 
-/* ================== PAGINACIÓN ================== */
+/* =========================
+   3) Paginación
+========================= */
 let page = 1;
 let pageSize = 100;
 let totalVisibles = 0;
 
-/* ================== CARGA PRINCIPAL ================== */
-async function cargar(p=1){
+/* =========================
+   4) Helpers
+========================= */
+function calcularDias(fecha) {
+  const hoy = new Date();
+  const f = new Date(fecha);
+  return Math.floor((hoy - f) / (1000 * 60 * 60 * 24));
+}
+
+function obtenerClaseVencimiento(d) {
+  if (d > 90) return "vencida-mas";
+  if (d > 60) return "vencida-90";
+  if (d > 30) return "vencida-60";
+  return "vencida-30";
+}
+
+function fmtMoney(n) {
+  return Number(n || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
+}
+
+function fmtFechaISO(fecha) {
+  // muestra YYYY-MM-DD (sin hora) para tabla
+  const d = new Date(fecha);
+  if (isNaN(d.getTime())) return String(fecha || "");
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const da = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+
+/* =========================
+   5) Resumen global (si existe fn_deuda_resumen_90)
+========================= */
+async function cargarResumenGlobal() {
+  const { data, error } = await db.rpc("fn_deuda_resumen_90");
+  if (error || !data?.length) {
+    // si no existe la función, no tronamos
+    return;
+  }
+  const r = data[0];
+
+  resumenDiv.innerHTML = `
+    <div>
+      <strong>Total visibles:</strong> ${r.total_visibles}<br>
+      <strong>No pagados:</strong> ${r.no_pagados}
+    </div>
+    <div style="text-align:right;">
+      <strong>Total $ pendiente:</strong><br>
+      <span style="font-size:18px;color:darkgreen;">
+        $${fmtMoney(r.total_pendiente)}
+      </span>
+    </div>
+  `;
+}
+
+/* =========================
+   6) Cargar página (VIEW v_deuda_visibles_90)
+========================= */
+async function cargar(p = 1) {
   page = p;
 
-  await cargarResumen();
+  // resumen global (si existe)
+  await cargarResumenGlobal();
 
-  const from = (page-1)*pageSize;
-  const to   = from + pageSize - 1;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
 
-  const {data,error,count} = await supabase
+  const { data, error, count } = await db
     .from("v_deuda_visibles_90")
-    .select("*",{count:"exact"})
-    .order("rfc_emisor",{ascending:true})
-    .order("fecha",{ascending:true})
-    .order("uuid_cfdi",{ascending:true})
-    .range(from,to);
+    .select("*", { count: "exact" })
+    .order("rfc_emisor", { ascending: true })
+    .order("fecha", { ascending: true })
+    .order("uuid_cfdi", { ascending: true })
+    .range(from, to);
 
-  if(error){
+  if (error) {
     alert("Error cargando datos");
     console.error(error);
     return;
@@ -133,121 +260,133 @@ async function cargar(p=1){
   actualizarPager();
 }
 
-/* ================== RESUMEN GLOBAL ================== */
-async function cargarResumen(){
-  const {data,error} = await supabase.rpc("fn_deuda_resumen_90");
-  if(error || !data?.length) return;
-
-  const r = data[0];
-  document.getElementById("resumen-header").innerHTML = `
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-      <div>
-        <b>Total visibles:</b> ${r.total_visibles}<br>
-        <b>No pagados:</b> ${r.no_pagados}
-      </div>
-      <div style="text-align:right">
-        <b>Total $ pendiente:</b><br>
-        <span style="font-size:18px;color:darkgreen">
-          $${Number(r.total_pendiente).toLocaleString("es-MX",{minimumFractionDigits:2})}
-        </span>
-      </div>
-    </div>
-  `;
+function actualizarPager() {
+  const totalPages = Math.max(1, Math.ceil(totalVisibles / pageSize));
+  pageInfo.textContent = `Página ${page} / ${totalPages} · ${totalVisibles} registros`;
+  prevBtn.disabled = page <= 1;
+  nextBtn.disabled = page >= totalPages;
 }
 
-/* ================== TABLA ================== */
-function mostrarTabla(data){
-  let html = `<table><thead><tr>
-    <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th>
-    <th>Proveedor</th><th>Factura</th><th>Total</th>
-    <th>Física</th><th>Fotos</th><th>Pagada</th>
-  </tr></thead><tbody>`;
+/* =========================
+   7) Render tabla
+========================= */
+function mostrarTabla(data) {
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Días</th>
+          <th>UUID</th>
+          <th>RFC</th>
+          <th>Proveedor</th>
+          <th>Factura</th>
+          <th>Total</th>
+          <th>Física</th>
+          <th>Fotos</th>
+          <th>Pagada</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
 
-  for(const f of data){
+  for (const f of data) {
     const dias = calcularDias(f.fecha);
-    let clase = obtenerClase(dias);
+    let clase = obtenerClaseVencimiento(dias);
 
-    if(f.factura_pagada==="SI") clase="pagada-reciente";
+    // pagadas recientes (en tu view ya solo llegan <=90, pero por estilo)
+    if ((f.factura_pagada || "NO").toUpperCase() === "SI") {
+      clase = "pagada-reciente";
+    }
 
-    html+=`<tr class="${clase}">
-      <td>${f.fecha}</td>
-      <td>${dias}</td>
-      <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
-      <td>${f.rfc_emisor||""}</td>
-      <td class="proveedor-destacado">
-  ${f.razon_social_emisor || f.nombre_emisor || f.rfc_emisor}
-</td>
-      <td>
-  ${f.serie ? f.serie + "-" : ""}${f.folio || f.factura || ""}
-</td>
-      <td class="numero">$${Number(f.total||0).toLocaleString("es-MX",{minimumFractionDigits:2})}</td>
+    const proveedor = f.razon_social_emisor || f.nombre_emisor || f.rfc_emisor || "—";
+    const facturaTxt = `${f.serie ? (f.serie + "-") : ""}${f.folio || f.factura || ""}`;
 
-      <td class="${f.factura_fisicamente==="SI"?"fisica-si":"fisica-no"}"
-          onclick="toggleFisica('${f.uuid_cfdi}','${f.factura_fisicamente||"NO"}')">
-        ${f.factura_fisicamente==="SI"?"SI":"NO"}
-      </td>
+    const fisicaVal = (f.factura_fisicamente || "NO").toUpperCase() === "SI" ? "SI" : "NO";
+    const pagadaVal = (f.factura_pagada || "NO").toUpperCase() === "SI" ? "SI" : "NO";
 
-      <td style="text-align:center">
-        ${Array.isArray(f.fotos)?f.fotos.map(x=>`<a href="${x}" target="_blank">📷</a>`).join(" "):""}
-      </td>
+    const fotos = Array.isArray(f.fotos) ? f.fotos : [];
+    const fotosHtml = fotos.length
+      ? fotos.map(url => `<a href="${url}" target="_blank" title="Ver foto">📷</a>`).join(" ")
+      : "";
 
-      <td class="${f.factura_pagada==="SI"?"pagada-si":"pagada-no"}"
-          onclick="togglePagada('${f.uuid_cfdi}','${f.factura_pagada||"NO"}')">
-        ${f.factura_pagada==="SI"?"SI":"NO"}
-      </td>
-    </tr>`;
+    html += `
+      <tr class="${clase}">
+        <td>${fmtFechaISO(f.fecha)}</td>
+        <td>${dias}</td>
+        <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
+        <td>${f.rfc_emisor || "—"}</td>
+        <td class="proveedor-destacado">${proveedor}</td>
+        <td>${facturaTxt || "—"}</td>
+        <td class="numero">$${fmtMoney(f.total)}</td>
+
+        <td class="${fisicaVal === "SI" ? "fisica-si" : "fisica-no"}"
+            onclick="toggleFisica('${f.uuid_cfdi}', '${fisicaVal}')">
+          ${fisicaVal}
+        </td>
+
+        <td style="text-align:center;">${fotosHtml}</td>
+
+        <td class="${pagadaVal === "SI" ? "pagada-si" : "pagada-no"}"
+            onclick="togglePagada('${f.uuid_cfdi}', '${pagadaVal}')">
+          ${pagadaVal}
+        </td>
+      </tr>
+    `;
   }
 
-  html+="</tbody></table>";
-  document.getElementById("tabla").innerHTML = html;
+  html += `</tbody></table>`;
+  tablaDiv.innerHTML = html;
 }
 
-/* ================== TOGGLES ================== */
-async function toggleFisica(uuid,actual){
-  const nuevo = actual==="SI"?"NO":"SI";
-  await supabase.from("deuda_limpia_pdd")
-    .update({factura_fisicamente:nuevo})
-    .eq("uuid_cfdi",uuid);
+/* =========================
+   8) Toggles (UPDATE a deuda_limpia_pdd)
+========================= */
+window.toggleFisica = async function(uuid, actual) {
+  const nuevo = actual === "SI" ? "NO" : "SI";
+
+  const { error } = await db
+    .from("deuda_limpia_pdd")
+    .update({ factura_fisicamente: nuevo })
+    .eq("uuid_cfdi", uuid);
+
+  if (error) {
+    alert("Error actualizando FÍSICA");
+    console.error(error);
+    return;
+  }
   cargar(page);
-}
-
-async function togglePagada(uuid,actual){
-  const nuevo = actual==="SI"?"NO":"SI";
-  await supabase.from("deuda_limpia_pdd")
-    .update({factura_pagada:nuevo})
-    .eq("uuid_cfdi",uuid);
-  cargar(page);
-}
-
-/* ================== UTILIDADES ================== */
-function calcularDias(fecha){
-  return Math.floor((new Date()-new Date(fecha))/(1000*60*60*24));
-}
-function obtenerClase(d){
-  if(d>90) return "vencida-mas";
-  if(d>60) return "vencida-90";
-  if(d>30) return "vencida-60";
-  return "vencida-30";
-}
-function actualizarPager(){
-  const totalPages = Math.max(1,Math.ceil(totalVisibles/pageSize));
-  document.getElementById("pageInfo").textContent =
-    `Página ${page} / ${totalPages} · ${totalVisibles} registros`;
-
-  prevBtn.disabled = page<=1;
-  nextBtn.disabled = page>=totalPages;
-}
-
-/* ================== EVENTOS ================== */
-prevBtn.onclick = ()=>cargar(page-1);
-nextBtn.onclick = ()=>cargar(page+1);
-pageSizeSel.onchange = e=>{
-  pageSize = parseInt(e.target.value);
-  cargar(1);
 };
 
-document.addEventListener("DOMContentLoaded",()=>cargar(1));
+window.togglePagada = async function(uuid, actual) {
+  const nuevo = actual === "SI" ? "NO" : "SI";
+
+  const { error } = await db
+    .from("deuda_limpia_pdd")
+    .update({ factura_pagada: nuevo })
+    .eq("uuid_cfdi", uuid);
+
+  if (error) {
+    alert("Error actualizando PAGADA");
+    console.error(error);
+    return;
+  }
+  cargar(page);
+};
+
+/* =========================
+   9) Eventos UI
+========================= */
+prevBtn.addEventListener("click", () => cargar(page - 1));
+nextBtn.addEventListener("click", () => cargar(page + 1));
+pageSizeSel.addEventListener("change", (e) => {
+  pageSize = parseInt(e.target.value, 10) || 100;
+  cargar(1);
+});
+
+document.addEventListener("DOMContentLoaded", () => cargar(1));
 </script>
 
 </body>
 </html>
+
