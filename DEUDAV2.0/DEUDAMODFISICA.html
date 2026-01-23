@@ -88,7 +88,10 @@
   font-weight: bold;
   cursor: pointer;
 }
-
+.pagada-reciente {
+  background: #e8f5e9 !important; /* verde muy claro */
+  opacity: 0.85;
+}
   </style>
 </head>
 <body>
@@ -151,8 +154,20 @@ const proveedoresContado = [
 const { data, error } = await _supabase
   .from("v_deuda_proveedores")
   .select("*")
-  .neq('factura_pagada', 'SI');
-      if (error) return alert("Error cargando datos");
+  if (error) return alert("Error cargando datos");
+const hoy = new Date();
+
+const visibles = data.filter(f => {
+  const dias = calcularDias(f.fecha);
+
+  // NO pagadas → siempre visibles
+  if ((f.factura_pagada || "NO").toUpperCase() !== "SI") {
+    return true;
+  }
+
+  // Pagadas → solo si tienen 90 días o menos
+  return dias <= 90;
+});
 
       //-------------------------------------------------------
 // 1) PÉGAS AQUÍ TU ARREGLO VIEJO (DE PRECIOS, FACTURAS, ETC.)
@@ -188,9 +203,10 @@ function normalizarFactura(f) {
 //-------------------------------------------------------
 // 3) FILTRO DE NO PAGADAS DEL SUPABASE (NUEVO)
 //-------------------------------------------------------
-const noPagadasSupabase = data.filter(f =>
+const noPagadasSupabase = visibles.filter(f =>
   (f.factura_pagada || "NO").toUpperCase().trim() !== "SI"
 );
+
 
 
 //-------------------------------------------------------
@@ -230,20 +246,36 @@ const ordenadosFinal = unicas.sort((a, b) => {
 //-------------------------------------------------------
 mostrarTabla(ordenadosFinal);
 
-      const sumaTotal = pendientes.reduce((acc, f) => acc + (parseFloat(f.total) || 0), 0);
+    // total solo de NO PAGADAS
+const pendientes = ordenadosFinal.filter(f =>
+  (f.factura_pagada || "NO") !== "SI"
+);
 
-      document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div>
-            <strong>Total en Supabase:</strong> ${data.length} registros<br>
-            <strong>No pagados:</strong> ${pendientes.length} registros
-          </div>
-          <div style="text-align: right;">
-            <strong style="display: block;">Total $ pendiente:</strong>
-            <span style="font-size: 1.3em; color: darkgreen;">$${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
-          </div>
-        </div>
-      `);
+const sumaTotal = pendientes.reduce(
+  (acc, f) => acc + (parseFloat(f.total) || 0),
+  0
+);
+
+// limpiar encabezado previo si existe
+document.getElementById("resumen-header")?.remove();
+
+document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
+  <div id="resumen-header"
+       style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div>
+      <strong>Total visibles:</strong> ${ordenadosFinal.length} registros<br>
+      <strong>No pagados:</strong> ${pendientes.length} registros
+    </div>
+
+    <div style="text-align:right;">
+      <strong style="display:block;">Total $ pendiente:</strong>
+      <span style="font-size:1.3em;color:darkgreen;">
+        $${sumaTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+      </span>
+    </div>
+  </div>
+`);
+
 
       const ordenados = pendientes.sort((a, b) => {
         const rfcA = (a.rfc_emisor || "").toLowerCase();
@@ -291,6 +323,10 @@ resumenTelegram =
         const dias = calcularDias(f.fecha);
         const razon = (f.razon_social_emisor || "").toUpperCase().trim();
 let clase = obtenerClaseVencimiento(dias);
+// 🔹 Marcar pagadas recientes (≤ 90 días)
+if (f.factura_pagada === "SI") {
+  clase = "pagada-reciente";
+}
 if (proveedoresContado.includes(razon)) {
   clase = "proveedor-contado";
 }
