@@ -789,13 +789,11 @@ async function toggleFisica(uuid) {
 
 async function togglePagada(uuid) {
   try {
-    // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
-    const { data, error } = await supa
-      
-      
-      .select("factura_pagada")
-      .eq("uuid", uuid)   // ← CORRECTO
-      .single();
+const { data, error } = await supa
+  .from("v_deuda_proveedores")
+  .select("factura_pagada")
+  .eq("uuid", uuid)
+  .single();
 
     if (error) {
       console.error("Error al leer estado actual:", error);
@@ -919,28 +917,6 @@ async function consultarGlobal() {
 
   document.getElementById("resumenConteo").innerText =
     `🔢 Total últimos 90 días: ${count}`;
-}
-
-async function cargarPaginaGlobal() {
-  const desde = paginaActual * TAM_PAGINA;
-  const hasta = desde + TAM_PAGINA - 1;
-
-  const { data, error } = await supa
-    .from("v_deuda_proveedores")
-    .select("*")
-    .gte("fecha", limiteISO)
-    .order("fecha", { ascending: false })
-    .range(desde, hasta);
-
-  if (error) {
-    alert("Error al cargar página (GLOBAL)");
-    console.error(error);
-    return;
-  }
-
-  datosCrudos = data;
-  filtrarPagadas();
-  actualizarInfoPagina();
 }
 </script>
 
