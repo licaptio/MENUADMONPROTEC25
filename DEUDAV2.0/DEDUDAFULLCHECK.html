@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facturas Pendientes · PROVSOFT</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f4f4;
+  margin:0;
+  padding:15px;
+}
+h2{margin:0 0 10px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  font-size:13px;
+  white-space:nowrap;
+}
+th{
+  background:#007bff;
+  color:white;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+
+td.numero{text-align:right}
+.proveedor-destacado{font-weight:bold}
+
+.vencida-30{background:#fff8e1}
+.vencida-60{background:#ffe082}
+.vencida-90{background:#ffca28}
+.vencida-mas{background:#ff7043;color:white}
+
+.pagada-reciente{background:#e8f5e9}
+
+.fisica-si{background:#2ecc71;color:white;font-weight:bold;cursor:pointer}
+.fisica-no{background:#e74c3c;color:white;font-weight:bold;cursor:pointer}
+
+.pagada-si{background:#27ae60;color:white;font-weight:bold;cursor:pointer}
+.pagada-no{background:#c0392b;color:white;font-weight:bold;cursor:pointer}
+
+.controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:10px 0;
+}
+button{
+  padding:6px 14px;
+  border:none;
+  border-radius:6px;
+  background:#28a745;
+  color:white;
+  cursor:pointer;
+}
+button:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+
+<body>
+
+<h2>📌 Facturas Pendientes</h2>
+
+<div id="resumen-header"></div>
+
+<div class="controls">
+  <button id="prevBtn">◀</button>
+  <span id="pageInfo"></span>
+  <button id="nextBtn">▶</button>
+
+  <label>Filas:</label>
+  <select id="pageSizeSel">
+    <option value="50">50</option>
+    <option value="100" selected>100</option>
+    <option value="200">200</option>
+  </select>
+</div>
+
+<div id="tabla"></div>
+
+<script>
+/* ================== SUPABASE ================== */
+const supabase = window.supabase.createClient(
+  "https://cvpbtjlupswbyxenugpz.supabase.co",
+  "TU_PUBLIC_ANON_KEY"
+);
+
+/* ================== PAGINACIÓN ================== */
+let page = 1;
+let pageSize = 100;
+let totalVisibles = 0;
+
+/* ================== CARGA PRINCIPAL ================== */
+async function cargar(p=1){
+  page = p;
+
+  await cargarResumen();
+
+  const from = (page-1)*pageSize;
+  const to   = from + pageSize - 1;
+
+  const {data,error,count} = await supabase
+    .from("v_deuda_visibles_90")
+    .select("*",{count:"exact"})
+    .order("rfc_emisor",{ascending:true})
+    .order("fecha",{ascending:true})
+    .order("uuid_cfdi",{ascending:true})
+    .range(from,to);
+
+  if(error){
+    alert("Error cargando datos");
+    console.error(error);
+    return;
+  }
+
+  totalVisibles = count || 0;
+  mostrarTabla(data || []);
+  actualizarPager();
+}
+
+/* ================== RESUMEN GLOBAL ================== */
+async function cargarResumen(){
+  const {data,error} = await supabase.rpc("fn_deuda_resumen_90");
+  if(error || !data?.length) return;
+
+  const r = data[0];
+  document.getElementById("resumen-header").innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <b>Total visibles:</b> ${r.total_visibles}<br>
+        <b>No pagados:</b> ${r.no_pagados}
+      </div>
+      <div style="text-align:right">
+        <b>Total $ pendiente:</b><br>
+        <span style="font-size:18px;color:darkgreen">
+          $${Number(r.total_pendiente).toLocaleString("es-MX",{minimumFractionDigits:2})}
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+/* ================== TABLA ================== */
+function mostrarTabla(data){
+  let html = `<table><thead><tr>
+    <th>Fecha</th><th>Días</th><th>UUID</th><th>RFC</th>
+    <th>Proveedor</th><th>Factura</th><th>Total</th>
+    <th>Física</th><th>Fotos</th><th>Pagada</th>
+  </tr></thead><tbody>`;
+
+  for(const f of data){
+    const dias = calcularDias(f.fecha);
+    let clase = obtenerClase(dias);
+
+    if(f.factura_pagada==="SI") clase="pagada-reciente";
+
+    html+=`<tr class="${clase}">
+      <td>${f.fecha}</td>
+      <td>${dias}</td>
+      <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
+      <td>${f.rfc_emisor||""}</td>
+      <td class="proveedor-destacado">${f.proveedor_unificado||f.razon_social_emisor}</td>
+      <td>${f.serie_folio||f.factura||""}</td>
+      <td class="numero">$${Number(f.total||0).toLocaleString("es-MX",{minimumFractionDigits:2})}</td>
+
+      <td class="${f.factura_fisicamente==="SI"?"fisica-si":"fisica-no"}"
+          onclick="toggleFisica('${f.uuid_cfdi}','${f.factura_fisicamente||"NO"}')">
+        ${f.factura_fisicamente==="SI"?"SI":"NO"}
+      </td>
+
+      <td style="text-align:center">
+        ${Array.isArray(f.fotos)?f.fotos.map(x=>`<a href="${x}" target="_blank">📷</a>`).join(" "):""}
+      </td>
+
+      <td class="${f.factura_pagada==="SI"?"pagada-si":"pagada-no"}"
+          onclick="togglePagada('${f.uuid_cfdi}','${f.factura_pagada||"NO"}')">
+        ${f.factura_pagada==="SI"?"SI":"NO"}
+      </td>
+    </tr>`;
+  }
+
+  html+="</tbody></table>";
+  document.getElementById("tabla").innerHTML = html;
+}
+
+/* ================== TOGGLES ================== */
+async function toggleFisica(uuid,actual){
+  const nuevo = actual==="SI"?"NO":"SI";
+  await supabase.from("deuda_limpia_pdd")
+    .update({factura_fisicamente:nuevo})
+    .eq("uuid_cfdi",uuid);
+  cargar(page);
+}
+
+async function togglePagada(uuid,actual){
+  const nuevo = actual==="SI"?"NO":"SI";
+  await supabase.from("deuda_limpia_pdd")
+    .update({factura_pagada:nuevo})
+    .eq("uuid_cfdi",uuid);
+  cargar(page);
+}
+
+/* ================== UTILIDADES ================== */
+function calcularDias(fecha){
+  return Math.floor((new Date()-new Date(fecha))/(1000*60*60*24));
+}
+function obtenerClase(d){
+  if(d>90) return "vencida-mas";
+  if(d>60) return "vencida-90";
+  if(d>30) return "vencida-60";
+  return "vencida-30";
+}
+function actualizarPager(){
+  const totalPages = Math.max(1,Math.ceil(totalVisibles/pageSize));
+  document.getElementById("pageInfo").textContent =
+    `Página ${page} / ${totalPages} · ${totalVisibles} registros`;
+
+  prevBtn.disabled = page<=1;
+  nextBtn.disabled = page>=totalPages;
+}
+
+/* ================== EVENTOS ================== */
+prevBtn.onclick = ()=>cargar(page-1);
+nextBtn.onclick = ()=>cargar(page+1);
+pageSizeSel.onchange = e=>{
+  pageSize = parseInt(e.target.value);
+  cargar(1);
+};
+
+document.addEventListener("DOMContentLoaded",()=>cargar(1));
+</script>
+
+</body>
+</html>
