@@ -266,10 +266,7 @@ label[for="rfcFiltro"],
   <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
   Mostrar pagadas
 </label>
-
-<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
-
-  
+ 
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
 <div id="paginacion" style="margin-top:10px;">
@@ -462,6 +459,7 @@ function autocompleteNombre() {
 
   lista.style.display = "block";
 }
+document.getElementById("infoPagina").innerText = "";
 
 /* =====================================
    5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
@@ -612,7 +610,8 @@ function mostrarTabla(data) {
     html += `
 <tr>
   <td>
-  <button onclick='copiarFila(${JSON.stringify(f)})'>📋</button>
+  <button onclick="copiarFilaPorUUID('${uuid}')">📋</button>
+
 </td>
   <td>${formatearFecha(f.fecha)}</td>
   <td>${calcDiasDesdeHoy(f.fecha)}</td>
@@ -820,6 +819,12 @@ function seleccionarFiltro() {
   input.focus();        // pone el cursor
   input.select();       // selecciona TODO el texto
 }
+function copiarFilaPorUUID(uuid) {
+  const f = datosCrudos.find(x => (x.uuid_cfdi || x.uuid) === uuid);
+  if (!f) return alert("Factura no encontrada");
+  copiarFila(f);
+}
+
 </script>
 
 </body>
