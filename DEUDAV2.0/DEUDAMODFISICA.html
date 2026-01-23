@@ -199,24 +199,13 @@ function normalizarFactura(f) {
   };
 }
 
-
-//-------------------------------------------------------
-// 3) FILTRO DE NO PAGADAS DEL SUPABASE (NUEVO)
-//-------------------------------------------------------
-const noPagadasSupabase = visibles.filter(f =>
-  (f.factura_pagada || "NO").toUpperCase().trim() !== "SI"
-);
-
-
-
 //-------------------------------------------------------
 // 4) UNIR AMBAS FUENTES (VIEJO + NUEVO) NORMALIZADAS
 //-------------------------------------------------------
 const unidas = [
   ...datosViejos.map(normalizarFactura),
-  ...noPagadasSupabase.map(normalizarFactura)
+  ...visibles.map(normalizarFactura)
 ];
-
 
 //-------------------------------------------------------
 // 5) QUITAR DUPLICADOS POR uuid_cfdi
@@ -276,16 +265,10 @@ document.getElementById("tabla").insertAdjacentHTML("beforebegin", `
   </div>
 `);
 
-
-      const ordenados = pendientes.sort((a, b) => {
-        const rfcA = (a.rfc_emisor || "").toLowerCase();
-        const rfcB = (b.rfc_emisor || "").toLowerCase();
-        if (rfcA !== rfcB) return rfcA.localeCompare(rfcB);
-        return new Date(a.fecha) - new Date(b.fecha);
-      });
-
-      mostrarTabla(ordenados);
-const vencidas30 = ordenados.filter(f => calcularDias(f.fecha) > 30);
+const vencidas30 = ordenadosFinal.filter(f =>
+  calcularDias(f.fecha) > 30 &&
+  (f.factura_pagada || "NO") !== "SI"
+);
 
 // Detectar vencimientos especiales
 const vencidasEspeciales = ordenados.filter(f => {
