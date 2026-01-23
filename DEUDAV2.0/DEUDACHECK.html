@@ -272,10 +272,20 @@ label[for="rfcFiltro"],
   
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
+<div id="paginacion" style="margin-top:10px;">
+  <button onclick="cambiarPagina(-1)">⬅️ Anterior</button>
+  <span id="infoPagina" style="margin:0 10px;"></span>
+  <button onclick="cambiarPagina(1)">➡️ Siguiente</button>
+</div>
+  
 <!-- =====================================
      [5] LÓGICA JAVASCRIPT
 ======================================-->
 <script>
+let paginaActual = 0;
+const TAM_PAGINA = 100;   // puedes bajar a 50 si quieres
+let totalRegistros = 0;
+let limiteISO = null;    // fecha límite global para paginación
 
 const supa = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
@@ -483,7 +493,8 @@ if (!rfc) {
   const hoy = new Date();
   const limite = new Date();
   limite.setDate(hoy.getDate() - 99);
-  const limiteISO = limite.toISOString().split("T")[0];
+  limiteISO = limite.toISOString().split("T")[0];
+
 
   // contar registros
 const { count, error: errorConteo } = await supa
@@ -496,27 +507,59 @@ const { count, error: errorConteo } = await supa
     alert("Error al contar registros");
     return;
   }
-
+totalRegistros = count;
+paginaActual = 0;
   // consultar facturas
 const { data: facturas, error } = await supa
   .from("v_deuda_proveedores")
   .select("*")
   .eq("rfc_emisor", rfc)
   .gte("fecha", limiteISO)
-  .order("fecha", { ascending: true });
+  .order("fecha", { ascending: true })
+  .range(0, TAM_PAGINA - 1);
 
-  if (error) {
-    alert("Error al traer facturas");
-    return;
-  }
+if (error) {
+  alert("Error al traer facturas");
+  return;
+}
 
-  datosCrudos = facturas;
+datosCrudos = facturas;
+filtrarPagadas();
+actualizarInfoPagina();
+
 
   document.getElementById("resumenConteo").innerText =
     `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
 
-  filtrarPagadas();
 }
+async function cambiarPagina(delta) {
+  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA);
+
+  paginaActual += delta;
+  if (paginaActual < 0) paginaActual = 0;
+  if (paginaActual >= totalPaginas) paginaActual = totalPaginas - 1;
+
+  const desde = paginaActual * TAM_PAGINA;
+  const hasta = desde + TAM_PAGINA - 1;
+
+  const { data, error } = await supa
+    .from("v_deuda_proveedores")
+    .select("*")
+    .eq("rfc_emisor", window.rfcSeleccionado)
+    .gte("fecha", limiteISO)
+    .order("fecha", { ascending: true })
+    .range(desde, hasta);
+
+  if (error) {
+    alert("Error al cambiar de página");
+    return;
+  }
+
+  datosCrudos = data;
+  filtrarPagadas();
+  actualizarInfoPagina();
+}
+
 function filtrarPagadas() {
   const mostrar = document.getElementById("togglePagadas").checked;
   const datos = mostrar
