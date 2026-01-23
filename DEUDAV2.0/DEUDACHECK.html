@@ -824,6 +824,19 @@ function copiarFilaPorUUID(uuid) {
   if (!f) return alert("Factura no encontrada");
   copiarFila(f);
 }
+function actualizarInfoPagina() {
+  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA) || 1;
+
+  document.getElementById("infoPagina").innerText =
+    `Página ${paginaActual + 1} de ${totalPaginas}`;
+
+  // deshabilitar botones cuando aplique
+  const botones = document.querySelectorAll("#paginacion button");
+  if (botones.length === 2) {
+    botones[0].disabled = paginaActual === 0;
+    botones[1].disabled = paginaActual >= totalPaginas - 1;
+  }
+}
 
 </script>
 
