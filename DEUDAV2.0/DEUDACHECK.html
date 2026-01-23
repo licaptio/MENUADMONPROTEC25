@@ -516,6 +516,7 @@ totalRegistros = count;
 paginaActual = 0;
 await cargarPaginaRFC();  
   // consultar facturas
+document.getElementById("paginacion").style.display = "block";
 
 }
 async function cargarPaginaRFC() {
@@ -843,12 +844,20 @@ function copiarFilaPorUUID(uuid) {
   copiarFila(f);
 }
 function actualizarInfoPagina() {
+  const pag = document.getElementById("paginacion");
+  const info = document.getElementById("infoPagina");
+
+  if (!totalRegistros || totalRegistros <= 0) {
+    info.innerText = "";
+    pag.style.display = "none";
+    return;
+  }
+
   const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA) || 1;
 
-  document.getElementById("infoPagina").innerText =
-    `Página ${paginaActual + 1} de ${totalPaginas}`;
+  info.innerText = `Página ${paginaActual + 1} de ${totalPaginas}`;
+  pag.style.display = totalPaginas > 1 ? "block" : "block";
 
-  // deshabilitar botones cuando aplique
   const botones = document.querySelectorAll("#paginacion button");
   if (botones.length === 2) {
     botones[0].disabled = paginaActual === 0;
@@ -880,44 +889,15 @@ async function consultarGlobal() {
 
   totalRegistros = count;
   paginaActual = 0;
+document.getElementById("togglePagadas").checked = true;
 
   await cargarPaginaGlobal();
 
   document.getElementById("resumenConteo").innerText =
     `🔢 Total últimos 90 días: ${count}`;
+  document.getElementById("paginacion").style.display = "block";
 }
 
-async function consultarGlobal() {
-  modoActual = "GLOBAL";
-  rfcActual = null;
-
-  document.getElementById("tablaResultados").innerHTML = "";
-  document.getElementById("resumenConteo").innerText = "";
-
-  const hoy = new Date();
-  const limite = new Date();
-  limite.setDate(hoy.getDate() - 90);
-  limiteISO = limite.toISOString().split("T")[0];
-
-  const { count, error: errorConteo } = await supa
-    .from("v_deuda_proveedores")
-    .select("*", { count: "exact", head: true })
-    .gte("fecha", limiteISO);
-
-  if (errorConteo) {
-    alert("Error al contar registros (GLOBAL)");
-    console.error(errorConteo);
-    return;
-  }
-
-  totalRegistros = count;
-  paginaActual = 0;
-
-  await cargarPaginaGlobal();
-
-  document.getElementById("resumenConteo").innerText =
-    `🔢 Total últimos 90 días: ${count}`;
-}
 </script>
 
 </body>
