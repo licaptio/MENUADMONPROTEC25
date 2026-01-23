@@ -282,6 +282,8 @@ label[for="rfcFiltro"],
      [5] LÓGICA JAVASCRIPT
 ======================================-->
 <script>
+let modoActual = "RFC";     // "GLOBAL" | "RFC"
+let rfcActual = null;       // RFC elegido cuando sea modo RFC
 let paginaActual = 0;
 const TAM_PAGINA = 100;   // puedes bajar a 50 si quieres
 let totalRegistros = 0;
@@ -469,23 +471,25 @@ document.getElementById("infoPagina").innerText = "";
 ======================================*/
 async function consultarPorRFC() {
 
-  // Obtenemos el RFC seleccionado desde autocompleteNombre()
+  // 1️⃣ obtener RFC
   let rfc = window.rfcSeleccionado;
 
-// Detección automática si el usuario NO clickeó nada:
-if (!rfc) {
-  const txt = nombreFiltro.value.toUpperCase().trim();
-  const encontrado = listaBusqueda.find(x =>
-    x.nombre.includes(txt) || x.rfc.includes(txt)
-  );
-  if (encontrado) rfc = encontrado.rfc;
-}
-
+  if (!rfc) {
+    const txt = nombreFiltro.value.toUpperCase().trim();
+    const encontrado = listaBusqueda.find(x =>
+      x.nombre.includes(txt) || x.rfc.includes(txt)
+    );
+    if (encontrado) rfc = encontrado.rfc;
+  }
 
   if (!rfc) {
     alert("Selecciona un proveedor válido de la lista");
     return;
   }
+
+  // 2️⃣ ahora sí fija el modo
+  modoActual = "RFC";
+  rfcActual = rfc;
 
   document.getElementById("tablaResultados").innerHTML = "";
   document.getElementById("resumenConteo").innerText = "";
@@ -510,37 +514,67 @@ const { count, error: errorConteo } = await supa
   }
 totalRegistros = count;
 paginaActual = 0;
+await cargarPaginaRFC();  
   // consultar facturas
-const { data: facturas, error } = await supa
-  .from("v_deuda_proveedores")
-  .select("*")
-  .eq("rfc_emisor", rfc)
-  .gte("fecha", limiteISO)
-  .order("fecha", { ascending: true })
-  .range(0, TAM_PAGINA - 1);
-
-if (error) {
-  alert("Error al traer facturas");
-  return;
-}
-
-datosCrudos = facturas;
-filtrarPagadas();
-actualizarInfoPagina();
-
-
-  document.getElementById("resumenConteo").innerText =
-    `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
 
 }
+async function cargarPaginaRFC() {
+  const desde = paginaActual * TAM_PAGINA;
+  const hasta = desde + TAM_PAGINA - 1;
+
+  const { data, error } = await supa
+    .from("v_deuda_proveedores")
+    .select("*")
+    .eq("rfc_emisor", rfcActual)
+    .gte("fecha", limiteISO)
+    .order("fecha", { ascending: true })
+    .range(desde, hasta);
+
+  if (error) {
+    alert("Error al cargar página (RFC)");
+    console.error(error);
+    return;
+  }
+
+  datosCrudos = data;
+  filtrarPagadas();
+  actualizarInfoPagina();
+}
+
+async function cargarPaginaGlobal() {
+  const desde = paginaActual * TAM_PAGINA;
+  const hasta = desde + TAM_PAGINA - 1;
+
+  const { data, error } = await supa
+    .from("v_deuda_proveedores")
+    .select("*")
+    .gte("fecha", limiteISO)
+    .order("fecha", { ascending: false })
+    .range(desde, hasta);
+
+  if (error) {
+    alert("Error al cargar página (GLOBAL)");
+    console.error(error);
+    return;
+  }
+
+  datosCrudos = data;
+  filtrarPagadas();
+  actualizarInfoPagina();
+}
+
 async function cambiarPagina(delta) {
-  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA);
+  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA) || 1;
 
   paginaActual += delta;
   if (paginaActual < 0) paginaActual = 0;
   if (paginaActual >= totalPaginas) paginaActual = totalPaginas - 1;
 
-  await cargarPaginaGlobal();
+  if (modoActual === "GLOBAL") {
+    await cargarPaginaGlobal();
+  } else {
+    await cargarPaginaRFC();
+  }
 }
 
 function filtrarPagadas() {
@@ -757,7 +791,8 @@ async function togglePagada(uuid) {
   try {
     // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
     const { data, error } = await supa
-      .from("v_deuda_proveedores")
+      
+      
       .select("factura_pagada")
       .eq("uuid", uuid)   // ← CORRECTO
       .single();
@@ -823,6 +858,8 @@ function actualizarInfoPagina() {
   }
 }
 async function consultarGlobal() {
+  modoActual = "GLOBAL";
+  rfcActual = null;
 
   document.getElementById("tablaResultados").innerHTML = "";
   document.getElementById("resumenConteo").innerText = "";
@@ -832,14 +869,14 @@ async function consultarGlobal() {
   limite.setDate(hoy.getDate() - 90);
   limiteISO = limite.toISOString().split("T")[0];
 
-  // 🔢 Conteo GLOBAL (sin RFC)
   const { count, error: errorConteo } = await supa
     .from("v_deuda_proveedores")
     .select("*", { count: "exact", head: true })
     .gte("fecha", limiteISO);
 
   if (errorConteo) {
-    alert("Error al contar registros");
+    alert("Error al contar registros (GLOBAL)");
+    console.error(errorConteo);
     return;
   }
 
@@ -851,6 +888,39 @@ async function consultarGlobal() {
   document.getElementById("resumenConteo").innerText =
     `🔢 Total últimos 90 días: ${count}`;
 }
+
+async function consultarGlobal() {
+  modoActual = "GLOBAL";
+  rfcActual = null;
+
+  document.getElementById("tablaResultados").innerHTML = "";
+  document.getElementById("resumenConteo").innerText = "";
+
+  const hoy = new Date();
+  const limite = new Date();
+  limite.setDate(hoy.getDate() - 90);
+  limiteISO = limite.toISOString().split("T")[0];
+
+  const { count, error: errorConteo } = await supa
+    .from("v_deuda_proveedores")
+    .select("*", { count: "exact", head: true })
+    .gte("fecha", limiteISO);
+
+  if (errorConteo) {
+    alert("Error al contar registros (GLOBAL)");
+    console.error(errorConteo);
+    return;
+  }
+
+  totalRegistros = count;
+  paginaActual = 0;
+
+  await cargarPaginaGlobal();
+
+  document.getElementById("resumenConteo").innerText =
+    `🔢 Total últimos 90 días: ${count}`;
+}
+
 async function cargarPaginaGlobal() {
   const desde = paginaActual * TAM_PAGINA;
   const hasta = desde + TAM_PAGINA - 1;
@@ -863,7 +933,8 @@ async function cargarPaginaGlobal() {
     .range(desde, hasta);
 
   if (error) {
-    alert("Error al cargar página");
+    alert("Error al cargar página (GLOBAL)");
+    console.error(error);
     return;
   }
 
@@ -871,7 +942,6 @@ async function cargarPaginaGlobal() {
   filtrarPagadas();
   actualizarInfoPagina();
 }
-
 </script>
 
 </body>
