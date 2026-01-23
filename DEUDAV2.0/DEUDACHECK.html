@@ -252,9 +252,6 @@ label[for="rfcFiltro"],
   <div id="sugerenciasNombre" class="autocomplete-list"></div>
 
 </div>
-  <button onclick="consultarGlobal()" class="btn-consultar">
-  📊 Ver últimas 90 días
-</button>
 
   <button onclick="consultarPorRFC()" class="btn-consultar">
     🔎 Consultar
@@ -269,25 +266,16 @@ label[for="rfcFiltro"],
   <input type="checkbox" id="togglePagadas" onchange="filtrarPagadas()">
   Mostrar pagadas
 </label>
- 
+
+<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
+
+  
 <div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
 <div id="tablaResultados"></div>
-<div id="paginacion" style="margin-top:10px;">
-  <button onclick="cambiarPagina(-1)">⬅️ Anterior</button>
-  <span id="infoPagina" style="margin:0 10px;"></span>
-  <button onclick="cambiarPagina(1)">➡️ Siguiente</button>
-</div>
-  
 <!-- =====================================
      [5] LÓGICA JAVASCRIPT
 ======================================-->
 <script>
-let modoActual = "RFC";     // "GLOBAL" | "RFC"
-let rfcActual = null;       // RFC elegido cuando sea modo RFC
-let paginaActual = 0;
-const TAM_PAGINA = 100;   // puedes bajar a 50 si quieres
-let totalRegistros = 0;
-let limiteISO = null;    // fecha límite global para paginación
 
 const supa = window.supabase.createClient(
   "https://cvpbtjlupswbyxenugpz.supabase.co",
@@ -464,32 +452,29 @@ function autocompleteNombre() {
 
   lista.style.display = "block";
 }
-document.getElementById("infoPagina").innerText = "";
 
 /* =====================================
    5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
 ======================================*/
 async function consultarPorRFC() {
 
-  // 1️⃣ obtener RFC
+  // Obtenemos el RFC seleccionado desde autocompleteNombre()
   let rfc = window.rfcSeleccionado;
 
-  if (!rfc) {
-    const txt = nombreFiltro.value.toUpperCase().trim();
-    const encontrado = listaBusqueda.find(x =>
-      x.nombre.includes(txt) || x.rfc.includes(txt)
-    );
-    if (encontrado) rfc = encontrado.rfc;
-  }
+// Detección automática si el usuario NO clickeó nada:
+if (!rfc) {
+  const txt = nombreFiltro.value.toUpperCase().trim();
+  const encontrado = listaBusqueda.find(x =>
+    x.nombre.includes(txt) || x.rfc.includes(txt)
+  );
+  if (encontrado) rfc = encontrado.rfc;
+}
+
 
   if (!rfc) {
     alert("Selecciona un proveedor válido de la lista");
     return;
   }
-
-  // 2️⃣ ahora sí fija el modo
-  modoActual = "RFC";
-  rfcActual = rfc;
 
   document.getElementById("tablaResultados").innerHTML = "";
   document.getElementById("resumenConteo").innerText = "";
@@ -498,8 +483,7 @@ async function consultarPorRFC() {
   const hoy = new Date();
   const limite = new Date();
   limite.setDate(hoy.getDate() - 99);
-  limiteISO = limite.toISOString().split("T")[0];
-
+  const limiteISO = limite.toISOString().split("T")[0];
 
   // contar registros
 const { count, error: errorConteo } = await supa
@@ -512,72 +496,27 @@ const { count, error: errorConteo } = await supa
     alert("Error al contar registros");
     return;
   }
-totalRegistros = count;
-paginaActual = 0;
-await cargarPaginaRFC();  
+
   // consultar facturas
-document.getElementById("paginacion").style.display = "block";
-
-}
-async function cargarPaginaRFC() {
-  const desde = paginaActual * TAM_PAGINA;
-  const hasta = desde + TAM_PAGINA - 1;
-
-  const { data, error } = await supa
-    .from("v_deuda_proveedores")
-    .select("*")
-    .eq("rfc_emisor", rfcActual)
-    .gte("fecha", limiteISO)
-    .order("fecha", { ascending: true })
-    .range(desde, hasta);
+const { data: facturas, error } = await supa
+  .from("v_deuda_proveedores")
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .gte("fecha", limiteISO)
+  .order("fecha", { ascending: true });
 
   if (error) {
-    alert("Error al cargar página (RFC)");
-    console.error(error);
+    alert("Error al traer facturas");
     return;
   }
 
-  datosCrudos = data;
+  datosCrudos = facturas;
+
+  document.getElementById("resumenConteo").innerText =
+    `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
+
   filtrarPagadas();
-  actualizarInfoPagina();
 }
-
-async function cargarPaginaGlobal() {
-  const desde = paginaActual * TAM_PAGINA;
-  const hasta = desde + TAM_PAGINA - 1;
-
-  const { data, error } = await supa
-    .from("v_deuda_proveedores")
-    .select("*")
-    .gte("fecha", limiteISO)
-    .order("fecha", { ascending: false })
-    .range(desde, hasta);
-
-  if (error) {
-    alert("Error al cargar página (GLOBAL)");
-    console.error(error);
-    return;
-  }
-
-  datosCrudos = data;
-  filtrarPagadas();
-  actualizarInfoPagina();
-}
-
-async function cambiarPagina(delta) {
-  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA) || 1;
-
-  paginaActual += delta;
-  if (paginaActual < 0) paginaActual = 0;
-  if (paginaActual >= totalPaginas) paginaActual = totalPaginas - 1;
-
-  if (modoActual === "GLOBAL") {
-    await cargarPaginaGlobal();
-  } else {
-    await cargarPaginaRFC();
-  }
-}
-
 function filtrarPagadas() {
   const mostrar = document.getElementById("togglePagadas").checked;
   const datos = mostrar
@@ -630,8 +569,7 @@ function mostrarTabla(data) {
     html += `
 <tr>
   <td>
-  <button onclick="copiarFilaPorUUID('${uuid}')">📋</button>
-
+  <button onclick='copiarFila(${JSON.stringify(f)})'>📋</button>
 </td>
   <td>${formatearFecha(f.fecha)}</td>
   <td>${calcDiasDesdeHoy(f.fecha)}</td>
@@ -790,11 +728,12 @@ async function toggleFisica(uuid) {
 
 async function togglePagada(uuid) {
   try {
-const { data, error } = await supa
-  .from("v_deuda_proveedores")
-  .select("factura_pagada")
-  .eq("uuid", uuid)
-  .single();
+    // 🔍 1) Obtener estado actual desde la VISTA usando "uuid"
+    const { data, error } = await supa
+      .from("v_deuda_proveedores")
+      .select("factura_pagada")
+      .eq("uuid", uuid)   // ← CORRECTO
+      .single();
 
     if (error) {
       console.error("Error al leer estado actual:", error);
@@ -838,66 +777,6 @@ function seleccionarFiltro() {
   input.focus();        // pone el cursor
   input.select();       // selecciona TODO el texto
 }
-function copiarFilaPorUUID(uuid) {
-  const f = datosCrudos.find(x => (x.uuid_cfdi || x.uuid) === uuid);
-  if (!f) return alert("Factura no encontrada");
-  copiarFila(f);
-}
-function actualizarInfoPagina() {
-  const pag = document.getElementById("paginacion");
-  const info = document.getElementById("infoPagina");
-
-  if (!totalRegistros || totalRegistros <= 0) {
-    info.innerText = "";
-    pag.style.display = "none";
-    return;
-  }
-
-  const totalPaginas = Math.ceil(totalRegistros / TAM_PAGINA) || 1;
-
-  info.innerText = `Página ${paginaActual + 1} de ${totalPaginas}`;
-  pag.style.display = totalPaginas > 1 ? "block" : "block";
-
-  const botones = document.querySelectorAll("#paginacion button");
-  if (botones.length === 2) {
-    botones[0].disabled = paginaActual === 0;
-    botones[1].disabled = paginaActual >= totalPaginas - 1;
-  }
-}
-async function consultarGlobal() {
-  modoActual = "GLOBAL";
-  rfcActual = null;
-
-  document.getElementById("tablaResultados").innerHTML = "";
-  document.getElementById("resumenConteo").innerText = "";
-
-  const hoy = new Date();
-  const limite = new Date();
-  limite.setDate(hoy.getDate() - 90);
-  limiteISO = limite.toISOString().split("T")[0];
-
-  const { count, error: errorConteo } = await supa
-    .from("v_deuda_proveedores")
-    .select("*", { count: "exact", head: true })
-    .gte("fecha", limiteISO);
-
-  if (errorConteo) {
-    alert("Error al contar registros (GLOBAL)");
-    console.error(errorConteo);
-    return;
-  }
-
-  totalRegistros = count;
-  paginaActual = 0;
-document.getElementById("togglePagadas").checked = true;
-
-  await cargarPaginaGlobal();
-
-  document.getElementById("resumenConteo").innerText =
-    `🔢 Total últimos 90 días: ${count}`;
-  document.getElementById("paginacion").style.display = "block";
-}
-
 </script>
 
 </body>
