@@ -187,22 +187,33 @@ let diasFiltro = 90;
 /* =========================
    NUEVO: Rango de RFCs
 ========================= */
-let rangoRfc = "RFC: —";
+let rangoProveedor = "Proveedor: —";
 
-function actualizarRangoRfc(data) {
+function actualizarRangoProveedor(data) {
   if (!Array.isArray(data) || data.length === 0) {
-    rangoRfc = "RFC: —";
+    rangoProveedor = "Proveedor: —";
     return;
   }
-  
-  const first = String(data[0].rfc_emisor || "").trim().toUpperCase();
-  const last  = String(data[data.length - 1].rfc_emisor || "").trim().toUpperCase();
+
+  const getProveedor = (f) =>
+    String(
+      f.razon_social_emisor ||
+      f.nombre_emisor ||
+      f.rfc_emisor ||
+      ""
+    ).trim().toUpperCase();
+
+  const first = getProveedor(data[0]);
+  const last  = getProveedor(data[data.length - 1]);
 
   const a = first[0] || "—";
   const b = last[0]  || "—";
 
-  rangoRfc = (a === b) ? `RFC: ${a}` : `RFC: ${a}-${b}`;
+  rangoProveedor = (a === b)
+    ? `Proveedor: ${a}`
+    : `Proveedor: ${a}-${b}`;
 }
+
 /* =========================
    4) Helpers
 ========================= */
@@ -311,7 +322,7 @@ async function cargar(p = 1) {
   }
 
   totalVisibles = count || 0;
-  actualizarRangoRfc(data || []);
+  actualizarRangoProveedor(data || []);
   mostrarTabla(data || []);
   actualizarPager();
 
@@ -321,7 +332,7 @@ async function cargar(p = 1) {
 
 function actualizarPager() {
   const totalPages = Math.max(1, Math.ceil(totalVisibles / pageSize));
-  pageInfo.textContent = `Página ${page} / ${totalPages} · ${totalVisibles} registros · ≤ ${diasFiltro} días · ${rangoRfc}`;
+  pageInfo.textContent = `Página ${page} / ${totalPages} · ${totalVisibles} registros · ≤ ${diasFiltro} días · ${rangoProveedor}`;
   prevBtn.disabled = page <= 1;
   nextBtn.disabled = page >= totalPages;
 }
