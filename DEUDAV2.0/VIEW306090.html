@@ -184,7 +184,25 @@ let page = 1;
 let pageSize = 100;
 let totalVisibles = 0;
 let diasFiltro = 90;
+/* =========================
+   NUEVO: Rango de RFCs
+========================= */
+let rangoRfc = "RFC: —";
 
+function actualizarRangoRfc(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    rangoRfc = "RFC: —";
+    return;
+  }
+  
+  const first = String(data[0].rfc_emisor || "").trim().toUpperCase();
+  const last  = String(data[data.length - 1].rfc_emisor || "").trim().toUpperCase();
+
+  const a = first[0] || "—";
+  const b = last[0]  || "—";
+
+  rangoRfc = (a === b) ? `RFC: ${a}` : `RFC: ${a}-${b}`;
+}
 /* =========================
    4) Helpers
 ========================= */
@@ -300,15 +318,16 @@ async function cargar(p = 1) {
 
 function actualizarPager() {
   const totalPages = Math.max(1, Math.ceil(totalVisibles / pageSize));
-  pageInfo.textContent = `Página ${page} / ${totalPages} · ${totalVisibles} registros · ≤ ${diasFiltro} días`;
+  pageInfo.textContent = `Página ${page} / ${totalPages} · ${totalVisibles} registros · ≤ ${diasFiltro} días · ${rangoRfc}`;
   prevBtn.disabled = page <= 1;
   nextBtn.disabled = page >= totalPages;
 }
-
 /* =========================
    7) Render tabla
 ========================= */
 function mostrarTabla(data) {
+  // NUEVO: Actualizar rango RFC antes de renderizar
+  actualizarRangoRfc(data);|  
   let html = `
     <table>
       <thead>
