@@ -309,6 +309,7 @@ async function cargar(p = 1) {
   }
 
   totalVisibles = count || 0;
+  actualizarRangoRfc(data || []);
   mostrarTabla(data || []);
   actualizarPager();
 
@@ -322,6 +323,7 @@ function actualizarPager() {
   prevBtn.disabled = page <= 1;
   nextBtn.disabled = page >= totalPages;
 }
+
 /* =========================
    7) Render tabla
 ========================= */
