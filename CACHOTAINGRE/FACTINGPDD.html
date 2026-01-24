@@ -127,7 +127,28 @@ const db = supabase.createClient(
   'https://cvpbtjlupswbyxenugpz.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY'
 );
+const SUCURSALES = {
+  LMN: 'MATRIZ',
+  GM:  'BODEGA 41',
+  SAN: 'ALLENDE II',
+  AM:  'ALLENDE I',
+  MM:  'MONTEMORELOS',
+  LO:  'OSITO',
+  LP:  'CENTRAL',
+  RVN: 'RIO VERDE',
+  LV:  'PROVILEON'
+};
 
+function sucTxt(code){
+  if(!code) return '';
+  return `${code}-${SUCURSALES[code] || code}`;
+}
+
+// ✅ Folio con sucursal: LMN-MATRIZ-127350
+function folioTxt(code, folio){
+  if(!folio) return '';
+  return `${sucTxt(code)}-${folio}`;
+}
 let page=0;
 const limit=50;
 
@@ -235,8 +256,9 @@ function render(rows){
 <td><a target="_blank" href="factura_detalle.html?uuid=${r.uuid_cfdi}">${r.uuid_cfdi.slice(0,16)}…</a></td>
 <td>${r.rfc_receptor||''}</td>
 <td title="${r.razon_social_receptor}">${r.razon_social_receptor}</td>
-<td>${r.serie}</td>
-<td>${r.folio||''}</td>
+<td>${sucTxt(r.serie)}</td>
+<td>${folioTxt(r.serie, r.folio)}</td>
+
 <td class="monto">${fmt(r.subtotal)}</td>
 <td class="monto">${fmt(r.total_iva)}</td>
 <td class="monto">${fmt(r.total_ieps)}</td>
