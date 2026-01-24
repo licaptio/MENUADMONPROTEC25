@@ -195,24 +195,61 @@ function actualizarRangoProveedor(data) {
     return;
   }
 
-  const getProveedor = (f) =>
-    String(
-      f.razon_social_emisor ||
-      f.nombre_emisor ||
-      f.rfc_emisor ||
-      ""
-    ).trim().toUpperCase();
+  const norm = (s) =>
+    String(s || "")
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // quita acentos
 
+  const getProveedor = (f) =>
+    norm(f.razon_social_emisor || f.nombre_emisor || f.rfc_emisor || "");
+
+  // 1) rango primero->último (para “en qué zona voy”)
   const first = getProveedor(data[0]);
   const last  = getProveedor(data[data.length - 1]);
-
   const a = first[0] || "—";
   const b = last[0]  || "—";
+  const rango = (a === b) ? `${a}` : `${a}-${b}`;
 
-  rangoProveedor = (a === b)
-    ? `Proveedor: ${a}`
-    : `Proveedor: ${a}-${b}`;
+  // 2) letras reales dentro de la página (intermedias)
+  const set = new Set();
+  for (const f of data) {
+    const p = getProveedor(f);
+    let ch = (p[0] || "—");
+    if (!/[A-ZÑ]/.test(ch)) ch = "#"; // números/símbolos
+    set.add(ch);
+  }
+
+  const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZÑ";
+  const order = (c) => {
+    const i = alpha.indexOf(c);
+    return i === -1 ? 999 : i;
+  };
+
+  const letras = Array.from(set).filter(x => x !== "#").sort((x,y)=>order(x)-order(y));
+  const tieneHash = set.has("#");
+
+  // compacta letras consecutivas: R,S,T -> R-T
+  const comp = [];
+  let start = null, prev = null;
+
+  const idx = (c) => alpha.indexOf(c);
+
+  for (const l of letras) {
+    if (start === null) { start = l; prev = l; continue; }
+    if (idx(l) === idx(prev) + 1) { prev = l; continue; }
+    comp.push(start === prev ? start : `${start}-${prev}`);
+    start = l; prev = l;
+  }
+  if (start !== null) comp.push(start === prev ? start : `${start}-${prev}`);
+  if (tieneHash) comp.unshift("#");
+
+  // ✅ lo que se muestra arriba
+  // Ej: Proveedor: R-Y · Letras: R-T, V, Y
+  rangoProveedor = `Proveedor: ${rango} · Letras: ${comp.join(", ")}`;
 }
+
 
 /* =========================
    4) Helpers
@@ -342,7 +379,6 @@ function actualizarPager() {
 ========================= */
 function mostrarTabla(data) {
   // NUEVO: Actualizar rango RFC antes de renderizar
-  actualizarRangoProveedor(data);  
   let html = `
     <table>
       <thead>
