@@ -146,7 +146,6 @@ function sucTxt(code){
 
 // ✅ Folio con sucursal: LMN-MATRIZ-127350
 function folioTxt(code, folio){
-  if(!folio) return '';
   return `${sucTxt(code)}-${folio}`;
 }
 let page=0;
@@ -257,8 +256,7 @@ function render(rows){
 <td>${r.rfc_receptor||''}</td>
 <td title="${r.razon_social_receptor}">${r.razon_social_receptor}</td>
 <td>${sucTxt(r.serie)}</td>
-<td>${folioTxt(r.serie, r.folio)}</td>
-
+<td>${r.folio ?? ''}</td>
 <td class="monto">${fmt(r.subtotal)}</td>
 <td class="monto">${fmt(r.total_iva)}</td>
 <td class="monto">${fmt(r.total_ieps)}</td>
