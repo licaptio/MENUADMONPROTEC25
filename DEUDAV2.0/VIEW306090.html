@@ -247,7 +247,9 @@ function actualizarRangoProveedor(data) {
 
   // ✅ lo que se muestra arriba
   // Ej: Proveedor: R-Y · Letras: R-T, V, Y
-  rangoProveedor = `Proveedor: ${rango} · Letras: ${comp.join(", ")}`;
+  const letrasTxt = (tieneHash ? ["#"] : []).concat(letras);
+rangoProveedor = `Proveedor: ${rango} · Letras: ${letrasTxt.join(", ")}`;
+
 }
 
 
