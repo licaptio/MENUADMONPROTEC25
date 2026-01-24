@@ -336,9 +336,12 @@ async function cargar(p = 1) {
   page = p;
 
   // filtro por fecha (reduce datos + paginación)
+  // ✅ filtro por fecha: inicio del día (Monterrey/local) para NO perder registros por hora/UTC
   const fechaLimite = new Date();
+  fechaLimite.setHours(0, 0, 0, 0);         // ← clave: 00:00:00 local
   fechaLimite.setDate(fechaLimite.getDate() - diasFiltro);
-  const fechaISO = fechaLimite.toISOString(); // OK para timestamptz
+
+  const fechaISO = fechaLimite.toISOString(); // ok para timestamptz
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
