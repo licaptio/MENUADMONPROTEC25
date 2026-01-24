@@ -297,9 +297,11 @@ async function cargar(p = 1) {
     .from("v_deuda_visibles_90")
     .select("*", { count: "exact" })
     .gte("fecha", fechaISO)
-    .order("rfc_emisor", { ascending: true })
-    .order("fecha", { ascending: true })
-    .order("uuid_cfdi", { ascending: true })
+.order("razon_social_emisor", { ascending: true, nullsFirst: false })
+.order("nombre_emisor", { ascending: true, nullsFirst: false })
+.order("rfc_emisor", { ascending: true })
+.order("fecha", { ascending: true })
+.order("uuid_cfdi", { ascending: true })
     .range(from, to);
 
   if (error) {
