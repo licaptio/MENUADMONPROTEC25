@@ -115,6 +115,12 @@
       cursor: pointer;
       text-align:center;
     }
+    .truncate {
+  max-width: 260px;       /* ajusta a gusto */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
   </style>
 </head>
 
@@ -203,6 +209,10 @@ function fmtFechaISO(fecha) {
   const m = String(d.getMonth()+1).padStart(2,"0");
   const da = String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${da}`;
+}
+function uuidCorto(u) {
+  if (!u) return "";
+  return u.slice(0, 18) + "…";
 }
 
 /* =========================
@@ -315,9 +325,16 @@ function mostrarTabla(data) {
       <tr class="${clase}">
         <td>${fmtFechaISO(f.fecha)}</td>
         <td>${dias}</td>
-        <td><a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">${f.uuid_cfdi}</a></td>
+        <td title="${f.uuid_cfdi}">
+  <a href="detalle-factura.html?uuid=${f.uuid_cfdi}" target="_blank">
+    ${uuidCorto(f.uuid_cfdi)}
+  </a>
+</td>
+
         <td>${f.rfc_emisor || "—"}</td>
-        <td class="proveedor-destacado">${proveedor}</td>
+        <td class="proveedor-destacado truncate" title="${proveedor}">
+  ${proveedor}
+</td>
         <td>${facturaTxt || "—"}</td>
         <td class="numero">$${fmtMoney(f.total)}</td>
 
