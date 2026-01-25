@@ -243,12 +243,12 @@ async function cargar(p = 1) {
   const to = from + pageSize - 1;
 
   const { data, error, count } = await db
-    .from("v_deuda_visibles_90")
-    .select("*", { count: "exact" })
-    .order("rfc_emisor", { ascending: true })
-    .order("fecha", { ascending: true })
-    .order("uuid_cfdi", { ascending: true })
-    .range(from, to);
+  .from("v_deuda_visibles_90")
+  .select("*", { count: "exact" })
+  .order("razon_social_emisor", { ascending: true })
+  .order("fecha", { ascending: true })
+  .order("uuid_cfdi", { ascending: true })
+  .range(from, to);
 
   if (error) {
     alert("Error cargando datos");
