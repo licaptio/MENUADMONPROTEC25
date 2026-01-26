@@ -11,12 +11,20 @@ const firebaseConfig = {
   appId: "1:96242533231:web:aae75a18fbaf9840529e9a"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-// 🔒 Persistencia SOLO mientras la pestaña esté abierta
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+
+// 🔒 NO guardar sesión
+auth.setPersistence(firebase.auth.Auth.Persistence.NONE)
   .catch(err => console.error("Persistencia error:", err));
+
+window.logout = function () {
+  auth.signOut().then(() => {
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+    clearTimeout(inactivityTimer);
+  });
+};
 /* =========================================
    ⏱️ CONTROL DE INACTIVIDAD
    ========================================= */
@@ -28,9 +36,10 @@ function resetInactivityTimer() {
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
     alert("Sesión cerrada por inactividad");
-    auth.signOut();
+    logout(); // 👈 usa logout centralizado
   }, INACTIVITY_LIMIT);
 }
+
 ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(evt => {
   document.addEventListener(evt, resetInactivityTimer);
 });
@@ -53,13 +62,6 @@ window.login = function () {
 };
 
 /* =========================================
-   🚪 LOGOUT
-   ========================================= */
-window.logout = function () {
-  auth.signOut();
-};
-
-/* =========================================
    🔒 SESIÓN ACTIVA
    ========================================= */
 auth.onAuthStateChanged(user => {
@@ -67,11 +69,11 @@ auth.onAuthStateChanged(user => {
   const menu = document.getElementById("menu");
 
   if (user) {
-  loginBox.style.display = "none";
-  menu.style.display = "block";
-  resetInactivityTimer(); // ⏱️ empieza conteo
-} else {
-  loginBox.style.display = "block";
-  menu.style.display = "none";
-}
+    loginBox.style.display = "none";
+    menu.style.display = "block";
+    resetInactivityTimer();
+  } else {
+    loginBox.style.display = "block";
+    menu.style.display = "none";
+  }
 });
