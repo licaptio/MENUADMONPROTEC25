@@ -552,17 +552,11 @@ function mostrarTabla(data) {
     /* ===========================
        2. PROVEEDOR REAL
        =========================== */
-    let proveedor = f.proveedor_unificado;
-    if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-      proveedor = f.razon_social_emisor;
-    }
-    else if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-      proveedor = f.nombre_emisor;
-    }
-    else {
-      proveedor = f.rfc_emisor;
-    }
-
+COALESCE(
+  NULLIF(TRIM(d.razon_social_emisor), ''),
+  d.rfc_emisor
+) AS proveedor
+    
     /* ===========================
        3. CONSTRUCCIÓN DE LA FILA
        =========================== */
