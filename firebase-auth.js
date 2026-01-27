@@ -93,7 +93,9 @@ document.addEventListener("visibilitychange", () => {
   if (!auth.currentUser) return;
 
 if (document.hidden) {
-  logout("Sesión cerrada (app en segundo plano)");
+  // 🔥 OPCIÓN DURA (si quieres que al irse a background se salga AL INSTANTE):
+  // logout("Sesión cerrada (app en segundo plano)");
+  return;
 }
   // Si volvió a foreground, revisa si ya venció
   if (isExpired()) {
