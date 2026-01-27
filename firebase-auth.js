@@ -92,12 +92,9 @@ function resetInactivityTimer() {
 document.addEventListener("visibilitychange", () => {
   if (!auth.currentUser) return;
 
-  if (document.hidden) {
-    // 🔥 OPCIÓN DURA (si quieres que al irse a background se salga AL INSTANTE):
-    // logout("Sesión cerrada (app en segundo plano)");
-    return;
-  }
-
+if (document.hidden) {
+  logout("Sesión cerrada (app en segundo plano)");
+}
   // Si volvió a foreground, revisa si ya venció
   if (isExpired()) {
     logout("Sesión cerrada por inactividad");
