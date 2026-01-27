@@ -552,10 +552,8 @@ function mostrarTabla(data) {
     /* ===========================
        2. PROVEEDOR REAL
        =========================== */
-COALESCE(
-  NULLIF(TRIM(d.razon_social_emisor), ''),
-  d.rfc_emisor
-) AS proveedor
+  // ✅ proveedor ya viene listo desde la VISTA
+  const proveedor = f.proveedor;
     
     /* ===========================
        3. CONSTRUCCIÓN DE LA FILA
