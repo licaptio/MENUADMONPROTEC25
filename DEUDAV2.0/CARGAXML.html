@@ -315,9 +315,10 @@ itemFire.classList.add("err");
         confirmacion: c.getAttribute("Confirmacion") || null,
 
         // === Emisor ===
-        rfc_emisor: e.getAttribute("Rfc"),
-        nombre_emisor: e.getAttribute("Nombre") || "",
-        regimen_fiscal_emisor: e.getAttribute("RegimenFiscal") || "",
+// === Emisor ===
+rfc_emisor: e.getAttribute("Rfc"),
+razon_social_emisor: e.getAttribute("Nombre") || "",
+regimen_fiscal_emisor: e.getAttribute("RegimenFiscal") || "",
 
         // === Receptor ===
         rfc_receptor: r.getAttribute("Rfc"),
@@ -345,10 +346,10 @@ itemFire.classList.add("err");
         complementos: data.complementosDetectados,
 
         // === Estados operativos ===
-        factura_pagada: "NO",
-        factura_fisicamente: "NO",
-        comentario_factura_fisica: "",
-        fotos: []
+// === Estados operativos ===
+factura_pagada: "NO",
+factura_fisicamente: "NO",
+fotos: []
       };
 
 // ==========================================================
@@ -443,3 +444,4 @@ itemFire.classList.add("ok");
 
 </body>
 </html>
+
