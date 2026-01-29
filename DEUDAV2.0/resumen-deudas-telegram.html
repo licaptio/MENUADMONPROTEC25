@@ -306,7 +306,20 @@ function mostrarTabla(data) {
     }
 
     // === FOLIO REAL ===
-    const folioFinal = f.serie_folio || "—";
+    const serie = (f.serie || "").trim();
+const folio = (f.folio || "").trim();
+const folioTec = (f.foliotecnopro || "").trim();
+
+let folioFinal = "—";
+
+if (serie && folio) {
+  folioFinal = `${serie}-${folio}`;
+} else if (folio) {
+  folioFinal = folio;
+} else if (folioTec) {
+  folioFinal = folioTec;
+}
+
 
 const clase30 = dias >= 30 ? "dias-30-morado" : "";
 
