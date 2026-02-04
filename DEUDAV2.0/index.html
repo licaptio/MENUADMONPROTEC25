@@ -3,41 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel de Control</title>
+  <title>Calamargo Guapo</title>
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(160deg, #dbe8f1, #f9f9f7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
       min-height: 100vh;
       margin: 0;
       padding: 30px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     h1 {
       margin-bottom: 40px;
       color: #003366;
-      font-size: 2rem;
+      font-size: 2.1rem;
     }
 
     .card-container {
       display: flex;
-      gap: 40px;
+      gap: 30px;
       flex-wrap: wrap;
       justify-content: center;
+      max-width: 1200px;
     }
 
     .card {
-      background-color: #ffffffcc;
+      background: #ffffffcc;
       border-radius: 16px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       padding: 25px;
       text-align: center;
       width: 260px;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .card:hover {
@@ -49,94 +50,94 @@
       font-size: 18px;
       font-weight: 600;
       color: #222;
+      margin-bottom: 15px;
     }
 
-    /* Estilo base botones */
-  .card a {
-  letter-spacing: 0.5px;
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
-}
+    .card a {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
+    }
 
-    /* Colores diferenciados */
-    .btn-xml { background: #007bff; }        /* azul */
-    .btn-deuda { background: #28a745; }      /* verde */
-    .btn-qr { background: #ff9800; }         /* naranja */
-    .btn-pagos { background: #9c27b0; }      /* morado */
-    .btn-celular { background: #009688; }    /* verde azulado */
-    .btn-bancos { background: #795548; }     /* café */
-    .btn-folios { background: #3f51b5; }     /* azul índigo */
-    .btn-morris { background: #e91e63; }     /* rosa fuerte */
-    .btn-60dias { background: #a51ee9; }     
-
-    /* Hover (un poquito más oscuro) */
     .card a:hover {
       filter: brightness(90%);
     }
 
+    /* Botones */
+    .btn-xml    { background: #007bff; }
+    .btn-folios { background: #3f51b5; }
+    .btn-deuda  { background: #28a745; }
+    .btn-morris { background: #e91e63; }
+    .btn-60     { background: #a51ee9; }
+    .btn-qr     { background: #ff9800; }
+
+    /* Fondos */
+    .card-blue   { background: linear-gradient(135deg, #e3f0ff, #ffffff); }
+    .card-indigo { background: linear-gradient(135deg, #e8eaf6, #ffffff); }
+    .card-green  { background: linear-gradient(135deg, #e6f4ea, #ffffff); }
+    .card-pink   { background: linear-gradient(135deg, #fce4ec, #ffffff); }
+    .card-purple { background: linear-gradient(135deg, #f3e5f5, #ffffff); }
+    .card-red    { background: linear-gradient(135deg, #fdecea, #ffffff); }
+
     footer {
       margin-top: 50px;
-      text-align: center;
-      color: #555;
       font-size: 14px;
+      color: #555;
     }
-    /* Fondos de tarjetas */
-.card-blue    { background: linear-gradient(135deg, #e3f0ff, #ffffff); }
-.card-indigo  { background: linear-gradient(135deg, #e8eaf6, #ffffff); }
-.card-green   { background: linear-gradient(135deg, #e6f4ea, #ffffff); }
-.card-red     { background: linear-gradient(135deg, #fdecea, #ffffff); }
-.card-purple  { background: linear-gradient(135deg, #f3e5f5, #ffffff); }
-.card-pink    { background: linear-gradient(135deg, #fce4ec, #ffffff); }
-
   </style>
 </head>
+
 <body>
-  <h1>Panel de Control</h1>
 
-<div class="card card-blue">
-  <div class="card-title">Cargar Archivos XML 2.0</div>
-  <a href="CARGAXML.html" class="btn-xml">Abrir herramienta</a>
-</div>
+  <h1>MENU FULL DEUDA</h1>
 
-<div class="card card-indigo">
-  <div class="card-title">Reporte Facturas x FOLIO Tecnopro</div>
-  <a href="FoliosTECNOPRO.html" class="btn-folios">Abrir Reporte</a>
-</div>
+  <div class="card-container">
 
-<div class="card card-green">
-  <div class="card-title">DEUDA APP CEL V2</div>
-  <a href="DEUDACHECK.html" class="btn-deuda">Abrir Aplicación</a>
-</div>
+    <div class="card card-blue">
+      <div class="card-title">Cargar Archivos XML 2.0</div>
+      <a href="CARGAXML.html" class="btn-xml">Abrir</a>
+    </div>
 
-<div class="card card-pink">
-  <div class="card-title">Don Morris</div>
-  <a href="DONMORRISDEUDA.html" class="btn-morris">Abrir</a>
-</div>
+    <div class="card card-indigo">
+      <div class="card-title">Reporte Facturas x Folio Tecnopro</div>
+      <a href="FoliosTECNOPRO.html" class="btn-folios">Abrir</a>
+    </div>
 
-<div class="card card-purple">
-  <div class="card-title">Tabla Egresos 60 días</div>
-  <a href="FacturacionEgresos.html" class="btn-60dias">Abrir</a>
-</div>
+    <div class="card card-green">
+      <div class="card-title">DEUDA APP CEL V2</div>
+      <a href="DEUDACHECK.html" class="btn-deuda">Abrir</a>
+    </div>
 
-<div class="card card-green">
-  <div class="card-title">QR SCANNER</div>
-  <a href="scanner.html" class="btn-qr">Abrir</a>
-</div>
+    <div class="card card-pink">
+      <div class="card-title">Don Morris</div>
+      <a href="DONMORRISDEUDA.html" class="btn-morris">Abrir</a>
+    </div>
 
-<div class="card card-red">
-  <div class="card-title">DEUDA 30-60-90</div>
-  <a href="DEUDA306090.html" class="btn-deuda">Abrir</a>
-</div>
+    <div class="card card-purple">
+      <div class="card-title">TABLA DEUDA PDD 2026</div>
+      <a href="FacturacionEgresos.html" class="btn-60">Abrir</a>
+    </div>
+
+    <div class="card card-green">
+      <div class="card-title">QR Scanner</div>
+      <a href="scanner.html" class="btn-qr">Abrir</a>
+    </div>
+
+    <div class="card card-red">
+      <div class="card-title">DEUDA PDD 30-60-90</div>
+      <a href="DEUDA306090.html" class="btn-deuda">Abrir</a>
+    </div>
 
   </div>
+
   <footer>
-    <p>&copy; powered by PROVSOFT</p>
+    &copy; powered by PROVSOFT
   </footer>
+
 </body>
 </html>
-
-
-
-
-
-
-
