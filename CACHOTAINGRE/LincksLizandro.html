@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROVSOFT · Proveedora</title>
+
+  <!-- Fuente (opcional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --azul:#00416A;
+      --azul2:#0c6cbd;
+      --card:#ffffff;
+      --shadow:0 10px 28px rgba(0,0,0,.22);
+      --radius:16px;
+      --btn:#1abc9c;
+      --btn2:#16a085;
+    }
+
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:28px 16px;
+      background:linear-gradient(135deg,var(--azul),#E4E5E6);
+      color:#fff;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:900px;
+    }
+
+    header{
+      text-align:center;
+      margin-bottom:18px;
+    }
+
+    h1{
+      display:inline-block;
+      margin:0;
+      padding:12px 18px;
+      border-radius:12px;
+      background:rgba(0,0,0,.55);
+      box-shadow:var(--shadow);
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin-top:10px;
+      opacity:.9;
+      font-size:14px;
+    }
+
+    .menu{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:16px;
+    }
+
+    a.card{
+      text-decoration:none;
+      color:#fff;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+      transition:transform .18s ease, background .18s ease;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    a.card:hover{
+      transform:translateY(-3px);
+      background:rgba(255,255,255,.16);
+    }
+
+    .title{
+      font-size:18px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .desc{
+      font-size:13px;
+      opacity:.92;
+      line-height:1.35;
+    }
+
+    .btnrow{
+      margin-top:6px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      background:var(--btn);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:600;
+      font-size:13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 6px 16px rgba(0,0,0,.18);
+      transition:background .18s ease, transform .18s ease;
+    }
+
+    a.card:hover .pill{
+      background:var(--btn2);
+    }
+
+    footer{
+      margin-top:18px;
+      text-align:center;
+      font-size:12px;
+      color:rgba(255,255,255,.85);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🏪 PROVSOFT · Proveedora</h1>
+      <div class="sub">Selecciona un módulo para abrirlo</div>
+    </header>
+
+    <div class="menu">
+      <a class="card" href="https://lizandrolumbreras.github.io/Auditorias-sucursales1.0/" target="_blank" rel="noopener">
+        <div class="title">✅ Auditorías de Sucursales</div>
+        <div class="desc">Abrir el panel de auditorías para capturas y revisión por sucursal.</div>
+        <div class="btnrow">
+          <span class="pill">Abrir módulo ↗</span>
+        </div>
+      </a>
+
+      <a class="card" href="https://lizandrolumbreras.github.io/MONITOREO-MERMA/" target="_blank" rel="noopener">
+        <div class="title">📉 Monitoreo de Merma</div>
+        <div class="desc">Abrir el tablero para seguimiento de merma y control de movimientos.</div>
+        <div class="btnrow">
+          <span class="pill">Abrir módulo ↗</span>
+        </div>
+      </a>
+    </div>
+
+    <footer>Powered by PROVSOFT</footer>
+  </div>
+</body>
+</html>
