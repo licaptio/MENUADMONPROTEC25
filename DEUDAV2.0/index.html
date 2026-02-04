@@ -52,17 +52,10 @@
     }
 
     /* Estilo base botones */
-    .card a {
-      text-decoration: none;
-      color: #fff;
-      font-size: 16px;
-      font-weight: bold;
-      display: block;
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      transition: background 0.3s;
-    }
+  .card a {
+  letter-spacing: 0.5px;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
+}
 
     /* Colores diferenciados */
     .btn-xml { background: #007bff; }        /* azul */
@@ -86,40 +79,53 @@
       color: #555;
       font-size: 14px;
     }
+    /* Fondos de tarjetas */
+.card-blue    { background: linear-gradient(135deg, #e3f0ff, #ffffff); }
+.card-indigo  { background: linear-gradient(135deg, #e8eaf6, #ffffff); }
+.card-green   { background: linear-gradient(135deg, #e6f4ea, #ffffff); }
+.card-red     { background: linear-gradient(135deg, #fdecea, #ffffff); }
+.card-purple  { background: linear-gradient(135deg, #f3e5f5, #ffffff); }
+.card-pink    { background: linear-gradient(135deg, #fce4ec, #ffffff); }
+
   </style>
 </head>
 <body>
   <h1>Panel de Control</h1>
 
-  <div class="card-container">
-    <div class="card">
-      <div class="card-title">Cargar Archivos XML 2.0</div>
-      <a href="CARGAXML.html" class="btn-xml">Abrir herramienta</a>
-    </div>
-    <div class="card">
-      <div class="card-title">Reporte Facturas x FOLIO Tecnopro</div>
-      <a href="FoliosTECNOPRO.html" class="btn-folios">Abrir Reporte</a>
-    </div>
-    <div class="card">
-      <div class="card-title">DEUDA APP CEL V2</div>
-      <a href="DEUDACHECK.html" class="btn-folios">Abrir Aplicacion</a>
-    </div>    
-    <div class="card">
-      <div class="card-title">Don Morris</div>
-      <a href="DONMORRISDEUDA.html" class="btn-morris">Abrir</a>
-    </div>
-    <div class="card">
-      <div class="card-title">Tabla Egresos 60dias</div>
-      <a href="https://licaptio.github.io/PROVEEDORADEDULCES/IYEPDD2026/FacturacionEgresos.html" class="btn-60dias">Abrir</a>
-    </div>
-    <div class="card">
-      <div class="card-title"> QR SCANNER </div>
-      <a href="https://licaptio.github.io/PROVEEDORADEDULCES/IYEPDD2026/scanner.html" class="btn-60dias">Abrir</a>
-    </div>
-    <div class="card">
-      <div class="card-title">Tabla Egresos 60dias</div>
-      <a href="https://licaptio.github.io/PROVEEDORADEDULCES/IYEPDD2026/DEUDA306090.html" class="DEUDA 306090 PDD">Abrir</a>
-    </div>
+<div class="card card-blue">
+  <div class="card-title">Cargar Archivos XML 2.0</div>
+  <a href="CARGAXML.html" class="btn-xml">Abrir herramienta</a>
+</div>
+
+<div class="card card-indigo">
+  <div class="card-title">Reporte Facturas x FOLIO Tecnopro</div>
+  <a href="FoliosTECNOPRO.html" class="btn-folios">Abrir Reporte</a>
+</div>
+
+<div class="card card-green">
+  <div class="card-title">DEUDA APP CEL V2</div>
+  <a href="DEUDACHECK.html" class="btn-deuda">Abrir Aplicación</a>
+</div>
+
+<div class="card card-pink">
+  <div class="card-title">Don Morris</div>
+  <a href="DONMORRISDEUDA.html" class="btn-morris">Abrir</a>
+</div>
+
+<div class="card card-purple">
+  <div class="card-title">Tabla Egresos 60 días</div>
+  <a href="FacturacionEgresos.html" class="btn-60dias">Abrir</a>
+</div>
+
+<div class="card card-green">
+  <div class="card-title">QR SCANNER</div>
+  <a href="scanner.html" class="btn-qr">Abrir</a>
+</div>
+
+<div class="card card-red">
+  <div class="card-title">DEUDA 30-60-90</div>
+  <a href="DEUDA306090.html" class="btn-deuda">Abrir</a>
+</div>
 
   </div>
   <footer>
@@ -127,6 +133,7 @@
   </footer>
 </body>
 </html>
+
 
 
 
