@@ -76,6 +76,10 @@
   // === SUPABASE CONFIG ===
   const SUPABASE_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
   const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+// ==========================================================
+// FEATURE FLAGS
+// ==========================================================
+const ENABLE_FIREBASE = false; // ⏸ Firebase bloqueado temporalmente
 
   let archivosDatos = [];
 
@@ -401,29 +405,35 @@ itemSupa.classList.add("ok");
   logBitacora(`⚠️ Ya existía en Supabase: ${data.uuid}`);
 }
 
-      // ==========================================================
-      // FIREBASE
-      // ==========================================================
-      if (!yaExisteFirebase) {
-await setDoc(refFirebase, {
-  ...datosInsert,
-  uuid_cfdi: uuidMayus,
-  origen: "SUPABASE",
-  estado: "pendiente",
-  timestamp: new Date().toISOString()
-});
-
-itemFire.classList.remove("pending","warn","err","ok");
-itemFire.textContent = "Guardado (nuevo)";
-itemFire.classList.add("ok");
-
-        logBitacora(`✅ Guardado en Firebase: ${data.uuid}`);
-} else {
+// ==========================================================
+// FIREBASE (CONTROLADO POR FEATURE FLAG)
+// ==========================================================
+if (!ENABLE_FIREBASE) {
   itemFire.classList.remove("pending","warn","err","ok");
-  itemFire.textContent = "Ya existía (previo)";
+  itemFire.textContent = "Firebase deshabilitado";
   itemFire.classList.add("warn");
-  logBitacora(`⚠️ Ya existía en Firebase: ${data.uuid}`);
-}
+  logBitacora(`⏸ Firebase deshabilitado para ${data.uuid}`);
+} else {
+  if (!yaExisteFirebase) {
+    await setDoc(refFirebase, {
+      ...datosInsert,
+      uuid_cfdi: uuidMayus,
+      origen: "SUPABASE",
+      estado: "pendiente",
+      timestamp: new Date().toISOString()
+    });
+
+    itemFire.classList.remove("pending","warn","err","ok");
+    itemFire.textContent = "Guardado (nuevo)";
+    itemFire.classList.add("ok");
+
+    logBitacora(`✅ Guardado en Firebase: ${data.uuid}`);
+  } else {
+    itemFire.classList.remove("pending","warn","err","ok");
+    itemFire.textContent = "Ya existía (previo)";
+    itemFire.classList.add("warn");
+    logBitacora(`⚠️ Ya existía en Firebase: ${data.uuid}`);
+  }
 }
 
     logBitacora("✅ Proceso completado");
@@ -444,4 +454,5 @@ itemFire.classList.add("ok");
 
 </body>
 </html>
+
 
