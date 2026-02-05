@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>INVENTARIOS GENERALES TELEGRAM</title>
+<title>INVENTARIOS GENERALES </title>
 <style>
 :root{
   --primary:#2c3e50;
@@ -819,15 +819,15 @@ const inventarios = [
 },
 /* ===================== INIX  ===================== */
 {
-  seccion: "CHISO TORITO",
+  seccion: "INIX",
   items: [
       ["HQR1230","",30,""],["HQR1238","",20,""],["HQR1245","",20,""],
       ["HQR30 VITAFILM C24","",15,""],["AL2923 REC CHICA","",5,""],
       ["AL4032O OVALADA","",5,""],["AL4130R REC GRANDE","",10,""],
       ["F3029 C24","",10,""],["FCB100012 CAJAB/6","",10,""],["32PP","",50,""],
-      ["16PP","",40,""],["8PP","",20,""],["TPP8","",110,""]
+      ["16PP","",40,""],["8PP","",20,""],["TPP8","",10,""]
   ]
-}
+},
 /* ===================== CHISO TORITO ===================== */
 {
   seccion: "🥃 CHISO TORITO",
@@ -947,37 +947,59 @@ function generarOrden() {
 
   let hayPedidos = false;
 
-inventarios.forEach(sec => {
+  inventarios.forEach(sec => {
+    // productos con pedido
+    const itemsConPedido = sec.items.filter(row => (parseInt(row[3]) || 0) > 0);
 
-  // 🔹 Productos con pedido
-  const itemsConPedido = sec.items.filter(
-    row => (parseInt(row[3]) || 0) > 0
-  );
+    if (itemsConPedido.length === 0) return;
 
-  // ❌ Si la sección no tiene pedidos, no se imprime
-  if (itemsConPedido.length === 0) return;
+    hayPedidos = true;
 
-  hayPedidos = true;
+    // ✅ MODAL: header visual de sección
+    const liHeader = document.createElement("li");
+    liHeader.style.fontWeight = "800";
+    liHeader.style.padding = "10px 0 6px";
+    liHeader.style.borderBottom = "1px solid #ddd";
+    liHeader.textContent = sec.seccion;
+    list.appendChild(liHeader);
 
-  // ✅ Sección con pedidos
-  mensaje += `*${sec.seccion}*\n`;
+    // ✅ TELEGRAM: sección
+    mensaje += `*${sec.seccion}*\n`;
 
-  itemsConPedido.forEach(row => {
-    mensaje += `• ${row[0]} — ${row[3]}\n`;
+    itemsConPedido.forEach(row => {
+      const qty = parseInt(row[3]) || 0;
+
+      // ✅ MODAL: item
+      const li = document.createElement("li");
+      li.style.display = "flex";
+      li.style.justifyContent = "space-between";
+      li.style.gap = "10px";
+      li.innerHTML = `<span>${row[0]}</span><strong>${qty}</strong>`;
+      list.appendChild(li);
+
+      // ✅ TELEGRAM: item
+      mensaje += `• ${row[0]} — ${qty}\n`;
+    });
+
+    // separador
+    const liSpace = document.createElement("li");
+    liSpace.style.borderBottom = "none";
+    liSpace.style.padding = "6px 0";
+    liSpace.textContent = "";
+    list.appendChild(liSpace);
+
+    mensaje += `\n`;
   });
 
-  mensaje += `\n`;
-});
-
-
   if (!hayPedidos) {
-    list.innerHTML = "<li>No hay productos con pedido</li>";
     alert("⚠ No hay productos con pedido para enviar");
     return;
   }
 
+  // ✅ ABRE EL MODAL (para que puedas copiar o tomar captura)
   modal.style.display = "flex";
 
+  // ✅ ENVÍA A TELEGRAM (como ya lo tenías)
   const token = "8324500461:AAGv7B5Xd6w1sl2Z0_7VJA-Gm4oc7NwC4Ac";
   const chatId = "6617988297";
 
@@ -997,7 +1019,7 @@ inventarios.forEach(sec => {
       alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
       return;
     }
-    alert("✅ Orden de compra enviada correctamente a Telegram");
+    alert("✅ Orden enviada a Telegram + lista lista en pantalla para foto/Whats");
   })
   .catch(err => {
     console.error("Error de red:", err);
