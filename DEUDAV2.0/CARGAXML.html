@@ -376,19 +376,19 @@ const existeEnSupabase =
   Array.isArray(respuestaSupa) && respuestaSupa.length > 0;
 
 if (!existeEnSupabase) {
-  await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
-    method: "POST",
-    headers: {
-      apikey: API_KEY,
-      Authorization: `Bearer ${API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-  ...datosInsert,
-  uuid_cfdi: uuidMayus
-})
+await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
+  method: "POST",
+  headers: {
+    apikey: API_KEY,
+    Authorization: `Bearer ${API_KEY}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    ...datosInsert,
+    uuid_cfdi: uuidMayus
+  })
+});
 
-  });
 
   itemSupa.classList.remove("pending");
 itemSupa.classList.remove("warn");
@@ -454,5 +454,6 @@ if (!ENABLE_FIREBASE) {
 
 </body>
 </html>
+
 
 
