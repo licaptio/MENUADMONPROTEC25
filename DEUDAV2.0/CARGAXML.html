@@ -376,35 +376,34 @@ const existeEnSupabase =
   Array.isArray(respuestaSupa) && respuestaSupa.length > 0;
 
 if (!existeEnSupabase) {
-await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
-  method: "POST",
-  headers: {
-    apikey: API_KEY,
-    Authorization: `Bearer ${API_KEY}`,
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
+  const payload = {
     ...datosInsert,
     uuid_cfdi: uuidMayus
-  })
-});
+  };
 
+  await fetch(`${SUPABASE_URL}/rest/v1/deuda_limpia_pdd`, {
+    method: "POST",
+    headers: {
+      apikey: API_KEY,
+      Authorization: `Bearer ${API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
 
   itemSupa.classList.remove("pending");
-itemSupa.classList.remove("warn");
-itemSupa.classList.remove("err");
-itemSupa.textContent = "Subido (nuevo)";
-itemSupa.classList.add("ok");
+  itemSupa.classList.remove("warn");
+  itemSupa.classList.remove("err");
+  itemSupa.textContent = "Subido (nuevo)";
+  itemSupa.classList.add("ok");
 
   logBitacora(`✅ Subido a Supabase: ${data.uuid}`);
-
 } else {
   itemSupa.classList.remove("pending","warn","err","ok");
   itemSupa.textContent = "Ya existía (previo)";
   itemSupa.classList.add("warn");
   logBitacora(`⚠️ Ya existía en Supabase: ${data.uuid}`);
 }
-
 // ==========================================================
 // FIREBASE (CONTROLADO POR FEATURE FLAG)
 // ==========================================================
@@ -454,6 +453,7 @@ if (!ENABLE_FIREBASE) {
 
 </body>
 </html>
+
 
 
 
