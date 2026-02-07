@@ -1,76 +1,130 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cachota Ingresos</title>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #00416A, #E4E5E6);
-      color: white;
-      text-align: center;
-      padding: 30px;
-    }
+<meta charset="UTF-8">
+<title>PROVSOFT | Clientes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    h1 {
-      background: rgba(0,0,0,0.6);
-      padding: 10px 20px;
-      border-radius: 10px;
-      display: inline-block;
-    }
+<style>
+:root{
+  --azul:#00416A;
+  --azul2:#0c6cbd;
+  --bg:#f2f4f8;
+  --shadow:0 8px 20px rgba(0,0,0,.12);
+}
 
-    .submenu {
-      margin-top: 30px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+*{
+  box-sizing:border-box;
+  font-family:'Poppins', Arial, sans-serif;
+}
 
-    a {
-      background: #1abc9c;
-      color: white;
-      text-decoration: none;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 1.1em;
-      font-weight: 600;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-      transition: all 0.2s ease;
-    }
+body{
+  margin:0;
+  background:linear-gradient(to right, var(--azul), #E4E5E6);
+  padding:30px;
+}
 
-    a:hover {
-      transform: scale(1.05);
-      background: #16a085;
-    }
+h1{
+  display:inline-block;
+  margin:0;
+  padding:10px 22px;
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  border-radius:12px;
+  font-size:24px;
+  font-weight:600;
+}
 
-    footer {
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #ccc;
-    }
-  </style>
+.sub{
+  margin:12px 0 30px;
+  color:#f0f0f0;
+  font-size:14px;
+}
+
+/* GRID */
+.dashboard{
+  max-width:900px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:18px;
+}
+
+/* TARJETA */
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:22px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  transition:.25s;
+  border-left:5px solid var(--azul);
+}
+
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 28px rgba(0,0,0,.18);
+  border-left-color:var(--azul2);
+}
+
+/* TEXTO */
+.title{
+  font-size:15px;
+  font-weight:600;
+  color:#111;
+  text-align:left;
+}
+
+/* FOOTER */
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:13px;
+  color:#e0e0e0;
+}
+</style>
 </head>
-<body>
-  <h1>🐺 CLIENTES PROVSOFT</h1>
 
-  <div class="submenu">
-    <a href="https://licaptio.github.io/PROVEEDORADEDULCES/index.html" target="_blank"> PROVEEDORA DE DULCES Y DESECHABLES</a>
-    <a href="cachota.html" target="_blank">📊 Monitoreo de Ingresos Cachota</a>
-    <a href="Ingresos_Cachota.html" target="_blank"> Carga Ingresos Cachota</a>
-    <a href="CargaIngresoGORB.html" target="_blank"> Carga Ingresos Bryan</a>
-    <a href="dashboard_ingresos_gorb.html" target="_blank"> Pizzarra de Bryan</a>
-    <a href="LincksLizandro.html" target="_blank"> Accesos Auditoria</a>
-    <a 
-  href="https://licaptio.github.io/SERGIOAGUAYO/BDSERGIOAGUAYO25/menuinicio.html" 
-  target="_blank">
-   Sergio Javier Aguayo Perez
-</a>
+<body>
+
+<h1>CLIENTES PROVSOFT</h1>
+<div class="sub">Accesos directos a sistemas y paneles</div>
+
+<div class="dashboard">
+
+  <div class="card" onclick="window.open('https://licaptio.github.io/PROVEEDORADEDULCES/index.html','_blank')">
+    <div class="title">PROVEEDORA DE DULCES Y DESECHABLES</div>
   </div>
 
-  <footer>Powered by PROVSOFT</footer>
+  <div class="card" onclick="window.open('cachota.html','_blank')">
+    <div class="title">Monitoreo de Ingresos Cachota</div>
+  </div>
+
+  <div class="card" onclick="window.open('Ingresos_Cachota.html','_blank')">
+    <div class="title">Carga Ingresos Cachota</div>
+  </div>
+
+  <div class="card" onclick="window.open('CargaIngresoGORB.html','_blank')">
+    <div class="title">Carga Ingresos Bryan</div>
+  </div>
+
+  <div class="card" onclick="window.open('dashboard_ingresos_gorb.html','_blank')">
+    <div class="title">Pizarra de Bryan</div>
+  </div>
+
+  <div class="card" onclick="window.open('LincksLizandro.html','_blank')">
+    <div class="title">Accesos Auditoría</div>
+  </div>
+
+  <div class="card" onclick="window.open('https://licaptio.github.io/SERGIOAGUAYO/BDSERGIOAGUAYO25/menuinicio.html','_blank')">
+    <div class="title">Sergio Javier Aguayo Perez</div>
+  </div>
+
+</div>
+
+<footer>
+  Powered by PROVSOFT
+</footer>
+
 </body>
 </html>
