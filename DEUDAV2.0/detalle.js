@@ -4,11 +4,27 @@
 const SUPA_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
 const TABLA = "deuda_limpia_pdd";
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+function $(id) { return document.getElementById(id); }
+
+function safe(v) {
+  return (v === null || v === undefined || v === "null") ? "" : v;
+}
+
+function formatoMX(n) {
+  return new Intl.NumberFormat("es-MX", {
+    style: "currency",
+    currency: "MXN"
+  }).format(Number(n || 0));
+}
+
 function formatFechaBonita(fechaRaw) {
   if (!fechaRaw) return "";
 
   const fecha = new Date(fechaRaw);
-
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
   let dia   = fecha.getDate();
@@ -26,20 +42,19 @@ function formatFechaBonita(fechaRaw) {
 }
 
 // ============================================================
-// UTILIDADES
+// PARSE DEFENSIVO: si viene string JSON, lo convierte a objeto/array
 // ============================================================
-function $(id) { return document.getElementById(id); }
-
-function safe(v) {
-  return (v === null || v === undefined || v === "null") ? "" : v;
+function parseJSONMaybe(v) {
+  if (typeof v !== "string") return v;
+  const s = v.trim();
+  if (!s) return v;
+  // intento parsear solo si parece JSON
+  if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
+    try { return JSON.parse(s); } catch { return v; }
+  }
+  return v;
 }
 
-function formatoMX(n) {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN"
-  }).format(Number(n || 0));
-}
 // ============================================================
 // TOTAL AUTORITATIVO CFDI (NO SE CALCULA, SE RESPETA)
 // ============================================================
@@ -82,104 +97,110 @@ async function cargarCFDI() {
 // RENDER PRINCIPAL
 // ============================================================
 function renderFactura(f) {
-window.__FACTURA = f;   // ← SOLUCIÓN PRINCIPAL
-  const esViejo = !Array.isArray(f.conceptos_detalle);
+  window.__FACTURA = f;
 
-  let subtotal = 0;
-  let totalIVA = 0;
-  let totalIEPS = 0;
-  let totalDescuentos = 0;
+  // ============================
+  // FIX 1: NORMALIZAR NOMBRE EMISOR (PROVEEDOR)
+  // ============================
+  f.nombre_emisor = f.nombre_emisor || f.razon_social_emisor || "";
 
-let filas = "";
-let conceptos = [];
+  // ============================
+  // FIX 2: PARSEAR CAMPOS QUE A VECES VIENEN COMO STRING JSON
+  // ============================
+  f.conceptos_detalle   = parseJSONMaybe(f.conceptos_detalle);
+  f.complementos        = parseJSONMaybe(f.complementos);
+  f.impuestos_globales  = parseJSONMaybe(f.impuestos_globales);
 
-// ---------------------------------------------
-// 🟦 CASO NUEVO – tiene valorUnitario y traslados
-// ---------------------------------------------
-if (
-  Array.isArray(f.conceptos_detalle) &&
-  f.conceptos_detalle.length > 0 &&
-  (f.conceptos_detalle[0].valorUnitario !== undefined ||
-   f.conceptos_detalle[0].traslados !== undefined)
-) {
-  conceptos = f.conceptos_detalle.map(c => ({
-    cantidad: Number(c.cantidad || 0),
-    clave: c.claveProdServ || "",
-    descripcion: c.descripcion || "",
-    unitario: Number(c.valorUnitario || 0),
-    descuento: Number(c.descuento || 0),
-    iva: Array.isArray(c.traslados)
-      ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
-      : 0,
-    ieps: Array.isArray(c.traslados)
-      ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
-      : 0,
-  }));
-}
+  let filas = "";
+  let conceptos = [];
 
-// ---------------------------------------------
-// 🟥 CASO VIEJO – NO tiene valorUnitario
-// ---------------------------------------------
-else if (
-  Array.isArray(f.conceptos_detalle) &&
-  f.conceptos_detalle.length > 0 &&
-  f.conceptos_detalle[0].costoUnitario !== undefined
-) {
-  conceptos = f.conceptos_detalle.map(c => ({
-    cantidad: Number(c.cantidad || 0),
-    clave: c.codigoSAT || "",
-    descripcion: c.descripcion || "",
-    unitario: Number(c.costoUnitario || 0),
-    descuento: 0,
-    iva: 0,
-    ieps: 0
-  }));
-}
+  // ---------------------------------------------
+  // 🟦 CASO NUEVO – tiene valorUnitario y traslados
+  // ---------------------------------------------
+  if (
+    Array.isArray(f.conceptos_detalle) &&
+    f.conceptos_detalle.length > 0 &&
+    (f.conceptos_detalle[0].valorUnitario !== undefined ||
+     f.conceptos_detalle[0].traslados !== undefined)
+  ) {
+    conceptos = f.conceptos_detalle.map(c => ({
+      cantidad: Number(c.cantidad || 0),
+      clave: c.claveProdServ || "",
+      descripcion: c.descripcion || "",
+      unitario: Number(c.valorUnitario || 0),
+      descuento: Number(c.descuento || 0),
+      iva: Array.isArray(c.traslados)
+        ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
+        : 0,
+      ieps: Array.isArray(c.traslados)
+        ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
+        : 0,
+    }));
+  }
 
-// ---------------------------------------------
-// 🟧 SI NO TIENE NADA
-// ---------------------------------------------
-else {
-  filas = `
-    <tr>
-      <td colspan="8" style="text-align:center;color:#777;padding:20px">
-        CFDI antiguo. No contiene desglose de conceptos.
-      </td>
-    </tr>`;
-}
+  // ---------------------------------------------
+  // 🟥 CASO VIEJO – NO tiene valorUnitario
+  // ---------------------------------------------
+  else if (
+    Array.isArray(f.conceptos_detalle) &&
+    f.conceptos_detalle.length > 0 &&
+    f.conceptos_detalle[0].costoUnitario !== undefined
+  ) {
+    conceptos = f.conceptos_detalle.map(c => ({
+      cantidad: Number(c.cantidad || 0),
+      clave: c.codigoSAT || "",
+      descripcion: c.descripcion || "",
+      unitario: Number(c.costoUnitario || 0),
+      descuento: 0,
+      iva: 0,
+      ieps: 0
+    }));
+  }
 
-// ---------------------------------------------
-// GENERACIÓN DE TABLA Y TOTALES
-// ---------------------------------------------
-if (conceptos.length > 0) {
-  let subtotal = 0, totalDesc = 0, totalIVA = 0, totalIEPS = 0;
-
-  conceptos.forEach(c => {
-    const importe = c.cantidad * c.unitario - c.descuento;
-
-    subtotal += c.cantidad * c.unitario;
-    totalDesc += c.descuento;
-    totalIVA += c.iva;
-    totalIEPS += c.ieps;
-
-    filas += `
+  // ---------------------------------------------
+  // 🟧 SI NO TIENE NADA
+  // ---------------------------------------------
+  else {
+    filas = `
       <tr>
-        <td>${c.cantidad}</td>
-        <td>${c.clave}</td>
-        <td style="text-align:left">${c.descripcion}</td>
-        <td>${formatoMX(c.unitario)}</td>
-        <td>${formatoMX(c.descuento)}</td>
-        <td>${formatoMX(c.iva)}</td>
-        <td>${formatoMX(c.ieps)}</td>
-        <td>${formatoMX(importe)}</td>
+        <td colspan="8" style="text-align:center;color:#777;padding:20px">
+          CFDI antiguo. No contiene desglose de conceptos.
+        </td>
       </tr>`;
-  });
+  }
 
-  window.__sub  = subtotal;
-  window.__desc = totalDesc;
-  window.__iva  = totalIVA;
-  window.__ieps = totalIEPS;
-}
+  // ---------------------------------------------
+  // GENERACIÓN DE TABLA Y TOTALES
+  // ---------------------------------------------
+  if (conceptos.length > 0) {
+    let subtotal = 0, totalDesc = 0, totalIVA = 0, totalIEPS = 0;
+
+    conceptos.forEach(c => {
+      const importe = c.cantidad * c.unitario - c.descuento;
+
+      subtotal += c.cantidad * c.unitario;
+      totalDesc += c.descuento;
+      totalIVA += c.iva;
+      totalIEPS += c.ieps;
+
+      filas += `
+        <tr>
+          <td>${c.cantidad}</td>
+          <td>${c.clave}</td>
+          <td style="text-align:left">${c.descripcion}</td>
+          <td>${formatoMX(c.unitario)}</td>
+          <td>${formatoMX(c.descuento)}</td>
+          <td>${formatoMX(c.iva)}</td>
+          <td>${formatoMX(c.ieps)}</td>
+          <td>${formatoMX(importe)}</td>
+        </tr>`;
+    });
+
+    window.__sub  = subtotal;
+    window.__desc = totalDesc;
+    window.__iva  = totalIVA;
+    window.__ieps = totalIEPS;
+  }
 
   // ============================================================
   // GALERÍA DE FOTOS
@@ -203,7 +224,6 @@ if (conceptos.length > 0) {
         </div>`;
     });
   }
-  renderGaleria();
 
   // ============================================================
   // TIMBRE
@@ -214,103 +234,86 @@ if (conceptos.length > 0) {
     const t = f.complementos[0].atributos || [];
     const busca = x => t.find(a => a.nombre === x)?.valor || "";
 
-timbreHTML = `
-  <div class="timbre-box timbre-grid">
-    
-    <div class="timbre-col">
-      <p><strong>UUID:</strong> ${safe(f.uuid_cfdi)}</p>
-      <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
-      <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
-      <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
-    </div>
-
-    <div class="timbre-col">
-      <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
-      <p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
-      <p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
-      <p><strong>Tipo de Pago:</strong> ${safe(f.tipo_comprobante)}</p>
-    </div>
-
-  </div>`;
-
+    timbreHTML = `
+      <div class="timbre-box timbre-grid">
+        <div class="timbre-col">
+          <p><strong>UUID:</strong> ${safe(f.uuid_cfdi)}</p>
+          <p><strong>Fecha Timbrado:</strong> ${busca("FechaTimbrado")}</p>
+          <p><strong>RFC Prov. Cert.:</strong> ${busca("RfcProvCertif")}</p>
+          <p><strong>No. Certificado SAT:</strong> ${busca("NoCertificadoSAT")}</p>
+        </div>
+        <div class="timbre-col">
+          <p><strong>Uso CFDI:</strong> ${safe(f.uso_cfdi)}</p>
+          <p><strong>Método de Pago:</strong> ${safe(f.metodo_pago)}</p>
+          <p><strong>Forma de Pago:</strong> ${safe(f.forma_pago)}</p>
+          <p><strong>Tipo de Pago:</strong> ${safe(f.tipo_comprobante)}</p>
+        </div>
+      </div>`;
   }
 
-// ============================================================
-// IMPUESTOS GLOBALES – DINÁMICOS + TOTAL DE IMPUESTOS
-// ============================================================
-let impGlobalHTML = "";
+  // ============================================================
+  // IMPUESTOS GLOBALES – DINÁMICOS + TOTAL DE IMPUESTOS
+  // ============================================================
+  let impGlobalHTML = "";
 
-// ---- IVA (siempre 16%) ----
-impGlobalHTML += `
-  <tr>
-    <td>IVA</td>
-    <td>16.00%</td>
-    <td>${formatoMX(window.__iva || 0)}</td>
-  </tr>`;
-
-// ---- IEPS: detectar tasas reales ----
-let iepsTasas = new Set();
-
-if (Array.isArray(f.conceptos_detalle)) {
-  f.conceptos_detalle.forEach(c => {
-    if (Array.isArray(c.traslados)) {
-      c.traslados
-        .filter(t => t.impuesto === "003" && t.tasa > 0)
-        .forEach(t => iepsTasas.add((t.tasa * 100).toFixed(2)));
-    }
-  });
-}
-
-iepsTasas = [...iepsTasas];
-
-// ---- Mostrar IEPS dependiendo del número de tasas ----
-
-// Solo una tasa IEPS
-if (iepsTasas.length === 1) {
+  // IVA (siempre 16% en tu vista)
   impGlobalHTML += `
     <tr>
-      <td>IEPS</td>
-      <td>${iepsTasas[0]}%</td>
-      <td>${formatoMX(window.__ieps || 0)}</td>
+      <td>IVA</td>
+      <td>16.00%</td>
+      <td>${formatoMX(window.__iva || 0)}</td>
     </tr>`;
-}
 
-// Varias tasas IEPS
-else if (iepsTasas.length > 1) {
-  iepsTasas.forEach(tasa => {
+  // IEPS: detectar tasas reales
+  let iepsTasas = new Set();
+  if (Array.isArray(f.conceptos_detalle)) {
+    f.conceptos_detalle.forEach(c => {
+      if (Array.isArray(c.traslados)) {
+        c.traslados
+          .filter(t => t.impuesto === "003" && t.tasa > 0)
+          .forEach(t => iepsTasas.add((t.tasa * 100).toFixed(2)));
+      }
+    });
+  }
+  iepsTasas = [...iepsTasas];
+
+  if (iepsTasas.length === 1) {
     impGlobalHTML += `
       <tr>
         <td>IEPS</td>
-        <td>${tasa}%</td>
+        <td>${iepsTasas[0]}%</td>
+        <td>${formatoMX(window.__ieps || 0)}</td>
+      </tr>`;
+  } else if (iepsTasas.length > 1) {
+    iepsTasas.forEach(tasa => {
+      impGlobalHTML += `
+        <tr>
+          <td>IEPS</td>
+          <td>${tasa}%</td>
+          <td>${formatoMX(0)}</td>
+        </tr>`;
+    });
+    impGlobalHTML += `
+      <tr>
+        <td>IEPS Total</td>
+        <td></td>
+        <td>${formatoMX(window.__ieps || 0)}</td>
+      </tr>`;
+  } else {
+    impGlobalHTML += `
+      <tr>
+        <td>IEPS</td>
+        <td>0%</td>
         <td>${formatoMX(0)}</td>
       </tr>`;
-  });
+  }
 
   impGlobalHTML += `
-    <tr>
-      <td>IEPS Total</td>
+    <tr style="background:#003366;color:white;font-weight:bold">
+      <td>Total Impuestos</td>
       <td></td>
-      <td>${formatoMX(window.__ieps || 0)}</td>
+      <td>${formatoMX((window.__iva || 0) + (window.__ieps || 0))}</td>
     </tr>`;
-}
-
-// Sin IEPS
-else {
-  impGlobalHTML += `
-    <tr>
-      <td>IEPS</td>
-      <td>0%</td>
-      <td>${formatoMX(0)}</td>
-    </tr>`;
-}
-
-// ---- TOTAL DE IMPUESTOS (IVA + IEPS) ----
-impGlobalHTML += `
-  <tr style="background:#003366;color:white;font-weight:bold">
-    <td>Total Impuestos</td>
-    <td></td>
-    <td>${formatoMX((window.__iva || 0) + (window.__ieps || 0))}</td>
-  </tr>`;
 
   // ============================================================
   // HTML FINAL
@@ -318,14 +321,12 @@ impGlobalHTML += `
   contenedor.innerHTML = `
     <div class="datos-grid">
 
-<div class="datos-box">
-  <h2>Datos del Emisor</h2>
-  <p><strong>RFC:</strong> ${safe(f.rfc_emisor)}</p>
-  <p><strong>Nombre:</strong> ${
-    safe(f.nombre_emisor || f.razon_social_emisor)
-  }</p>
-  <p><strong>Régimen Fiscal:</strong> ${safe(f.regimen_fiscal_emisor)}</p>
-</div>
+      <div class="datos-box">
+        <h2>Datos del Emisor</h2>
+        <p><strong>RFC:</strong> ${safe(f.rfc_emisor)}</p>
+        <p><strong>Nombre:</strong> <span style="font-weight:700;color:#003366">${safe(f.nombre_emisor)}</span></p>
+        <p><strong>Régimen Fiscal:</strong> ${safe(f.regimen_fiscal_emisor)}</p>
+      </div>
 
       <div class="datos-box">
         <h2>Datos del Receptor</h2>
@@ -335,53 +336,44 @@ impGlobalHTML += `
       </div>
 
     </div>
-<div class="seriefolio-grid-master">
 
-  <!-- IZQUIERDA: Serie, Folio, UUID -->
-  <section class="seccion-seriefolio">
-    
+    <div class="seriefolio-grid-master">
 
-    <div class="seriefolio-grid">
-      <p><strong>Serie:</strong> ${safe(f.serie)}</p>
-      <p><strong>Folio:</strong> ${safe(f.folio)}</p>
-    </div>
+      <section class="seccion-seriefolio">
+        <div class="seriefolio-grid">
+          <p><strong>Serie:</strong> ${safe(f.serie)}</p>
+          <p><strong>Folio:</strong> ${safe(f.folio)}</p>
+        </div>
 
-<!-- FILA UUID -->
-<div class="seriefolio-grid" style="margin-top:10px;">
-  <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
-  <button id="btnCopiarUUID" class="btn-copiar">📋 Copiar</button>
-</div>
+        <div class="seriefolio-grid" style="margin-top:10px;">
+          <p><strong>UUID:</strong> <span id="uuidText">${safe(f.uuid_cfdi)}</span></p>
+          <button id="btnCopiarUUID" class="btn-copiar">📋 Copiar</button>
+        </div>
 
-<!-- FILA FECHA -->
-<div class="seriefolio-grid">
-  <p><strong>Fecha:</strong> ${formatFechaBonita(f.fecha)}</p>
-</div>
+        <div class="seriefolio-grid">
+          <p><strong>Fecha:</strong> ${formatFechaBonita(f.fecha)}</p>
+        </div>
 
-<!-- FILA TOTAL -->
-<div class="seriefolio-grid">
-<p><strong>Total Factura:</strong> ${formatoMX(Number(f.total || 0))}</p>
+        <div class="seriefolio-grid">
+          <p><strong>Total Factura:</strong> ${formatoMX(Number(f.total || 0))}</p>
+        </div>
+      </section>
 
-</div>
-  </section>
+      <section class="seccion-folio compacto">
+        <h3>Folio Tecnopro</h3>
+        <div class="compacto-row">
+          <input data-folio-input maxlength="7"
+            class="folio-input"
+            placeholder="Folio"
+            value="${safe(f.foliotecnopro)}">
 
-  <!-- DERECHA: Folio Tecnopro -->
-  <section class="seccion-folio compacto">
-    <h3>Folio Tecnopro</h3>
-
-    <div class="compacto-row">
-<input data-folio-input maxlength="7"
-  class="folio-input"
-  placeholder="Folio"
-  value="${safe(f.foliotecnopro)}">
-
-<button data-folio-btn class="btn-guardar-folio">
-  Guardar
-</button>
+          <button data-folio-btn class="btn-guardar-folio">
+            Guardar
+          </button>
+        </div>
+      </section>
 
     </div>
-  </section>
-
-</div>
 
     <section>
       <h2>Conceptos</h2>
@@ -400,48 +392,38 @@ impGlobalHTML += `
             </tr>
           </thead>
           <tbody>${filas}</tbody>
-<tfoot>
-  <tr>
-    <td colspan="7" style="text-align:right">Subtotal</td>
-    <td>${formatoMX(window.__sub || 0)}</td>
-  </tr>
-
-  <tr>
-    <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
-    <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
-  </tr>
-
-  <tr>
-    <td colspan="7" style="text-align:right">IVA</td>
-    <td>${formatoMX(window.__iva || 0)}</td>
-  </tr>
-
-  <tr>
-    <td colspan="7" style="text-align:right">IEPS</td>
-    <td>${formatoMX(window.__ieps || 0)}</td>
-  </tr>
-<tr>
-  <td colspan="7" style="text-align:right;color:#b00020">
-    IVA Retenido
-  </td>
-  <td>${formatoMX(Math.abs(f.impuestos_retenidos?.iva || 0))}</td>
-</tr>
-
-<tr>
-  <td colspan="7" style="text-align:right;color:#b00020">
-    ISR Retenido
-  </td>
-  <td>${formatoMX(Math.abs(f.impuestos_retenidos?.isr || 0))}</td>
-</tr>
-
-  <tr>
-    <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL NETO A PAGAR</td>
-<td style="background:#003366;color:#fff">
-  ${formatoMX(Number(f.total || 0))}
-</td>
-  </tr>
-</tfoot>
-
+          <tfoot>
+            <tr>
+              <td colspan="7" style="text-align:right">Subtotal</td>
+              <td>${formatoMX(window.__sub || 0)}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+              <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right">IVA</td>
+              <td>${formatoMX(window.__iva || 0)}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right">IEPS</td>
+              <td>${formatoMX(window.__ieps || 0)}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right;color:#b00020">IVA Retenido</td>
+              <td>${formatoMX(Math.abs(f.impuestos_retenidos?.iva || 0))}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right;color:#b00020">ISR Retenido</td>
+              <td>${formatoMX(Math.abs(f.impuestos_retenidos?.isr || 0))}</td>
+            </tr>
+            <tr>
+              <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL NETO A PAGAR</td>
+              <td style="background:#003366;color:#fff">
+                ${formatoMX(Number(f.total || 0))}
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>
@@ -457,9 +439,12 @@ impGlobalHTML += `
     </section>
   `;
 
-  // 🔴 AQUI SE CONECTA EL BOTÓN GUARDAR
+  renderGaleria();
+
+  // Conectar botón guardar folio
   initFolioTecnopro(f.uuid_cfdi);
 }
+
 // ============================================================
 // GUARDAR FOLIO TECNOPRO
 // ============================================================
@@ -604,6 +589,7 @@ function showToast(msg, error = false) {
 
 // INICIO
 cargarCFDI();
+
 // ============================================================
 // COPIAR UUID
 // ============================================================
@@ -612,19 +598,15 @@ document.addEventListener("click", e => {
     const texto = document.getElementById("uuidText").textContent;
 
     navigator.clipboard.writeText(texto)
-      .then(() => {
-        showToast("UUID copiado");
-      })
-      .catch(() => {
-        showToast("No se pudo copiar", true);
-      });
+      .then(() => showToast("UUID copiado"))
+      .catch(() => showToast("No se pudo copiar", true));
   }
 });
+
 // ============================================================
 // FOTOS — CONTROL CENTRAL (FIX DEFINITIVO)
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
-
   const btnCapturar = $("btnCapturar");
   const btnSubirFoto = $("btnSubirFoto");
   const fotoInput = $("fotoInput");
@@ -634,24 +616,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // 📸 Abrir cámara
   btnCapturar.onclick = () => {
-    fotoInput.value = ""; // reset
+    fotoInput.value = "";
     fotoInput.setAttribute("capture", "environment");
     fotoInput.click();
   };
 
-  // 📤 Abrir galería
   btnSubirFoto.onclick = () => {
-    fotoInput.value = ""; // reset
+    fotoInput.value = "";
     fotoInput.removeAttribute("capture");
     fotoInput.click();
   };
 
-  // ⬆️ Subida REAL ocurre aquí
   fotoInput.onchange = async () => {
     if (!fotoInput.files || !fotoInput.files.length) return;
     await subirFoto();
   };
-
 });
