@@ -321,7 +321,7 @@ impGlobalHTML += `
       <div class="datos-box">
         <h2>Datos del Emisor</h2>
         <p><strong>RFC:</strong> ${safe(f.rfc_emisor)}</p>
-        <p><strong>Nombre:</strong> ${safe(f.nombre_emisor)}</p>
+        <p><strong>Nombre:</strong> ${safe(f.nombre_emisor || f.razon_social_emisor)}</p>
         <p><strong>Régimen Fiscal:</strong> ${safe(f.regimen_fiscal_emisor)}</p>
       </div>
 
