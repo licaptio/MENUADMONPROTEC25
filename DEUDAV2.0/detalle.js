@@ -103,6 +103,8 @@ function renderFactura(f) {
   // FIX 1: NORMALIZAR NOMBRE EMISOR (PROVEEDOR)
   // ============================
   f.nombre_emisor = f.nombre_emisor || f.razon_social_emisor || "";
+ // FIX RECEPTOR
+  f.nombre_receptor = f.nombre_receptor || f.razon_social_receptor || "";
 
   // ============================
   // FIX 2: PARSEAR CAMPOS QUE A VECES VIENEN COMO STRING JSON
