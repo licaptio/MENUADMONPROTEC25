@@ -350,7 +350,7 @@ button.action{
  <!-- Sustituye desde aquí (donde estaba la barra de acciones) -->
 <div class="actions">
   <div class="grid">
-    <button id="btn-enviar" class="action" onclick="enviarTelegram()">📤 Enviar</button>
+    
     <button id="btn-orden" class="action" onclick="generarOrden()">🧾 Orden</button>
     <button id="btn-limpiar" class="action" onclick="limpiarTodo()">🧹 Limpiar</button>
   </div>
@@ -870,68 +870,6 @@ render();
   alert("✅ Inventario y localStorage limpiados");
 }
 
-/* ===================== TELEGRAM ===================== */
-function enviarTelegram() {
-  let hayInventario = false;
-
-  let mensaje = `📦 *INVENTARIO GENERAL*\n`;
-  mensaje += `📅 ${new Date().toLocaleString("es-MX")}\n\n`;
-
-  inventarios.forEach(sec => {
-
-    // 🔎 La sección se envía solo si al menos un SKU tiene inventario
-    const tieneInventario = sec.items.some(
-      row => (parseInt(row[4]) || 0) > 0
-    );
-
-    if (!tieneInventario) return;
-
-    // ✅ Encabezado de sección
-    mensaje += `*${sec.seccion}*\n`;
-
-    sec.items.forEach(row => {
-      const stock = parseInt(row[2]) || 0;
-      const inventario = parseInt(row[4]) || 0;
-
-      mensaje += `• ${row[0]} — Stock: ${stock} | Inv: ${inventario}\n`;
-    });
-
-    mensaje += `\n`;
-    hayInventario = true;
-  });
-
-  // 🚨 Ninguna sección tuvo inventario
-  if (!hayInventario) {
-    mensaje += `🚨 *SIN INVENTARIO*\n`;
-    mensaje += `⚠️ No se registraron acumulados.\n`;
-    mensaje += `📌 Revisar físicamente almacén.\n`;
-  }
-
-  const token = "8324500461:AAGv7B5Xd6w1sl2Z0_7VJA-Gm4oc7NwC4Ac";
-  const chatId = "6617988297";
-
-  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: mensaje,
-      parse_mode: "Markdown"
-    })
-  })
-  .then(res => res.json())
-  .then(resp => {
-    if (!resp.ok) {
-      alert("❌ Error Telegram: " + resp.description);
-      return;
-    }
-    alert("✅ Inventario enviado correctamente");
-  })
-  .catch(err => {
-    console.error(err);
-    alert("❌ Error de red con Telegram");
-  });
-}
 
 /* ===================== GENERAR ORDEN ===================== */
 function generarOrden() {
@@ -991,41 +929,14 @@ function generarOrden() {
     mensaje += `\n`;
   });
 
-  if (!hayPedidos) {
-    alert("⚠ No hay productos con pedido para enviar");
-    return;
-  }
-
-  // ✅ ABRE EL MODAL (para que puedas copiar o tomar captura)
-  modal.style.display = "flex";
-
-  // ✅ ENVÍA A TELEGRAM (como ya lo tenías)
-  const token = "8324500461:AAGv7B5Xd6w1sl2Z0_7VJA-Gm4oc7NwC4Ac";
-  const chatId = "6617988297";
-
-  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: mensaje,
-      parse_mode: "Markdown"
-    })
-  })
-  .then(async res => {
-    const respuesta = await res.json();
-    if (!respuesta.ok) {
-      console.error("Error Telegram:", respuesta);
-      alert(`❌ Telegram no aceptó el mensaje:\n${respuesta.description}`);
-      return;
-    }
-    alert("✅ Orden enviada a Telegram + lista lista en pantalla para foto/Whats");
-  })
-  .catch(err => {
-    console.error("Error de red:", err);
-    alert("❌ Error al conectar con Telegram. Revisa tu conexión o token.");
-  });
+if (!hayPedidos) {
+  alert("⚠ No hay productos con pedido para mostrar");
+  return;
 }
+
+// Solo abre modal
+modal.style.display = "flex";
+alert("✅ Orden generada en pantalla");
 
 /* ===================== HTML2CANVAS ===================== */
 function generarImagen(){
