@@ -937,7 +937,7 @@ if (!hayPedidos) {
 // Solo abre modal
 modal.style.display = "flex";
 alert("✅ Orden generada en pantalla");
-
+} // ← E
 /* ===================== HTML2CANVAS ===================== */
 function generarImagen(){
   const contenido = document.getElementById("ordenContenido");
@@ -979,10 +979,6 @@ function render(){
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  render();
-});
 /* ===================== INICIALIZACIÓN ===================== */
 window.addEventListener("DOMContentLoaded", () => {
   loadData();
