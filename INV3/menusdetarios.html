@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MENÚ INVENTARIOS</title>
+
+<style>
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --primary:#1f2937;
+  --accent:#2563eb;
+  --border:#e5e7eb;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  padding:30px 15px;
+  color:#111;
+}
+
+.container{
+  max-width:600px;
+  margin:auto;
+}
+
+h1{
+  text-align:center;
+  margin-bottom:25px;
+  font-size:1.6rem;
+  color:var(--primary);
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  text-decoration:none;
+  color:#111;
+  font-weight:600;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  transition:.2s ease;
+  box-shadow:0 4px 8px rgba(0,0,0,.05);
+}
+
+.card:hover{
+  transform:translateY(-2px);
+  background:#eef2ff;
+  border-color:var(--accent);
+}
+
+.arrow{
+  font-size:1.2rem;
+  color:var(--accent);
+}
+
+.footer{
+  text-align:center;
+  margin-top:30px;
+  font-size:.8rem;
+  color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>📦 MENÚ INVENTARIOS</h1>
+
+  <div class="menu">
+
+    <a class="card" href="INVENTARIOSPDDV3.html">
+      INVENTARIO GENERAL PDD
+      <span class="arrow">→</span>
+    </a>
+
+    <a class="card" href="CELOFAN2026.html">
+      BOLSA CELOFÁN
+      <span class="arrow">→</span>
+    </a>
+
+    <a class="card" href="INVETNPAGINA.html">
+      OTRAS PÁGINAS
+      <span class="arrow">→</span>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    PROVEEDORA PDD • Sistema Interno
+  </div>
+
+</div>
+
+</body>
+</html>
