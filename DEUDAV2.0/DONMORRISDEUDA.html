@@ -5,469 +5,507 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Facturas por RFC O NOMBRE PROVEEDOR</title>
 
-  <!-- ================================
-       [1] LIBRERÍAS
-  =================================-->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-  <!-- ================================
-       [2] ESTILOS CSS
-  =================================-->
   <style>
+    * { box-sizing: border-box; }
 
-  /* =====================================
-       2.0 — AUTOCOMPLETE
-  ======================================*/
-.autocomplete-list {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  width: 250px;
-  max-height: 180px;
-  overflow-y: auto;
-  display: none;
-  border-radius: 6px;
-  z-index: 10;
-
-  /* 🔥 ESTA LÍNEA LA AGREGA: BAJA LA LISTA */
-  margin-top: 18px; 
-}
-
-
-  .autocomplete-list div {
-    padding: 8px;
-    cursor: pointer;
-  }
-
-  .autocomplete-list div:hover {
-    background: #007bff;
-    color: white;
-  }
-
-  /* =====================================
-       2.1 — REGLAS BASE
-  ======================================*/
-  body {
-    font-family: sans-serif;
-    background: #f4f4f4;
-    margin: 0;
-    padding: 1rem;
-  }
-
-  button {
-    margin: 1rem 0;
-    padding: 10px 20px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  button:hover { background: #218838; }
-
-  /* =====================================
-       2.2 — TABLAS (PC)
-  ======================================*/
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-  }
-  th, td {
-    padding: 8px;
-    border: 1px solid #ccc;
-    font-size: 0.9em;
-    text-align: left;
-  }
-  th {
-    background-color: #007bff;
-    color: white;
-  }
-
-  /* =====================================
-       2.3 — TARJETAS MÓVIL
-  ======================================*/
-  @media (max-width: 768px) {
-    table, thead, tbody, th, td, tr { display: block; }
-    thead { display: none; }
-
-    tr {
-      margin-bottom: 18px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.08);
-      padding: 12px 15px;
-      border: 1px solid #e0e0e0;
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+      color: #1f2937;
     }
 
-    td {
+    h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .filtros-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .campo-busqueda {
+      position: relative;
+      width: 420px;
+      max-width: 100%;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
       border: none;
-      border-bottom: 1px dashed #ddd;
-      padding: 10px 6px;
-      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    td:last-child { border-bottom: none; }
-  }
-@media (max-width: 768px) {
+    button:hover {
+      background: #218838;
+    }
 
-  td {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    text-align: right;
-    position: relative;
-  }
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    }
 
-  td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    text-transform: capitalize;
-    color: #555;
-    flex-basis: 50%;
-    text-align: left;
-  }
-}
+    .autocomplete-list div {
+      padding: 9px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
 
-  /* =====================================
-       2.4 — TARJETA DETALLE
-  ======================================*/
-  .card {
-    background: #fff;
-    margin: 12px 0;
-    padding: 14px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    border: 1px solid #e0e0e0;
-    font-size: 0.95rem;
-  }
-.badge-toggle {
-  display: inline-block;
-  padding: 6px 14px;
-  color: white;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: bold;
-  user-select: none;
-}
+    .autocomplete-list div:last-child {
+      border-bottom: none;
+    }
 
-.badge-si {
-  background: #28a745;
-}
+    .autocomplete-list div:hover {
+      background: #007bff;
+      color: white;
+    }
 
-.badge-no {
-  background: #dc3545;
-}
-#rfcFiltro {
-  display: none;
-}
+    #rfcFiltro,
+    #sugerenciasRFC {
+      display: none !important;
+    }
 
-#sugerenciasRFC {
-  display: none !important;
-}
-</style>
+    #resumenConteo {
+      margin-top: 1rem;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.9em;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    a {
+      word-break: break-word;
+    }
+
+    .estado-carga {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #eef6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 18px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,.08);
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+      }
+
+      td {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        border: none;
+        border-bottom: 1px dashed #ddd;
+        padding: 10px 6px;
+        font-size: 0.95rem;
+        text-align: right;
+        position: relative;
+      }
+
+      td:last-child {
+        border-bottom: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-transform: capitalize;
+        color: #555;
+        flex-basis: 50%;
+        text-align: left;
+      }
+
+      .filtros-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .campo-busqueda {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<h2>🔍 Consulta de Facturas por RFC O NOMBRE DE PROVEEDOR </h2>
+  <h2>🔍 Consulta de Facturas por RFC O NOMBRE DE PROVEEDOR</h2>
 
-<!-- =====================================
-     [3] INPUT RFC + AUTOCOMPLETE
-======================================-->
-<label><strong>RFC O NOMBRE:</strong></label>
-<input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
-<div id="sugerenciasRFC" class="autocomplete-list"></div>
+  <label><strong>RFC O NOMBRE:</strong></label>
 
-<!-- =====================================
-     [4] INPUT NOMBRE + AUTOCOMPLETE
-======================================-->
-<input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
-<div id="sugerenciasNombre" class="autocomplete-list"></div>
+  <div class="filtros-wrap">
+    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
+    <div id="sugerenciasRFC" class="autocomplete-list"></div>
 
-<button onclick="consultarPorRFC()">🔎 Consultar</button>
+    <div class="campo-busqueda">
+      <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
+      <div id="sugerenciasNombre" class="autocomplete-list"></div>
+    </div>
 
-<div id="resumenConteo" style="margin-top: 1rem; font-weight: bold;"></div>
-<div id="tablaResultados"></div>
+    <button onclick="consultarPorRFC()">🔎 Consultar</button>
+  </div>
 
-<!-- =====================================
-     [5] LÓGICA JAVASCRIPT
-======================================-->
-<script>
+  <div id="estadoCarga" class="estado-carga"></div>
+  <div id="resumenConteo"></div>
+  <div id="tablaResultados"></div>
 
-const supa = window.supabase.createClient(
-  "https://cvpbtjlupswbyxenugpz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
-);
-
-const tabla = "deuda_limpia_pdd";
-let datosCrudos = [];
-let listaBusqueda = [];
-
-/* =====================================
-   5.1 CARGAR RFCs SIN LÍMITE (Paginación real)
-======================================*/
-async function cargarRFCs() {
-  console.log("🚀 Cargando TODOS los RFCs (paginado)...");
-
-  let todos = [];
-  let desde = 0;
-  let pagina = [];
-
-  do {
-const { data, error } = await supa
-  .from("v_deuda_proveedores")
-  .select("*")
-  .eq("rfc_emisor", rfc)
-  .order("fecha", { ascending: true })
-  .range(desde, hasta);
-    
-    if (error) {
-      console.error("❌ Error cargando página:", error);
-      break;
-    }
-
-    pagina = data;
-    todos = todos.concat(data);  // ← Acumula
-    desde += 1000;               // ← Avanza a la siguiente página
-
-    console.log(`📥 Página cargada: ${pagina.length} registros`);
-  } while (pagina.length === 1000); // ← Repetir mientras venga llena
-
-  console.log(`🏁 TOTAL FINAL TRAÍDO: ${todos.length} registros`);
-
-  // --------------------------------------------
-  // 🔍 CREAR LISTA ÚNICA DE RFCs + NOMBRES
-  // --------------------------------------------
-
-  const mapa = new Map();
-
-  todos.forEach(item => {
-    if (!item.rfc_emisor) return;
-
-    const rfc = item.rfc_emisor.toUpperCase().trim();
-
-let nombre = "";
-if (item.nombre_emisor?.trim()) nombre = item.nombre_emisor;
-else if (item.razon_social_emisor?.trim()) nombre = item.razon_social_emisor;
-else nombre = rfc;
-
-    mapa.set(rfc, nombre.toUpperCase().trim());
-  });
-
-  listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }))
-    .sort((a, b) => a.rfc.localeCompare(b.rfc));
-
-  console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
-  console.log("🎯 Ejemplo:", listaBusqueda.slice(0, 5));
-}
-
-// Recargar inmediatamente después de cambiar
-cargarRFCs();
-/* =====================================
-   5.2 AUTOCOMPLETE RFC
-======================================*/
-function autocompleteRFC() {
-  const txt = rfcFiltro.value.trim().toUpperCase();
-  const lista = document.getElementById("sugerenciasRFC");
-
-  lista.innerHTML = "";
-  
-  if (txt.length < 2) {
-    lista.style.display = "none";
-    return;
-  }
-
-  console.log("Buscando:", txt);
-  console.log("En lista de", listaBusqueda.length, "proveedores");
-
-  // Búsqueda simple y directa
-  const resultados = listaBusqueda.filter(x => {
-    // Buscar en RFC (exacto o parcial)
-    if (x.rfc && x.rfc.includes(txt)) return true;
-    
-    // Buscar en nombre (sin normalizar para mantener tildes)
-    if (x.nombre && x.nombre.includes(txt)) return true;
-    
-    // Buscar sin acentos en nombre (opcional)
-    const nombreSinAcentos = x.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (nombreSinAcentos.includes(txt.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
-      return true;
-    }
-    
-    return false;
-  });
-
-  console.log("Resultados encontrados:", resultados.length);
-
-  if (resultados.length === 0) {
-    lista.style.display = "none";
-    return;
-  }
-
-  // Mostrar resultados
-  resultados.slice(0, 15).forEach(x => {
-    const div = document.createElement("div");
-    div.textContent = `${x.rfc} — ${x.nombre}`;
-    div.onclick = () => {
-      rfcFiltro.value = x.rfc;
-      nombreFiltro.value = x.nombre;
-      window.rfcSeleccionado = x.rfc;
-      lista.style.display = "none";
-    };
-    lista.appendChild(div);
-  });
-
-  lista.style.display = "block";
-}
-/* =====================================
-   5.3 AUTOCOMPLETE NOMBRE
-======================================*/
-function autocompleteNombre() {
-  const txt = nombreFiltro.value
-    .toUpperCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " "); // limpia dobles espacios
-
-  const lista = document.getElementById("sugerenciasNombre");
-  lista.innerHTML = "";
-
-  if (txt.length < 1) {
-    lista.style.display = "none";
-    return;
-  }
-
-  const resultados = listaBusqueda.filter(x => {
-    const nom = (x.nombre || "")
-      .toUpperCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, " ");
-
-    const rfc = (x.rfc || "").toUpperCase();
-
-    return (
-      nom.includes(txt) ||                 // MINERVA → coincide
-      nom.startsWith(txt) ||               // inicio coincide
-      rfc.includes(txt) ||                 // busca por RFC
-      nom.replace(/\s+/g, '').includes(txt.replace(/\s+/g, '')) // fuzzy
+  <script>
+    const supa = window.supabase.createClient(
+      "https://cvpbtjlupswbyxenugpz.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
     );
-  });
 
-  resultados.forEach(x => {
-    let div = document.createElement("div");
-    div.textContent = `${x.nombre} — ${x.rfc}`;
-    div.onclick = () => {
-      nombreFiltro.value = x.nombre;
-      window.rfcSeleccionado = x.rfc;
-      lista.style.display = "none";
-    };
-    lista.appendChild(div);
-  });
+    let datosCrudos = [];
+    let listaBusqueda = [];
+    window.rfcSeleccionado = null;
 
-  lista.style.display = "block";
-}
+    const nombreFiltro = document.getElementById("nombreFiltro");
+    const rfcFiltro = document.getElementById("rfcFiltro");
+    const sugerenciasNombre = document.getElementById("sugerenciasNombre");
+    const sugerenciasRFC = document.getElementById("sugerenciasRFC");
+    const resumenConteo = document.getElementById("resumenConteo");
+    const tablaResultados = document.getElementById("tablaResultados");
+    const estadoCarga = document.getElementById("estadoCarga");
 
-
-/* =====================================
-   5.4 CONSULTAR FACTURAS SOLO POR PROVEEDOR
-======================================*/
-async function consultarPorRFC() {
-
-  // Obtenemos el RFC seleccionado desde autocompleteNombre()
-  let rfc = window.rfcSeleccionado;
-
-// Detección automática si el usuario NO clickeó nada:
-if (!rfc) {
-  const txt = nombreFiltro.value.toUpperCase().trim();
-  const encontrado = listaBusqueda.find(x =>
-    x.nombre.includes(txt) || x.rfc.includes(txt)
-  );
-  if (encontrado) rfc = encontrado.rfc;
-}
-
-
-  if (!rfc) {
-    alert("Selecciona un proveedor válido de la lista");
-    return;
-  }
-
-  document.getElementById("tablaResultados").innerHTML = "";
-  document.getElementById("resumenConteo").innerText = "";
-
-  // últimos 60 días
-  const hoy = new Date();
-  const limite = new Date();
-  limite.setDate(hoy.getDate() - 99);
-  const limiteISO = limite.toISOString().split("T")[0];
-
-  // contar registros
-const { count, error: errorConteo } = await supa
-  .from("deuda_limpia_pdd")
-  .select("*", { count: "exact", head: true })
-  .eq("rfc_emisor", rfc)
-  
-
-  if (errorConteo) {
-    alert("Error al contar registros");
-    return;
-  }
-
-  // consultar facturas
-const { data: facturas, error } = await supa
-  .from("v_deuda_proveedores")
-  .select("*")
-  .eq("rfc_emisor", rfc)
-  .gte("fecha", limiteISO)
-  .order("fecha", { ascending: true });
-
-  if (error) {
-    alert("Error al traer facturas");
-    return;
-  }
-
-  datosCrudos = facturas;
-
-  document.getElementById("resumenConteo").innerText =
-    `🔢 Total: ${count}\n📄 Mostrados: ${facturas.length}`;
-
-  mostrarTabla(datosCrudos);
-}
-
-  
-function mostrarTabla(data) {
-  let html = `<table><thead><tr>
-    <th>Fecha</th>
-    <th>Días</th>
-    <th>UUID</th>
-    <th>RFC</th>
-    <th>Proveedor</th>
-    <th>Total</th>
-    <th>Serie/Folio</th>
-    <th>Folio Tecnopro</th>
-    <th>📷 Fotos</th>
-  </tr></thead><tbody>`;
-
-  data.forEach(f => {
-    const uuid = f.uuid_cfdi || f.uuid || "—";
-
-    let proveedor = "";
-    if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-      proveedor = f.nombre_emisor;
-    } else if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-      proveedor = f.razon_social_emisor;
-    } else {
-      proveedor = f.rfc_emisor || "—";
+    function mostrarEstado(msg, visible = true) {
+      estadoCarga.textContent = msg || "";
+      estadoCarga.style.display = visible ? "block" : "none";
     }
 
-    html += `
+    function normalizarTexto(txt) {
+      return (txt || "")
+        .toUpperCase()
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+    }
+
+    async function cargarRFCs() {
+      console.log("🚀 Cargando TODOS los RFCs (paginado)...");
+      mostrarEstado("Cargando catálogo de proveedores...");
+
+      let todos = [];
+      let desde = 0;
+      let pagina = [];
+
+      do {
+        const { data, error } = await supa
+          .from("v_deuda_proveedores")
+          .select("rfc_emisor, razon_social_emisor, nombre_emisor")
+          .not("rfc_emisor", "is", null)
+          .order("rfc_emisor", { ascending: true })
+          .range(desde, desde + 999);
+
+        if (error) {
+          console.error("❌ Error cargando página:", error);
+          mostrarEstado("Error cargando proveedores");
+          return;
+        }
+
+        pagina = data || [];
+        todos = todos.concat(pagina);
+        desde += 1000;
+
+        console.log(`📥 Página cargada: ${pagina.length} registros`);
+      } while (pagina.length === 1000);
+
+      const mapa = new Map();
+
+      todos.forEach(item => {
+        if (!item.rfc_emisor) return;
+
+        const rfc = String(item.rfc_emisor).toUpperCase().trim();
+
+        let nombre = "";
+        if (item.nombre_emisor?.trim()) nombre = item.nombre_emisor;
+        else if (item.razon_social_emisor?.trim()) nombre = item.razon_social_emisor;
+        else nombre = rfc;
+
+        mapa.set(rfc, nombre.toUpperCase().trim());
+      });
+
+      listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }))
+        .sort((a, b) => a.rfc.localeCompare(b.rfc));
+
+      console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
+      console.log("🎯 Ejemplo:", listaBusqueda.slice(0, 5));
+
+      mostrarEstado(`Catálogo cargado: ${listaBusqueda.length} proveedores`);
+      setTimeout(() => mostrarEstado("", false), 1500);
+    }
+
+    function autocompleteRFC() {
+      const txt = rfcFiltro.value.trim().toUpperCase();
+      const lista = sugerenciasRFC;
+
+      lista.innerHTML = "";
+
+      if (txt.length < 2) {
+        lista.style.display = "none";
+        return;
+      }
+
+      const resultados = listaBusqueda.filter(x => {
+        if (x.rfc && x.rfc.includes(txt)) return true;
+        if (x.nombre && x.nombre.includes(txt)) return true;
+
+        const nombreSinAcentos = normalizarTexto(x.nombre);
+        if (nombreSinAcentos.includes(normalizarTexto(txt))) return true;
+
+        return false;
+      });
+
+      if (resultados.length === 0) {
+        lista.style.display = "none";
+        return;
+      }
+
+      resultados.slice(0, 15).forEach(x => {
+        const div = document.createElement("div");
+        div.textContent = `${x.rfc} — ${x.nombre}`;
+        div.onclick = () => {
+          rfcFiltro.value = x.rfc;
+          nombreFiltro.value = x.nombre;
+          window.rfcSeleccionado = x.rfc;
+          lista.style.display = "none";
+        };
+        lista.appendChild(div);
+      });
+
+      lista.style.display = "block";
+    }
+
+    function autocompleteNombre() {
+      const txt = normalizarTexto(nombreFiltro.value);
+      const lista = sugerenciasNombre;
+      lista.innerHTML = "";
+
+      if (txt.length < 1) {
+        lista.style.display = "none";
+        window.rfcSeleccionado = null;
+        return;
+      }
+
+      const resultados = listaBusqueda.filter(x => {
+        const nom = normalizarTexto(x.nombre);
+        const rfc = (x.rfc || "").toUpperCase();
+        const txtSinEspacios = txt.replace(/\s+/g, "");
+        const nomSinEspacios = nom.replace(/\s+/g, "");
+
+        return (
+          nom.includes(txt) ||
+          nom.startsWith(txt) ||
+          rfc.includes(txt) ||
+          nomSinEspacios.includes(txtSinEspacios)
+        );
+      });
+
+      resultados.slice(0, 20).forEach(x => {
+        const div = document.createElement("div");
+        div.textContent = `${x.nombre} — ${x.rfc}`;
+        div.onclick = () => {
+          nombreFiltro.value = x.nombre;
+          rfcFiltro.value = x.rfc;
+          window.rfcSeleccionado = x.rfc;
+          lista.style.display = "none";
+        };
+        lista.appendChild(div);
+      });
+
+      lista.style.display = resultados.length ? "block" : "none";
+    }
+
+    async function consultarPorRFC() {
+      let rfc = window.rfcSeleccionado;
+
+      if (!rfc) {
+        const txtOriginal = nombreFiltro.value.toUpperCase().trim();
+        const txtNormalizado = normalizarTexto(nombreFiltro.value);
+
+        const encontrado = listaBusqueda.find(x =>
+          x.rfc.includes(txtOriginal) ||
+          normalizarTexto(x.nombre).includes(txtNormalizado)
+        );
+
+        if (encontrado) rfc = encontrado.rfc;
+      }
+
+      if (!rfc) {
+        alert("Selecciona un proveedor válido de la lista");
+        return;
+      }
+
+      tablaResultados.innerHTML = "";
+      resumenConteo.innerText = "";
+      mostrarEstado("Consultando facturas...");
+
+      const hoy = new Date();
+      const limite = new Date();
+      limite.setDate(hoy.getDate() - 99);
+      const limiteISO = limite.toISOString().split("T")[0];
+
+      const { count, error: errorConteo } = await supa
+        .from("v_deuda_proveedores")
+        .select("*", { count: "exact", head: true })
+        .eq("rfc_emisor", rfc)
+        .gte("fecha", limiteISO);
+
+      if (errorConteo) {
+        console.error("❌ Error al contar registros:", errorConteo);
+        mostrarEstado("", false);
+        alert("Error al contar registros");
+        return;
+      }
+
+      const TAMANO_PAGINA = 1000;
+      let desde = 0;
+      let todos = [];
+      let seguir = true;
+
+      while (seguir) {
+        const hasta = desde + TAMANO_PAGINA - 1;
+
+        mostrarEstado(`Consultando facturas ${desde + 1} a ${hasta + 1}...`);
+
+        const { data, error } = await supa
+          .from("v_deuda_proveedores")
+          .select("*")
+          .eq("rfc_emisor", rfc)
+          .gte("fecha", limiteISO)
+          .order("fecha", { ascending: true })
+          .range(desde, hasta);
+
+        if (error) {
+          console.error("❌ Error al traer facturas:", error);
+          mostrarEstado("", false);
+          alert("Error al traer facturas");
+          return;
+        }
+
+        const bloque = data || [];
+        todos = todos.concat(bloque);
+
+        console.log(`📦 Página ${desde}-${hasta}: ${bloque.length} registros`);
+
+        if (bloque.length < TAMANO_PAGINA) {
+          seguir = false;
+        } else {
+          desde += TAMANO_PAGINA;
+        }
+      }
+
+      datosCrudos = todos;
+
+      resumenConteo.innerText = `🔢 Total BD: ${count}\n📄 Mostrados: ${todos.length}`;
+      mostrarTabla(datosCrudos);
+      mostrarEstado(`Consulta terminada. Facturas cargadas: ${todos.length}`);
+      setTimeout(() => mostrarEstado("", false), 2000);
+    }
+
+    function mostrarTabla(data) {
+      if (!data || data.length === 0) {
+        tablaResultados.innerHTML = `<div style="margin-top:1rem; padding:12px; background:white; border-radius:8px; border:1px solid #ddd;">No se encontraron facturas para ese proveedor.</div>`;
+        return;
+      }
+
+      let html = `<table><thead><tr>
+        <th>Fecha</th>
+        <th>Días</th>
+        <th>UUID</th>
+        <th>RFC</th>
+        <th>Proveedor</th>
+        <th>Total</th>
+        <th>Serie/Folio</th>
+        <th>Folio Tecnopro</th>
+        <th>📷 Fotos</th>
+      </tr></thead><tbody>`;
+
+      data.forEach(f => {
+        const uuid = f.uuid_cfdi || f.uuid || "—";
+
+        let proveedor = "";
+        if (f.nombre_emisor && String(f.nombre_emisor).trim() !== "") {
+          proveedor = f.nombre_emisor;
+        } else if (f.razon_social_emisor && String(f.razon_social_emisor).trim() !== "") {
+          proveedor = f.razon_social_emisor;
+        } else {
+          proveedor = f.rfc_emisor || "—";
+        }
+
+        html += `
 <tr>
   <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
   <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
   <td data-label="UUID">
-    <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
+    <a href="detalle.html?uuid=${encodeURIComponent(uuid)}" target="_blank" style="color:#007bff;">
       ${uuid}
     </a>
   </td>
@@ -484,59 +522,81 @@ function mostrarTabla(data) {
     }
   </td>
 </tr>`;
-  });
+      });
 
-  html += "</tbody></table>";
-  document.getElementById("tablaResultados").innerHTML = html;
-}
-  
-function calcDiasDesdeHoy(iso) {
-  const soloFecha = iso.split("T")[0];
-  const [anio, mes, dia] = soloFecha.split("-").map(Number);
+      html += "</tbody></table>";
+      tablaResultados.innerHTML = html;
+    }
 
-  const fecha = new Date(anio, mes - 1, dia);
-  const hoy = new Date();
+    function calcDiasDesdeHoy(iso) {
+      if (!iso) return "—";
 
-  hoy.setHours(0,0,0,0);
-  fecha.setHours(0,0,0,0);
+      const soloFecha = String(iso).split("T")[0];
+      const [anio, mes, dia] = soloFecha.split("-").map(Number);
 
-  return Math.floor((hoy - fecha) / 86400000);
-}
-function formatearFecha(fechaISO) {
-  const fecha = new Date(fechaISO);
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const año = fecha.getFullYear();
-  return `${dia}/${mes}/${año}`;
-}
-function monedaMXN(valor) {
-  return Number(valor).toLocaleString('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  });
-}
-  async function guardarFolioFactura(idFactura, folio) {
+      const fecha = new Date(anio, mes - 1, dia);
+      const hoy = new Date();
 
-  if (!folio) return;
+      hoy.setHours(0,0,0,0);
+      fecha.setHours(0,0,0,0);
 
-  const folioFormateado = String(folio).padStart(7, "0");
+      return Math.floor((hoy - fecha) / 86400000);
+    }
 
-  const { error } = await supa
-    .from("deuda_limpia_pdd")
-    .update({ foliotecnopro: folioFormateado })
-    .eq("id", idFactura);
+    function formatearFecha(fechaISO) {
+      if (!fechaISO) return "—";
+      const fecha = new Date(fechaISO);
+      const dia = String(fecha.getDate()).padStart(2, "0");
+      const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+      const año = fecha.getFullYear();
+      return `${dia}/${mes}/${año}`;
+    }
 
-  if (error) {
-    console.error("❌ Error guardando folio:", error);
-    alert("Error al guardar Folio Tecnopro");
-    return;
-  }
+    function monedaMXN(valor) {
+      const numero = Number(valor || 0);
+      return numero.toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN"
+      });
+    }
 
-  console.log("✅ Folio Tecnopro guardado:", folioFormateado);
-}
+    async function guardarFolioFactura(idFactura, folio) {
+      if (!folio) return;
 
-</script>
+      const folioFormateado = String(folio).padStart(7, "0");
+
+      const { error } = await supa
+        .from("deuda_limpia_pdd")
+        .update({ foliotecnopro: folioFormateado })
+        .eq("id", idFactura);
+
+      if (error) {
+        console.error("❌ Error guardando folio:", error);
+        alert("Error al guardar Folio Tecnopro");
+        return;
+      }
+
+      console.log("✅ Folio Tecnopro guardado:", folioFormateado);
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!sugerenciasNombre.contains(e.target) && e.target !== nombreFiltro) {
+        sugerenciasNombre.style.display = "none";
+      }
+
+      if (!sugerenciasRFC.contains(e.target) && e.target !== rfcFiltro) {
+        sugerenciasRFC.style.display = "none";
+      }
+    });
+
+    nombreFiltro.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        consultarPorRFC();
+      }
+    });
+
+    cargarRFCs();
+  </script>
 
 </body>
 </html>
-
