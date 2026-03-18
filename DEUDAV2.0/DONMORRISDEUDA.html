@@ -102,10 +102,25 @@
       white-space: pre-line;
     }
 
+    .estado-carga {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #eef6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      display: none;
+    }
+
+    .tabla-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
       background: white;
     }
 
@@ -126,14 +141,38 @@
       word-break: break-word;
     }
 
-    .estado-carga {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      background: #eef6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      display: none;
+    .paginacion {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .paginacion button {
+      padding: 8px 12px;
+      margin: 0;
+      background: #0f62fe;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .paginacion button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .paginacion .info {
+      font-size: 14px;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .selector-pagina {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: white;
     }
 
     @media (max-width: 768px) {
@@ -191,6 +230,16 @@
       button {
         width: 100%;
       }
+
+      .paginacion {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .paginacion button,
+      .selector-pagina {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -224,6 +273,8 @@
 
     let datosCrudos = [];
     let listaBusqueda = [];
+    let paginaActual = 1;
+    const filasPorPagina = 100;
     window.rfcSeleccionado = null;
 
     const nombreFiltro = document.getElementById("nombreFiltro");
@@ -255,6 +306,7 @@
       let todos = [];
       let desde = 0;
       let pagina = [];
+      const tamPagina = 1000;
 
       do {
         const { data, error } = await supa
@@ -262,7 +314,7 @@
           .select("rfc_emisor, razon_social_emisor, nombre_emisor")
           .not("rfc_emisor", "is", null)
           .order("rfc_emisor", { ascending: true })
-          .range(desde, desde + 999);
+          .range(desde, desde + tamPagina - 1);
 
         if (error) {
           console.error("❌ Error cargando página:", error);
@@ -272,10 +324,10 @@
 
         pagina = data || [];
         todos = todos.concat(pagina);
-        desde += 1000;
+        desde += tamPagina;
 
         console.log(`📥 Página cargada: ${pagina.length} registros`);
-      } while (pagina.length === 1000);
+      } while (pagina.length === tamPagina);
 
       const mapa = new Map();
 
@@ -296,10 +348,8 @@
         .sort((a, b) => a.rfc.localeCompare(b.rfc));
 
       console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
-      console.log("🎯 Ejemplo:", listaBusqueda.slice(0, 5));
-
       mostrarEstado(`Catálogo cargado: ${listaBusqueda.length} proveedores`);
-      setTimeout(() => mostrarEstado("", false), 1500);
+      setTimeout(() => mostrarEstado("", false), 1200);
     }
 
     function autocompleteRFC() {
@@ -316,11 +366,8 @@
       const resultados = listaBusqueda.filter(x => {
         if (x.rfc && x.rfc.includes(txt)) return true;
         if (x.nombre && x.nombre.includes(txt)) return true;
-
         const nombreSinAcentos = normalizarTexto(x.nombre);
-        if (nombreSinAcentos.includes(normalizarTexto(txt))) return true;
-
-        return false;
+        return nombreSinAcentos.includes(normalizarTexto(txt));
       });
 
       if (resultados.length === 0) {
@@ -405,18 +452,12 @@
 
       tablaResultados.innerHTML = "";
       resumenConteo.innerText = "";
-      mostrarEstado("Consultando facturas...");
-
-      const hoy = new Date();
-      const limite = new Date();
-      limite.setDate(hoy.getDate() - 99);
-      const limiteISO = limite.toISOString().split("T")[0];
+      mostrarEstado("Consultando TODA la BD del proveedor...");
 
       const { count, error: errorConteo } = await supa
         .from("v_deuda_proveedores")
         .select("*", { count: "exact", head: true })
-        .eq("rfc_emisor", rfc)
-        .gte("fecha", limiteISO);
+        .eq("rfc_emisor", rfc);
 
       if (errorConteo) {
         console.error("❌ Error al contar registros:", errorConteo);
@@ -425,22 +466,20 @@
         return;
       }
 
-      const TAMANO_PAGINA = 1000;
+      const TAMANO_PAGINA_BD = 1000;
       let desde = 0;
       let todos = [];
       let seguir = true;
 
       while (seguir) {
-        const hasta = desde + TAMANO_PAGINA - 1;
-
-        mostrarEstado(`Consultando facturas ${desde + 1} a ${hasta + 1}...`);
+        const hasta = desde + TAMANO_PAGINA_BD - 1;
+        mostrarEstado(`Consultando BD ${desde + 1} a ${Math.min(hasta + 1, count || hasta + 1)}...`);
 
         const { data, error } = await supa
           .from("v_deuda_proveedores")
           .select("*")
           .eq("rfc_emisor", rfc)
-          .gte("fecha", limiteISO)
-          .order("fecha", { ascending: true })
+          .order("fecha", { ascending: false })
           .range(desde, hasta);
 
         if (error) {
@@ -453,30 +492,44 @@
         const bloque = data || [];
         todos = todos.concat(bloque);
 
-        console.log(`📦 Página ${desde}-${hasta}: ${bloque.length} registros`);
+        console.log(`📦 Página BD ${desde}-${hasta}: ${bloque.length} registros`);
 
-        if (bloque.length < TAMANO_PAGINA) {
+        if (bloque.length < TAMANO_PAGINA_BD) {
           seguir = false;
         } else {
-          desde += TAMANO_PAGINA;
+          desde += TAMANO_PAGINA_BD;
         }
       }
 
       datosCrudos = todos;
+      paginaActual = 1;
 
-      resumenConteo.innerText = `🔢 Total BD: ${count}\n📄 Mostrados: ${todos.length}`;
-      mostrarTabla(datosCrudos);
+      resumenConteo.innerText =
+        `🔢 Total BD: ${count}\n📄 Cargados: ${todos.length}\n⬇ Orden: más reciente primero`;
+
+      renderPagina();
       mostrarEstado(`Consulta terminada. Facturas cargadas: ${todos.length}`);
-      setTimeout(() => mostrarEstado("", false), 2000);
+      setTimeout(() => mostrarEstado("", false), 1800);
     }
 
-    function mostrarTabla(data) {
-      if (!data || data.length === 0) {
-        tablaResultados.innerHTML = `<div style="margin-top:1rem; padding:12px; background:white; border-radius:8px; border:1px solid #ddd;">No se encontraron facturas para ese proveedor.</div>`;
+    function renderPagina() {
+      if (!datosCrudos || datosCrudos.length === 0) {
+        tablaResultados.innerHTML = `
+          <div style="margin-top:1rem; padding:12px; background:white; border-radius:8px; border:1px solid #ddd;">
+            No se encontraron facturas para ese proveedor.
+          </div>`;
         return;
       }
 
-      let html = `<table><thead><tr>
+      const totalPaginas = Math.ceil(datosCrudos.length / filasPorPagina);
+      if (paginaActual < 1) paginaActual = 1;
+      if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+
+      const inicio = (paginaActual - 1) * filasPorPagina;
+      const fin = inicio + filasPorPagina;
+      const pagina = datosCrudos.slice(inicio, fin);
+
+      let html = `<div class="tabla-wrap"><table><thead><tr>
         <th>Fecha</th>
         <th>Días</th>
         <th>UUID</th>
@@ -488,7 +541,7 @@
         <th>📷 Fotos</th>
       </tr></thead><tbody>`;
 
-      data.forEach(f => {
+      pagina.forEach(f => {
         const uuid = f.uuid_cfdi || f.uuid || "—";
 
         let proveedor = "";
@@ -524,8 +577,63 @@
 </tr>`;
       });
 
-      html += "</tbody></table>";
+      html += `</tbody></table></div>`;
+
+      html += `
+        <div class="paginacion">
+          <button onclick="irPrimeraPagina()" ${paginaActual === 1 ? "disabled" : ""}>⏮ Primera</button>
+          <button onclick="irPaginaAnterior()" ${paginaActual === 1 ? "disabled" : ""}>◀ Anterior</button>
+
+          <span class="info">Página ${paginaActual} de ${totalPaginas}</span>
+
+          <select class="selector-pagina" onchange="irPaginaNumero(this.value)">
+            ${Array.from({ length: totalPaginas }, (_, i) => {
+              const p = i + 1;
+              return `<option value="${p}" ${p === paginaActual ? "selected" : ""}>Ir a página ${p}</option>`;
+            }).join("")}
+          </select>
+
+          <button onclick="irPaginaSiguiente()" ${paginaActual === totalPaginas ? "disabled" : ""}>Siguiente ▶</button>
+          <button onclick="irUltimaPagina()" ${paginaActual === totalPaginas ? "disabled" : ""}>Última ⏭</button>
+        </div>
+      `;
+
       tablaResultados.innerHTML = html;
+    }
+
+    function irPrimeraPagina() {
+      paginaActual = 1;
+      renderPagina();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function irPaginaAnterior() {
+      if (paginaActual > 1) {
+        paginaActual--;
+        renderPagina();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function irPaginaSiguiente() {
+      const totalPaginas = Math.ceil(datosCrudos.length / filasPorPagina);
+      if (paginaActual < totalPaginas) {
+        paginaActual++;
+        renderPagina();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function irUltimaPagina() {
+      paginaActual = Math.ceil(datosCrudos.length / filasPorPagina);
+      renderPagina();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function irPaginaNumero(valor) {
+      paginaActual = Number(valor);
+      renderPagina();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function calcDiasDesdeHoy(iso) {
@@ -537,8 +645,8 @@
       const fecha = new Date(anio, mes - 1, dia);
       const hoy = new Date();
 
-      hoy.setHours(0,0,0,0);
-      fecha.setHours(0,0,0,0);
+      hoy.setHours(0, 0, 0, 0);
+      fecha.setHours(0, 0, 0, 0);
 
       return Math.floor((hoy - fecha) / 86400000);
     }
