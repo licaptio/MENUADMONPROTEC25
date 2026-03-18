@@ -215,13 +215,13 @@ async function cargarRFCs() {
   let pagina = [];
 
   do {
-  const { data, error } = await supa
+const { data, error } = await supa
   .from("v_deuda_proveedores")
-  .select("rfc_emisor, razon_social_emisor, nombre_emisor")
-  .not("rfc_emisor", "is", null)
-  .order("rfc_emisor", { ascending: true })
-  .range(desde, desde + 999);
-
+  .select("*")
+  .eq("rfc_emisor", rfc)
+  .order("fecha", { ascending: true })
+  .range(desde, hasta);
+    
     if (error) {
       console.error("❌ Error cargando página:", error);
       break;
@@ -408,7 +408,7 @@ const { count, error: errorConteo } = await supa
   .from("deuda_limpia_pdd")
   .select("*", { count: "exact", head: true })
   .eq("rfc_emisor", rfc)
-  .gte("fecha", limiteISO);
+  
 
   if (errorConteo) {
     alert("Error al contar registros");
@@ -451,54 +451,45 @@ function mostrarTabla(data) {
   </tr></thead><tbody>`;
 
   data.forEach(f => {
+    const uuid = f.uuid_cfdi || f.uuid || "—";
 
-    const uuid = f.uuid_cfdi || f.uuid;
-
-let proveedor = "";
-if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
-  proveedor = f.nombre_emisor;
-} else if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
-  proveedor = f.razon_social_emisor;
-} else {
-  proveedor = f.rfc_emisor;
-}
+    let proveedor = "";
+    if (f.nombre_emisor && f.nombre_emisor.trim() !== "") {
+      proveedor = f.nombre_emisor;
+    } else if (f.razon_social_emisor && f.razon_social_emisor.trim() !== "") {
+      proveedor = f.razon_social_emisor;
+    } else {
+      proveedor = f.rfc_emisor || "—";
+    }
 
     html += `
 <tr>
-  <td>${formatearFecha(f.fecha)}</td>
-  <td>${calcDiasDesdeHoy(f.fecha)}</td>
-
-
-<td>
-  <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
-    ${uuid}
-  </a>
-</td>
-
-
-  <td>${f.rfc_emisor}</td>
-  <td>${proveedor}</td>
-  <td>${monedaMXN(f.total)}</td>
-  <td>${f.serie_folio || "—"}</td>
-<td>
-  ${f.foliotecnopro ? f.foliotecnopro : "—"}
-</td>
-
-  <td>
+  <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
+  <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
+  <td data-label="UUID">
+    <a href="detalle.html?uuid=${uuid}" target="_blank" style="color:#007bff;">
+      ${uuid}
+    </a>
+  </td>
+  <td data-label="RFC">${f.rfc_emisor || "—"}</td>
+  <td data-label="Proveedor">${proveedor}</td>
+  <td data-label="Total">${monedaMXN(f.total)}</td>
+  <td data-label="Serie/Folio">${f.serie_folio || "—"}</td>
+  <td data-label="Folio Tecnopro">${f.foliotecnopro || "—"}</td>
+  <td data-label="Fotos">
     ${
-      (f.fotos && f.fotos.length > 0)
-      ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(" ")
-      : "—"
+      (f.fotos && Array.isArray(f.fotos) && f.fotos.length > 0)
+        ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(" ")
+        : "—"
     }
   </td>
-</tr>
-`;
+</tr>`;
   });
 
   html += "</tbody></table>";
   document.getElementById("tablaResultados").innerHTML = html;
 }
-
+  
 function calcDiasDesdeHoy(iso) {
   const soloFecha = iso.split("T")[0];
   const [anio, mes, dia] = soloFecha.split("-").map(Number);
