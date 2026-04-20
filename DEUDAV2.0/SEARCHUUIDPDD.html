@@ -23,6 +23,8 @@ margin-bottom:15px;
 display:flex;
 gap:10px;
 margin-bottom:20px;
+align-items:center;
+flex-wrap:wrap;
 }
 
 input{
@@ -104,6 +106,10 @@ placeholder="Pegue aquí el UUID"
 Buscar
 </button>
 
+<button id="seleccionar" class="verde">
+Seleccionar
+</button>
+
 </div>
 
 <table>
@@ -149,6 +155,11 @@ const tabla = document.getElementById("tabla");
 const input = document.getElementById("uuid");
 
 document.getElementById("buscar").onclick = buscar;
+
+document.getElementById("seleccionar").onclick = () => {
+input.focus();
+input.setSelectionRange(0, input.value.length);
+};
 
 input.addEventListener("keydown",(e)=>{
 if(e.key==="Enter") buscar();
