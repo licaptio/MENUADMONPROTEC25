@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PROVSOFT | Clientes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --azul:#00416A;
+  --azul2:#0c6cbd;
+  --bg:#f2f4f8;
+  --shadow:0 8px 20px rgba(0,0,0,.12);
+}
+
+*{
+  box-sizing:border-box;
+  font-family:'Poppins', Arial, sans-serif;
+}
+
+body{
+  margin:0;
+  background:linear-gradient(to right, var(--azul), #E4E5E6);
+  padding:30px;
+}
+
+h1{
+  display:inline-block;
+  margin:0;
+  padding:10px 22px;
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  border-radius:12px;
+  font-size:24px;
+  font-weight:600;
+}
+
+.sub{
+  margin:12px 0 30px;
+  color:#f0f0f0;
+  font-size:14px;
+}
+
+/* GRID */
+.dashboard{
+  max-width:900px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:18px;
+}
+
+/* TARJETA */
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:22px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  transition:.25s;
+  border-left:5px solid var(--azul);
+}
+
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 28px rgba(0,0,0,.18);
+  border-left-color:var(--azul2);
+}
+
+/* TEXTO */
+.title{
+  font-size:15px;
+  font-weight:600;
+  color:#111;
+  text-align:left;
+}
+
+/* FOOTER */
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:13px;
+  color:#e0e0e0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>CLIENTES PROVSOFT</h1>
+<div class="sub">Accesos directos a sistemas y paneles</div>
+
+<div class="dashboard">
+
+  <div class="card" onclick="window.open('https://licaptio.github.io/PROVEEDORADEDULCES/index.html','_blank')">
+    <div class="title">PROVEEDORA DE DULCES Y DESECHABLES</div>
+  </div>
+
+  <div class="card" onclick="window.open('https://licaptio.github.io/MENUADMONPROTEC25/GERARDOR/index.html','_blank')">
+    <div class="title">GERARDO RIOS MENU </div>
+  </div>
+  
+  
+  <div class="card" onclick="window.open('cachota.html','_blank')">
+    <div class="title">Monitoreo de Ingresos Cachota</div>
+  </div>
+
+  <div class="card" onclick="window.open('Ingresos_Cachota.html','_blank')">
+    <div class="title">Carga Ingresos Cachota</div>
+  </div>
+
+  <div class="card" onclick="window.open('CargaIngresoGORB.html','_blank')">
+    <div class="title">Carga Ingresos Bryan</div>
+  </div>
+
+  <div class="card" onclick="window.open('dashboard_ingresos_gorb.html','_blank')">
+    <div class="title">Pizarra de Bryan</div>
+  </div>
+
+  <div class="card" onclick="window.open('LincksLizandro.html','_blank')">
+    <div class="title">Accesos Auditoría</div>
+  </div>
+
+  <div class="card" onclick="window.open('https://licaptio.github.io/SERGIOAGUAYO/BDSERGIOAGUAYO25/menuinicio.html','_blank')">
+    <div class="title">Sergio Javier Aguayo Perez</div>
+  </div>
+
+</div>
+
+<footer>
+  Powered by PROVSOFT
+</footer>
+
+</body>
+</html>
