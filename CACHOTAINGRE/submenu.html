@@ -86,12 +86,12 @@ footer{
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<script src="../firebase-auth.js"></script>
+<script src="firebase-auth.js"></script>
 
 <script>
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
-    window.location.replace("../index.html");
+    window.location.replace("index.html");
   }
 });
 </script>
