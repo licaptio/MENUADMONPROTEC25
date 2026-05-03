@@ -19,7 +19,7 @@ const auth = firebase.auth();
    ========================================= */
 // 🔒 NO guardar sesión (pero ESPERAMOS a que quede aplicado)
 const persistReady = auth
-  .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .setPersistence(firebase.auth.Auth.Persistence.SESSION)
   .catch(err => console.error("Persistencia error:", err));
 /* =========================================
    ⏱️ CONTROL DE INACTIVIDAD (ROBUSTO)
