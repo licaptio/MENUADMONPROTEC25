@@ -11,7 +11,10 @@
 :root{
   --azul:#00416A;
   --azul2:#0c6cbd;
-  --bg:#f2f4f8;
+}
+
+*{
+  box-sizing:border-box;
 }
 
 body{
@@ -128,6 +131,12 @@ button:hover{
   background:#f1f5f9;
 }
 
+.estado{
+  font-size:12px;
+  color:#475569;
+  margin-top:8px;
+}
+
 @media(max-width:800px){
   body{
     padding:10px;
@@ -139,6 +148,10 @@ button:hover{
 
   .chartBox{
     height:300px;
+  }
+
+  .tabla{
+    font-size:12px;
   }
 }
 
@@ -214,6 +227,7 @@ button:hover{
   <div class="card acciones">
     <button id="btnActualizar" type="button">Actualizar</button>
     <button id="btnImprimir" type="button">Imprimir</button>
+    <div class="estado" id="estado">Esperando carga...</div>
   </div>
 
   <div class="card">
@@ -289,10 +303,15 @@ function setProgress(p, text){
   document.getElementById("loadingText").textContent = text;
 }
 
+function setEstado(text){
+  document.getElementById("estado").textContent = text;
+}
+
 async function cargarDatos(){
   try{
     showLoading(true);
-    setProgress(20, "Consultando ingresos GORB...");
+    setProgress(15, "Conectando a Supabase...");
+    setEstado("Consultando datos...");
 
     const { data, error } = await supabase
       .from(VISTA)
@@ -302,21 +321,29 @@ async function cargarDatos(){
       .order("mes", { ascending:true });
 
     if(error){
+      console.error(error);
       alert("Error cargando datos: " + error.message);
       showLoading(false);
+      setEstado("Error al consultar datos.");
       return;
     }
 
-    setProgress(70, "Generando resumen...");
+    setProgress(65, "Generando gráficas y tabla...");
+
     render(data || []);
 
     setProgress(100, "Listo");
+
+    const ahora = new Date().toLocaleString("es-MX");
+    setEstado("Última actualización: " + ahora);
+
     setTimeout(() => showLoading(false), 400);
 
   }catch(e){
     console.error(e);
     alert("Error inesperado: " + e.message);
     showLoading(false);
+    setEstado("Error inesperado.");
   }
 }
 
@@ -338,6 +365,8 @@ function normalizar(data, anio){
     .filter(x => Number(x.ejercicio) === Number(anio))
     .forEach(r => {
       const mes = Number(r.mes);
+
+      if(!mes || mes < 1 || mes > 12) return;
 
       m[mes] = {
         mes,
@@ -369,13 +398,7 @@ const pluginEtiquetas = {
         ctx.fillStyle = "#1f2937";
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "center";
-
-        ctx.fillText(
-          moneyCompact(value),
-          bar.x,
-          bar.y - 5
-        );
-
+        ctx.fillText(moneyCompact(value), bar.x, bar.y - 5);
         ctx.restore();
       });
     });
@@ -416,7 +439,7 @@ function renderGraficas(data){
     div.className = "card";
 
     div.innerHTML = `
-      <h3>Ingresos GORB · ${anio} · ${money(total)} · ${facturas} facturas</h3>
+      <h3>Ingresos GORB · ${anio} · ${money(total)} · ${facturas.toLocaleString("es-MX")} facturas</h3>
       <div class="chartBox">
         <canvas id="c${anio}"></canvas>
       </div>
@@ -485,6 +508,13 @@ function renderTabla(data){
     return Number(a.mes) - Number(b.mes);
   });
 
+  if(!ordenado.length){
+    document.getElementById("tablaDetalle").innerHTML = `
+      <p>No hay datos disponibles en <b>${VISTA}</b>.</p>
+    `;
+    return;
+  }
+
   let html = `
     <table class="tabla">
       <thead>
@@ -503,7 +533,7 @@ function renderTabla(data){
   ordenado.forEach(r => {
     html += `
       <tr>
-        <td>${MESES[Number(r.mes)]} ${r.ejercicio}</td>
+        <td>${MESES[Number(r.mes)] || r.mes} ${r.ejercicio}</td>
         <td>${Number(r.facturas || 0).toLocaleString("es-MX")}</td>
         <td>${money(r.venta_antes_impuestos)}</td>
         <td>${money(r.total_iva)}</td>
@@ -526,4 +556,3 @@ cargarDatos();
 
 </body>
 </html>
-
