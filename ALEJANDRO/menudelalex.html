@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PROVSOFT | Inicio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --azul:#00416A;
+  --azul2:#0c6cbd;
+  --bg:#f1f5f9;
+}
+
+body{
+  margin:0;
+  font-family:'Segoe UI', Arial;
+  background:linear-gradient(135deg,var(--azul),#e4e5e6);
+}
+
+.header{
+  background:rgba(0,0,0,.6);
+  color:white;
+  padding:20px;
+  text-align:center;
+}
+
+.header h1{
+  margin:0;
+  font-size:26px;
+}
+
+.header p{
+  margin:5px 0 0;
+  font-size:14px;
+  opacity:.8;
+}
+
+.container{
+  max-width:1100px;
+  margin:30px auto;
+  padding:10px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+  transition:.2s;
+  cursor:pointer;
+}
+
+.card:hover{
+  transform:translateY(-4px);
+}
+
+.card h3{
+  margin:0 0 10px 0;
+  color:#0f172a;
+}
+
+.card p{
+  font-size:13px;
+  color:#475569;
+}
+
+.btn{
+  margin-top:12px;
+  display:inline-block;
+  background:var(--azul2);
+  color:white;
+  padding:8px 14px;
+  border-radius:8px;
+  text-decoration:none;
+  font-size:13px;
+}
+
+.footer{
+  text-align:center;
+  padding:20px;
+  font-size:12px;
+  color:white;
+  opacity:.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>PROVSOFT</h1>
+  <p>Sistema Central · Control Operativo</p>
+</div>
+
+<div class="container">
+
+  <div class="grid">
+
+    <!-- INGRESOS GORB DASHBOARD -->
+    <div class="card" onclick="go('dashboard_ingresos_gorb.html')">
+      <h3>📊 Dashboard Ingresos GORB</h3>
+      <p>Visualización mensual y anual de ingresos, impuestos y facturación.</p>
+      <a class="btn">Abrir</a>
+    </div>
+
+    <!-- TABLA ANUAL -->
+    <div class="card" onclick="go('TABLAANUALALEX.html')">
+      <h3>📈 Tabla Anual</h3>
+      <p>Consulta detallada anual por periodos y totales.</p>
+      <a class="btn">Abrir</a>
+    </div>
+
+    <!-- CARGA GORB -->
+    <div class="card" onclick="go('CargaIngresoGORB.html')">
+      <h3>📤 Carga de Ingresos GORB</h3>
+      <p>Subida y procesamiento de XML / CFDI hacia la base.</p>
+      <a class="btn">Abrir</a>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  PROVSOFT · Sistema interno
+</div>
+
+<script>
+function go(url){
+  window.location.href = url;
+}
+</script>
+
+</body>
+</html>
