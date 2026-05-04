@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ingresos GORB | PROVSOFT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --azul:#00416A;
+  --azul2:#0c6cbd;
+  --bg:#f2f4f8;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,var(--azul),#e4e5e6);
+  padding:20px;
+}
+
+.app{
+  max-width:1200px;
+  margin:auto;
+}
+
+.header{
+  background:rgba(0,0,0,.6);
+  color:white;
+  padding:15px;
+  border-radius:10px;
+}
+
+.header h2{
+  margin:0 0 6px 0;
+}
+
+.card{
+  background:white;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
+  box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+
+.loading{
+  display:none;
+  background:#fff7ed;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+#barra{
+  height:12px;
+  width:0%;
+  background:linear-gradient(90deg,#0c6cbd,#00c6ff);
+  transition:width .4s;
+}
+
+button{
+  min-height:38px;
+  padding:8px 14px;
+  margin-right:6px;
+  cursor:pointer;
+  border:0;
+  border-radius:8px;
+  background:#0c6cbd;
+  color:white;
+  font-weight:bold;
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.kpi{
+  background:#f8fafc;
+  border-left:5px solid var(--azul2);
+  padding:12px;
+  border-radius:10px;
+}
+
+.kpi .lbl{
+  font-size:12px;
+  color:#475569;
+}
+
+.kpi .val{
+  font-size:20px;
+  font-weight:bold;
+  color:#0f172a;
+  margin-top:5px;
+}
+
+.chartBox{
+  height:350px;
+}
+
+.tabla{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+.tabla th,
+.tabla td{
+  border-bottom:1px solid #e5e7eb;
+  padding:8px;
+  text-align:right;
+  font-size:13px;
+}
+
+.tabla th:first-child,
+.tabla td:first-child{
+  text-align:left;
+}
+
+.tabla th{
+  background:#f1f5f9;
+}
+
+@media(max-width:800px){
+  body{
+    padding:10px;
+  }
+
+  .kpis{
+    grid-template-columns:1fr;
+  }
+
+  .chartBox{
+    height:300px;
+  }
+}
+
+@media print{
+
+  @page{
+    size:letter landscape;
+    margin:8mm;
+  }
+
+  body{
+    background:white !important;
+    padding:0 !important;
+  }
+
+  .header,
+  .loading,
+  .acciones{
+    display:none !important;
+  }
+
+  .app{
+    max-width:none !important;
+    width:100% !important;
+  }
+
+  .card{
+    box-shadow:none !important;
+    border:1px solid #ddd !important;
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+  }
+
+  #graficas .card{
+    height:92mm !important;
+    overflow:hidden !important;
+  }
+
+  #graficas .card:nth-child(2n){
+    page-break-after:always !important;
+    break-after:page !important;
+  }
+
+  .chartBox{
+    height:76mm !important;
+  }
+
+  canvas{
+    width:100% !important;
+    height:76mm !important;
+    max-height:76mm !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <h2>Ingresos GORB</h2>
+    <div>PROVSOFT · Venta antes de impuestos · Global por mes / año</div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div id="loadingText">Iniciando...</div>
+    <div style="background:#eee;border-radius:8px;margin-top:8px;">
+      <div id="barra"></div>
+    </div>
+  </div>
+
+  <div class="card acciones">
+    <button id="btnActualizar" type="button">Actualizar</button>
+    <button id="btnImprimir" type="button">Imprimir</button>
+  </div>
+
+  <div class="card">
+    <h3>Resumen General</h3>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="lbl">Venta antes de impuestos</div>
+        <div class="val" id="kpiSubtotal">$0</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">IVA</div>
+        <div class="val" id="kpiIva">$0</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">IEPS</div>
+        <div class="val" id="kpiIeps">$0</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">Total facturado</div>
+        <div class="val" id="kpiTotal">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graficas"></div>
+
+  <div class="card">
+    <h3>Detalle Mensual</h3>
+    <div id="tablaDetalle"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { supabaseUrl, supabaseAnonKey } from "./config.js";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const VISTA = "v_ingresos_gorb_mensual";
+const EJERCICIOS = [2026, 2025, 2024, 2023];
+
+const MESES = [
+  "",
+  "Ene","Feb","Mar","Abr","May","Jun",
+  "Jul","Ago","Sep","Oct","Nov","Dic"
+];
+
+let charts = [];
+
+document.getElementById("btnActualizar").addEventListener("click", cargarDatos);
+document.getElementById("btnImprimir").addEventListener("click", () => window.print());
+
+function money(n){
+  return Number(n || 0).toLocaleString("es-MX", {
+    style:"currency",
+    currency:"MXN"
+  });
+}
+
+function moneyCompact(n){
+  return "$" + Number(n || 0).toLocaleString("es-MX", {
+    maximumFractionDigits:0
+  });
+}
+
+function showLoading(v){
+  document.getElementById("loading").style.display = v ? "block" : "none";
+}
+
+function setProgress(p, text){
+  document.getElementById("barra").style.width = p + "%";
+  document.getElementById("loadingText").textContent = text;
+}
+
+async function cargarDatos(){
+  try{
+    showLoading(true);
+    setProgress(20, "Consultando ingresos GORB...");
+
+    const { data, error } = await supabase
+      .from(VISTA)
+      .select("*")
+      .in("ejercicio", EJERCICIOS)
+      .order("ejercicio", { ascending:false })
+      .order("mes", { ascending:true });
+
+    if(error){
+      alert("Error cargando datos: " + error.message);
+      showLoading(false);
+      return;
+    }
+
+    setProgress(70, "Generando resumen...");
+    render(data || []);
+
+    setProgress(100, "Listo");
+    setTimeout(() => showLoading(false), 400);
+
+  }catch(e){
+    console.error(e);
+    alert("Error inesperado: " + e.message);
+    showLoading(false);
+  }
+}
+
+function normalizar(data, anio){
+  const m = {};
+
+  for(let i = 1; i <= 12; i++){
+    m[i] = {
+      mes:i,
+      venta_antes_impuestos:0,
+      total_iva:0,
+      total_ieps:0,
+      total_facturado:0,
+      facturas:0
+    };
+  }
+
+  data
+    .filter(x => Number(x.ejercicio) === Number(anio))
+    .forEach(r => {
+      const mes = Number(r.mes);
+
+      m[mes] = {
+        mes,
+        venta_antes_impuestos:Number(r.venta_antes_impuestos || 0),
+        total_iva:Number(r.total_iva || 0),
+        total_ieps:Number(r.total_ieps || 0),
+        total_facturado:Number(r.total_facturado || 0),
+        facturas:Number(r.facturas || 0)
+      };
+    });
+
+  return Object.values(m);
+}
+
+const pluginEtiquetas = {
+  id:"pluginEtiquetas",
+  afterDatasetsDraw(chart){
+    const { ctx } = chart;
+
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+
+      meta.data.forEach((bar, index) => {
+        const value = dataset.data[index];
+
+        if(!value) return;
+
+        ctx.save();
+        ctx.fillStyle = "#1f2937";
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+          moneyCompact(value),
+          bar.x,
+          bar.y - 5
+        );
+
+        ctx.restore();
+      });
+    });
+  }
+};
+
+function render(data){
+  charts.forEach(c => c.destroy());
+  charts = [];
+
+  renderKpis(data);
+  renderGraficas(data);
+  renderTabla(data);
+}
+
+function renderKpis(data){
+  const subtotal = data.reduce((s,x) => s + Number(x.venta_antes_impuestos || 0), 0);
+  const iva = data.reduce((s,x) => s + Number(x.total_iva || 0), 0);
+  const ieps = data.reduce((s,x) => s + Number(x.total_ieps || 0), 0);
+  const total = data.reduce((s,x) => s + Number(x.total_facturado || 0), 0);
+
+  document.getElementById("kpiSubtotal").textContent = money(subtotal);
+  document.getElementById("kpiIva").textContent = money(iva);
+  document.getElementById("kpiIeps").textContent = money(ieps);
+  document.getElementById("kpiTotal").textContent = money(total);
+}
+
+function renderGraficas(data){
+  const cont = document.getElementById("graficas");
+  cont.innerHTML = "";
+
+  EJERCICIOS.forEach(anio => {
+    const rows = normalizar(data, anio);
+    const total = rows.reduce((s, x) => s + x.venta_antes_impuestos, 0);
+    const facturas = rows.reduce((s, x) => s + x.facturas, 0);
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <h3>Ingresos GORB · ${anio} · ${money(total)} · ${facturas} facturas</h3>
+      <div class="chartBox">
+        <canvas id="c${anio}"></canvas>
+      </div>
+    `;
+
+    cont.appendChild(div);
+
+    const chart = new Chart(document.getElementById("c" + anio), {
+      type:"bar",
+      data:{
+        labels:rows.map(r => MESES[r.mes]),
+        datasets:[{
+          label:"Venta antes de impuestos",
+          data:rows.map(r => r.venta_antes_impuestos),
+          backgroundColor:"#0c6cbd",
+          borderRadius:6
+        }]
+      },
+      plugins:[pluginEtiquetas],
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        layout:{
+          padding:{
+            top:28
+          }
+        },
+        plugins:{
+          tooltip:{
+            callbacks:{
+              label:function(context){
+                return "Subtotal: " + money(context.raw);
+              }
+            }
+          },
+          legend:{
+            display:false
+          },
+          title:{
+            display:true,
+            text:`Ingresos GORB · ${anio}`
+          }
+        },
+        scales:{
+          y:{
+            beginAtZero:true,
+            ticks:{
+              callback:function(v){
+                return moneyCompact(v);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    charts.push(chart);
+  });
+}
+
+function renderTabla(data){
+  const ordenado = [...data].sort((a,b) => {
+    if(Number(b.ejercicio) !== Number(a.ejercicio)){
+      return Number(b.ejercicio) - Number(a.ejercicio);
+    }
+    return Number(a.mes) - Number(b.mes);
+  });
+
+  let html = `
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Periodo</th>
+          <th>Facturas</th>
+          <th>Subtotal</th>
+          <th>IVA</th>
+          <th>IEPS</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  ordenado.forEach(r => {
+    html += `
+      <tr>
+        <td>${MESES[Number(r.mes)]} ${r.ejercicio}</td>
+        <td>${Number(r.facturas || 0).toLocaleString("es-MX")}</td>
+        <td>${money(r.venta_antes_impuestos)}</td>
+        <td>${money(r.total_iva)}</td>
+        <td>${money(r.total_ieps)}</td>
+        <td>${money(r.total_facturado)}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById("tablaDetalle").innerHTML = html;
+}
+
+cargarDatos();
+</script>
+
+</body>
+</html>
