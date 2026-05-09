@@ -154,8 +154,20 @@ supabaseAnonKey
 const tabla = document.getElementById("tabla");
 const input = document.getElementById("uuid");
 
-document.getElementById("buscar").onclick = buscar;
+document.addEventListener("keydown",(e)=>{
 
+if(e.key === "F4"){
+
+e.preventDefault();
+
+input.focus();
+input.select();
+
+}
+
+});
+
+document.getElementById("buscar").onclick = buscar;
 document.getElementById("seleccionar").onclick = () => {
 input.focus();
 input.setSelectionRange(0, input.value.length);
