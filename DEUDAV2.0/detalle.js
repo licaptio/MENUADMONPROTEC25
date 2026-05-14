@@ -132,14 +132,16 @@ conceptos = f.conceptos_detalle.map(c => ({
   noIdentificacion: c.noIdentificacion || "",
   unitario: Number(c.valorUnitario || 0),
   descuento: Number(c.descuento || 0),
+
   iva: Array.isArray(c.traslados)
     ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
     : 0,
+
   ieps: Array.isArray(c.traslados)
     ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
     : 0,
 }));
-  }
+}
 
   // ---------------------------------------------
   // 🟥 CASO VIEJO – NO tiene valorUnitario
@@ -166,7 +168,7 @@ conceptos = f.conceptos_detalle.map(c => ({
   else {
     filas = `
       <tr>
-        <td colspan="8" style="text-align:center;color:#777;padding:20px">
+        <td colspan="9" style="text-align:center;color:#777;padding:20px">
           CFDI antiguo. No contiene desglose de conceptos.
         </td>
       </tr>`;
@@ -186,25 +188,26 @@ conceptos = f.conceptos_detalle.map(c => ({
       totalIVA += c.iva;
       totalIEPS += c.ieps;
 
-      filas += `
-        <tr>
-          <td>${c.cantidad}</td>
-          <td>${c.clave}</td>
-          <td style="text-align:left">
-  ${c.descripcion}
-  ${c.noIdentificacion
-    ? `<div style="font-size:11px;color:#666;margin-top:4px">
-         Código: ${c.noIdentificacion}
-       </div>`
-    : ""
-  }
-</td>
-          <td>${formatoMX(c.unitario)}</td>
-          <td>${formatoMX(c.descuento)}</td>
-          <td>${formatoMX(c.iva)}</td>
-          <td>${formatoMX(c.ieps)}</td>
-          <td>${formatoMX(importe)}</td>
-        </tr>`;
+filas += `
+  <tr>
+    <td>${c.cantidad}</td>
+    <td>${c.clave}</td>
+
+    <td style="text-align:left">
+      ${c.descripcion}
+    </td>
+
+    <td>
+      ${c.noIdentificacion || ""}
+    </td>
+
+    <td>${formatoMX(c.unitario)}</td>
+    <td>${formatoMX(c.descuento)}</td>
+    <td>${formatoMX(c.iva)}</td>
+    <td>${formatoMX(c.ieps)}</td>
+    <td>${formatoMX(importe)}</td>
+  </tr>`;
+      
     });
 
     window.__sub  = subtotal;
@@ -392,44 +395,47 @@ conceptos = f.conceptos_detalle.map(c => ({
         <table>
           <thead>
             <tr>
-              <th>Cant</th>
-              <th>Clave</th>
-              <th>Descripción</th>
-              <th>Unitario</th>
-              <th>Descuento</th>
-              <th>IVA</th>
-              <th>IEPS</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
+<thead>
+  <tr>
+    <th>Cant</th>
+    <th>Clave</th>
+    <th>Descripción</th>
+    <th>No. Identificación</th>
+    <th>Unitario</th>
+    <th>Descuento</th>
+    <th>IVA</th>
+    <th>IEPS</th>
+    <th>Subtotal</th>
+  </tr>
+</thead>
           <tbody>${filas}</tbody>
           <tfoot>
             <tr>
-              <td colspan="7" style="text-align:right">Subtotal</td>
+              <td colspan="8" style="text-align:right">Subtotal</td>
               <td>${formatoMX(window.__sub || 0)}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right" class="desc-total">Descuento Total</td>
+              <td colspan="8" style="text-align:right" class="desc-total">Descuento Total</td>
               <td class="desc-total">${formatoMX(window.__desc || 0)}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right">IVA</td>
+              <td colspan="8" style="text-align:right">IVA</td>
               <td>${formatoMX(window.__iva || 0)}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right">IEPS</td>
+              <td colspan="8" style="text-align:right">IEPS</td>
               <td>${formatoMX(window.__ieps || 0)}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right;color:#b00020">IVA Retenido</td>
+              <td colspan="8" style="text-align:right;color:#b00020">IVA Retenido</td>
               <td>${formatoMX(Math.abs(f.impuestos_retenidos?.iva || 0))}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right;color:#b00020">ISR Retenido</td>
+              <td colspan="8" style="text-align:right;color:#b00020">ISR Retenido</td>
               <td>${formatoMX(Math.abs(f.impuestos_retenidos?.isr || 0))}</td>
             </tr>
             <tr>
-              <td colspan="7" style="text-align:right;background:#003366;color:#fff">TOTAL NETO A PAGAR</td>
+              <td colspan="8" style="text-align:right;background:#003366;color:#fff">TOTAL NETO A PAGAR</td>
               <td style="background:#003366;color:#fff">
                 ${formatoMX(Number(f.total || 0))}
               </td>
