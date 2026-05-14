@@ -125,19 +125,20 @@ function renderFactura(f) {
     (f.conceptos_detalle[0].valorUnitario !== undefined ||
      f.conceptos_detalle[0].traslados !== undefined)
   ) {
-    conceptos = f.conceptos_detalle.map(c => ({
-      cantidad: Number(c.cantidad || 0),
-      clave: c.claveProdServ || "",
-      descripcion: c.descripcion || "",
-      unitario: Number(c.valorUnitario || 0),
-      descuento: Number(c.descuento || 0),
-      iva: Array.isArray(c.traslados)
-        ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
-        : 0,
-      ieps: Array.isArray(c.traslados)
-        ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
-        : 0,
-    }));
+conceptos = f.conceptos_detalle.map(c => ({
+  cantidad: Number(c.cantidad || 0),
+  clave: c.claveProdServ || "",
+  descripcion: c.descripcion || "",
+  noIdentificacion: c.noIdentificacion || "",
+  unitario: Number(c.valorUnitario || 0),
+  descuento: Number(c.descuento || 0),
+  iva: Array.isArray(c.traslados)
+    ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
+    : 0,
+  ieps: Array.isArray(c.traslados)
+    ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
+    : 0,
+}));
   }
 
   // ---------------------------------------------
@@ -189,7 +190,15 @@ function renderFactura(f) {
         <tr>
           <td>${c.cantidad}</td>
           <td>${c.clave}</td>
-          <td style="text-align:left">${c.descripcion}</td>
+          <td style="text-align:left">
+  ${c.descripcion}
+  ${c.noIdentificacion
+    ? `<div style="font-size:11px;color:#666;margin-top:4px">
+         Código: ${c.noIdentificacion}
+       </div>`
+    : ""
+  }
+</td>
           <td>${formatoMX(c.unitario)}</td>
           <td>${formatoMX(c.descuento)}</td>
           <td>${formatoMX(c.iva)}</td>
