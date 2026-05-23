@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Facturas por RFC O NOMBRE PROVEEDOR</title>
 
-  <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <style>
@@ -16,8 +15,133 @@
       font-family: sans-serif;
       background: #f4f4f4;
       margin: 0;
-      padding: 1rem;
       color: #1f2937;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      background: linear-gradient(135deg, #00416A, #0c6cbd);
+    }
+
+    .login-brand {
+      color: white;
+      padding: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-brand h1 {
+      font-size: 42px;
+      margin: 0 0 12px;
+    }
+
+    .login-brand p {
+      font-size: 18px;
+      opacity: .9;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    .login-panel {
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 390px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.18);
+    }
+
+    .login-card h2 {
+      margin: 0 0 8px;
+      color: #00416A;
+    }
+
+    .login-card small {
+      display: block;
+      margin-bottom: 22px;
+      color: #64748b;
+    }
+
+    .login-card label {
+      display: block;
+      font-weight: bold;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+    }
+
+    .login-card button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #00416A;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login-card button:hover {
+      background: #0c6cbd;
+    }
+
+    .login-error {
+      display: none;
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 14px;
+      border: 1px solid #fecaca;
+    }
+
+    .app-page {
+      display: none;
+      padding: 1rem;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    .usuario-info {
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .btn-salir {
+      background: #dc2626;
+      padding: 9px 14px;
+      border-radius: 8px;
+      width: auto;
     }
 
     h2 {
@@ -178,6 +302,32 @@
     }
 
     @media (max-width: 768px) {
+      .login-page {
+        grid-template-columns: 1fr;
+      }
+
+      .login-brand {
+        padding: 32px 24px;
+        min-height: 260px;
+      }
+
+      .login-brand h1 {
+        font-size: 32px;
+      }
+
+      .login-panel {
+        padding: 20px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-salir {
+        width: 100%;
+      }
+
       table, thead, tbody, th, td, tr {
         display: block;
       }
@@ -247,30 +397,80 @@
 </head>
 <body>
 
-  <h2>🔍 Consulta de Facturas por RFC O NOMBRE DE PROVEEDOR</h2>
-
-  <label><strong>RFC O NOMBRE:</strong></label>
-
-  <div class="filtros-wrap">
-    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" autocomplete="off">
-    <div id="sugerenciasRFC" class="autocomplete-list"></div>
-
-    <div class="campo-busqueda">
-      <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" autocomplete="off">
-      <div id="sugerenciasNombre" class="autocomplete-list"></div>
+  <section id="loginPage" class="login-page">
+    <div class="login-brand">
+      <h1>PROVSOFT</h1>
+      <p>Consulta segura de facturas por proveedor. Inicia sesión para acceder a la aplicación.</p>
     </div>
 
-    <button id="btnConsultar">🔎 Consultar</button>
-  </div>
+    <div class="login-panel">
+      <div class="login-card">
+        <h2>Iniciar sesión</h2>
+        <small>Usuario autorizado desde Firebase</small>
 
-  <div id="estadoCarga" class="estado-carga"></div>
-  <div id="resumenConteo"></div>
-  <div id="tablaResultados"></div>
+        <label for="loginUsuario">Usuario</label>
+        <input type="text" id="loginUsuario" placeholder="Usuario" autocomplete="username">
 
-  <script>
+        <label for="loginPassword">Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+
+        <button id="btnLogin">Entrar</button>
+
+        <div id="loginError" class="login-error"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="appPage" class="app-page">
+    <div class="topbar">
+      <div class="usuario-info" id="usuarioInfo">Sesión iniciada</div>
+      <button class="btn-salir" id="btnSalir">Cerrar sesión</button>
+    </div>
+
+    <h2>🔍 Consulta de Facturas por RFC O NOMBRE DE PROVEEDOR</h2>
+
+    <label><strong>RFC O NOMBRE:</strong></label>
+
+    <div class="filtros-wrap">
+      <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" autocomplete="off">
+      <div id="sugerenciasRFC" class="autocomplete-list"></div>
+
+      <div class="campo-busqueda">
+        <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" autocomplete="off">
+        <div id="sugerenciasNombre" class="autocomplete-list"></div>
+      </div>
+
+      <button id="btnConsultar">🔎 Consultar</button>
+    </div>
+
+    <div id="estadoCarga" class="estado-carga"></div>
+    <div id="resumenConteo"></div>
+    <div id="tablaResultados"></div>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      limit,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    import {
+      firebaseConfig,
+      supabaseUrl,
+      supabaseAnonKey
+    } from "./config.js";
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
     const supa = window.supabase.createClient(
-      window.PROVSOFT_CONFIG.supabaseUrl,
-      window.PROVSOFT_CONFIG.supabaseAnonKey
+      supabaseUrl,
+      supabaseAnonKey
     );
 
     let datosCrudos = [];
@@ -278,6 +478,15 @@
     let paginaActual = 1;
     const filasPorPagina = 100;
     window.rfcSeleccionado = null;
+
+    const loginPage = document.getElementById("loginPage");
+    const appPage = document.getElementById("appPage");
+    const loginUsuario = document.getElementById("loginUsuario");
+    const loginPassword = document.getElementById("loginPassword");
+    const btnLogin = document.getElementById("btnLogin");
+    const loginError = document.getElementById("loginError");
+    const usuarioInfo = document.getElementById("usuarioInfo");
+    const btnSalir = document.getElementById("btnSalir");
 
     const nombreFiltro = document.getElementById("nombreFiltro");
     const rfcFiltro = document.getElementById("rfcFiltro");
@@ -287,6 +496,106 @@
     const tablaResultados = document.getElementById("tablaResultados");
     const estadoCarga = document.getElementById("estadoCarga");
     const btnConsultar = document.getElementById("btnConsultar");
+
+    function mostrarLoginError(msg) {
+      loginError.textContent = msg || "";
+      loginError.style.display = msg ? "block" : "none";
+    }
+
+    function abrirAplicacion(usuarioData) {
+      loginPage.style.display = "none";
+      appPage.style.display = "block";
+
+      usuarioInfo.textContent =
+        `Sesión: ${usuarioData.nombre || usuarioData.usuario || "Usuario"} | Rol: ${usuarioData.rol || "—"}`;
+
+      cargarRFCs();
+    }
+
+    function cerrarSesion() {
+      sessionStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+      location.reload();
+    }
+
+    async function validarLogin() {
+      mostrarLoginError("");
+
+      const usuario = loginUsuario.value.trim().toUpperCase();
+      const password = loginPassword.value.trim();
+
+      if (!usuario || !password) {
+        mostrarLoginError("Captura usuario y contraseña.");
+        return;
+      }
+
+      btnLogin.disabled = true;
+      btnLogin.textContent = "Validando...";
+
+      try {
+        const q = query(
+          collection(db, "usuarios_ruta"),
+          where("usuario", "==", usuario),
+          limit(1)
+        );
+
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          mostrarLoginError("Usuario no encontrado.");
+          return;
+        }
+
+        const docUsuario = snap.docs[0];
+        const data = docUsuario.data();
+
+        if (data.activo !== true) {
+          mostrarLoginError("Usuario inactivo.");
+          return;
+        }
+
+        if (String(data.password || "") !== password) {
+          mostrarLoginError("Contraseña incorrecta.");
+          return;
+        }
+
+        const usuarioSeguro = {
+          id: docUsuario.id,
+          usuario: data.usuario || usuario,
+          nombre: data.nombre || "",
+          rol: data.rol || "",
+          rutaId: data.rutaId || ""
+        };
+
+        sessionStorage.setItem(
+          "PROVSOFT_USUARIO_ACTIVO",
+          JSON.stringify(usuarioSeguro)
+        );
+
+        abrirAplicacion(usuarioSeguro);
+
+      } catch (err) {
+        console.error("Error login:", err);
+        mostrarLoginError("Error al validar usuario en Firebase.");
+      } finally {
+        btnLogin.disabled = false;
+        btnLogin.textContent = "Entrar";
+      }
+    }
+
+    function revisarSesionLocal() {
+      const raw = sessionStorage.getItem("PROVSOFT_USUARIO_ACTIVO");
+
+      if (!raw) return;
+
+      try {
+        const usuario = JSON.parse(raw);
+        if (usuario && usuario.usuario) {
+          abrirAplicacion(usuario);
+        }
+      } catch {
+        sessionStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+      }
+    }
 
     function mostrarEstado(msg, visible = true) {
       estadoCarga.textContent = msg || "";
@@ -656,6 +965,16 @@
       if (e.key === "Enter") consultarPorRFC();
     });
 
+    loginUsuario.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginPassword.focus();
+    });
+
+    loginPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") validarLogin();
+    });
+
+    btnLogin.addEventListener("click", validarLogin);
+    btnSalir.addEventListener("click", cerrarSesion);
     btnConsultar.addEventListener("click", consultarPorRFC);
 
     window.irPrimeraPagina = irPrimeraPagina;
@@ -664,7 +983,7 @@
     window.irUltimaPagina = irUltimaPagina;
     window.irPaginaNumero = irPaginaNumero;
 
-    cargarRFCs();
+    revisarSesionLocal();
   </script>
 
 </body>
