@@ -1,8 +1,13 @@
+import {
+  supabaseUrl,
+  supabaseAnonKey
+} from "./config.js";
+
 // ============================================================
 // CONFIG SUPABASE
 // ============================================================
-const SUPA_URL = "https://cvpbtjlupswbyxenugpz.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY";
+const SUPA_URL = supabaseUrl;
+const SUPA_KEY = supabaseAnonKey;
 const TABLA = "deuda_limpia_pdd";
 
 // ============================================================
@@ -41,23 +46,18 @@ function formatFechaBonita(fechaRaw) {
   return `${dia} ${mes} ${año} – ${horas}:${mins} ${ampm}`;
 }
 
-// ============================================================
-// PARSE DEFENSIVO: si viene string JSON, lo convierte a objeto/array
-// ============================================================
 function parseJSONMaybe(v) {
   if (typeof v !== "string") return v;
   const s = v.trim();
   if (!s) return v;
-  // intento parsear solo si parece JSON
+
   if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
     try { return JSON.parse(s); } catch { return v; }
   }
+
   return v;
 }
 
-// ============================================================
-// TOTAL AUTORITATIVO CFDI (NO SE CALCULA, SE RESPETA)
-// ============================================================
 function totalCFDI(f) {
   return Number(f?.total || 0);
 }
@@ -69,6 +69,7 @@ const params = new URLSearchParams(location.search);
 const uuid = params.get("uuid");
 
 const contenedor = $("contenedor");
+
 if (!uuid) {
   contenedor.innerHTML = `<p>No hay UUID en la URL</p>`;
   throw new Error("Falta UUID");
@@ -78,13 +79,17 @@ if (!uuid) {
 // CONSULTA PRINCIPAL A SUPABASE
 // ============================================================
 async function cargarCFDI() {
-  const url = `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}&select=*`;
+  const url = `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}&select=*`;
 
   const res = await fetch(url, {
-    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    headers: {
+      apikey: SUPA_KEY,
+      Authorization: `Bearer ${SUPA_KEY}`
+    }
   });
 
   const json = await res.json();
+
   if (!Array.isArray(json) || !json.length) {
     contenedor.innerHTML = "<p>No se encontró información.</p>";
     return;
@@ -99,53 +104,39 @@ async function cargarCFDI() {
 function renderFactura(f) {
   window.__FACTURA = f;
 
-  // ============================
-  // FIX 1: NORMALIZAR NOMBRE EMISOR (PROVEEDOR)
-  // ============================
   f.nombre_emisor = f.nombre_emisor || f.razon_social_emisor || "";
- // FIX RECEPTOR
   f.nombre_receptor = f.nombre_receptor || f.razon_social_receptor || "";
 
-  // ============================
-  // FIX 2: PARSEAR CAMPOS QUE A VECES VIENEN COMO STRING JSON
-  // ============================
   f.conceptos_detalle   = parseJSONMaybe(f.conceptos_detalle);
   f.complementos        = parseJSONMaybe(f.complementos);
   f.impuestos_globales  = parseJSONMaybe(f.impuestos_globales);
+  f.impuestos_retenidos = parseJSONMaybe(f.impuestos_retenidos) || {};
 
   let filas = "";
   let conceptos = [];
 
-  // ---------------------------------------------
-  // 🟦 CASO NUEVO – tiene valorUnitario y traslados
-  // ---------------------------------------------
   if (
     Array.isArray(f.conceptos_detalle) &&
     f.conceptos_detalle.length > 0 &&
     (f.conceptos_detalle[0].valorUnitario !== undefined ||
      f.conceptos_detalle[0].traslados !== undefined)
   ) {
-conceptos = f.conceptos_detalle.map(c => ({
-  cantidad: Number(c.cantidad || 0),
-  clave: c.claveProdServ || "",
-  descripcion: c.descripcion || "",
-  noIdentificacion: c.noIdentificacion || "",
-  unitario: Number(c.valorUnitario || 0),
-  descuento: Number(c.descuento || 0),
+    conceptos = f.conceptos_detalle.map(c => ({
+      cantidad: Number(c.cantidad || 0),
+      clave: c.claveProdServ || "",
+      descripcion: c.descripcion || "",
+      noIdentificacion: c.noIdentificacion || "",
+      unitario: Number(c.valorUnitario || 0),
+      descuento: Number(c.descuento || 0),
+      iva: Array.isArray(c.traslados)
+        ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
+        : 0,
+      ieps: Array.isArray(c.traslados)
+        ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
+        : 0
+    }));
+  }
 
-  iva: Array.isArray(c.traslados)
-    ? Number(c.traslados.find(t => t.impuesto === "002")?.importe || 0)
-    : 0,
-
-  ieps: Array.isArray(c.traslados)
-    ? Number(c.traslados.find(t => t.impuesto === "003")?.importe || 0)
-    : 0,
-}));
-}
-
-  // ---------------------------------------------
-  // 🟥 CASO VIEJO – NO tiene valorUnitario
-  // ---------------------------------------------
   else if (
     Array.isArray(f.conceptos_detalle) &&
     f.conceptos_detalle.length > 0 &&
@@ -155,6 +146,7 @@ conceptos = f.conceptos_detalle.map(c => ({
       cantidad: Number(c.cantidad || 0),
       clave: c.codigoSAT || "",
       descripcion: c.descripcion || "",
+      noIdentificacion: c.noIdentificacion || "",
       unitario: Number(c.costoUnitario || 0),
       descuento: 0,
       iva: 0,
@@ -162,9 +154,6 @@ conceptos = f.conceptos_detalle.map(c => ({
     }));
   }
 
-  // ---------------------------------------------
-  // 🟧 SI NO TIENE NADA
-  // ---------------------------------------------
   else {
     filas = `
       <tr>
@@ -174,9 +163,6 @@ conceptos = f.conceptos_detalle.map(c => ({
       </tr>`;
   }
 
-  // ---------------------------------------------
-  // GENERACIÓN DE TABLA Y TOTALES
-  // ---------------------------------------------
   if (conceptos.length > 0) {
     let subtotal = 0, totalDesc = 0, totalIVA = 0, totalIEPS = 0;
 
@@ -188,26 +174,18 @@ conceptos = f.conceptos_detalle.map(c => ({
       totalIVA += c.iva;
       totalIEPS += c.ieps;
 
-filas += `
-  <tr>
-    <td>${c.cantidad}</td>
-    <td>${c.clave}</td>
-
-    <td style="text-align:left">
-      ${c.descripcion}
-    </td>
-
-    <td>
-      ${c.noIdentificacion || ""}
-    </td>
-
-    <td>${formatoMX(c.unitario)}</td>
-    <td>${formatoMX(c.descuento)}</td>
-    <td>${formatoMX(c.iva)}</td>
-    <td>${formatoMX(c.ieps)}</td>
-    <td>${formatoMX(importe)}</td>
-  </tr>`;
-      
+      filas += `
+        <tr>
+          <td>${c.cantidad}</td>
+          <td>${c.clave}</td>
+          <td style="text-align:left">${c.descripcion}</td>
+          <td>${c.noIdentificacion || ""}</td>
+          <td>${formatoMX(c.unitario)}</td>
+          <td>${formatoMX(c.descuento)}</td>
+          <td>${formatoMX(c.iva)}</td>
+          <td>${formatoMX(c.ieps)}</td>
+          <td>${formatoMX(importe)}</td>
+        </tr>`;
     });
 
     window.__sub  = subtotal;
@@ -216,14 +194,11 @@ filas += `
     window.__ieps = totalIEPS;
   }
 
-  // ============================================================
-  // GALERÍA DE FOTOS
-  // ============================================================
   function renderGaleria() {
     const galeria = $("galeriaFotos");
     galeria.innerHTML = "";
 
-    const fotos = f.fotos || [];
+    const fotos = Array.isArray(f.fotos) ? f.fotos : [];
 
     if (!fotos.length) {
       galeria.innerHTML = `<p style="color:#666">No hay fotos.</p>`;
@@ -239,9 +214,6 @@ filas += `
     });
   }
 
-  // ============================================================
-  // TIMBRE
-  // ============================================================
   let timbreHTML = `<p>No hay datos de timbrado</p>`;
 
   if (Array.isArray(f.complementos) && f.complementos.length) {
@@ -265,12 +237,8 @@ filas += `
       </div>`;
   }
 
-  // ============================================================
-  // IMPUESTOS GLOBALES – DINÁMICOS + TOTAL DE IMPUESTOS
-  // ============================================================
   let impGlobalHTML = "";
 
-  // IVA (siempre 16% en tu vista)
   impGlobalHTML += `
     <tr>
       <td>IVA</td>
@@ -278,17 +246,18 @@ filas += `
       <td>${formatoMX(window.__iva || 0)}</td>
     </tr>`;
 
-  // IEPS: detectar tasas reales
   let iepsTasas = new Set();
+
   if (Array.isArray(f.conceptos_detalle)) {
     f.conceptos_detalle.forEach(c => {
       if (Array.isArray(c.traslados)) {
         c.traslados
-          .filter(t => t.impuesto === "003" && t.tasa > 0)
-          .forEach(t => iepsTasas.add((t.tasa * 100).toFixed(2)));
+          .filter(t => t.impuesto === "003" && Number(t.tasa || 0) > 0)
+          .forEach(t => iepsTasas.add((Number(t.tasa) * 100).toFixed(2)));
       }
     });
   }
+
   iepsTasas = [...iepsTasas];
 
   if (iepsTasas.length === 1) {
@@ -307,6 +276,7 @@ filas += `
           <td>${formatoMX(0)}</td>
         </tr>`;
     });
+
     impGlobalHTML += `
       <tr>
         <td>IEPS Total</td>
@@ -329,9 +299,6 @@ filas += `
       <td>${formatoMX((window.__iva || 0) + (window.__ieps || 0))}</td>
     </tr>`;
 
-  // ============================================================
-  // HTML FINAL
-  // ============================================================
   contenedor.innerHTML = `
     <div class="datos-grid">
 
@@ -395,19 +362,17 @@ filas += `
         <table>
           <thead>
             <tr>
-<thead>
-  <tr>
-    <th>Cant</th>
-    <th>Clave</th>
-    <th>Descripción</th>
-    <th>No. Identificación</th>
-    <th>Unitario</th>
-    <th>Descuento</th>
-    <th>IVA</th>
-    <th>IEPS</th>
-    <th>Subtotal</th>
-  </tr>
-</thead>
+              <th>Cant</th>
+              <th>Clave</th>
+              <th>Descripción</th>
+              <th>No. Identificación</th>
+              <th>Unitario</th>
+              <th>Descuento</th>
+              <th>IVA</th>
+              <th>IEPS</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
           <tbody>${filas}</tbody>
           <tfoot>
             <tr>
@@ -457,8 +422,6 @@ filas += `
   `;
 
   renderGaleria();
-
-  // Conectar botón guardar folio
   initFolioTecnopro(f.uuid_cfdi);
 }
 
@@ -466,7 +429,6 @@ filas += `
 // GUARDAR FOLIO TECNOPRO
 // ============================================================
 function initFolioTecnopro(uuid_cfdi) {
-
   const input = document.querySelector('[data-folio-input]');
   const btn   = document.querySelector('[data-folio-btn]');
 
@@ -475,7 +437,6 @@ function initFolioTecnopro(uuid_cfdi) {
     return;
   }
 
-  // 🔒 LIMPIA EVENTOS PREVIOS
   btn.replaceWith(btn.cloneNode(true));
   const btnClean = document.querySelector('[data-folio-btn]');
 
@@ -488,7 +449,7 @@ function initFolioTecnopro(uuid_cfdi) {
     }
 
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid_cfdi}`,
+      `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid_cfdi)}`,
       {
         method: "PATCH",
         headers: {
@@ -532,22 +493,30 @@ async function subirFoto() {
   const url = pub.publicUrl;
 
   const fotosRes = await fetch(
-    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}&select=fotos`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}&select=fotos`,
+    {
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`
+      }
+    }
   );
 
   const actuales = (await fotosRes.json())[0]?.fotos || [];
   const nuevas = [...actuales, url];
 
-  const up = await fetch(`${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}`, {
-    method: "PATCH",
-    headers: {
-      apikey: SUPA_KEY,
-      Authorization: `Bearer ${SUPA_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ fotos: nuevas })
-  });
+  const up = await fetch(
+    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ fotos: nuevas })
+    }
+  );
 
   if (!up.ok) return showToast("Error BD", true);
 
@@ -563,35 +532,45 @@ async function eliminarFoto(url) {
 
   const marker = `/storage/v1/object/public/${BUCKET}/`;
   const idx = url.indexOf(marker);
+
   if (idx === -1) return showToast("Ruta inválida", true);
 
   const ruta = url.substring(idx + marker.length);
-
   const client = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
   await client.storage.from(BUCKET).remove([ruta]);
 
   const fotosRes = await fetch(
-    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}&select=fotos`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}&select=fotos`,
+    {
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`
+      }
+    }
   );
 
   const actuales = (await fotosRes.json())[0]?.fotos || [];
   const filtradas = actuales.filter(f => f !== url);
 
-  await fetch(`${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${uuid}`, {
-    method: "PATCH",
-    headers: {
-      apikey: SUPA_KEY,
-      Authorization: `Bearer ${SUPA_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ fotos: filtradas })
-  });
+  await fetch(
+    `${SUPA_URL}/rest/v1/${TABLA}?uuid_cfdi=eq.${encodeURIComponent(uuid)}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ fotos: filtradas })
+    }
+  );
 
   showToast("Foto eliminada");
   setTimeout(() => location.reload(), 700);
 }
+
+window.eliminarFoto = eliminarFoto;
 
 // ============================================================
 // TOAST
@@ -603,9 +582,6 @@ function showToast(msg, error = false) {
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2000);
 }
-
-// INICIO
-cargarCFDI();
 
 // ============================================================
 // COPIAR UUID
@@ -621,7 +597,7 @@ document.addEventListener("click", e => {
 });
 
 // ============================================================
-// FOTOS — CONTROL CENTRAL (FIX DEFINITIVO)
+// FOTOS — CONTROL CENTRAL
 // ============================================================
 document.addEventListener("DOMContentLoaded", () => {
   const btnCapturar = $("btnCapturar");
@@ -650,3 +626,8 @@ document.addEventListener("DOMContentLoaded", () => {
     await subirFoto();
   };
 });
+
+// ============================================================
+// INICIO
+// ============================================================
+cargarCFDI();
