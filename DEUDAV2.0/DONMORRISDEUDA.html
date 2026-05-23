@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Facturas por RFC O NOMBRE PROVEEDOR</title>
 
+  <script src="./config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <style>
@@ -250,15 +252,15 @@
   <label><strong>RFC O NOMBRE:</strong></label>
 
   <div class="filtros-wrap">
-    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" oninput="autocompleteRFC()" autocomplete="off">
+    <input type="text" id="rfcFiltro" placeholder="Escribe RFC…" autocomplete="off">
     <div id="sugerenciasRFC" class="autocomplete-list"></div>
 
     <div class="campo-busqueda">
-      <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" oninput="autocompleteNombre()" autocomplete="off">
+      <input type="text" id="nombreFiltro" placeholder="Escribe Nombre…" autocomplete="off">
       <div id="sugerenciasNombre" class="autocomplete-list"></div>
     </div>
 
-    <button onclick="consultarPorRFC()">🔎 Consultar</button>
+    <button id="btnConsultar">🔎 Consultar</button>
   </div>
 
   <div id="estadoCarga" class="estado-carga"></div>
@@ -267,8 +269,8 @@
 
   <script>
     const supa = window.supabase.createClient(
-      "https://cvpbtjlupswbyxenugpz.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cGJ0amx1cHN3Ynl4ZW51Z3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MDIxOTQsImV4cCI6MjA2MzI3ODE5NH0.iiJsYM3TtaGPdeCtPcEXwAz3LfFc1uJGECEvOErvrqY"
+      window.PROVSOFT_CONFIG.supabaseUrl,
+      window.PROVSOFT_CONFIG.supabaseAnonKey
     );
 
     let datosCrudos = [];
@@ -284,6 +286,7 @@
     const resumenConteo = document.getElementById("resumenConteo");
     const tablaResultados = document.getElementById("tablaResultados");
     const estadoCarga = document.getElementById("estadoCarga");
+    const btnConsultar = document.getElementById("btnConsultar");
 
     function mostrarEstado(msg, visible = true) {
       estadoCarga.textContent = msg || "";
@@ -300,7 +303,6 @@
     }
 
     async function cargarRFCs() {
-      console.log("🚀 Cargando TODOS los RFCs (paginado)...");
       mostrarEstado("Cargando catálogo de proveedores...");
 
       let todos = [];
@@ -317,7 +319,7 @@
           .range(desde, desde + tamPagina - 1);
 
         if (error) {
-          console.error("❌ Error cargando página:", error);
+          console.error("Error cargando proveedores:", error);
           mostrarEstado("Error cargando proveedores");
           return;
         }
@@ -325,8 +327,6 @@
         pagina = data || [];
         todos = todos.concat(pagina);
         desde += tamPagina;
-
-        console.log(`📥 Página cargada: ${pagina.length} registros`);
       } while (pagina.length === tamPagina);
 
       const mapa = new Map();
@@ -347,56 +347,16 @@
       listaBusqueda = Array.from(mapa, ([rfc, nombre]) => ({ rfc, nombre }))
         .sort((a, b) => a.rfc.localeCompare(b.rfc));
 
-      console.log(`📊 RFCs ÚNICOS: ${listaBusqueda.length}`);
       mostrarEstado(`Catálogo cargado: ${listaBusqueda.length} proveedores`);
       setTimeout(() => mostrarEstado("", false), 1200);
     }
 
-    function autocompleteRFC() {
-      const txt = rfcFiltro.value.trim().toUpperCase();
-      const lista = sugerenciasRFC;
-
-      lista.innerHTML = "";
-
-      if (txt.length < 2) {
-        lista.style.display = "none";
-        return;
-      }
-
-      const resultados = listaBusqueda.filter(x => {
-        if (x.rfc && x.rfc.includes(txt)) return true;
-        if (x.nombre && x.nombre.includes(txt)) return true;
-        const nombreSinAcentos = normalizarTexto(x.nombre);
-        return nombreSinAcentos.includes(normalizarTexto(txt));
-      });
-
-      if (resultados.length === 0) {
-        lista.style.display = "none";
-        return;
-      }
-
-      resultados.slice(0, 15).forEach(x => {
-        const div = document.createElement("div");
-        div.textContent = `${x.rfc} — ${x.nombre}`;
-        div.onclick = () => {
-          rfcFiltro.value = x.rfc;
-          nombreFiltro.value = x.nombre;
-          window.rfcSeleccionado = x.rfc;
-          lista.style.display = "none";
-        };
-        lista.appendChild(div);
-      });
-
-      lista.style.display = "block";
-    }
-
     function autocompleteNombre() {
       const txt = normalizarTexto(nombreFiltro.value);
-      const lista = sugerenciasNombre;
-      lista.innerHTML = "";
+      sugerenciasNombre.innerHTML = "";
 
       if (txt.length < 1) {
-        lista.style.display = "none";
+        sugerenciasNombre.style.display = "none";
         window.rfcSeleccionado = null;
         return;
       }
@@ -418,16 +378,18 @@
       resultados.slice(0, 20).forEach(x => {
         const div = document.createElement("div");
         div.textContent = `${x.nombre} — ${x.rfc}`;
+
         div.onclick = () => {
           nombreFiltro.value = x.nombre;
           rfcFiltro.value = x.rfc;
           window.rfcSeleccionado = x.rfc;
-          lista.style.display = "none";
+          sugerenciasNombre.style.display = "none";
         };
-        lista.appendChild(div);
+
+        sugerenciasNombre.appendChild(div);
       });
 
-      lista.style.display = resultados.length ? "block" : "none";
+      sugerenciasNombre.style.display = resultados.length ? "block" : "none";
     }
 
     async function consultarPorRFC() {
@@ -460,7 +422,7 @@
         .eq("rfc_emisor", rfc);
 
       if (errorConteo) {
-        console.error("❌ Error al contar registros:", errorConteo);
+        console.error("Error al contar registros:", errorConteo);
         mostrarEstado("", false);
         alert("Error al contar registros");
         return;
@@ -473,6 +435,7 @@
 
       while (seguir) {
         const hasta = desde + TAMANO_PAGINA_BD - 1;
+
         mostrarEstado(`Consultando BD ${desde + 1} a ${Math.min(hasta + 1, count || hasta + 1)}...`);
 
         const { data, error } = await supa
@@ -483,7 +446,7 @@
           .range(desde, hasta);
 
         if (error) {
-          console.error("❌ Error al traer facturas:", error);
+          console.error("Error al traer facturas:", error);
           mostrarEstado("", false);
           alert("Error al traer facturas");
           return;
@@ -491,8 +454,6 @@
 
         const bloque = data || [];
         todos = todos.concat(bloque);
-
-        console.log(`📦 Página BD ${desde}-${hasta}: ${bloque.length} registros`);
 
         if (bloque.length < TAMANO_PAGINA_BD) {
           seguir = false;
@@ -508,6 +469,7 @@
         `🔢 Total BD: ${count}\n📄 Cargados: ${todos.length}\n⬇ Orden: más reciente primero`;
 
       renderPagina();
+
       mostrarEstado(`Consulta terminada. Facturas cargadas: ${todos.length}`);
       setTimeout(() => mostrarEstado("", false), 1800);
     }
@@ -522,6 +484,7 @@
       }
 
       const totalPaginas = Math.ceil(datosCrudos.length / filasPorPagina);
+
       if (paginaActual < 1) paginaActual = 1;
       if (paginaActual > totalPaginas) paginaActual = totalPaginas;
 
@@ -529,17 +492,24 @@
       const fin = inicio + filasPorPagina;
       const pagina = datosCrudos.slice(inicio, fin);
 
-      let html = `<div class="tabla-wrap"><table><thead><tr>
-        <th>Fecha</th>
-        <th>Días</th>
-        <th>UUID</th>
-        <th>RFC</th>
-        <th>Proveedor</th>
-        <th>Total</th>
-        <th>Serie/Folio</th>
-        <th>Folio Tecnopro</th>
-        <th>📷 Fotos</th>
-      </tr></thead><tbody>`;
+      let html = `
+        <div class="tabla-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Días</th>
+                <th>UUID</th>
+                <th>RFC</th>
+                <th>Proveedor</th>
+                <th>Total</th>
+                <th>Serie/Folio</th>
+                <th>Folio Tecnopro</th>
+                <th>📷 Fotos</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
 
       pagina.forEach(f => {
         const uuid = f.uuid_cfdi || f.uuid || "—";
@@ -554,32 +524,35 @@
         }
 
         html += `
-<tr>
-  <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
-  <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
-  <td data-label="UUID">
-    <a href="detalle.html?uuid=${encodeURIComponent(uuid)}" target="_blank" style="color:#007bff;">
-      ${uuid}
-    </a>
-  </td>
-  <td data-label="RFC">${f.rfc_emisor || "—"}</td>
-  <td data-label="Proveedor">${proveedor}</td>
-  <td data-label="Total">${monedaMXN(f.total)}</td>
-  <td data-label="Serie/Folio">${f.serie_folio || "—"}</td>
-  <td data-label="Folio Tecnopro">${f.foliotecnopro || "—"}</td>
-  <td data-label="Fotos">
-    ${
-      (f.fotos && Array.isArray(f.fotos) && f.fotos.length > 0)
-        ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(" ")
-        : "—"
-    }
-  </td>
-</tr>`;
+          <tr>
+            <td data-label="Fecha">${formatearFecha(f.fecha)}</td>
+            <td data-label="Días">${calcDiasDesdeHoy(f.fecha)}</td>
+            <td data-label="UUID">
+              <a href="detalle.html?uuid=${encodeURIComponent(uuid)}" target="_blank" style="color:#007bff;">
+                ${uuid}
+              </a>
+            </td>
+            <td data-label="RFC">${f.rfc_emisor || "—"}</td>
+            <td data-label="Proveedor">${proveedor}</td>
+            <td data-label="Total">${monedaMXN(f.total)}</td>
+            <td data-label="Serie/Folio">${f.serie_folio || "—"}</td>
+            <td data-label="Folio Tecnopro">${f.foliotecnopro || "—"}</td>
+            <td data-label="Fotos">
+              ${
+                (f.fotos && Array.isArray(f.fotos) && f.fotos.length > 0)
+                  ? f.fotos.map(url => `<a href="${url}" target="_blank">📷</a>`).join(" ")
+                  : "—"
+              }
+            </td>
+          </tr>
+        `;
       });
 
-      html += `</tbody></table></div>`;
-
       html += `
+            </tbody>
+          </table>
+        </div>
+
         <div class="paginacion">
           <button onclick="irPrimeraPagina()" ${paginaActual === 1 ? "disabled" : ""}>⏮ Primera</button>
           <button onclick="irPaginaAnterior()" ${paginaActual === 1 ? "disabled" : ""}>◀ Anterior</button>
@@ -653,55 +626,43 @@
 
     function formatearFecha(fechaISO) {
       if (!fechaISO) return "—";
+
       const fecha = new Date(fechaISO);
       const dia = String(fecha.getDate()).padStart(2, "0");
       const mes = String(fecha.getMonth() + 1).padStart(2, "0");
       const año = fecha.getFullYear();
+
       return `${dia}/${mes}/${año}`;
     }
 
     function monedaMXN(valor) {
       const numero = Number(valor || 0);
+
       return numero.toLocaleString("es-MX", {
         style: "currency",
         currency: "MXN"
       });
     }
 
-    async function guardarFolioFactura(idFactura, folio) {
-      if (!folio) return;
-
-      const folioFormateado = String(folio).padStart(7, "0");
-
-      const { error } = await supa
-        .from("deuda_limpia_pdd")
-        .update({ foliotecnopro: folioFormateado })
-        .eq("id", idFactura);
-
-      if (error) {
-        console.error("❌ Error guardando folio:", error);
-        alert("Error al guardar Folio Tecnopro");
-        return;
-      }
-
-      console.log("✅ Folio Tecnopro guardado:", folioFormateado);
-    }
-
     document.addEventListener("click", (e) => {
       if (!sugerenciasNombre.contains(e.target) && e.target !== nombreFiltro) {
         sugerenciasNombre.style.display = "none";
       }
-
-      if (!sugerenciasRFC.contains(e.target) && e.target !== rfcFiltro) {
-        sugerenciasRFC.style.display = "none";
-      }
     });
+
+    nombreFiltro.addEventListener("input", autocompleteNombre);
 
     nombreFiltro.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        consultarPorRFC();
-      }
+      if (e.key === "Enter") consultarPorRFC();
     });
+
+    btnConsultar.addEventListener("click", consultarPorRFC);
+
+    window.irPrimeraPagina = irPrimeraPagina;
+    window.irPaginaAnterior = irPaginaAnterior;
+    window.irPaginaSiguiente = irPaginaSiguiente;
+    window.irUltimaPagina = irUltimaPagina;
+    window.irPaginaNumero = irPaginaNumero;
 
     cargarRFCs();
   </script>
