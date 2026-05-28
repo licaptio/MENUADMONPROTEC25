@@ -5,32 +5,57 @@
   <title>Detalle CFDI – PROVSOFT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script>
-  (() => {
-    const sesion = sessionStorage.getItem("PROVSOFT_USUARIO_ACTIVO");
+<script>
+(() => {
 
-    if (!sesion) {
-      alert("Debes iniciar sesión.");
-      window.location.replace("index.html");
-      return;
-    }
+  const sesion =
+    sessionStorage.getItem("PROVSOFT_USUARIO_ACTIVO") ||
+    localStorage.getItem("PROVSOFT_USUARIO_ACTIVO");
 
-    try {
-      const usuario = JSON.parse(sesion);
+  if (!sesion) {
+    alert("Debes iniciar sesión.");
+    window.location.replace("index.html");
+    return;
+  }
 
-      if (!usuario || !usuario.usuario) {
-        sessionStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
-        window.location.replace("index.html");
-        return;
-      }
-    } catch (e) {
+  try {
+
+    const usuario = JSON.parse(sesion);
+
+    // ACEPTAR CUALQUIER FORMATO NUEVO O VIEJO
+    const valido =
+      usuario &&
+      (
+        usuario.usuario ||
+        usuario.email ||
+        usuario.nombre ||
+        usuario.id
+      );
+
+    if (!valido) {
       sessionStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+      localStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+
+      alert("Sesión inválida.");
       window.location.replace("index.html");
       return;
     }
-  })();
-  </script>
 
+    console.log("✅ Sesión válida", usuario);
+
+  } catch (e) {
+
+    console.error(e);
+
+    sessionStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+    localStorage.removeItem("PROVSOFT_USUARIO_ACTIVO");
+
+    alert("Error de sesión.");
+    window.location.replace("index.html");
+  }
+
+})();
+</script>
   <!-- CSS externo -->
   <link rel="stylesheet" href="detalle.css">
 
