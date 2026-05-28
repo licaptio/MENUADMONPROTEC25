@@ -7,7 +7,7 @@ import {
 // CONFIG SUPABASE
 // ============================================================
 const SUPA_URL = supabaseUrl;
-const SUPA_KEY = supabaseAnonKey;
+const SUPA_KEY = window.supabasePublishableKey || supabaseAnonKey;
 const TABLA = "deuda_limpia_pdd";
 
 // ============================================================
