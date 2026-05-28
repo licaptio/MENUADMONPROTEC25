@@ -227,8 +227,14 @@ return;
 tabla.innerHTML = "";
 
 rows.forEach(r=>{
-
-const tr = document.createElement("tr");
+localStorage.setItem(
+  "PROVSOFT_USUARIO_ACTIVO",
+  JSON.stringify({
+    usuario:"MASTER"
+  })
+);
+  
+  const tr = document.createElement("tr");
 
 tr.innerHTML = `
 
