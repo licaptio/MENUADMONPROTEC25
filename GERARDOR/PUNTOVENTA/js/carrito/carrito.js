@@ -2,17 +2,20 @@ import { money } from "../util/money.js";
 
 export let carrito = [];
 
+function normalizarTasa(tasa) {
+  const n = Number(tasa || 0);
+  return n > 1 ? n / 100 : n;
+}
+
 export function agregarProducto(prod, cantidad = 1) {
   if (!prod) return;
 
-  const id = prod.id;
-  const existente = carrito.find(x => x.id === id);
-
+  const existente = carrito.find(x => x.id === prod.id);
   const precio = Number(prod.precioPublico || prod.precio || 0);
 
   if (existente) {
     existente.cantidad += cantidad;
-    existente.importe = existente.cantidad * existente.precioUnit;
+    existente.importe = +(existente.cantidad * existente.precioUnit).toFixed(2);
   } else {
     carrito.unshift({
       id: prod.id,
@@ -20,10 +23,10 @@ export function agregarProducto(prod, cantidad = 1) {
       nombre: prod.nombre || prod.concepto || "SIN NOMBRE",
       cantidad,
       precioUnit: precio,
-      importe: cantidad * precio,
+      importe: +(cantidad * precio).toFixed(2),
 
-      ivaTasa: Number(prod.ivaTasa || 0),
-      iepsTasa: Number(prod.iepsTasa || 0),
+      ivaTasa: normalizarTasa(prod.ivaTasa),
+      iepsTasa: normalizarTasa(prod.iepsTasa),
       costoUnit: Number(prod.costoUnit || 0),
 
       departamento_id: prod.departamento_id || null,
@@ -53,7 +56,7 @@ export function actualizarCantidad(id, nuevaCantidad) {
   }
 
   item.cantidad = cantidad;
-  item.importe = item.cantidad * item.precioUnit;
+  item.importe = +(item.cantidad * item.precioUnit).toFixed(2);
 
   renderCarrito();
 }
@@ -65,12 +68,13 @@ export function limpiarCarrito() {
 
 export function calcularTotales() {
   let subtotal = 0;
-  let impuestos = 0;
+  let iva = 0;
+  let ieps = 0;
 
   carrito.forEach(it => {
     const importe = Number(it.importe || 0);
-    const ivaTasa = Number(it.ivaTasa || 0);
-    const iepsTasa = Number(it.iepsTasa || 0);
+    const ivaTasa = normalizarTasa(it.ivaTasa);
+    const iepsTasa = normalizarTasa(it.iepsTasa);
 
     let base = importe;
 
@@ -82,31 +86,43 @@ export function calcularTotales() {
       base = importe / (1 + ivaTasa);
     }
 
-    const iva = base * ivaTasa;
-    const ieps = base * iepsTasa;
+    const iepsCalc = +(base * iepsTasa).toFixed(2);
+    const ivaCalc = +((base + iepsCalc) * ivaTasa).toFixed(2);
+
+    it.base = +base.toFixed(2);
+    it.ivaTasa = ivaTasa;
+    it.iepsTasa = iepsTasa;
+    it.iva_calculado = ivaCalc;
+    it.ieps_calculado = iepsCalc;
 
     subtotal += base;
-    impuestos += iva + ieps;
+    iva += ivaCalc;
+    ieps += iepsCalc;
   });
 
+  const subtotalFinal = +subtotal.toFixed(2);
+  const ivaFinal = +iva.toFixed(2);
+  const iepsFinal = +ieps.toFixed(2);
+  const impuestos = +(ivaFinal + iepsFinal).toFixed(2);
+  const total = +(subtotalFinal + impuestos).toFixed(2);
+
   return {
-    subtotal: Number(subtotal.toFixed(2)),
-    impuestos: Number(impuestos.toFixed(2)),
-    total: Number((subtotal + impuestos).toFixed(2)),
+    subtotal: subtotalFinal,
+    iva: ivaFinal,
+    ieps: iepsFinal,
+    impuestos,
+    total,
     piezas: carrito.reduce((s, x) => s + Number(x.cantidad || 0), 0)
   };
 }
 
 export function renderCarrito() {
-
   const tbody = document.getElementById("tbody");
-
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
   carrito.forEach(it => {
-
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -116,7 +132,7 @@ export function renderCarrito() {
         <input
           type="number"
           min="0"
-          step="1"
+          step="0.01"
           value="${it.cantidad}"
           data-id="${it.id}"
           class="input-cantidad"
@@ -131,52 +147,31 @@ export function renderCarrito() {
       <td>${money(it.importe)}</td>
 
       <td>
-        <button
-          class="btn-eliminar"
-          data-id="${it.id}"
-        >
+        <button class="btn-eliminar" data-id="${it.id}">
           ×
         </button>
       </td>
     `;
 
     tbody.appendChild(tr);
-
   });
 
-  tbody.querySelectorAll(".input-cantidad")
-    .forEach(input => {
-
-      input.addEventListener("change", e => {
-
-        actualizarCantidad(
-          e.target.dataset.id,
-          e.target.value
-        );
-
-      });
-
+  tbody.querySelectorAll(".input-cantidad").forEach(input => {
+    input.addEventListener("change", e => {
+      actualizarCantidad(e.target.dataset.id, e.target.value);
     });
+  });
 
-  tbody.querySelectorAll(".btn-eliminar")
-    .forEach(btn => {
-
-      btn.addEventListener("click", e => {
-
-        eliminarProducto(
-          e.target.dataset.id
-        );
-
-      });
-
+  tbody.querySelectorAll(".btn-eliminar").forEach(btn => {
+    btn.addEventListener("click", e => {
+      eliminarProducto(e.target.dataset.id);
     });
+  });
 
   renderTotales();
 }
 
-
 export function renderTotales() {
-
   const tot = calcularTotales();
 
   const lblSubtotal = document.getElementById("lblSubtotal");
@@ -185,25 +180,15 @@ export function renderTotales() {
   const lblCantidad = document.getElementById("lblCantidad");
   const lblDescuento = document.getElementById("lblDescuento");
 
-  if (lblSubtotal) {
-    lblSubtotal.textContent = money(tot.subtotal);
-  }
+  if (lblSubtotal) lblSubtotal.textContent = money(tot.subtotal);
+  if (lblImpuestos) lblImpuestos.textContent = money(tot.impuestos);
+  if (lblTotal) lblTotal.textContent = money(tot.total);
+  if (lblCantidad) lblCantidad.textContent = tot.piezas;
+  if (lblDescuento) lblDescuento.textContent = money(0);
+}
 
-  if (lblImpuestos) {
-    lblImpuestos.textContent = money(tot.impuestos);
-  }
-
-  if (lblTotal) {
-    lblTotal.textContent = money(tot.total);
-  }
-
-  if (lblCantidad) {
-    lblCantidad.textContent = tot.piezas;
-  }
-
-  if (lblDescuento) {
-    lblDescuento.textContent = money(0);
-  }
+export function obtenerCarrito() {
+  return carrito;
 }
 
 window.carrito = carrito;
