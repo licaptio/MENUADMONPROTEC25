@@ -1,3 +1,4 @@
+import { guardarVentaFirestore } from "../ventas/guardarVenta.js";
 import {
   carrito,
   calcularTotales,
@@ -174,7 +175,7 @@ function abrirModalCobro() {
   setTimeout(() => recibido.focus(), 80);
 }
 
-function confirmarCobro(tot, modal) {
+async function confirmarCobro(tot, modal) {
   const recibido = Number(
     document.getElementById("montoRecibido").value || 0
   );
@@ -186,8 +187,7 @@ function confirmarCobro(tot, modal) {
 
   const cambio = recibido - tot.total;
 
-  const ventaPreview = {
-    fecha_local: new Date().toISOString(),
+  const ventaBase = {
     subtotal: tot.subtotal,
     impuestos: tot.impuestos,
     total: tot.total,
@@ -199,14 +199,31 @@ function confirmarCobro(tot, modal) {
       nombre: x.nombre,
       cantidad: x.cantidad,
       precio_unit: x.precioUnit,
-      importe: x.importe
+      importe: x.importe,
+
+      ivaTasa: x.ivaTasa,
+      iepsTasa: x.iepsTasa,
+      costo_unit: x.costoUnit,
+
+      departamento_id: x.departamento_id,
+      departamento: x.departamento
     }))
   };
 
-  console.log("VENTA PREVIEW:", ventaPreview);
+  try {
+    toast("Guardando venta...");
 
-  toast("Venta confirmada");
+    const ventaGuardada = await guardarVentaFirestore(ventaBase);
 
-  modal.remove();
-  limpiarCarrito();
+    console.log("VENTA GUARDADA:", ventaGuardada);
+
+    toast("Venta guardada");
+
+    modal.remove();
+    limpiarCarrito();
+
+  } catch (err) {
+    console.error("Error guardando venta:", err);
+    toast("Error guardando venta");
+  }
 }
