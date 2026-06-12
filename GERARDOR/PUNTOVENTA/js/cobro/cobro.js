@@ -1,4 +1,3 @@
-import { guardarVentaFirestore } from "../ventas/guardarVenta.js";
 import {
   carrito,
   calcularTotales,
@@ -7,6 +6,7 @@ import {
 
 import { money } from "../util/money.js";
 import { toast } from "../ui/toast.js";
+import { guardarVentaFirestore } from "../ventas/guardarVenta.js";
 
 export function iniciarCobro() {
   const btnCobrar = document.getElementById("btnCobrar");
@@ -160,7 +160,6 @@ function abrirModalCobro() {
   recibido.addEventListener("input", () => {
     const pago = Number(recibido.value || 0);
     const cambioCalc = Math.max(0, pago - tot.total);
-
     cambio.textContent = money(cambioCalc);
   });
 
@@ -189,22 +188,34 @@ async function confirmarCobro(tot, modal) {
 
   const ventaBase = {
     subtotal: tot.subtotal,
+    iva: tot.iva,
+    ieps: tot.ieps,
     impuestos: tot.impuestos,
     total: tot.total,
     recibido,
-    cambio: Number(cambio.toFixed(2)),
+    cambio: +cambio.toFixed(2),
+
     detalle: carrito.map(x => ({
       id: x.id,
       codigo: x.codigo,
       nombre: x.nombre,
+
       cantidad: x.cantidad,
       precio_unit: x.precioUnit,
       importe: x.importe,
 
+      base: x.base,
+
       ivaTasa: x.ivaTasa,
       iepsTasa: x.iepsTasa,
-      costo_unit: x.costoUnit,
 
+      iva_porcentaje: +(x.ivaTasa * 100).toFixed(2),
+      ieps_porcentaje: +(x.iepsTasa * 100).toFixed(2),
+
+      iva_calculado: x.iva_calculado,
+      ieps_calculado: x.ieps_calculado,
+
+      costo_unit: x.costoUnit,
       departamento_id: x.departamento_id,
       departamento: x.departamento
     }))
@@ -213,9 +224,9 @@ async function confirmarCobro(tot, modal) {
   try {
     toast("Guardando venta...");
 
-    const ventaGuardada = await guardarVentaFirestore(ventaBase);
+    const venta = await guardarVentaFirestore(ventaBase);
 
-    console.log("VENTA GUARDADA:", ventaGuardada);
+    console.log("VENTA GUARDADA:", venta);
 
     toast("Venta guardada");
 
