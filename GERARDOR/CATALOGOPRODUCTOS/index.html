@@ -30,7 +30,7 @@
   </div>
 
   <div class="filtros">
-    <input id="txtBuscarPrincipal" placeholder="Código directo o texto para buscar..." autocomplete="off"/>
+    <input id="txtBuscarPrincipal" placeholder="Código, descripción, marca o equivalente..." autocomplete="off"/>
     <select id="selActivo">
       <option value="todos">Todos</option>
       <option value="true">Activos</option>
@@ -61,39 +61,6 @@
       </thead>
       <tbody id="tbody"></tbody>
     </table>
-  </div>
-</div>
-
-<!-- MODAL 1: SUGERENCIAS -->
-<div class="modal" id="modalBuscador">
-  <div class="modal-buscador-box">
-    <div class="acciones">
-      <button id="btnCerrarBuscador" class="btn-gray">Cerrar</button>
-    </div>
-
-    <div class="campo-busqueda">
-      <input id="txtBuscarModal" placeholder="Escribe código, concepto, marca o equivalente..." autocomplete="off" style="width:100%;">
-    </div>
-
-    <div class="meta" id="metaBusqueda">Escribe para buscar productos...</div>
-
-    <div class="resultados-wrap">
-      <table class="resultados-busqueda">
-        <thead>
-          <tr>
-            <th>Activo</th>
-            <th class="codigo-col">Código</th>
-            <th>Concepto</th>
-            <th>Marca</th>
-            <th>Costo</th>
-            <th>Público</th>
-            <th>Medio Mayoreo</th>
-            <th>Mayoreo</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyBusqueda"></tbody>
-      </table>
-    </div>
   </div>
 </div>
 
