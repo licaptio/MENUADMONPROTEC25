@@ -1,0 +1,92 @@
+/* =========================================================
+   PROVSOFT - TABLA TIPO EXCEL / ALINEADA / CONCEPTOS CORTOS
+   Pega este bloque al FINAL de css/productos.css
+   ========================================================= */
+
+.tabla-wrap{
+  background:#fff;
+  border-radius:12px;
+  margin-top:14px;
+  overflow:auto;
+  max-height:72vh;
+  border:1px solid #b7c1cc;
+}
+
+table{
+  width:100%;
+  min-width:1280px;
+  border-collapse:collapse;
+  table-layout:fixed;
+  background:#fff;
+}
+
+th,td{
+  border:1px solid #b7c1cc;
+  padding:6px 8px;
+  font-size:13px;
+  line-height:1.15;
+  text-align:left;
+  vertical-align:middle;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+th{
+  background:#e8f2ff;
+  color:#0f172a;
+  font-weight:800;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+th:nth-child(1), td:nth-child(1){ width:75px;  text-align:center; }
+th:nth-child(2), td:nth-child(2){ width:150px; font-family:Consolas, monospace; }
+th:nth-child(3), td:nth-child(3){ width:390px; max-width:390px; }
+th:nth-child(4), td:nth-child(4){ width:130px; }
+th:nth-child(5), td:nth-child(5){ width:100px; text-align:right; font-family:Consolas, monospace; font-weight:700; }
+th:nth-child(6), td:nth-child(6){ width:130px; text-align:right; font-family:Consolas, monospace; font-weight:900; font-size:16px; }
+th:nth-child(7), td:nth-child(7){ width:135px; text-align:right; font-family:Consolas, monospace; font-weight:700; }
+th:nth-child(8), td:nth-child(8){ width:110px; text-align:right; font-family:Consolas, monospace; font-weight:700; }
+th:nth-child(9), td:nth-child(9){ width:95px; text-align:center; }
+
+td:nth-child(3){
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+tbody tr{
+  height:36px;
+}
+
+tbody tr:hover{
+  background:#fff7ed;
+}
+
+td button{
+  height:32px;
+  padding:6px 12px;
+  border-radius:8px;
+  font-size:13px;
+}
+
+.tag{
+  padding:3px 7px;
+  font-size:11px;
+  line-height:1;
+}
+
+.num{
+  text-align:right !important;
+  white-space:nowrap;
+  font-family:Consolas, monospace;
+  font-weight:800;
+}
+
+@media (max-width: 1100px){
+  table{
+    min-width:1280px;
+  }
+}
