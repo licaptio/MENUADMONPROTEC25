@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PROVSOFT - Productos</title>
+
+<link rel="stylesheet" href="./css/productos.css">
+<link rel="stylesheet" href="./css/loader.css">
+</head>
+
+<body>
+
+<!-- LOADER -->
+<div id="loaderProvsoft" class="loader-provsoft show">
+  <div class="loader-box">
+    <div class="loader-logo">PROVSOFT</div>
+    <div class="loader-sub">CARGANDO información...</div>
+    <div class="loader-bar">
+      <div class="loader-bar-fill"></div>
+    </div>
+    <div id="loaderDetalle" class="loader-detalle">Inicializando módulo...</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="top">
+    <h2>Administrador de Productos</h2>
+    <div class="top-sub">Catálogo principal PROVSOFT</div>
+  </div>
+
+  <div class="filtros">
+    <input id="txtBuscarPrincipal" placeholder="Código directo o texto para buscar..." autocomplete="off"/>
+    <select id="selActivo">
+      <option value="todos">Todos</option>
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+    </select>
+    <button id="btnBuscarPrincipal">Buscar</button>
+    <button id="btnReset" class="btn-gray">Ver todos</button>
+    <button id="btnNuevoProducto" class="btn-green">Nuevo producto</button>
+    <button id="btnSincronizar" class="btn-warning">Sincronizar</button>
+  </div>
+
+  <div class="meta" id="meta">Cargando...</div>
+
+  <div class="tabla-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Activo</th>
+          <th>Código</th>
+          <th>Concepto</th>
+          <th>Marca</th>
+          <th>Costo</th>
+          <th>Precio Público</th>
+          <th>Medio Mayoreo</th>
+          <th>Mayoreo</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL 1: SUGERENCIAS -->
+<div class="modal" id="modalBuscador">
+  <div class="modal-buscador-box">
+    <div class="acciones">
+      <button id="btnCerrarBuscador" class="btn-gray">Cerrar</button>
+    </div>
+
+    <div class="campo-busqueda">
+      <input id="txtBuscarModal" placeholder="Escribe código, concepto, marca o equivalente..." autocomplete="off" style="width:100%;">
+    </div>
+
+    <div class="meta" id="metaBusqueda">Escribe para buscar productos...</div>
+
+    <div class="resultados-wrap">
+      <table class="resultados-busqueda">
+        <thead>
+          <tr>
+            <th>Activo</th>
+            <th class="codigo-col">Código</th>
+            <th>Concepto</th>
+            <th>Marca</th>
+            <th>Costo</th>
+            <th>Público</th>
+            <th>Medio Mayoreo</th>
+            <th>Mayoreo</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyBusqueda"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: EDITOR -->
+<div class="modal" id="modalEditor">
+  <div class="modal-editor-box">
+    <div id="statusModal" class="status"></div>
+
+    <div class="acciones">
+      <button id="btnGuardar">Guardar cambios</button>
+      <button id="btnActivar">Activar producto</button>
+      <button id="btnDesactivar" class="btn-warning">Desactivar producto</button>
+      <button id="btnEliminarReal" class="btn-danger">Eliminar físicamente</button>
+      <button id="btnCerrarEditor" class="btn-gray">Cerrar</button>
+    </div>
+
+    <div class="editor-grid" id="editorCampos"></div>
+  </div>
+</div>
+
+<script type="module" src="./js/productos.main.js"></script>
+</body>
+</html>
