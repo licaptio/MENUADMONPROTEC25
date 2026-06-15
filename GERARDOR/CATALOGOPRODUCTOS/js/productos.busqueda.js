@@ -21,33 +21,88 @@ export function bolsaBusqueda(p){
 }
 
 export function buscarCoincidencias(texto){
+
   const b = norm(texto);
+
   if (!b) return [];
 
-  const tokens = b.split(/\s+/).filter(Boolean);
+  const tokens = b
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(t =>
+      ![
+        "DE","DEL","LA","LAS","EL","LOS",
+        "C","CJ","CAJA","PZA","PZAS",
+        "LTS","LT","L","ML","KG"
+      ].includes(t)
+    );
 
   return state.productos
     .filter(p => coincideActivo(p))
     .map(p => {
-      const bolsa = bolsaBusqueda(p);
-      const ok = tokens.every(t => bolsa.includes(t));
-      if (!ok) return null;
+
+      const concepto = norm(p.concepto || "");
+      const marca = norm(p.marca || "");
+      const codigo = norm(p.codigoBarra || "");
+      const equivalentes = Array.isArray(p.codigosEquivalentes)
+        ? p.codigosEquivalentes.map(x => norm(x))
+        : [];
 
       let score = 0;
-      if (norm(p.codigoBarra) === b) score += 7000;
-      if ((Array.isArray(p.codigosEquivalentes) ? p.codigosEquivalentes.map(x => norm(x)) : []).includes(b)) score += 6500;
-      if (norm(p.concepto) === b) score += 4000;
-      if (norm(p.codigoBarra).startsWith(b)) score += 2000;
-      if (norm(p.concepto).startsWith(b)) score += 1500;
-      if (norm(p.codigoBarra).includes(b)) score += 800;
-      if (norm(p.concepto).includes(b)) score += 600;
-      if (norm(p.marca).includes(b)) score += 300;
+      let encontrados = 0;
 
-      return { producto: p, score };
+      for(const token of tokens){
+
+        let encontrado = false;
+
+        if(codigo.includes(token)){
+          score += 1200;
+          encontrado = true;
+        }
+
+        if(concepto.includes(token)){
+          score += 1000;
+          encontrado = true;
+        }
+
+        if(marca.includes(token)){
+          score += 300;
+          encontrado = true;
+        }
+
+        if(equivalentes.some(eq => eq.includes(token))){
+          score += 800;
+          encontrado = true;
+        }
+
+        if(encontrado){
+          encontrados++;
+        }
+      }
+
+      const cobertura = encontrados / tokens.length;
+
+      if(cobertura === 1){
+        score += 2500;
+      }else if(cobertura >= .75){
+        score += 1200;
+      }else if(cobertura >= .50){
+        score += 400;
+      }
+
+      if(p.activo === true){
+        score += 50;
+      }
+
+      return {
+        producto:p,
+        score
+      };
+
     })
-    .filter(Boolean)
+    .filter(x => x.score > 0)
     .sort((a,b) => b.score - a.score)
-    .slice(0, 50)
+    .slice(0,80)
     .map(x => x.producto);
 }
 
