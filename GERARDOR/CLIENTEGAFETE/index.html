@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROVSOFT · Clientes</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="./assets/img/logo.jfif" alt="Proveedora" />
+        <div>
+          <h1>PROVSOFT</h1>
+          <span>Clientes</span>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-view="clientesView">👥 Clientes</button>
+        <button class="nav-btn" data-view="expedienteView">📂 Expediente</button>
+        <button class="nav-btn" data-view="capturaView">📸 Cargar documentos</button>
+        <button class="nav-btn" data-view="membresiaView">🪪 Membresía</button>
+        <button class="nav-btn" data-view="configView">⚙️ Configuración</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Gestión de clientes</h2>
+          <p id="estadoSistema">Listo</p>
+        </div>
+        <div class="current-client" id="clienteActualLabel">Sin cliente seleccionado</div>
+      </header>
+
+      <section id="clientesView" class="view active-view">
+        <div class="card">
+          <h3>Buscar cliente</h3>
+          <div class="search-row">
+            <input id="txtBuscarCliente" placeholder="Nombre, RFC o idCliente. Ejemplo: RIOS, QUESADA, COPPEL, 1074" />
+            <button id="btnBuscarCliente">Buscar</button>
+            <button id="btnLimpiarBusqueda" class="secondary">Limpiar</button>
+          </div>
+          <div id="resultadosClientes" class="results"></div>
+          <div class="pagination-row">
+            <span id="lblPaginacionClientes">Página 1 de 1</span>
+            <div>
+              <button id="btnPaginaAnterior" class="secondary" type="button">Anterior</button>
+              <button id="btnPaginaSiguiente" class="secondary" type="button">Siguiente</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="expedienteView" class="view">
+        <div class="card expediente-card">
+          <div class="card-title-row">
+            <div>
+              <h3>Expediente digital</h3>
+              <p class="hint" id="expedienteClienteLabel">Selecciona un cliente para administrar su expediente.</p>
+            </div>
+            <button id="btnRefrescarDocs" class="secondary">Refrescar</button>
+          </div>
+
+          <div class="expediente-resumen" id="expedienteResumen">
+            <div><b>Documentos</b><span id="resTotalDocs">0</span></div>
+            <div><b>Foto</b><span id="resFoto">NO</span></div>
+            <div><b>Identificación</b><span id="resIdentificacion">NO</span></div>
+            <div><b>Comprobante</b><span id="resComprobante">NO</span></div>
+          </div>
+
+          <div class="upload-panel-v2">
+            <label>Categoría
+              <select id="selCategoriaDoc">
+                <option value="perfil">Foto cliente</option>
+                <option value="identificacion">Identificación</option>
+                <option value="comprobante_domicilio">Comprobante domicilio</option>
+                <option value="contratos">Contratos</option>
+                <option value="credito">Crédito</option>
+                <option value="pagares">Pagarés</option>
+                <option value="estados_cuenta">Estados de cuenta</option>
+                <option value="otros">Otros</option>
+              </select>
+            </label>
+            <label>Observaciones
+              <input id="txtObservacionesDoc" placeholder="Opcional" />
+            </label>
+          </div>
+
+          <div id="dropZoneDocumentos" class="drop-zone">
+            <div>
+              <b>Arrastra archivos aquí</b>
+              <p>PDF, JPG, PNG, WEBP, DOCX, XLSX. También puedes seleccionar archivos recibidos por WhatsApp o correo.</p>
+            </div>
+            <div class="drop-actions">
+              <label class="file-button">Seleccionar archivos
+                <input id="fileDocumento" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" hidden />
+              </label>
+              <label class="file-button camera">Tomar foto
+                <input id="fileCamaraDocumento" type="file" accept="image/*" capture="environment" hidden />
+              </label>
+            </div>
+          </div>
+
+          <div id="archivosPendientes" class="pending-files"></div>
+
+          <div class="expediente-actions">
+            <button id="btnSubirDocumentos">Subir documento(s)</button>
+            <button id="btnLimpiarArchivos" class="secondary" type="button">Limpiar selección</button>
+          </div>
+
+          <div class="documents-toolbar">
+            <h4>Documentos del cliente</h4>
+            <select id="selFiltroCategoriaDoc">
+              <option value="TODOS">Todas las categorías</option>
+              <option value="perfil">Foto cliente</option>
+              <option value="identificacion">Identificación</option>
+              <option value="comprobante_domicilio">Comprobante domicilio</option>
+              <option value="contratos">Contratos</option>
+              <option value="credito">Crédito</option>
+              <option value="pagares">Pagarés</option>
+              <option value="estados_cuenta">Estados de cuenta</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+          <div id="listaDocumentos" class="documents-list"></div>
+        </div>
+      </section>
+
+
+      <section id="capturaView" class="view">
+        <div class="card captura-card">
+          <div class="card-title-row">
+            <div>
+              <h3>Cargar documentos principales</h3>
+              <p class="hint" id="capturaClienteLabel">Selecciona un cliente desde Clientes para cargar documentos.</p>
+            </div>
+            <button id="btnVolverFichaDesdeCaptura" class="secondary" type="button">Volver a ficha</button>
+          </div>
+
+          <div class="captura-main-grid">
+            <div class="captura-doc-card" data-captura-card="foto_cliente">
+              <div class="captura-doc-head">
+                <div>
+                  <h4>📷 Foto del cliente</h4>
+                  <p id="capEstadoFoto" class="hint">Sin foto principal</p>
+                </div>
+                <button id="btnVerFotoPrincipal" class="secondary" type="button">Ver actual</button>
+              </div>
+              <div id="previewFotoCliente" class="capture-preview">Sin archivo seleccionado</div>
+              <div class="capture-actions">
+                <label class="file-button">Seleccionar archivo
+                  <input id="fileFotoCliente" type="file" accept="image/*" hidden />
+                </label>
+                <label class="file-button camera">Tomar foto
+                  <input id="camFotoCliente" type="file" accept="image/*" capture="environment" hidden />
+                </label>
+                <button id="btnGuardarFotoCliente" type="button">Guardar foto principal</button>
+              </div>
+            </div>
+
+            <div class="captura-doc-card" data-captura-card="identificacion">
+              <div class="captura-doc-head">
+                <div>
+                  <h4>🪪 Identificación oficial</h4>
+                  <p id="capEstadoIdentificacion" class="hint">Sin identificación principal</p>
+                </div>
+                <button id="btnVerIdentificacionPrincipal" class="secondary" type="button">Ver actual</button>
+              </div>
+              <div id="previewIdentificacion" class="capture-preview">Sin archivo seleccionado</div>
+              <div class="capture-actions">
+                <label class="file-button">Seleccionar archivo
+                  <input id="fileIdentificacion" type="file" accept="image/*,.pdf" hidden />
+                </label>
+                <label class="file-button camera">Tomar foto
+                  <input id="camIdentificacion" type="file" accept="image/*" capture="environment" hidden />
+                </label>
+                <button id="btnGuardarIdentificacion" type="button">Guardar identificación principal</button>
+              </div>
+            </div>
+
+            <div class="captura-doc-card" data-captura-card="comprobante_domicilio">
+              <div class="captura-doc-head">
+                <div>
+                  <h4>🏠 Comprobante de domicilio</h4>
+                  <p id="capEstadoComprobante" class="hint">Sin comprobante principal</p>
+                </div>
+                <button id="btnVerComprobantePrincipal" class="secondary" type="button">Ver actual</button>
+              </div>
+              <div id="previewComprobante" class="capture-preview">Sin archivo seleccionado</div>
+              <div class="capture-actions">
+                <label class="file-button">Seleccionar archivo
+                  <input id="fileComprobante" type="file" accept="image/*,.pdf" hidden />
+                </label>
+                <label class="file-button camera">Tomar foto
+                  <input id="camComprobante" type="file" accept="image/*" capture="environment" hidden />
+                </label>
+                <button id="btnGuardarComprobante" type="button">Guardar comprobante principal</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="hint">Si ya existe un archivo principal, la nueva carga queda como principal y la anterior permanece en el historial del expediente.</p>
+        </div>
+      </section>
+
+      <section id="membresiaView" class="view">
+        <div class="card">
+          <h3>Membresía virtual</h3>
+          <div id="membresiaPanel" class="membership-panel">
+            <p>Selecciona un cliente para ver su membresía.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="configView" class="view">
+        <div class="card">
+          <h3>Configuración</h3>
+          <div class="config-grid">
+            <div><b>Empresa:</b> <span id="cfgEmpresa"></span></div>
+            <div><b>Bucket clientes:</b> <span id="cfgBucketClientes"></span></div>
+            <div><b>Ruta base:</b> <span id="cfgRutaBase"></span></div>
+          </div>
+          <button id="btnCargarConfig">Recargar configuración</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <div id="modalFichaOverlay" class="modal-overlay" hidden>
+        <div class="modal-panel" id="fichaClienteCard" hidden>
+          <div class="modal-header" id="modalFichaHeader">
+            <h3>Ficha del cliente</h3>
+            <div class="actions-row">
+              <button id="btnCerrarFicha" type="button" class="secondary">Cerrar</button>
+              <button id="btnEditarCliente" type="button">Editar</button>
+              <button id="btnGuardarCliente" type="button" hidden>Guardar cambios</button>
+              <button id="btnCancelarEdicion" type="button" class="secondary" hidden>Cancelar</button>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>ID Cliente<input id="editIdCliente" disabled /></label>
+            <label>Nombre<input id="editNombre" /></label>
+            <label>RFC<input id="editRfc" /></label>
+            <label>Régimen fiscal<input id="editRegimenFiscal" /></label>
+            <label>Email<input id="editEmail" /></label>
+            <label>Teléfono<input id="editTelefono" /></label>
+            <label>Dirección<input id="editDireccion" /></label>
+            <label>No. exterior<input id="editNumeroExterior" /></label>
+            <label>Colonia<input id="editColonia" /></label>
+            <label>CP<input id="editCp" /></label>
+            <label>Ciudad<input id="editCiudad" /></label>
+            <label>Municipio<input id="editMunicipio" /></label>
+            <label>Estado<input id="editEstado" /></label>
+            <label>País<input id="editPais" /></label>
+            <label>Categoría precio<input id="editCatPrecio" type="number" /></label>
+            <label>Agregar porcentaje<input id="editAgregarPorcentaje" type="number" /></label>
+          </div>
+
+          <div class="google-address-section">
+            <div class="section-title-row">
+              <h4>DIRECCIÓN GOOGLE</h4>
+              <button id="btnAbrirGoogleMaps" type="button" class="secondary">Abrir mapa</button>
+            </div>
+            <label>URL de Google Maps
+              <input id="editDireccionGoogleUrl" placeholder="https://maps.google.com/..." />
+            </label>
+            <p class="hint">Pega aquí la liga directa de Google Maps para ubicar al cliente.</p>
+          </div>
+
+          <div class="modal-expediente-section modal-expediente-status">
+            <div class="section-title-row">
+              <div>
+                <h4>ESTADO DEL EXPEDIENTE</h4>
+                <p class="hint" id="modalDocsResumen">Revisión rápida de documentos principales.</p>
+              </div>
+              <button id="btnAbrirCargaDocumentos" type="button">Cargar documentos</button>
+            </div>
+
+            <div class="doc-status-grid">
+              <div class="doc-status-card" id="statusFotoCliente">
+                <div class="doc-status-icon">📷</div>
+                <div>
+                  <b>Foto principal</b>
+                  <span id="statusFotoTexto">Pendiente</span>
+                </div>
+                <button id="btnVerFotoDesdeFicha" type="button" class="secondary">Ver</button>
+              </div>
+              <div class="doc-status-card" id="statusIdentificacion">
+                <div class="doc-status-icon">🪪</div>
+                <div>
+                  <b>Identificación oficial</b>
+                  <span id="statusIdentificacionTexto">Pendiente</span>
+                </div>
+                <button id="btnVerIdentificacionDesdeFicha" type="button" class="secondary">Ver</button>
+              </div>
+              <div class="doc-status-card" id="statusComprobante">
+                <div class="doc-status-icon">🏠</div>
+                <div>
+                  <b>Comprobante domicilio</b>
+                  <span id="statusComprobanteTexto">Pendiente</span>
+                </div>
+                <button id="btnVerComprobanteDesdeFicha" type="button" class="secondary">Ver</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+  </div>
+
+  <div id="editorImagenOverlay" class="modal-overlay image-editor-overlay" hidden>
+    <div class="image-editor-panel">
+      <div class="modal-header">
+        <h3 id="editorImagenTitulo">Editar imagen</h3>
+        <button id="btnCancelarEditorImagen" type="button" class="secondary">Cancelar</button>
+      </div>
+      <div class="image-editor-body">
+        <canvas id="canvasEditorImagen"></canvas>
+      </div>
+      <div class="image-editor-tools">
+        <button id="btnRotarIzq" type="button" class="secondary">↺ Rotar izquierda</button>
+        <button id="btnRotarDer" type="button" class="secondary">↻ Rotar derecha</button>
+        <button id="btnCentrarImagen" type="button" class="secondary">Centrar</button>
+        <label>Zoom
+          <input id="rangeZoomImagen" type="range" min="0.5" max="3" step="0.05" value="1" />
+        </label>
+        <button id="btnUsarImagenEditada" type="button">Usar imagen editada</button>
+      </div>
+      <p class="hint editor-hint">Arrastra la imagen para acomodarla. Usa zoom para recortar. Al guardar se sube la imagen corregida.</p>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>

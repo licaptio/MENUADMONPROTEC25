@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:8000", "http://127.0.0.1:8000", "https://localhost:8000"],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin", "x-goog-meta-firebaseStorageDownloadTokens"],
+    "maxAgeSeconds": 3600
+  }
+]
