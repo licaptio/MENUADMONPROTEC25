@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROVSOFT · Cargador CFDI PDD</title>
+  <link rel="stylesheet" href="./assets/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div>
+        <strong>PROVSOFT</strong>
+        <span>Cargador CFDI · PDD</span>
+      </div>
+    </div>
+
+    <button id="btnConfiguracion" class="icon-button" type="button" title="Configuración" aria-label="Configuración">
+      ⚙
+    </button>
+  </header>
+
+  <main class="layout">
+    <section class="card hero">
+      <div>
+        <p class="kicker">CARGA CONTABLE</p>
+        <h1>Subir CFDI válidos</h1>
+        <p>
+          Supabase recibe todos los CFDI tipo ingreso del receptor PDD031204KL5.
+          Firebase recibe únicamente los RFC autorizados desde Configuración.
+        </p>
+      </div>
+
+      <div class="file-actions">
+        <label class="file-picker" for="xmlInput">
+          <span>Seleccionar XML</span>
+          <small id="textoSeleccion">Ningún archivo seleccionado</small>
+        </label>
+        <input id="xmlInput" type="file" accept=".xml,application/xml,text/xml" multiple hidden>
+
+        <button id="btnProcesar" class="btn btn-primary" type="button" disabled>
+          Procesar y subir
+        </button>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Resumen del proceso">
+      <article class="summary-card">
+        <span>XML seleccionados</span>
+        <strong id="totalSeleccionados">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>CFDI válidos</span>
+        <strong id="totalValidos">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>Subidos a Supabase</span>
+        <strong id="totalSupabase">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>Guardados en Firebase</span>
+        <strong id="totalFirebase">0</strong>
+      </article>
+    </section>
+
+    <section class="results-grid">
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <h2>Procesos Supabase</h2>
+            <p>Todos los CFDI válidos.</p>
+          </div>
+          <span class="badge badge-blue">GENERAL</span>
+        </div>
+        <div id="listaSupabase" class="process-list empty-state">
+          Selecciona uno o más archivos XML.
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="section-title">
+          <div>
+            <h2>Procesos Firebase</h2>
+            <p>Solo RFC autorizados.</p>
+          </div>
+          <span class="badge badge-red">CONTROLADO</span>
+        </div>
+        <div id="listaFirebase" class="process-list empty-state">
+          Selecciona uno o más archivos XML.
+        </div>
+      </article>
+    </section>
+
+    <section class="card log-card">
+      <div class="section-title">
+        <div>
+          <h2>Bitácora</h2>
+          <p>Resultado detallado del proceso.</p>
+        </div>
+        <button id="btnLimpiarBitacora" class="btn btn-light" type="button">Limpiar</button>
+      </div>
+      <pre id="bitacora">Aplicación lista.</pre>
+    </section>
+  </main>
+
+  <div id="vistaConfiguracion" class="internal-view" aria-hidden="true">
+    <div class="internal-panel">
+      <header class="internal-header">
+        <button id="btnCerrarConfiguracion" class="back-button" type="button" aria-label="Regresar">←</button>
+        <div>
+          <p class="kicker">CONFIGURACIÓN FIREBASE</p>
+          <h2>Autorizar proveedores Firebase</h2>
+          <p>Agrega únicamente el RFC del proveedor autorizado.</p>
+        </div>
+      </header>
+
+      <section class="config-content">
+        <article class="card config-form-card">
+          <label for="rfcProveedor">RFC del proveedor</label>
+          <div class="rfc-row">
+            <input
+              id="rfcProveedor"
+              type="text"
+              maxlength="13"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Ejemplo: ABC010203XYZ"
+            >
+            <button id="btnAgregarRfc" class="btn btn-primary" type="button">Agregar RFC</button>
+          </div>
+          <p id="mensajeConfiguracion" class="form-message"></p>
+          <div class="path-box">
+            <span>Ruta utilizada</span>
+            <code>/CLIENTES/PDD031204KL5/CONFIGURACION/EGRESOSFIREBASEAUTORIZADOS/items/{RFC}</code>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">
+            <div>
+              <h2>RFC autorizados</h2>
+              <p>Estos proveedores sí se podrán grabar en Firebase.</p>
+            </div>
+            <button id="btnActualizarRfc" class="btn btn-light" type="button">Actualizar</button>
+          </div>
+
+          <div id="listaRfcAutorizados" class="authorized-list empty-state">
+            Cargando configuración...
+          </div>
+        </article>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 PROVSOFT · Deuda Limpia PDD
+  </footer>
+
+  <script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>
