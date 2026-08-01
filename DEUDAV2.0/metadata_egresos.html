@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+
+<title>PROVSOFT – Carga Metadata Egresos SAT</title>
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#0c6cbd;
+  padding:30px;
+}
+
+.card{
+  background:#fff;
+  max-width:750px;
+  margin:auto;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+h2{
+  color:#00416A;
+  margin-top:0;
+}
+
+button{
+  padding:10px 18px;
+  font-size:15px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+}
+
+button:disabled{
+  cursor:not-allowed;
+  opacity:.6;
+}
+
+#log{
+  margin-top:15px;
+  font-family:monospace;
+  font-size:12px;
+  white-space:pre-wrap;
+  background:#f5f5f5;
+  padding:10px;
+  border-radius:6px;
+  max-height:260px;
+  overflow:auto;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>📤 Carga Metadata Egresos SAT</h2>
+
+  <input
+    type="file"
+    id="fileInput"
+    accept=".txt"
+    multiple
+  >
+
+  <br><br>
+
+  <button id="btnProcesar">
+    Procesar archivos
+  </button>
+
+  <div style="margin-top:15px;">
+
+    <div style="
+      background:#ddd;
+      border-radius:8px;
+      overflow:hidden;
+      height:18px;
+    ">
+      <div
+        id="progressBar"
+        style="
+          height:100%;
+          width:0%;
+          background:#0c6cbd;
+          transition:width .2s;
+        "
+      ></div>
+    </div>
+
+    <div
+      id="progressText"
+      style="
+        margin-top:6px;
+        font-size:13px;
+        color:#333;
+      "
+    >
+      Esperando…
+    </div>
+
+  </div>
+
+  <div id="log"></div>
+
+</div>
+
+<script type="module">
+
+import {
+  supabaseUrl,
+  supabaseAnonKey
+} from "./config.js";
+
+// ==========================================
+// CONFIGURACIÓN
+// ==========================================
+
+const SUPABASE_URL =
+  `${supabaseUrl}/rest/v1/metadata_egresos`;
+
+const ANON_KEY = supabaseAnonKey;
+
+const BATCH_SIZE = 30;
+const MAX_REINTENTOS = 5;
+
+// RFC de la empresa receptora.
+// Sirve para evitar cargar accidentalmente
+// un archivo que no corresponda a esta empresa.
+const RFC_RECEPTOR_ESPERADO = "PDD031204KL5";
+
+// ==========================================
+// ELEMENTOS
+// ==========================================
+
+const fileInput =
+  document.getElementById("fileInput");
+
+const btnProcesar =
+  document.getElementById("btnProcesar");
+
+const progressBar =
+  document.getElementById("progressBar");
+
+const progressText =
+  document.getElementById("progressText");
+
+const logElement =
+  document.getElementById("log");
+
+btnProcesar.addEventListener(
+  "click",
+  procesarArchivos
+);
+
+// ==========================================
+// FUNCIONES GENERALES
+// ==========================================
+
+function log(mensaje){
+  logElement.textContent += mensaje + "\n";
+  logElement.scrollTop = logElement.scrollHeight;
+}
+
+function limpiarLog(){
+  logElement.textContent = "";
+}
+
+function setProgress(actual, total, extra = ""){
+  const porcentaje = total > 0
+    ? Math.round((actual / total) * 100)
+    : 0;
+
+  progressBar.style.width =
+    porcentaje + "%";
+
+  progressText.textContent =
+    `${extra} ${actual}/${total} (${porcentaje}%)`;
+}
+
+function esperar(ms){
+  return new Promise(
+    resolve => setTimeout(resolve, ms)
+  );
+}
+
+function convertirFechaSAT(valor){
+  const fechaTexto = String(valor || "").trim();
+
+  if (!fechaTexto) {
+    return null;
+  }
+
+  /*
+   * El SAT entrega:
+   * 2026-07-01 01:26:31
+   *
+   * PostgreSQL acepta este formato directamente.
+   * No usamos new Date() para enviar la fecha,
+   * porque podría modificarla por zona horaria.
+   */
+  return fechaTexto;
+}
+
+function obtenerPeriodo(fechaSAT){
+  const fechaTexto = String(fechaSAT || "").trim();
+
+  const coincidencia = fechaTexto.match(
+    /^(\d{4})-(\d{2})-\d{2}/
+  );
+
+  if (!coincidencia) {
+    return null;
+  }
+
+  const anio = Number(coincidencia[1]);
+  const mes = Number(coincidencia[2]);
+
+  if (
+    !Number.isInteger(anio) ||
+    !Number.isInteger(mes) ||
+    mes < 1 ||
+    mes > 12
+  ) {
+    return null;
+  }
+
+  return {
+    anio,
+    mes
+  };
+}
+
+function convertirMonto(valor){
+  const texto = String(valor || "0")
+    .trim()
+    .replace(/,/g, "");
+
+  const monto = Number(texto);
+
+  return Number.isFinite(monto)
+    ? monto
+    : 0;
+}
+
+// ==========================================
+// ENVÍO A SUPABASE
+// ==========================================
+
+async function enviarLote(batch, intento = 1){
+
+  try {
+
+    const respuesta = await fetch(
+      SUPABASE_URL + "?on_conflict=uuid_cfdi",
+      {
+        method:"POST",
+
+        headers:{
+          "apikey":ANON_KEY,
+          "Authorization":"Bearer " + ANON_KEY,
+          "Content-Type":"application/json",
+          "Prefer":
+            "resolution=merge-duplicates,return=minimal"
+        },
+
+        body:JSON.stringify(batch)
+      }
+    );
+
+    if (!respuesta.ok) {
+
+      const texto =
+        await respuesta.text();
+
+      const esErrorTemporal =
+        respuesta.status === 429 ||
+        respuesta.status === 500 ||
+        respuesta.status === 502 ||
+        respuesta.status === 503 ||
+        respuesta.status === 504 ||
+        texto.includes("statement timeout") ||
+        texto.includes("57014");
+
+      if (esErrorTemporal) {
+        throw new Error(texto);
+      }
+
+      throw new Error(
+        `Error HTTP ${respuesta.status}: ${texto}`
+      );
+    }
+
+    return true;
+
+  } catch (error) {
+
+    if (intento < MAX_REINTENTOS) {
+
+      const tiempoEspera =
+        intento * 2000;
+
+      log(
+        `⚠ Lote falló. Reintento ` +
+        `${intento}/${MAX_REINTENTOS - 1} ` +
+        `en ${tiempoEspera / 1000}s`
+      );
+
+      await esperar(tiempoEspera);
+
+      return enviarLote(
+        batch,
+        intento + 1
+      );
+    }
+
+    throw new Error(
+      `El lote falló después de ` +
+      `${MAX_REINTENTOS} intentos: ` +
+      error.message
+    );
+  }
+}
+
+// ==========================================
+// CONVERTIR LÍNEA SAT
+// ==========================================
+
+function convertirLinea(linea, nombreArchivo){
+
+  const columnas = linea.split("~");
+
+  if (columnas.length < 12) {
+    return {
+      valido:false,
+      motivo:"La línea contiene menos de 12 columnas"
+    };
+  }
+
+  const uuid =
+    String(columnas[0] || "")
+      .trim()
+      .toUpperCase();
+
+  const rfcEmisor =
+    String(columnas[1] || "")
+      .trim()
+      .toUpperCase();
+
+  const rfcReceptor =
+    String(columnas[3] || "")
+      .trim()
+      .toUpperCase();
+
+  const fechaEmision =
+    convertirFechaSAT(columnas[6]);
+
+  const periodo =
+    obtenerPeriodo(fechaEmision);
+
+  if (!uuid) {
+    return {
+      valido:false,
+      motivo:"UUID vacío"
+    };
+  }
+
+  if (!rfcEmisor) {
+    return {
+      valido:false,
+      motivo:`RFC emisor vacío. UUID ${uuid}`
+    };
+  }
+
+  if (!rfcReceptor) {
+    return {
+      valido:false,
+      motivo:`RFC receptor vacío. UUID ${uuid}`
+    };
+  }
+
+  if (!periodo) {
+    return {
+      valido:false,
+      motivo:`Fecha de emisión inválida. UUID ${uuid}`
+    };
+  }
+
+  /*
+   * Para egresos de PDD, PDD debe aparecer
+   * como receptor del comprobante.
+   */
+  if (
+    RFC_RECEPTOR_ESPERADO &&
+    rfcReceptor !== RFC_RECEPTOR_ESPERADO
+  ) {
+    return {
+      valido:false,
+      motivo:
+        `RFC receptor diferente: ${rfcReceptor}. ` +
+        `UUID ${uuid}`
+    };
+  }
+
+  const estatusTexto =
+    String(columnas[10] || "").trim();
+
+  const estatus =
+    estatusTexto === ""
+      ? null
+      : Number(estatusTexto);
+
+  const row = {
+    uuid_cfdi:uuid,
+
+    rfc_emisor:rfcEmisor,
+    nombre_emisor:
+      String(columnas[2] || "").trim() || null,
+
+    rfc_receptor:rfcReceptor,
+    nombre_receptor:
+      String(columnas[4] || "").trim() || null,
+
+    rfc_pac:
+      String(columnas[5] || "")
+        .trim()
+        .toUpperCase() || null,
+
+    fecha_emision:fechaEmision,
+
+    fecha_certificacion:
+      convertirFechaSAT(columnas[7]),
+
+    fecha_cancelacion:
+      convertirFechaSAT(columnas[11]),
+
+    monto:
+      convertirMonto(columnas[8]),
+
+    efecto_comprobante:
+      String(columnas[9] || "")
+        .trim()
+        .toUpperCase()
+        .substring(0, 1) || null,
+
+    estatus:
+      Number.isFinite(estatus)
+        ? estatus
+        : null,
+
+    periodo_anio:
+      periodo.anio,
+
+    periodo_mes:
+      periodo.mes,
+
+    fuente:
+      nombreArchivo,
+
+    cargado_en:
+      new Date().toISOString(),
+
+    raw_line:
+      linea
+  };
+
+  return {
+    valido:true,
+    row
+  };
+}
+
+// ==========================================
+// PROCESAR ARCHIVOS
+// ==========================================
+
+async function procesarArchivos(){
+
+  if (!fileInput.files.length) {
+    alert(
+      "Selecciona uno o más archivos TXT"
+    );
+    return;
+  }
+
+  btnProcesar.disabled = true;
+  fileInput.disabled = true;
+
+  limpiarLog();
+  setProgress(0, 1, "Preparando");
+
+  try {
+
+    const archivos =
+      Array.from(fileInput.files);
+
+    log(
+      `📂 Archivos seleccionados: ${archivos.length}`
+    );
+
+    /*
+     * Primero leemos todos los archivos para
+     * conocer el total real de registros.
+     */
+    const archivosPreparados = [];
+
+    let totalRegistros = 0;
+
+    for (const file of archivos) {
+
+      const texto = await file.text();
+
+      const lineas = texto
+        .split(/\r?\n/)
+        .map(linea => linea.trim())
+        .filter(Boolean)
+        .filter(
+          linea =>
+            !linea.toLowerCase().startsWith("uuid~")
+        );
+
+      archivosPreparados.push({
+        file,
+        lineas
+      });
+
+      totalRegistros += lineas.length;
+    }
+
+    let registrosRecorridos = 0;
+    let registrosEnviados = 0;
+    let registrosOmitidos = 0;
+
+    for (
+      let indiceArchivo = 0;
+      indiceArchivo < archivosPreparados.length;
+      indiceArchivo++
+    ) {
+
+      const {
+        file,
+        lineas
+      } = archivosPreparados[indiceArchivo];
+
+      log(`\n📄 Procesando: ${file.name}`);
+      log(`📌 Líneas detectadas: ${lineas.length}`);
+
+      let batch = [];
+      let enviadosArchivo = 0;
+      let omitidosArchivo = 0;
+
+      for (const linea of lineas) {
+
+        registrosRecorridos++;
+
+        const resultado =
+          convertirLinea(linea, file.name);
+
+        if (!resultado.valido) {
+
+          registrosOmitidos++;
+          omitidosArchivo++;
+
+          log(
+            `⏭ Omitido: ${resultado.motivo}`
+          );
+
+          setProgress(
+            registrosRecorridos,
+            totalRegistros,
+            `Archivo ${indiceArchivo + 1}/${archivos.length}`
+          );
+
+          continue;
+        }
+
+        batch.push(resultado.row);
+
+        if (batch.length >= BATCH_SIZE) {
+
+          await enviarLote(batch);
+
+          registrosEnviados += batch.length;
+          enviadosArchivo += batch.length;
+
+          batch = [];
+        }
+
+        setProgress(
+          registrosRecorridos,
+          totalRegistros,
+          `Archivo ${indiceArchivo + 1}/${archivos.length}`
+        );
+      }
+
+      if (batch.length > 0) {
+
+        await enviarLote(batch);
+
+        registrosEnviados += batch.length;
+        enviadosArchivo += batch.length;
+
+        batch = [];
+      }
+
+      log(
+        `✔ ${enviadosArchivo} registros sincronizados`
+      );
+
+      if (omitidosArchivo > 0) {
+        log(
+          `⚠ ${omitidosArchivo} registros omitidos`
+        );
+      }
+    }
+
+    setProgress(
+      totalRegistros,
+      totalRegistros,
+      "Finalizado"
+    );
+
+    progressText.textContent =
+      "✅ Proceso terminado";
+
+    log("\n🎯 CARGA DE EGRESOS FINALIZADA");
+    log(`✔ Sincronizados: ${registrosEnviados}`);
+    log(`⚠ Omitidos: ${registrosOmitidos}`);
+    log(`📋 Revisados: ${registrosRecorridos}`);
+
+  } catch (error) {
+
+    console.error(error);
+
+    progressText.textContent =
+      "❌ El proceso terminó con errores";
+
+    log("\n❌ ERROR GENERAL");
+    log(error.message);
+
+    alert(
+      "Ocurrió un error durante la carga. " +
+      "Revisa el registro."
+    );
+
+  } finally {
+
+    btnProcesar.disabled = false;
+    fileInput.disabled = false;
+  }
+}
+
+</script>
+
+<footer style="
+  margin-top:40px;
+  padding:20px;
+  text-align:center;
+  font-size:13px;
+  color:#ffffff;
+">
+  ⚙️ POWERED BY <b>PROVSOFT</b> · 2026
+</footer>
+
+</body>
+</html>
