@@ -82,18 +82,6 @@ export async function revivirRecordatorio(id) {
   });
 }
 
-export async function obtenerRecordatoriosAtendidos(maximo = 100) {
-  const resultado = await getDocs(collection(db, COLECCION));
-  return resultado.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(r => r.tipo === "RECORDATORIO" && r.estado === "ATENDIDO")
-    .sort((a, b) => {
-      const fa = a.fecha_atendido?.toDate?.() || a.ultima_modificacion?.toDate?.() || new Date(0);
-      const fb = b.fecha_atendido?.toDate?.() || b.ultima_modificacion?.toDate?.() || new Date(0);
-      return fb - fa;
-    })
-    .slice(0, maximo);
-}
 
 function convertirFecha(fecha, hora) {
   const fechaProgramada = new Date(`${fecha}T${hora}:00`);
@@ -109,11 +97,42 @@ function obtenerTituloAutomatico(contenido) {
   return (lineas[0].replace(/^[-–—•*\s]+/, "").trim() || "Recordatorio").slice(0, 120);
 }
 
-export async function obtenerRecordatoriosPendientes(maximo = 50) {
+export async function obtenerRecordatoriosPendientes() {
   const resultado = await getDocs(collection(db, COLECCION));
+
   return resultado.docs
     .map(d => ({ id: d.id, ...d.data() }))
-    .filter(r => r.tipo === "RECORDATORIO" && r.estado === "PENDIENTE" && r.fecha_programada?.toDate)
-    .sort((a, b) => a.fecha_programada.toDate() - b.fecha_programada.toDate())
+    .filter(r =>
+      r.tipo === "RECORDATORIO" &&
+      r.estado === "PENDIENTE" &&
+      r.fecha_programada?.toDate
+    )
+    .sort((a, b) =>
+      a.fecha_programada.toDate() - b.fecha_programada.toDate()
+    );
+}
+
+export async function obtenerRecordatoriosAtendidos(maximo = 30) {
+  const resultado = await getDocs(collection(db, COLECCION));
+
+  return resultado.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(r =>
+      r.tipo === "RECORDATORIO" &&
+      r.estado === "ATENDIDO"
+    )
+    .sort((a, b) => {
+      const fa =
+        a.fecha_atendido?.toDate?.() ||
+        a.ultima_modificacion?.toDate?.() ||
+        new Date(0);
+
+      const fb =
+        b.fecha_atendido?.toDate?.() ||
+        b.ultima_modificacion?.toDate?.() ||
+        new Date(0);
+
+      return fb - fa;
+    })
     .slice(0, maximo);
 }
