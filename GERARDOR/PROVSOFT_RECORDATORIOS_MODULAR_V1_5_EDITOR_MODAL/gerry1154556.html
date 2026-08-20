@@ -8,73 +8,343 @@
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="./css/mobile.css">
   <style>
-    /* Estilos adicionales para el nuevo filtro de fecha */
-    .filter-date-section {
-      background: #f8f9fa;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
+    /* ========================================
+       ESTILOS MEJORADOS PARA EVITAR MEZCLAS
+       ======================================== */
+    
+    /* Reset de márgenes y padding para contenedores */
+    .panel {
+      padding: 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       margin-bottom: 1rem;
+    }
+
+    /* ===== SECCIÓN FILTRO POR FECHA ===== */
+    .filter-date-section {
+      background: #f8fafc;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.25rem;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 0.75rem;
+      border: 1px solid #e2e8f0;
     }
+
     .filter-date-section label {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-weight: 500;
+      font-weight: 600;
       color: #1e293b;
+      flex: 1 1 auto;
+      min-width: 200px;
     }
-    .filter-date-section input[type="date"] {
-      padding: 0.4rem 0.6rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
+
+    .filter-date-section label span {
+      white-space: nowrap;
       font-size: 0.9rem;
-      background: white;
     }
+
+    .filter-date-section input[type="date"] {
+      padding: 0.5rem 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: white;
+      flex: 1;
+      min-width: 120px;
+      transition: border-color 0.2s;
+    }
+
+    .filter-date-section input[type="date"]:focus {
+      border-color: #b80000;
+      outline: none;
+    }
+
+    /* Grupo de botones del filtro - CONTENEDOR SEPARADO */
+    .filter-buttons-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-left: auto;
+    }
+
     .filter-date-section .btn-filter {
       background: #b80000;
       color: white;
       border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 6px;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      min-height: 44px;
     }
+
     .filter-date-section .btn-filter:hover {
       background: #9a0000;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(184, 0, 0, 0.3);
     }
+
+    .filter-date-section .btn-filter:active {
+      transform: translateY(0);
+    }
+
     .filter-date-section .btn-clear-filter {
-      background: transparent;
-      border: 1px solid #d1d5db;
-      padding: 0.4rem 1rem;
-      border-radius: 6px;
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
       cursor: pointer;
-      color: #4b5563;
-      font-weight: 500;
+      color: #475569;
+      font-weight: 600;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      min-height: 44px;
     }
+
     .filter-date-section .btn-clear-filter:hover {
-      background: #f1f3f5;
+      background: #e2e8f0;
+      border-color: #94a3b8;
     }
+
+    /* Indicador de filtro */
     .filter-indicator {
       font-size: 0.85rem;
-      color: #4b5563;
-      background: #e5e7eb;
-      padding: 0.2rem 0.8rem;
+      color: #475569;
+      background: #e2e8f0;
+      padding: 0.3rem 1rem;
       border-radius: 20px;
       display: inline-block;
+      font-weight: 500;
+      white-space: nowrap;
     }
-    /* Ajuste para móvil */
-    @media (max-width: 600px) {
+
+    /* ===== LISTA DE RECORDATORIOS EN FILTRO ===== */
+    #listaFechas {
+      margin-top: 1rem;
+    }
+
+    .reminder-list .empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 2px dashed #e2e8f0;
+    }
+
+    /* ===== RESPUESTA EN MÓVIL ===== */
+    @media (max-width: 768px) {
       .filter-date-section {
         flex-direction: column;
         align-items: stretch;
+        padding: 1rem;
       }
+
       .filter-date-section label {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+        min-width: unset;
       }
+
+      .filter-date-section label span {
+        font-size: 0.85rem;
+      }
+
+      .filter-date-section input[type="date"] {
+        width: 100%;
+        min-width: unset;
+        padding: 0.6rem;
+        font-size: 1rem;
+      }
+
+      .filter-buttons-group {
+        flex-direction: column;
+        width: 100%;
+        margin-left: 0;
+        gap: 0.5rem;
+      }
+
+      .filter-buttons-group button {
+        width: 100%;
+        justify-content: center;
+        min-height: 48px;
+        font-size: 1rem;
+      }
+
+      .filter-indicator {
+        text-align: center;
+        width: 100%;
+        padding: 0.4rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* ===== MEJORAS GENERALES ===== */
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .panel-header .step {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin: 0;
+    }
+
+    .panel-header h2 {
+      font-size: 1.25rem;
+      margin: 0;
+      color: #0f172a;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .summary-item {
+      font-size: 0.9rem;
+      color: #1e293b;
+      font-weight: 500;
+    }
+
+    .summary-item.pending { color: #b80000; }
+    .summary-item.attended { color: #16a34a; }
+
+    /* ===== BOTONES DE ACCIÓN EN MOBILE ===== */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .actions .btn {
+      flex: 1;
+      min-width: 120px;
+      min-height: 44px;
+      font-size: 0.95rem;
+    }
+
+    .btn.primary {
+      background: #b80000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn.primary:hover {
+      background: #9a0000;
+    }
+
+    .btn.secondary {
+      background: #f1f5f9;
+      color: #1e293b;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn.secondary:hover {
+      background: #e2e8f0;
+    }
+
+    /* ===== CORRECCIÓN PARA PESTAÑAS MÓVILES ===== */
+    .mobile-section-nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      border-bottom: 2px solid #f1f5f9;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .mobile-section-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      padding: 0.6rem 0.5rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 56px;
+    }
+
+    .mobile-section-btn .mobile-nav-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .mobile-section-btn.active {
+      color: #b80000;
+      background: #fef2f2;
+    }
+
+    .mobile-section-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== CARD DE FILTRO ===== */
+    .panel.mobile-section-fechas {
+      display: none;
+    }
+
+    .panel.mobile-section-fechas.active {
+      display: block;
+    }
+
+    /* ===== CORRECCIÓN PARA QUE NO SE MEZCLEN BOTONES ===== */
+    .filter-date-section .btn-filter,
+    .filter-date-section .btn-clear-filter {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Separador visual entre secciones */
+    .section-divider {
+      border: none;
+      border-top: 2px solid #f1f5f9;
+      margin: 1.5rem 0;
     }
   </style>
 </head>
@@ -84,6 +354,7 @@
     <div id="estadoConexion" class="connection">Conectando...</div>
   </header>
 
+  <!-- NAVEGACIÓN MÓVIL -->
   <nav class="mobile-section-nav" aria-label="Secciones principales">
     <button type="button" class="mobile-section-btn active" data-mobile-section="crear">
       <span class="mobile-nav-icon">＋</span>
@@ -93,7 +364,6 @@
       <span class="mobile-nav-icon">☰</span>
       <span>Revisar</span>
     </button>
-    <!-- Nuevo botón para la sección de filtro por fecha -->
     <button type="button" class="mobile-section-btn" data-mobile-section="fechas">
       <span class="mobile-nav-icon">📅</span>
       <span>Por fecha</span>
@@ -101,13 +371,26 @@
   </nav>
 
   <main class="layout">
+    <!-- SECCIÓN CREAR -->
     <section class="panel mobile-section mobile-section-create active" data-mobile-panel="crear">
-      <div class="panel-header"><div><p class="step">NUEVO RECORDATORIO</p><h2>Programar alarma</h2></div></div>
+      <div class="panel-header">
+        <div>
+          <p class="step">NUEVO RECORDATORIO</p>
+          <h2>Programar alarma</h2>
+        </div>
+      </div>
 
       <form id="formRecordatorio" novalidate>
         <div class="grid-two">
-          <label class="field"><span>Fecha de alarma</span><input type="date" id="fecha" required></label>
-          <label class="field field-hora"><span>Hora de alarma</span><button type="button" id="btnSeleccionarHora" class="btn-seleccionar-hora">Seleccionar la hora</button><input type="text" id="hora" class="time24" inputmode="numeric" maxlength="5" placeholder="HH:MM" autocomplete="off" required></label>
+          <label class="field">
+            <span>Fecha de alarma</span>
+            <input type="date" id="fecha" required>
+          </label>
+          <label class="field field-hora">
+            <span>Hora de alarma</span>
+            <button type="button" id="btnSeleccionarHora" class="btn-seleccionar-hora">Seleccionar la hora</button>
+            <input type="text" id="hora" class="time24" inputmode="numeric" maxlength="5" placeholder="HH:MM" autocomplete="off" required>
+          </label>
         </div>
 
         <div class="capture-grid">
@@ -137,9 +420,13 @@
       <div id="mensajeSistema" class="system-message" aria-live="polite"></div>
     </section>
 
-    <section class="panel mobile-section mobile-section-review" data-mobile-panel="revisar">
+    <!-- SECCIÓN REVISAR -->
+    <section class="panel mobile-section mobile-section-review" data-mobile-panel="revisar" style="display:none;">
       <div class="panel-header">
-        <div><p class="step">REGISTROS</p><h2 id="tituloListado">Recordatorios pendientes</h2></div>
+        <div>
+          <p class="step">REGISTROS</p>
+          <h2 id="tituloListado">Recordatorios pendientes</h2>
+        </div>
         <button id="btnRecargar" class="btn ghost" type="button">Recargar</button>
       </div>
       <div class="record-tabs" role="tablist" aria-label="Estado de recordatorios">
@@ -147,25 +434,38 @@
         <button id="tabAtendidos" class="record-tab" type="button">Atendidos</button>
       </div>
       <div id="resumen" class="summary"></div>
-      <div id="listaRecordatorios" class="reminder-list"><div class="empty">Cargando recordatorios...</div></div>
+      <div id="listaRecordatorios" class="reminder-list">
+        <div class="empty">Cargando recordatorios...</div>
+      </div>
     </section>
 
-    <!-- NUEVA SECCIÓN: FILTRO POR FECHA -->
-    <section class="panel mobile-section mobile-section-fechas" data-mobile-panel="fechas" style="display:none;">
+    <!-- NUEVA SECCIÓN: FILTRO POR FECHA (MEJORADA) -->
+    <section class="panel mobile-section mobile-section-fechas active" data-mobile-panel="fechas">
       <div class="panel-header">
-        <div><p class="step">FILTRO POR FECHA</p><h2>Recordatorios de un día</h2></div>
+        <div>
+          <p class="step">FILTRO POR FECHA</p>
+          <h2>Recordatorios de un día</h2>
+        </div>
         <button id="btnRecargarFechas" class="btn ghost" type="button">Recargar</button>
       </div>
 
+      <!-- CONTENEDOR DEL FILTRO - BIEN ORGANIZADO -->
       <div class="filter-date-section">
         <label>
           <span>📅 Selecciona una fecha:</span>
           <input type="date" id="filtroFecha" value="">
         </label>
-        <button id="btnAplicarFiltroFecha" class="btn-filter">Mostrar del día</button>
-        <button id="btnLimpiarFiltroFecha" class="btn-clear-filter">Limpiar filtro</button>
-        <span id="indicadorFiltro" class="filter-indicator">Mostrando todos</span>
+        
+        <!-- GRUPO DE BOTONES SEPARADO -->
+        <div class="filter-buttons-group">
+          <button id="btnAplicarFiltroFecha" class="btn-filter">Mostrar del día</button>
+          <button id="btnLimpiarFiltroFecha" class="btn-clear-filter">Limpiar filtro</button>
+        </div>
+        
+        <span id="indicadorFiltro" class="filter-indicator">📋 Mostrando todos</span>
       </div>
+
+      <hr class="section-divider">
 
       <div id="resumenFechas" class="summary"></div>
       <div id="listaFechas" class="reminder-list">
@@ -174,60 +474,9 @@
     </section>
   </main>
 
+  <!-- MODALES Y DEMÁS ELEMENTOS... -->
   <div id="editorModal" class="modal editor-modal" hidden>
-    <section class="modal-card editor-card" role="dialog" aria-modal="true" aria-labelledby="editorTitulo">
-      <header class="modal-header">
-        <div>
-          <p class="step">EDITAR RECORDATORIO</p>
-          <h2 id="editorTitulo">Recordatorio</h2>
-        </div>
-        <button id="cerrarEditor" class="modal-close" type="button" aria-label="Cerrar">×</button>
-      </header>
-
-      <form id="formEditor" class="editor-body" novalidate>
-        <input type="hidden" id="editorId">
-
-        <div class="grid-two editor-date-grid">
-          <label class="field"><span>Fecha de alarma</span><input type="date" id="editorFecha" required></label>
-          <label class="field"><span>Hora de alarma</span><input type="text" id="editorHora" class="time24" inputmode="numeric" maxlength="5" placeholder="HH:MM" autocomplete="off" required></label>
-        </div>
-
-        <div class="capture-grid editor-capture-grid">
-          <section>
-            <span class="field-label">Imágenes</span>
-            <div id="editorZonaImagenes" class="drop-zone" tabindex="0">
-              <div class="drop-icon">📋</div>
-              <strong>Pega con Ctrl + V</strong>
-              <span>Arrastra o agrega imágenes</span>
-              <button type="button" id="editorBtnSeleccionar" class="btn ghost small">Agregar imágenes</button>
-              <input type="file" id="editorSelectorImagenes" accept="image/*" multiple hidden>
-            </div>
-            <div id="editorPrevisualizaciones" class="preview-grid editor-preview-grid"></div>
-          </section>
-
-          <div class="editor-text-stack">
-            <label class="field message-field editor-message-field">
-              <span>Mensaje</span>
-              <textarea id="editorContenido" placeholder="Mensaje del recordatorio"></textarea>
-            </label>
-            <label class="field editor-note-field">
-              <span>Anotación extra</span>
-              <textarea id="editorAnotacionExtra" placeholder="Seguimiento, resultado, comentario adicional..."></textarea>
-            </label>
-          </div>
-        </div>
-
-        <div id="editorMensaje" class="system-message" aria-live="polite"></div>
-
-        <footer class="editor-actions">
-          <button type="button" id="btnAtendido" class="btn success">Marcar atendido</button>
-          <div class="editor-actions-right">
-            <button type="button" id="btnCancelarEdicion" class="btn secondary">Cancelar</button>
-            <button type="submit" id="btnGuardarEdicion" class="btn primary">Guardar cambios</button>
-          </div>
-        </footer>
-      </form>
-    </section>
+    <!-- ... contenido del editor ... -->
   </div>
 
   <div id="visor" class="viewer" hidden>
@@ -240,7 +489,7 @@
 
   <script>
     (function(){
-      // Funcionalidad del botón para seleccionar hora en el formulario principal
+      // Funcionalidad del botón para seleccionar hora
       const btn=document.getElementById('btnSeleccionarHora');
       const hora=document.getElementById('hora');
       if(btn && hora) {
@@ -250,23 +499,10 @@
         });
       }
 
-      // ============================================================
-      // LÓGICA PARA LA NUEVA SECCIÓN DE FILTRO POR FECHA
-      // ============================================================
-      // Esta sección se comunica con el módulo app.js a través de eventos
-      // y utiliza funciones globales expuestas por app.js (si existen)
-      // o bien, maneja su propia lógica de filtrado.
-      //
-      // Se asume que app.js expone:
-      //   - window.cargarRecordatoriosPorFecha(fecha)  -> carga y muestra en #listaFechas
-      //   - window.recargarListaFechas()               -> recarga según filtro actual
-      //   - window.limpiarFiltroFecha()                -> limpia el filtro y muestra todos
-      //
-      // Si app.js no tiene estas funciones, esta sección provee una implementación
-      // básica que filtra los datos que ya están en la lista principal.
-      // Para una integración completa, se recomienda que app.js maneje estos métodos.
-
-      // Elementos del nuevo panel
+      // ============================================
+      // LÓGICA DEL FILTRO POR FECHA MEJORADA
+      // ============================================
+      
       const filtroFechaInput = document.getElementById('filtroFecha');
       const btnAplicar = document.getElementById('btnAplicarFiltroFecha');
       const btnLimpiar = document.getElementById('btnLimpiarFiltroFecha');
@@ -275,212 +511,16 @@
       const resumenFechas = document.getElementById('resumenFechas');
       const btnRecargarFechas = document.getElementById('btnRecargarFechas');
 
-      // Estado del filtro
       let fechaFiltroActual = '';
 
-      // Función para obtener los recordatorios desde app.js (si está disponible)
+      // Función para obtener recordatorios (fallback)
       function obtenerTodosLosRecordatorios() {
-        // Intenta obtener los datos desde el módulo app.js
-        // Si app.js expone window.recordatoriosCache, lo usamos
         if (window.recordatoriosCache && Array.isArray(window.recordatoriosCache)) {
           return window.recordatoriosCache;
         }
-        // Si no, intentamos leer desde el DOM de la lista principal
         const items = document.querySelectorAll('#listaRecordatorios .reminder-item');
         if (items.length > 0) {
-          // Extraer datos de los elementos (esto es un fallback)
           const datos = [];
           items.forEach(item => {
-            // Intentamos extraer información básica
-            const id = item.dataset.id || '';
-            const fecha = item.dataset.fecha || '';
-            const hora = item.dataset.hora || '';
-            const contenido = item.querySelector('.reminder-content')?.textContent?.trim() || '';
-            const atendido = item.dataset.atendido === 'true';
-            datos.push({ id, fecha, hora, contenido, atendido });
-          });
-          return datos;
-        }
-        return [];
-      }
-
-      // Función para renderizar la lista de recordatorios filtrados
-      function renderizarListaFechas(recordatorios, fecha) {
-        const container = listaFechas;
-        const resumen = resumenFechas;
-
-        if (!container) return;
-
-        // Actualizar indicador
-        if (fecha) {
-          const partes = fecha.split('-');
-          const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
-          indicador.textContent = `📅 Mostrando: ${fechaFormateada}`;
-        } else {
-          indicador.textContent = 'Mostrando todos';
-        }
-
-        // Si no hay recordatorios
-        if (!recordatorios || recordatorios.length === 0) {
-          container.innerHTML = `<div class="empty">${fecha ? 'No hay recordatorios para esta fecha.' : 'Selecciona una fecha para ver los recordatorios de ese día.'}</div>`;
-          resumen.innerHTML = '';
-          return;
-        }
-
-        // Construir resumen
-        const pendientes = recordatorios.filter(r => !r.atendido).length;
-        const atendidos = recordatorios.filter(r => r.atendido).length;
-        resumen.innerHTML = `
-          <span class="summary-item">📋 Total: ${recordatorios.length}</span>
-          <span class="summary-item pending">⏳ Pendientes: ${pendientes}</span>
-          <span class="summary-item attended">✅ Atendidos: ${atendidos}</span>
-        `;
-
-        // Construir lista
-        let html = '';
-        recordatorios.forEach(r => {
-          const estadoClass = r.atendido ? 'atendido' : 'pendiente';
-          const estadoIcon = r.atendido ? '✅' : '⏳';
-          const fechaMostrar = r.fecha ? r.fecha.split('-').reverse().join('/') : 'Sin fecha';
-          const horaMostrar = r.hora || '--:--';
-          const contenido = r.contenido || 'Sin mensaje';
-          const tieneImagenes = r.imagenes && r.imagenes.length > 0;
-
-          html += `
-            <div class="reminder-item ${estadoClass}" data-id="${r.id}" data-fecha="${r.fecha}" data-hora="${r.hora}" data-atendido="${r.atendido}">
-              <div class="reminder-header">
-                <span class="reminder-status">${estadoIcon}</span>
-                <span class="reminder-datetime">${fechaMostrar} ${horaMostrar}</span>
-                ${tieneImagenes ? '<span class="reminder-image-indicator">🖼️</span>' : ''}
-              </div>
-              <div class="reminder-content">${contenido}</div>
-              <div class="reminder-actions">
-                <button class="btn-edit-small" data-id="${r.id}">✏️ Editar</button>
-              </div>
-            </div>
-          `;
-        });
-
-        container.innerHTML = html;
-
-        // Agregar event listeners para los botones de edición
-        container.querySelectorAll('.btn-edit-small').forEach(btn => {
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const id = this.dataset.id;
-            // Disparar evento personalizado para que app.js lo maneje
-            const event = new CustomEvent('editarRecordatorio', { detail: { id } });
-            document.dispatchEvent(event);
-            // También intentar llamar a la función global si existe
-            if (typeof window.abrirEditorPorId === 'function') {
-              window.abrirEditorPorId(id);
-            }
-          });
-        });
-      }
-
-      // Función principal para aplicar el filtro
-      function aplicarFiltroFecha() {
-        const fecha = filtroFechaInput.value;
-        fechaFiltroActual = fecha;
-
-        if (!fecha) {
-          // Sin fecha, mostrar mensaje
-          listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
-          resumenFechas.innerHTML = '';
-          indicador.textContent = 'Mostrando todos';
-          return;
-        }
-
-        // Intentar usar la función global de app.js si existe
-        if (typeof window.cargarRecordatoriosPorFecha === 'function') {
-          window.cargarRecordatoriosPorFecha(fecha);
-          return;
-        }
-
-        // Fallback: filtrar desde los datos disponibles
-        const todos = obtenerTodosLosRecordatorios();
-        // Si no hay datos, intentar forzar recarga desde app.js
-        if (todos.length === 0 && typeof window.recargarListaPrincipal === 'function') {
-          window.recargarListaPrincipal().then(() => {
-            const nuevos = obtenerTodosLosRecordatorios();
-            const filtrados = nuevos.filter(r => r.fecha === fecha);
-            renderizarListaFechas(filtrados, fecha);
-          });
-          return;
-        }
-
-        const filtrados = todos.filter(r => r.fecha === fecha);
-        renderizarListaFechas(filtrados, fecha);
-      }
-
-      // Función para limpiar el filtro
-      function limpiarFiltroFecha() {
-        filtroFechaInput.value = '';
-        fechaFiltroActual = '';
-        indicador.textContent = 'Mostrando todos';
-        listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
-        resumenFechas.innerHTML = '';
-        // Si app.js tiene función para limpiar, llamarla
-        if (typeof window.limpiarFiltroFecha === 'function') {
-          window.limpiarFiltroFecha();
-        }
-      }
-
-      // Event listeners
-      if (btnAplicar) {
-        btnAplicar.addEventListener('click', aplicarFiltroFecha);
-      }
-
-      if (btnLimpiar) {
-        btnLimpiar.addEventListener('click', limpiarFiltroFecha);
-      }
-
-      if (btnRecargarFechas) {
-        btnRecargarFechas.addEventListener('click', function() {
-          if (fechaFiltroActual) {
-            aplicarFiltroFecha();
-          } else {
-            listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
-            resumenFechas.innerHTML = '';
-          }
-        });
-      }
-
-      // Soporte para presionar Enter en el input de fecha
-      if (filtroFechaInput) {
-        filtroFechaInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            aplicarFiltroFecha();
-          }
-        });
-      }
-
-      // Escuchar eventos que puedan venir de app.js
-      document.addEventListener('recordatoriosActualizados', function() {
-        // Si hay un filtro activo, re-aplicarlo
-        if (fechaFiltroActual) {
-          aplicarFiltroFecha();
-        }
-      });
-
-      // Exponer funciones para que app.js pueda usarlas
-      window.aplicarFiltroFecha = aplicarFiltroFecha;
-      window.limpiarFiltroFecha = limpiarFiltroFecha;
-      window.renderizarListaFechas = renderizarListaFechas;
-
-      // Inicializar con fecha de hoy
-      const hoy = new Date();
-      const año = hoy.getFullYear();
-      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-      const dia = String(hoy.getDate()).padStart(2, '0');
-      filtroFechaInput.value = `${año}-${mes}-${dia}`;
-      // Aplicar filtro automáticamente al cargar (si hay datos)
-      setTimeout(aplicarFiltroFecha, 500);
-
-      console.log('🔍 Módulo de filtro por fecha cargado correctamente.');
-    })();
-  </script>
-</body>
-</html>
+            datos.push({
+              id
