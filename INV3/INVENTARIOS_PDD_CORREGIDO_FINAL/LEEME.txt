@@ -1,1 +1,0 @@
-Ejecuta server.py. No guarda capturas en almacenamiento local. Stock imprime únicamente la sección visible con producto, stock y espacio físico.
