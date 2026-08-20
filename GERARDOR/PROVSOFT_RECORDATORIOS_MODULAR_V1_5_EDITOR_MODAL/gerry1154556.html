@@ -440,7 +440,7 @@
     </section>
 
     <!-- NUEVA SECCIÓN: FILTRO POR FECHA (MEJORADA) -->
-    <section class="panel mobile-section mobile-section-fechas active" data-mobile-panel="fechas">
+    <section class="panel mobile-section mobile-section-fechas" data-mobile-panel="fechas" style="display:none;">
       <div class="panel-header">
         <div>
           <p class="step">FILTRO POR FECHA</p>
@@ -474,9 +474,67 @@
     </section>
   </main>
 
-  <!-- MODALES Y DEMÁS ELEMENTOS... -->
+  <!-- MODAL EDITOR -->
   <div id="editorModal" class="modal editor-modal" hidden>
-    <!-- ... contenido del editor ... -->
+    <section class="modal-card editor-card" role="dialog" aria-modal="true" aria-labelledby="editorTitulo">
+      <header class="modal-header">
+        <div>
+          <p class="step">EDITAR RECORDATORIO</p>
+          <h2 id="editorTitulo">Recordatorio</h2>
+        </div>
+        <button id="cerrarEditor" class="modal-close" type="button" aria-label="Cerrar">×</button>
+      </header>
+
+      <form id="formEditor" class="editor-body" novalidate>
+        <input type="hidden" id="editorId">
+
+        <div class="grid-two editor-date-grid">
+          <label class="field">
+            <span>Fecha de alarma</span>
+            <input type="date" id="editorFecha" required>
+          </label>
+          <label class="field">
+            <span>Hora de alarma</span>
+            <input type="text" id="editorHora" class="time24" inputmode="numeric" maxlength="5" placeholder="HH:MM" autocomplete="off" required>
+          </label>
+        </div>
+
+        <div class="capture-grid editor-capture-grid">
+          <section>
+            <span class="field-label">Imágenes</span>
+            <div id="editorZonaImagenes" class="drop-zone" tabindex="0">
+              <div class="drop-icon">📋</div>
+              <strong>Pega con Ctrl + V</strong>
+              <span>Arrastra o agrega imágenes</span>
+              <button type="button" id="editorBtnSeleccionar" class="btn ghost small">Agregar imágenes</button>
+              <input type="file" id="editorSelectorImagenes" accept="image/*" multiple hidden>
+            </div>
+            <div id="editorPrevisualizaciones" class="preview-grid editor-preview-grid"></div>
+          </section>
+
+          <div class="editor-text-stack">
+            <label class="field message-field editor-message-field">
+              <span>Mensaje</span>
+              <textarea id="editorContenido" placeholder="Mensaje del recordatorio"></textarea>
+            </label>
+            <label class="field editor-note-field">
+              <span>Anotación extra</span>
+              <textarea id="editorAnotacionExtra" placeholder="Seguimiento, resultado, comentario adicional..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div id="editorMensaje" class="system-message" aria-live="polite"></div>
+
+        <footer class="editor-actions">
+          <button type="button" id="btnAtendido" class="btn success">Marcar atendido</button>
+          <div class="editor-actions-right">
+            <button type="button" id="btnCancelarEdicion" class="btn secondary">Cancelar</button>
+            <button type="submit" id="btnGuardarEdicion" class="btn primary">Guardar cambios</button>
+          </div>
+        </footer>
+      </form>
+    </section>
   </div>
 
   <div id="visor" class="viewer" hidden>
@@ -490,8 +548,8 @@
   <script>
     (function(){
       // Funcionalidad del botón para seleccionar hora
-      const btn=document.getElementById('btnSeleccionarHora');
-      const hora=document.getElementById('hora');
+      const btn = document.getElementById('btnSeleccionarHora');
+      const hora = document.getElementById('hora');
       if(btn && hora) {
         btn.addEventListener('click', function(){
           hora.focus();
@@ -523,4 +581,169 @@
           const datos = [];
           items.forEach(item => {
             datos.push({
-              id
+              id: item.dataset.id || '',
+              fecha: item.dataset.fecha || '',
+              hora: item.dataset.hora || '',
+              contenido: item.querySelector('.reminder-content')?.textContent?.trim() || '',
+              atendido: item.dataset.atendido === 'true'
+            });
+          });
+          return datos;
+        }
+        return [];
+      }
+
+      // Función para renderizar la lista filtrada
+      function renderizarListaFechas(recordatorios, fecha) {
+        const container = listaFechas;
+        const resumen = resumenFechas;
+
+        if (!container) return;
+
+        // Actualizar indicador
+        if (fecha) {
+          const partes = fecha.split('-');
+          const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+          indicador.textContent = `📅 Mostrando: ${fechaFormateada}`;
+        } else {
+          indicador.textContent = '📋 Mostrando todos';
+        }
+
+        // Si no hay recordatorios
+        if (!recordatorios || recordatorios.length === 0) {
+          container.innerHTML = `<div class="empty">${fecha ? 'No hay recordatorios para esta fecha.' : 'Selecciona una fecha para ver los recordatorios de ese día.'}</div>`;
+          resumen.innerHTML = '';
+          return;
+        }
+
+        // Construir resumen
+        const pendientes = recordatorios.filter(r => !r.atendido).length;
+        const atendidos = recordatorios.filter(r => r.atendido).length;
+        resumen.innerHTML = `
+          <span class="summary-item">📋 Total: ${recordatorios.length}</span>
+          <span class="summary-item pending">⏳ Pendientes: ${pendientes}</span>
+          <span class="summary-item attended">✅ Atendidos: ${atendidos}</span>
+        `;
+
+        // Construir lista
+        let html = '';
+        recordatorios.forEach(r => {
+          const estadoClass = r.atendido ? 'atendido' : 'pendiente';
+          const estadoIcon = r.atendido ? '✅' : '⏳';
+          const fechaMostrar = r.fecha ? r.fecha.split('-').reverse().join('/') : 'Sin fecha';
+          const horaMostrar = r.hora || '--:--';
+          const contenido = r.contenido || 'Sin mensaje';
+
+          html += `
+            <div class="reminder-item ${estadoClass}" data-id="${r.id}" data-fecha="${r.fecha}" data-hora="${r.hora}" data-atendido="${r.atendido}">
+              <div class="reminder-header">
+                <span class="reminder-status">${estadoIcon}</span>
+                <span class="reminder-datetime">${fechaMostrar} ${horaMostrar}</span>
+              </div>
+              <div class="reminder-content">${contenido}</div>
+              <div class="reminder-actions">
+                <button class="btn-edit-small" data-id="${r.id}">✏️ Editar</button>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Event listeners para botones de edición
+        container.querySelectorAll('.btn-edit-small').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            if (typeof window.abrirEditorPorId === 'function') {
+              window.abrirEditorPorId(id);
+            }
+          });
+        });
+      }
+
+      // Función para aplicar el filtro
+      function aplicarFiltroFecha() {
+        const fecha = filtroFechaInput.value;
+        fechaFiltroActual = fecha;
+
+        if (!fecha) {
+          listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+          resumenFechas.innerHTML = '';
+          indicador.textContent = '📋 Mostrando todos';
+          return;
+        }
+
+        // Usar función global o fallback
+        if (typeof window.cargarRecordatoriosPorFecha === 'function') {
+          window.cargarRecordatoriosPorFecha(fecha);
+          return;
+        }
+
+        const todos = obtenerTodosLosRecordatorios();
+        const filtrados = todos.filter(r => r.fecha === fecha);
+        renderizarListaFechas(filtrados, fecha);
+      }
+
+      // Función para limpiar filtro
+      function limpiarFiltroFecha() {
+        filtroFechaInput.value = '';
+        fechaFiltroActual = '';
+        indicador.textContent = '📋 Mostrando todos';
+        listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+        resumenFechas.innerHTML = '';
+        if (typeof window.limpiarFiltroFecha === 'function') {
+          window.limpiarFiltroFecha();
+        }
+      }
+
+      // Event listeners
+      if (btnAplicar) {
+        btnAplicar.addEventListener('click', aplicarFiltroFecha);
+      }
+
+      if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', limpiarFiltroFecha);
+      }
+
+      if (btnRecargarFechas) {
+        btnRecargarFechas.addEventListener('click', function() {
+          if (fechaFiltroActual) {
+            aplicarFiltroFecha();
+          } else {
+            listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+            resumenFechas.innerHTML = '';
+          }
+        });
+      }
+
+      // Enter en el input de fecha
+      if (filtroFechaInput) {
+        filtroFechaInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            aplicarFiltroFecha();
+          }
+        });
+      }
+
+      // Exponer funciones globales
+      window.aplicarFiltroFecha = aplicarFiltroFecha;
+      window.limpiarFiltroFecha = limpiarFiltroFecha;
+      window.renderizarListaFechas = renderizarListaFechas;
+
+      // Inicializar con fecha de hoy
+      const hoy = new Date();
+      const año = hoy.getFullYear();
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      filtroFechaInput.value = `${año}-${mes}-${dia}`;
+      
+      // Aplicar filtro automáticamente
+      setTimeout(aplicarFiltroFecha, 500);
+
+      console.log('🔍 Módulo de filtro por fecha cargado correctamente.');
+    })();
+  </script>
+</body>
+</html>
