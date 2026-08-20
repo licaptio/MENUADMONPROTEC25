@@ -7,6 +7,76 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23b80000'/%3E%3Cpath d='M20 18h24v28H20z' fill='white'/%3E%3Cpath d='M25 25h14M25 32h14M25 39h9' stroke='%23b80000' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="./css/mobile.css">
+  <style>
+    /* Estilos adicionales para el nuevo filtro de fecha */
+    .filter-date-section {
+      background: #f8f9fa;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .filter-date-section label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      color: #1e293b;
+    }
+    .filter-date-section input[type="date"] {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: white;
+    }
+    .filter-date-section .btn-filter {
+      background: #b80000;
+      color: white;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .filter-date-section .btn-filter:hover {
+      background: #9a0000;
+    }
+    .filter-date-section .btn-clear-filter {
+      background: transparent;
+      border: 1px solid #d1d5db;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #4b5563;
+      font-weight: 500;
+    }
+    .filter-date-section .btn-clear-filter:hover {
+      background: #f1f3f5;
+    }
+    .filter-indicator {
+      font-size: 0.85rem;
+      color: #4b5563;
+      background: #e5e7eb;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    /* Ajuste para móvil */
+    @media (max-width: 600px) {
+      .filter-date-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-date-section label {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -22,6 +92,11 @@
     <button type="button" class="mobile-section-btn" data-mobile-section="revisar">
       <span class="mobile-nav-icon">☰</span>
       <span>Revisar</span>
+    </button>
+    <!-- Nuevo botón para la sección de filtro por fecha -->
+    <button type="button" class="mobile-section-btn" data-mobile-section="fechas">
+      <span class="mobile-nav-icon">📅</span>
+      <span>Por fecha</span>
     </button>
   </nav>
 
@@ -73,6 +148,29 @@
       </div>
       <div id="resumen" class="summary"></div>
       <div id="listaRecordatorios" class="reminder-list"><div class="empty">Cargando recordatorios...</div></div>
+    </section>
+
+    <!-- NUEVA SECCIÓN: FILTRO POR FECHA -->
+    <section class="panel mobile-section mobile-section-fechas" data-mobile-panel="fechas" style="display:none;">
+      <div class="panel-header">
+        <div><p class="step">FILTRO POR FECHA</p><h2>Recordatorios de un día</h2></div>
+        <button id="btnRecargarFechas" class="btn ghost" type="button">Recargar</button>
+      </div>
+
+      <div class="filter-date-section">
+        <label>
+          <span>📅 Selecciona una fecha:</span>
+          <input type="date" id="filtroFecha" value="">
+        </label>
+        <button id="btnAplicarFiltroFecha" class="btn-filter">Mostrar del día</button>
+        <button id="btnLimpiarFiltroFecha" class="btn-clear-filter">Limpiar filtro</button>
+        <span id="indicadorFiltro" class="filter-indicator">Mostrando todos</span>
+      </div>
+
+      <div id="resumenFechas" class="summary"></div>
+      <div id="listaFechas" class="reminder-list">
+        <div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>
+      </div>
     </section>
   </main>
 
@@ -140,16 +238,249 @@
   <script src="./js/mobile.js"></script>
   <script type="module" src="./js/app.js"></script>
 
-<script>
-(function(){
-  const btn=document.getElementById('btnSeleccionarHora');
-  const hora=document.getElementById('hora');
-  if(!btn||!hora) return;
-  btn.addEventListener('click', function(){
-    hora.focus();
-    setTimeout(function(){ hora.select(); }, 30);
-  });
-})();
-</script>
+  <script>
+    (function(){
+      // Funcionalidad del botón para seleccionar hora en el formulario principal
+      const btn=document.getElementById('btnSeleccionarHora');
+      const hora=document.getElementById('hora');
+      if(btn && hora) {
+        btn.addEventListener('click', function(){
+          hora.focus();
+          setTimeout(function(){ hora.select(); }, 30);
+        });
+      }
+
+      // ============================================================
+      // LÓGICA PARA LA NUEVA SECCIÓN DE FILTRO POR FECHA
+      // ============================================================
+      // Esta sección se comunica con el módulo app.js a través de eventos
+      // y utiliza funciones globales expuestas por app.js (si existen)
+      // o bien, maneja su propia lógica de filtrado.
+      //
+      // Se asume que app.js expone:
+      //   - window.cargarRecordatoriosPorFecha(fecha)  -> carga y muestra en #listaFechas
+      //   - window.recargarListaFechas()               -> recarga según filtro actual
+      //   - window.limpiarFiltroFecha()                -> limpia el filtro y muestra todos
+      //
+      // Si app.js no tiene estas funciones, esta sección provee una implementación
+      // básica que filtra los datos que ya están en la lista principal.
+      // Para una integración completa, se recomienda que app.js maneje estos métodos.
+
+      // Elementos del nuevo panel
+      const filtroFechaInput = document.getElementById('filtroFecha');
+      const btnAplicar = document.getElementById('btnAplicarFiltroFecha');
+      const btnLimpiar = document.getElementById('btnLimpiarFiltroFecha');
+      const indicador = document.getElementById('indicadorFiltro');
+      const listaFechas = document.getElementById('listaFechas');
+      const resumenFechas = document.getElementById('resumenFechas');
+      const btnRecargarFechas = document.getElementById('btnRecargarFechas');
+
+      // Estado del filtro
+      let fechaFiltroActual = '';
+
+      // Función para obtener los recordatorios desde app.js (si está disponible)
+      function obtenerTodosLosRecordatorios() {
+        // Intenta obtener los datos desde el módulo app.js
+        // Si app.js expone window.recordatoriosCache, lo usamos
+        if (window.recordatoriosCache && Array.isArray(window.recordatoriosCache)) {
+          return window.recordatoriosCache;
+        }
+        // Si no, intentamos leer desde el DOM de la lista principal
+        const items = document.querySelectorAll('#listaRecordatorios .reminder-item');
+        if (items.length > 0) {
+          // Extraer datos de los elementos (esto es un fallback)
+          const datos = [];
+          items.forEach(item => {
+            // Intentamos extraer información básica
+            const id = item.dataset.id || '';
+            const fecha = item.dataset.fecha || '';
+            const hora = item.dataset.hora || '';
+            const contenido = item.querySelector('.reminder-content')?.textContent?.trim() || '';
+            const atendido = item.dataset.atendido === 'true';
+            datos.push({ id, fecha, hora, contenido, atendido });
+          });
+          return datos;
+        }
+        return [];
+      }
+
+      // Función para renderizar la lista de recordatorios filtrados
+      function renderizarListaFechas(recordatorios, fecha) {
+        const container = listaFechas;
+        const resumen = resumenFechas;
+
+        if (!container) return;
+
+        // Actualizar indicador
+        if (fecha) {
+          const partes = fecha.split('-');
+          const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+          indicador.textContent = `📅 Mostrando: ${fechaFormateada}`;
+        } else {
+          indicador.textContent = 'Mostrando todos';
+        }
+
+        // Si no hay recordatorios
+        if (!recordatorios || recordatorios.length === 0) {
+          container.innerHTML = `<div class="empty">${fecha ? 'No hay recordatorios para esta fecha.' : 'Selecciona una fecha para ver los recordatorios de ese día.'}</div>`;
+          resumen.innerHTML = '';
+          return;
+        }
+
+        // Construir resumen
+        const pendientes = recordatorios.filter(r => !r.atendido).length;
+        const atendidos = recordatorios.filter(r => r.atendido).length;
+        resumen.innerHTML = `
+          <span class="summary-item">📋 Total: ${recordatorios.length}</span>
+          <span class="summary-item pending">⏳ Pendientes: ${pendientes}</span>
+          <span class="summary-item attended">✅ Atendidos: ${atendidos}</span>
+        `;
+
+        // Construir lista
+        let html = '';
+        recordatorios.forEach(r => {
+          const estadoClass = r.atendido ? 'atendido' : 'pendiente';
+          const estadoIcon = r.atendido ? '✅' : '⏳';
+          const fechaMostrar = r.fecha ? r.fecha.split('-').reverse().join('/') : 'Sin fecha';
+          const horaMostrar = r.hora || '--:--';
+          const contenido = r.contenido || 'Sin mensaje';
+          const tieneImagenes = r.imagenes && r.imagenes.length > 0;
+
+          html += `
+            <div class="reminder-item ${estadoClass}" data-id="${r.id}" data-fecha="${r.fecha}" data-hora="${r.hora}" data-atendido="${r.atendido}">
+              <div class="reminder-header">
+                <span class="reminder-status">${estadoIcon}</span>
+                <span class="reminder-datetime">${fechaMostrar} ${horaMostrar}</span>
+                ${tieneImagenes ? '<span class="reminder-image-indicator">🖼️</span>' : ''}
+              </div>
+              <div class="reminder-content">${contenido}</div>
+              <div class="reminder-actions">
+                <button class="btn-edit-small" data-id="${r.id}">✏️ Editar</button>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Agregar event listeners para los botones de edición
+        container.querySelectorAll('.btn-edit-small').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            // Disparar evento personalizado para que app.js lo maneje
+            const event = new CustomEvent('editarRecordatorio', { detail: { id } });
+            document.dispatchEvent(event);
+            // También intentar llamar a la función global si existe
+            if (typeof window.abrirEditorPorId === 'function') {
+              window.abrirEditorPorId(id);
+            }
+          });
+        });
+      }
+
+      // Función principal para aplicar el filtro
+      function aplicarFiltroFecha() {
+        const fecha = filtroFechaInput.value;
+        fechaFiltroActual = fecha;
+
+        if (!fecha) {
+          // Sin fecha, mostrar mensaje
+          listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+          resumenFechas.innerHTML = '';
+          indicador.textContent = 'Mostrando todos';
+          return;
+        }
+
+        // Intentar usar la función global de app.js si existe
+        if (typeof window.cargarRecordatoriosPorFecha === 'function') {
+          window.cargarRecordatoriosPorFecha(fecha);
+          return;
+        }
+
+        // Fallback: filtrar desde los datos disponibles
+        const todos = obtenerTodosLosRecordatorios();
+        // Si no hay datos, intentar forzar recarga desde app.js
+        if (todos.length === 0 && typeof window.recargarListaPrincipal === 'function') {
+          window.recargarListaPrincipal().then(() => {
+            const nuevos = obtenerTodosLosRecordatorios();
+            const filtrados = nuevos.filter(r => r.fecha === fecha);
+            renderizarListaFechas(filtrados, fecha);
+          });
+          return;
+        }
+
+        const filtrados = todos.filter(r => r.fecha === fecha);
+        renderizarListaFechas(filtrados, fecha);
+      }
+
+      // Función para limpiar el filtro
+      function limpiarFiltroFecha() {
+        filtroFechaInput.value = '';
+        fechaFiltroActual = '';
+        indicador.textContent = 'Mostrando todos';
+        listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+        resumenFechas.innerHTML = '';
+        // Si app.js tiene función para limpiar, llamarla
+        if (typeof window.limpiarFiltroFecha === 'function') {
+          window.limpiarFiltroFecha();
+        }
+      }
+
+      // Event listeners
+      if (btnAplicar) {
+        btnAplicar.addEventListener('click', aplicarFiltroFecha);
+      }
+
+      if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', limpiarFiltroFecha);
+      }
+
+      if (btnRecargarFechas) {
+        btnRecargarFechas.addEventListener('click', function() {
+          if (fechaFiltroActual) {
+            aplicarFiltroFecha();
+          } else {
+            listaFechas.innerHTML = `<div class="empty">Selecciona una fecha para ver los recordatorios de ese día.</div>`;
+            resumenFechas.innerHTML = '';
+          }
+        });
+      }
+
+      // Soporte para presionar Enter en el input de fecha
+      if (filtroFechaInput) {
+        filtroFechaInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            aplicarFiltroFecha();
+          }
+        });
+      }
+
+      // Escuchar eventos que puedan venir de app.js
+      document.addEventListener('recordatoriosActualizados', function() {
+        // Si hay un filtro activo, re-aplicarlo
+        if (fechaFiltroActual) {
+          aplicarFiltroFecha();
+        }
+      });
+
+      // Exponer funciones para que app.js pueda usarlas
+      window.aplicarFiltroFecha = aplicarFiltroFecha;
+      window.limpiarFiltroFecha = limpiarFiltroFecha;
+      window.renderizarListaFechas = renderizarListaFechas;
+
+      // Inicializar con fecha de hoy
+      const hoy = new Date();
+      const año = hoy.getFullYear();
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      filtroFechaInput.value = `${año}-${mes}-${dia}`;
+      // Aplicar filtro automáticamente al cargar (si hay datos)
+      setTimeout(aplicarFiltroFecha, 500);
+
+      console.log('🔍 Módulo de filtro por fecha cargado correctamente.');
+    })();
+  </script>
 </body>
 </html>
