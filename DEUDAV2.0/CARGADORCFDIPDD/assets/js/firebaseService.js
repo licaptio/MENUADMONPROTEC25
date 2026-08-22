@@ -21,7 +21,9 @@ function refColeccionAutorizados() {
 
 export async function listarRfcAutorizados() {
   const snap = await getDocs(refColeccionAutorizados());
+
   return snap.docs
+    .filter(item => item.data()?.activo === true)
     .map(item => item.id.toUpperCase())
     .sort((a, b) => a.localeCompare(b));
 }
@@ -52,11 +54,16 @@ export async function rfcEstaAutorizado(rfc) {
   const normalizado = normalizarRfc(rfc);
   if (!normalizado) return false;
 
-  const snap = await getDoc(doc(refColeccionAutorizados(), normalizado));
+  const snap = await getDoc(
+    doc(refColeccionAutorizados(), normalizado)
+  );
+
   if (!snap.exists()) return false;
 
   const datos = snap.data();
-  return datos?.activo !== false;
+
+  // SOLO autorizar si explícitamente tiene activo === true
+  return datos?.activo === true;
 }
 
 export async function existeEntradaFirebase(uuid) {
