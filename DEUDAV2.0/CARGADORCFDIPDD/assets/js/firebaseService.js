@@ -74,7 +74,31 @@ export async function existeEntradaFirebase(uuid) {
 }
 
 export async function guardarEntradaFirebase(uuid, datos) {
-  const uuidMayus = uuid.toUpperCase();
+  const uuidMayus = String(uuid || "").toUpperCase().trim();
+
+  if (!uuidMayus) {
+    throw new Error("Firebase bloqueado: UUID vacío.");
+  }
+
+  const rfcEmisor = normalizarRfc(
+    datos?.rfc_emisor ||
+    datos?.rfcEmisor ||
+    ""
+  );
+
+  if (!rfcEmisor) {
+    throw new Error(
+      "Firebase bloqueado: el documento no contiene RFC emisor."
+    );
+  }
+
+  const autorizado = await rfcEstaAutorizado(rfcEmisor);
+
+  if (!autorizado) {
+    throw new Error(
+      `Firebase bloqueado: RFC ${rfcEmisor} no autorizado.`
+    );
+  }
 
   await setDoc(
     doc(db, ...appConfig.firebaseEntradaPath, uuidMayus),
@@ -87,7 +111,6 @@ export async function guardarEntradaFirebase(uuid, datos) {
     }
   );
 }
-
 export function normalizarRfc(valor) {
   return String(valor || "")
     .toUpperCase()
